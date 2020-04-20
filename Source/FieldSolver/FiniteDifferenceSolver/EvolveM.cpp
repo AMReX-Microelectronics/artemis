@@ -44,8 +44,9 @@ void FiniteDifferenceSolver::EvolveM (
     else {
        amrex::Abort("Only yee algorithm is compatible for M updates.");
     }
+    }
     
-    template< typename T_Algo >
+    template<typename T_Algo>
     void FiniteDifferenceSolver::EvolveMCartesian (
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > & Mfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
@@ -102,4 +103,3 @@ void FiniteDifferenceSolver::EvolveM (
             );
         }
     }
-}
