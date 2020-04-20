@@ -19,7 +19,7 @@ void FiniteDifferenceSolver::EvolveM ( std::unique_ptr<amrex::MultiFab>& Mfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     amrex::Real const dt) {
 
-    if (m_do_nodal) {
+    /* if (m_do_nodal) {
 
         EvolveMCartesian <CartesianNodalAlgorithm> ( Mfield, Bfield, dt );
 
@@ -34,6 +34,14 @@ void FiniteDifferenceSolver::EvolveM ( std::unique_ptr<amrex::MultiFab>& Mfield,
     else
     {
         amrex::Abort("Unknown algorithm");
+    } */
+
+    if (m_fdtd_algo == MaxwellSolverAlgo::Yee)
+    {
+        EvolveMCartesian <CartesianYeeAlgorithm> (Mfield, Bfield, dt);
+    }
+    else {
+       amrex::Abort("Only yee algorithm is compatible for M updates.")
     }
     
     template< typename T_Algo >
