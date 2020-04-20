@@ -87,13 +87,13 @@ void FiniteDifferenceSolver::EvolveM (
                 Mx(i, j, k) += dt * cons1 * ( My(i, j, k) * Bz(i, j, k) - Mz(i, j, k) * By(i, j, k))
                 + dt * cons2 * ( My(i, j, k) * (Mx(i, j, k) * By(i, j, k) - My(i, j, k) * Bx(i, j, k))
                 - Mz(i, j, k) * ( Mz(i, j, k) * Bx(i, j, k) - Mx(i, j, k) * Bz(i, j, k)));
-            }
+            },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 My(i, j, k) += dt * cons1 * ( Mz(i, j, k) * Bx(i, j, k) - Mx(i, j, k) * Bz(i, j, k))
                 + dt * cons2 * ( Mz(i, j, k) * (My(i, j, k) * Bz(i, j, k) - Mz(i, j, k) * By(i, j, k))
                 - Mx(i, j, k) * ( Mx(i, j, k) * By(i, j, k) - My(i, j, k) * Bx(i, j, k)));
-            }
+            },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Mz(i, j, k) += dt * cons1 * ( Mx(i, j, k) * By(i, j, k) - My(i, j, k) * Bx(i, j, k))
