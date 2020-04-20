@@ -44,7 +44,7 @@ void FiniteDifferenceSolver::EvolveM (
     else {
        amrex::Abort("Only yee algorithm is compatible for M updates.");
     }
-    }
+    } // closes function EvolveM
     
     template<typename T_Algo>
     void FiniteDifferenceSolver::EvolveMCartesian (
@@ -58,7 +58,7 @@ void FiniteDifferenceSolver::EvolveM (
         Real constexpr cons1 = - gamma;
         Real constexpr cons2 = -cons1*alpha/Ms;
 
-        for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isvalid(); ++mfi)
+        for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             // extract field data
             Array4<Real> const& Mx = Mfield[0]->array(mfi);
