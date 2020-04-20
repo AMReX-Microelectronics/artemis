@@ -41,7 +41,7 @@ void FiniteDifferenceSolver::EvolveM ( std::unique_ptr<amrex::MultiFab>& Mfield,
         EvolveMCartesian <CartesianYeeAlgorithm> (Mfield, Bfield, dt);
     }
     else {
-       amrex::Abort("Only yee algorithm is compatible for M updates.")
+       amrex::Abort("Only yee algorithm is compatible for M updates.");
     }
     
     template< typename T_Algo >
