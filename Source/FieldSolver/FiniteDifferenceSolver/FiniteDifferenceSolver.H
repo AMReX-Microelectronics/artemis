@@ -50,6 +50,10 @@ class FiniteDifferenceSolver
                        int const rhocomp,
                        amrex::Real const dt );
 
+        void EvolveM ( std::unique_ptr<amrex::MultiFab>& Mfield,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+                       amrex::Real const dt);
+
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
 
@@ -115,6 +119,12 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             std::unique_ptr<amrex::MultiFab> const& Ffield,
+            amrex::Real const dt );
+
+        template< typename T_Algo >
+        void EvolveMCartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Mfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             amrex::Real const dt );
 
         template< typename T_Algo >
