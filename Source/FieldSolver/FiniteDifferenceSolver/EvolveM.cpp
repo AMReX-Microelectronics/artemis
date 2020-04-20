@@ -15,7 +15,8 @@ using namespace amrex;
 
 // update M field over one timestep
 
-void FiniteDifferenceSolver::EvolveM ( std::unique_ptr<amrex::MultiFab>& Mfield,
+void FiniteDifferenceSolver::EvolveM ( 
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Mfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     amrex::Real const dt) {
 

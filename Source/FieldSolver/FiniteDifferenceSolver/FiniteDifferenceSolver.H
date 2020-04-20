@@ -50,8 +50,8 @@ class FiniteDifferenceSolver
                        int const rhocomp,
                        amrex::Real const dt );
 
-        void EvolveM ( std::unique_ptr<amrex::MultiFab>& Mfield,
-                       std::array<std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+        void EvolveM ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Mfield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
                        amrex::Real const dt);
 
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
