@@ -65,9 +65,9 @@ void FiniteDifferenceSolver::EvolveM (
         for (MFIter mfi(*Mxfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) /* remember to FIX */
         {
             // extract field data
-            // Array4<Real> const& Mx = Mxfield[0]->array(mfi);
-            // Array4<Real> const& My = Myfield[1]->array(mfi);
-            //Array4<Real> const& Mz = Mzfield[2]->array(mfi);
+            Array4<Real> const& Mx = Mxfield->array(mfi);
+            Array4<Real> const& My = Myfield->array(mfi);
+            Array4<Real> const& Mz = Mzfield->array(mfi);
             Array4<Real> const& Bx = Bfield[0]->array(mfi);
             Array4<Real> const& By = Bfield[1]->array(mfi);
             Array4<Real> const& Bz = Bfield[2]->array(mfi);
