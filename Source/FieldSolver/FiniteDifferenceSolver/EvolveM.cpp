@@ -52,11 +52,11 @@ void FiniteDifferenceSolver::EvolveM (
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
         amrex::Real const dt )
     {
-        static constexpr amrex::Real gamma = 1.759e-11;
+        static constexpr amrex::Real gamma = 1.759e-11; // gamma_L is gamma/(1+alpha^2), alpha^2 ~ 0
         static constexpr amrex::Real alpha = 1e-4;
         static constexpr amrex::Real Ms = 1e4; 
-        Real constexpr cons1 = -gamma;
-        Real constexpr cons2 = -cons1*alpha/Ms;
+        Real constexpr cons1 = -gamma; // should be mu0*gamma, mu0 is absorbed by B used in this case
+        Real constexpr cons2 = -cons1*alpha/Ms; // factor of the second term in scalar LLG
         
         for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) /* remember to FIX */
         {
