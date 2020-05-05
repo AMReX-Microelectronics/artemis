@@ -35,13 +35,22 @@
 
 using namespace amrex;
 
-Vector<Real> WarpX::E_external_grid(3, 0.0);
+Vector<Real> WarpX::E_external_grid(3, 0.0); // this is fill constructor
 Vector<Real> WarpX::B_external_grid(3, 0.0);
+
+// M_external_grid is 2D array.
+std::array<Vector<Real>,3> WarpX::M_external_grid;
+// = {{0.0,0.0,0.0}, {14000.0,14000.0,14000.0}, {0.0,0.0,0.0}};
+Vector<Real> WarpX::M_external_grid[0] = (3, 0.0); // in the square bracket is the nth component 
+Vector<Real> WarpX::M_external_grid[1] = (3, 14000.0); // My is initialized to be 14000 Ampere/meter
+Vector<Real> WarpX::M_external_grid[2] = (3, 0.0); 
 
 std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
+std::string WarpX::M_ext_grid_s = "constant"; // M is constant with some nonzero value assigned
 
+// no M parser yet
 // Parser for B_external on the grid
 std::string WarpX::str_Bx_ext_grid_function;
 std::string WarpX::str_By_ext_grid_function;
@@ -128,6 +137,16 @@ IntVect WarpX::Ez_nodal_flag(1,1,0);
 IntVect WarpX::Ex_nodal_flag(0,1);// x is the first dimension to AMReX
 IntVect WarpX::Ey_nodal_flag(1,1);// y is the missing dimension to 2D AMReX
 IntVect WarpX::Ez_nodal_flag(1,0);// z is the second dimension to 2D AMReX
+#endif
+
+#if (AMREX_SPACEDIM == 3)
+IntVect WarpX::Mx_nodal_flag(1,0,0);
+IntVect WarpX::My_nodal_flag(0,1,0);
+IntVect WarpX::Mz_nodal_flag(0,0,1); // M and B co-locate
+#elif (AMREX_SPACEDIM == 2)
+IntVect WarpX::Mx_nodal_flag(1,0);
+IntVect WarpX::My_nodal_flag(1,1);
+IntVect WarpX::Mz_nodal_flag(1,0);
 #endif
 
 #if (AMREX_SPACEDIM == 3)
@@ -231,6 +250,7 @@ WarpX::WarpX ()
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
+    Mfield_fp.resize(nlevs_max); // ??
 
     current_store.resize(nlevs_max);
 
@@ -656,6 +676,10 @@ WarpX::ReadParameters ()
             Ex_nodal_flag = IntVect::TheNodeVector();
             Ey_nodal_flag = IntVect::TheNodeVector();
             Ez_nodal_flag = IntVect::TheNodeVector();
+            Mx_nodal_flag = IntVect::TheNodeVector();
+            My_nodal_flag = IntVect::TheNodeVector();
+            Mz_nodal_flag = IntVect::TheNodeVector();
+            
             jx_nodal_flag = IntVect::TheNodeVector();
             jy_nodal_flag = IntVect::TheNodeVector();
             jz_nodal_flag = IntVect::TheNodeVector();
@@ -666,7 +690,7 @@ WarpX::ReadParameters ()
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1.
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD) // doesn't seem to apply to the magnetic cases
         // Force use of cell centered in r and z.
         // Also, do_nodal is forced to be true. Here, do_nodal effectively
         // means do_colocated (i.e. not staggered).
@@ -796,6 +820,7 @@ WarpX::ClearLevel (int lev)
         current_fp[lev][i].reset();
         Efield_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
+        Mfield_fp [lev][i].reset(); //??
 
         current_store[lev][i].reset();
 
@@ -890,6 +915,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_fp[lev][0].reset( new MultiFab(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE+ngextra));
     Efield_fp[lev][1].reset( new MultiFab(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE+ngextra));
     Efield_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE+ngextra));
+
+    Mfield_fp[lev][0].reset( new MultiFab(amrex::convert(ba,Mx_nodal_flag),dm,3,ngE+ngextra));
+    Mfield_fp[lev][1].reset( new MultiFab(amrex::convert(ba,My_nodal_flag),dm,3,ngE+ngextra));
+    Mfield_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Mz_nodal_flag),dm,3,ngE+ngextra)); // each Mfield[] is three components
 
     current_fp[lev][0].reset( new MultiFab(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ));
     current_fp[lev][1].reset( new MultiFab(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ));

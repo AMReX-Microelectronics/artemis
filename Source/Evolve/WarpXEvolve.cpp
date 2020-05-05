@@ -426,6 +426,7 @@ WarpX::OneStep_nosub (Real cur_time)
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         EvolveB(0.5*dt[0]); // We now have B^{n+1/2}
 
+        EvolveM(dt[0]); // we now have M^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
         EvolveE(dt[0]); // We now have E^{n+1}
 

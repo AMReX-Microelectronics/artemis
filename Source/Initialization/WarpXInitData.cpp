@@ -248,6 +248,18 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 {
 
     ParmParse pp("warpx");
+    // ParmParse stores all entries in a static table which is built the
+    // first time a ParmParse object is constructed (usually in main()).
+    // Subsequent invocations have access to this table.
+    // A ParmParse constructor has an optional "prefix" argument that will
+    // limit the searches to only those entries of the table with this prefix
+    // in name.  For example:
+    //     ParmParse pp("plot");
+    // will find only those entries with name given by "plot.<string>".
+
+    // * Functions with the string "query" in their names attempt to get a
+    //   value or an array of values from the table.  They return the value 1
+    //   (true) if they are successful and 0 (false) if not.
 
     // default values of E_external_grid and B_external_grid
     // are used to set the E and B field when "constant" or
@@ -264,6 +276,18 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    E_ext_grid_s.begin(),
                    ::tolower);
 
+    pp.query("M_ext_grid_init_style", M_ext_grid_s); // user-defined initial M
+    std::transform(M_ext_grid_s.begin(),
+                   M_ext_grid_s.end(),
+                   M_ext_grid_s.begin(),
+                   ::tolower);
+    // * Functions with the string "arr" in their names get an Array of
+    //   values from the given entry in the table.  The array argument is
+    //   resized (if necessary) to hold all the values requested.
+    //
+    // * Functions without the string "arr" in their names get single
+    //   values from the given entry in the table.
+
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (B_ext_grid_s == "constant")
@@ -273,6 +297,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // external grid must be provided in the input.
     if (E_ext_grid_s == "constant")
         pp.getarr("E_external_grid", E_external_grid);
+
+    if (M_ext_grid_s == "constant")
+        pp.getarr("M_external_grid", M_external_grid);
 
     for (int i = 0; i < 3; ++i) {
         current_fp[lev][i]->setVal(0.0);
@@ -292,6 +319,25 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               Efield_aux[lev][i]->setVal(E_external_grid[i]);
               Efield_cp[lev][i]->setVal(E_external_grid[i]);
            }
+        }
+
+        if (M_ext_grid_s == "constant" || M_ext_grid_s == "default"){
+            // this if condition finds out if the user-input is constant
+            // if not, set initial value to default, default = 0.0
+
+            // Set the value of num_comp components in the valid region of
+            // each FAB in the FabArray, starting at component comp to val.
+            // Also set the value of nghost boundary cells.
+            // template <class F=FAB, class = typename std::enable_if<IsBaseFab<F>::value>::type >
+            // void setVal (value_type val,
+            //              int        comp,
+            //              int        num_comp,
+            //              int        nghost = 0);
+
+            for (int icomp = 0; icomp < 3; ++icomp){ // icomp is the index of components at each i face
+                Mfield_fp[lev][i]->setVal(M_external_grid[icomp], icomp, 1, nghost); 
+            }
+
         }
     }
 
