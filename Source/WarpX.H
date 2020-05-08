@@ -107,7 +107,8 @@ public:
     // Initial field on the grid.
     static amrex::Vector<amrex::Real> E_external_grid;
     static amrex::Vector<amrex::Real> B_external_grid;
-    static std::array<amrex::Vector<amrex::Real>, 3 > M_external_grid; // define M initial value
+    static amrex::Vector<amrex::Real> M_external_grid;
+    //static std::array<amrex::Vector<amrex::Real>, 3 > M_external_grid; // define M initial value
    
     // Initialization Type for External E and B on grid
     static std::string B_ext_grid_s;
@@ -213,7 +214,8 @@ public:
 
     amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_Mfield_fp  (int lev, int direction) const { return Mfield_fp[lev][direction].get();} // note "direction" of M means face
+    amrex::MultiFab * get_pointer_Mfield_fp  (int lev, int direction) const { return Mfield_fp[lev][direction].get();} 
+    // note "direction" of M means face
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
@@ -282,14 +284,17 @@ public:
     void ShiftGalileanBoundary ();
     void UpdatePlasmaInjectionPosition (amrex::Real dt);
     void ResetProbDomain (const amrex::RealBox& rb);
-    void EvolveE (         amrex::Real dt);
+    void EvolveE (         amrex::Real dt); // declare this function, defined somewhere else
     void EvolveE (int lev, amrex::Real dt);
     void EvolveB (         amrex::Real dt);
     void EvolveB (int lev, amrex::Real dt);
+    void EvolveM (         amrex::Real dt);
+    void EvolveM (int lev, amrex::Real dt); // declare WarpX::EvolveM, defined in WarpXPushFieldsEM.cpp
     void EvolveF (         amrex::Real dt, DtType dt_type);
     void EvolveF (int lev, amrex::Real dt, DtType dt_type);
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
+    void EvolveM (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void FieldGather ();
 
@@ -675,7 +680,8 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_fp; // define Mfield MultiFab
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_fp; 
+    // define Mfield MultiFab; only fine patches
 
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;

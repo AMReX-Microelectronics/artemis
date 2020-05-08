@@ -37,18 +37,14 @@ using namespace amrex;
 
 Vector<Real> WarpX::E_external_grid(3, 0.0); // this is fill constructor
 Vector<Real> WarpX::B_external_grid(3, 0.0);
-
-// M_external_grid is 2D array.
-std::array<Vector<Real>,3> WarpX::M_external_grid;
-// = {{0.0,0.0,0.0}, {14000.0,14000.0,14000.0}, {0.0,0.0,0.0}};
-Vector<Real> WarpX::M_external_grid[0] = (3, 0.0); // in the square bracket is the nth component 
-Vector<Real> WarpX::M_external_grid[1] = (3, 14000.0); // My is initialized to be 14000 Ampere/meter
-Vector<Real> WarpX::M_external_grid[2] = (3, 0.0); 
+Vector<Real> WarpX::M_external_grid(3, 0.0); 
+// M could be one 9-comp vector or a vector of vectors
 
 std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
-std::string WarpX::M_ext_grid_s = "constant"; // M is constant with some nonzero value assigned
+std::string WarpX::M_ext_grid_s = "default"; 
+// "default" sets M to zero but will be overwritten by user defined input file
 
 // no M parser yet
 // Parser for B_external on the grid
