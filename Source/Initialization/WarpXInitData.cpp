@@ -334,6 +334,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             //              int        num_comp,
             //              int        nghost = 0);
 
+            int nghost = 1; 
             for (int icomp = 0; icomp < 3; ++icomp){ // icomp is the index of components at each i face
                 Mfield_fp[lev][i]->setVal(M_external_grid[icomp], icomp, 1, nghost); 
             }

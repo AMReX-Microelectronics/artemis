@@ -146,7 +146,8 @@ WarpX::EvolveM (int lev, PatchType patch_type, amrex::Real a_dt)
         // the object m_fdtd_solver_fp belongs to class FiniteDifferenceSolver,
         // which defines EvolveM. See WarpX.H Line 848
     } else {
-        m_fdtd_solver_cp[lev]->EvolveM( Mfield_cp[lev], Bfield_cp[lev], a_dt );
+        amrex::Abort("Mfield is only defined on fine patch for now");
+        // m_fdtd_solver_cp[lev]->EvolveM( Mfield_cp[lev], Bfield_cp[lev], a_dt );
     }
 
     const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
