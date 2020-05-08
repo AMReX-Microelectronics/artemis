@@ -1,0 +1,4 @@
+MPI initialized with 1 MPI processes
+OMP initialized with 8 OMP threads
+AMReX (19.11-1468-gfbdddc3616fc) initialized
+Level 0: dt = 2.223760635e-15 ; dx = 1e-06 ; dy = 1e-06 ; dz = 2e-06
