@@ -794,6 +794,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // Declare nodal flags
     IntVect Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag;
     IntVect Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag;
+    IntVect Mx_nodal_flag, My_nodal_flag, Mz_nodal_flag;
     IntVect jx_nodal_flag, jy_nodal_flag, jz_nodal_flag;
     IntVect rho_nodal_flag;
 
@@ -806,6 +807,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Bx_nodal_flag = IntVect(1,0);
     By_nodal_flag = IntVect(0,0);
     Bz_nodal_flag = IntVect(0,1);
+    Mx_nodal_flag = IntVect(1,0);
+    My_nodal_flag = IntVect(0,0);
+    Mz_nodal_flag = IntVect(0,1);
     jx_nodal_flag = IntVect(0,1);
     jy_nodal_flag = IntVect(1,1);
     jz_nodal_flag = IntVect(1,0);
@@ -816,6 +820,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Bx_nodal_flag = IntVect(1,0,0);
     By_nodal_flag = IntVect(0,1,0);
     Bz_nodal_flag = IntVect(0,0,1);
+    Mx_nodal_flag = IntVect(1,0,0);
+    My_nodal_flag = IntVect(0,1,0);
+    Mz_nodal_flag = IntVect(0,0,1);
     jx_nodal_flag = IntVect(0,1,1);
     jy_nodal_flag = IntVect(1,0,1);
     jz_nodal_flag = IntVect(1,1,0);
@@ -830,12 +837,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Bx_nodal_flag  = IntVect::TheNodeVector();
         By_nodal_flag  = IntVect::TheNodeVector();
         Bz_nodal_flag  = IntVect::TheNodeVector();
+        // M is not nodal and is unlikely to be nodal
+        // so this definition is unlikely to be used
+        Mx_nodal_flag  = IntVect::TheNodeVector();
+        My_nodal_flag  = IntVect::TheNodeVector();
+        Mz_nodal_flag  = IntVect::TheNodeVector();
         jx_nodal_flag  = IntVect::TheNodeVector();
         jy_nodal_flag  = IntVect::TheNodeVector();
         jz_nodal_flag  = IntVect::TheNodeVector();
         rho_nodal_flag = IntVect::TheNodeVector();
     }
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+// material implementation is not done with RZ or PSATD
     // Force cell-centered IndexType in r and z
     Ex_nodal_flag  = IntVect::TheCellVector();
     Ey_nodal_flag  = IntVect::TheCellVector();
