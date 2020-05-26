@@ -15,7 +15,7 @@ using namespace amrex;
 
 // update M field over one timestep
 
-void FiniteDifferenceSolver::EvolveM ( 
+void FiniteDifferenceSolver::EvolveM (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Mfield, // Mfield contains three components MultiFab
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     amrex::Real const dt) {
@@ -48,22 +48,22 @@ void FiniteDifferenceSolver::EvolveM (
 
     template<typename T_Algo>
     void FiniteDifferenceSolver::EvolveMCartesian (
-        std::array< std::unique_ptr<amrex::MultiFab>, 3 > & Mfield, 
+        std::array< std::unique_ptr<amrex::MultiFab>, 3 > & Mfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
         amrex::Real const dt )
     {
         static constexpr amrex::Real gamma = 1.759e-11; // gamma_L is gamma/(1+alpha^2), alpha^2 ~ 0
         static constexpr amrex::Real alpha = 1e-4;
-        static constexpr amrex::Real Ms = 1e4; 
+        static constexpr amrex::Real Ms = 1e4;
         Real constexpr cons1 = -gamma; // should be mu0*gamma, mu0 is absorbed by B used in this case
         Real constexpr cons2 = -cons1*alpha/Ms; // factor of the second term in scalar LLG
-        
+
         for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) /* remember to FIX */
         {
             // extract field data
             Array4<Real> const& Mx = Mfield[0]->array(mfi); // note Mx are x,y,z components at |_x faces
             Array4<Real> const& My = Mfield[1]->array(mfi);
-            Array4<Real> const& Mz = Mfield[2]->array(mfi); 
+            Array4<Real> const& Mz = Mfield[2]->array(mfi);
             Array4<Real> const& Bx = Bfield[0]->array(mfi);
             Array4<Real> const& By = Bfield[1]->array(mfi);
             Array4<Real> const& Bz = Bfield[2]->array(mfi);
@@ -92,7 +92,7 @@ void FiniteDifferenceSolver::EvolveM (
 
               // now you have access to use Mx(i,j,k,0) Mx(i,j,k,1), Mx(i,j,k,2), Bx(i,j,k), By, Bz on the RHS of these update lines below
 
-              // x component on x-faces of grid                                   
+              // x component on x-faces of grid
               Mx(i, j, k, 0) += dt * cons1 * ( Mx(i, j, k, 1) * Bz_xtemp - Mx(i, j, k, 2) * By_xtemp)
                 + dt * cons2 * ( Mx(i, j, k, 1) * (Mx(i, j, k, 0) * By_xtemp - Mx(i, j, k, 1) * Bx(i, j, k))
                 - Mx(i, j, k, 2) * ( Mx(i, j, k, 2) * Bx(i, j, k) - Mx(i, j, k, 0) * Bz_xtemp));
@@ -114,7 +114,7 @@ void FiniteDifferenceSolver::EvolveM (
               Real Bx_ytemp = 0.25*(Bx(i,j,k)+Bx(i+1,j,k)+Bx(i,j-1,k)+Bx(i+1,j-1,k));
               Real Bz_ytemp = 0.25*(Bz(i,j,k)+Bz(i,j,k+1)+Bz(i,j-1,k)+Bz(i,j-1,k+1));
 
-              // x component on y-faces of grid                                   
+              // x component on y-faces of grid
               My(i, j, k, 0) += dt * cons1 * ( My(i, j, k, 1) * Bz_ytemp - My(i, j, k, 2) * By(i, j, k))
                 + dt * cons2 * ( My(i, j, k, 1) * (My(i, j, k, 0) * By(i, j, k) - My(i, j, k, 1) * Bx(i, j, k))
                 - My(i, j, k, 2) * ( My(i, j, k, 2) * Bx_ytemp - My(i, j, k, 0) * Bz_ytemp));
@@ -127,7 +127,7 @@ void FiniteDifferenceSolver::EvolveM (
               // z component on y-faces of grid
               My(i, j, k, 2) += dt * cons1 * ( My(i, j, k, 0) * By(i, j, k) - My(i, j, k, 1) * Bx_ytemp)
                 + dt * cons2 * ( My(i, j, k, 0) * ( My(i, j, k, 2) * Bx_ytemp - My(i, j, k, 0) * Bz_ytemp)
-                - My(i, j, k, 1) * ( My(i, j, k, 1) * Bz_ytemp - My(i, j, k, 2) * By(i, j, k)));   
+                - My(i, j, k, 1) * ( My(i, j, k, 1) * Bz_ytemp - My(i, j, k, 2) * By(i, j, k)));
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -136,7 +136,7 @@ void FiniteDifferenceSolver::EvolveM (
               Real Bx_ztemp = 0.25*(Bx(i,j,k)+Bx(i+1,j,k)+Bx(i+1,j,k-1)+Bx(i,j,k-1));
               Real By_ztemp = 0.25*(By(i,j,k)+By(i,j,k-1)+By(i,j+1,k)+By(i,j+1,k-1));
 
-              // x component on z-faces of grid                                   
+              // x component on z-faces of grid
               Mz(i, j, k, 0) += dt * cons1 * ( Mz(i, j, k, 1) * Bz(i, j, k) - Mz(i, j, k, 2) * By_ztemp)
                 + dt * cons2 * ( Mz(i, j, k, 1) * (Mz(i, j, k, 0) * By_ztemp - Mz(i, j, k, 1) * Bx(i, j, k))
                 - Mz(i, j, k, 2) * ( Mz(i, j, k, 2) * Bx_ztemp - Mz(i, j, k, 0) * Bz(i, j, k)));
@@ -149,7 +149,7 @@ void FiniteDifferenceSolver::EvolveM (
               // z component on z-faces of grid
               Mz(i, j, k, 2) += dt * cons1 * ( Mz(i, j, k, 0) * By_ztemp - Mz(i, j, k, 1) * Bx_ztemp)
                 + dt * cons2 * ( Mz(i, j, k, 0) * ( Mz(i, j, k, 2) * Bx_ztemp - Mz(i, j, k, 0) * Bz(i, j, k))
-                - Mz(i, j, k, 1) * ( Mz(i, j, k, 1) * Bz(i, j, k) - My(i, j, k, 2) * By_ztemp)); 
+                - Mz(i, j, k, 1) * ( Mz(i, j, k, 1) * Bz(i, j, k) - My(i, j, k, 2) * By_ztemp));
             }
             );
         }

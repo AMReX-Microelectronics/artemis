@@ -219,7 +219,7 @@ WarpX::EvolveM (int lev, PatchType patch_type, amrex::Real a_dt)
                });
 
             }
-        } 
+        }
         */
     }
 }

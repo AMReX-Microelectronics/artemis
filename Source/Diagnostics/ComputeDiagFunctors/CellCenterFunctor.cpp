@@ -5,9 +5,10 @@ using namespace amrex;
 
 CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
                                      amrex::IntVect crse_ratio,
-                                     bool convertRZmodes2cartesian, int ncomp)
+                                     bool convertRZmodes2cartesian, int ncomp,
+                                     int scomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_mf_src(mf_src), m_lev(lev),
-      m_convertRZmodes2cartesian(convertRZmodes2cartesian)
+      m_convertRZmodes2cartesian(convertRZmodes2cartesian), m_scomp(scomp)
 {}
 
 void
@@ -35,6 +36,6 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, m_mf_src,
     // to output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
+    CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, m_scomp, nComp(), 0, m_crse_ratio);
 #endif
 }

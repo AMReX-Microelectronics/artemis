@@ -330,9 +330,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             //              int        num_comp,
             //              int        nghost = 0);
 
-            int nghost = 1; 
+            int nghost = 1;
             for (int icomp = 0; icomp < 3; ++icomp){ // icomp is the index of components at each i face
-                Mfield_fp[lev][i]->setVal(M_external_grid[icomp], icomp, 1, nghost); 
+                Mfield_fp[lev][i]->setVal(M_external_grid[icomp], icomp, 1, nghost);
             }
 
         }
@@ -452,6 +452,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Efield_cp[lev][2]->ixType().toIntVect(),
                                                     lev);
        }
+    }
+
+    if (M_ext_grid_s == "parse_m_ext_grid_function") {
+        Abort("WarpXInitData: M field initialization parser not implemented yet");
     }
 
     if (F_fp[lev]) {
