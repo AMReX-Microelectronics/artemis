@@ -1,6 +1,9 @@
 #include "MacroscopicProperties.H"
 #include <AMReX_ParmParse.H>
+<<<<<<< HEAD
 #include "WarpX.H"
+=======
+>>>>>>> 36b4ef471cbc72b739cee2027f4dc420e1d20608
 
 using namespace amrex;
 
@@ -14,6 +17,7 @@ MacroscopicProperties::ReadParameters ()
 {
     ParmParse pp("macroscopic");
     // Since macroscopic maxwell solve is turned on, user must define sigma, mu, and epsilon //
+<<<<<<< HEAD
 //    pp.get("sigma", m_sigma);
 //    pp.get("mu", m_mu);
 //    pp.get("epsilon", m_epsilon);
@@ -134,3 +138,11 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
 
 
+=======
+    pp.get("sigma", m_sigma);
+    pp.get("mu", m_mu);
+    pp.get("epsilon", m_epsilon);
+
+}
+
+>>>>>>> 36b4ef471cbc72b739cee2027f4dc420e1d20608

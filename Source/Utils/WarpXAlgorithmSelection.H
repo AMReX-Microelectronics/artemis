@@ -24,6 +24,7 @@ struct MediumForEM {
 
 /**
   * \brief struct to select algorithm for macroscopic Maxwell solver
+<<<<<<< HEAD
            LaxWendroff represents sigma*E^(n+1/2) = sigma*0.5*(E^(n) + E^(n+1))
            Backward Euler represents sigma*E^(n+1/2) = sigma*E^(n)
            default is LaxWendroff.
@@ -32,6 +33,16 @@ struct MacroscopicSolverAlgo {
     enum {
         LaxWendroff = 0,
         BackwardEuler = 1
+=======
+           LaxWendroff (semi-implicit) represents sigma*E = sigma*0.5*(E^(n) + E^(n+1))
+           Backward Euler (fully-implicit) represents sigma*E = sigma*E^(n+1)
+           default is Backward Euler as it is more robust.
+  */
+struct MacroscopicSolverAlgo {
+    enum {
+        BackwardEuler = 0,
+        LaxWendroff = 1
+>>>>>>> 36b4ef471cbc72b739cee2027f4dc420e1d20608
     };
 };
 
