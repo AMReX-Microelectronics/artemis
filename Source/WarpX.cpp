@@ -194,14 +194,18 @@ WarpX::WarpX ()
 
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
+#ifdef WARPX_MAG_LLG
     Mfield_aux.resize(nlevs_max);
+#endif
 
     F_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
+#ifdef WARPX_MAG_LLG
     Mfield_fp.resize(nlevs_max);
+#endif
 
     current_store.resize(nlevs_max);
 
@@ -210,7 +214,9 @@ WarpX::WarpX ()
     current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
     Bfield_cp.resize(nlevs_max);
+#ifdef WARPX_MAG_LLG
     Mfield_cp.resize(nlevs_max);
+#endif
 
     Efield_cax.resize(nlevs_max);
     Bfield_cax.resize(nlevs_max);
@@ -702,19 +708,25 @@ WarpX::ClearLevel (int lev)
     for (int i = 0; i < 3; ++i) {
         Efield_aux[lev][i].reset();
         Bfield_aux[lev][i].reset();
+#ifdef WARPX_MAG_LLG
         Mfield_aux[lev][i].reset();
+#endif
 
         current_fp[lev][i].reset();
         Efield_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
+#ifdef WARPX_MAG_LLG
         Mfield_fp [lev][i].reset();
+#endif
 
         current_store[lev][i].reset();
 
         current_cp[lev][i].reset();
         Efield_cp [lev][i].reset();
         Bfield_cp [lev][i].reset();
+#ifdef WARPX_MAG_LLG
         Mfield_cp [lev][i].reset();
+#endif
 
         Efield_cax[lev][i].reset();
         Bfield_cax[lev][i].reset();
@@ -874,9 +886,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_fp[lev][1].reset( new MultiFab(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE+ngextra));
     Efield_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE+ngextra));
 
+#ifdef WARPX_MAG_LLG
     Mfield_fp[lev][0].reset( new MultiFab(amrex::convert(ba,Mx_nodal_flag),dm,3,ngE+ngextra));
     Mfield_fp[lev][1].reset( new MultiFab(amrex::convert(ba,My_nodal_flag),dm,3,ngE+ngextra));
     Mfield_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Mz_nodal_flag),dm,3,ngE+ngextra)); // each Mfield[] is three components
+#endif
 
     current_fp[lev][0].reset( new MultiFab(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ));
     current_fp[lev][1].reset( new MultiFab(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ));
@@ -954,7 +968,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         for (int idir = 0; idir < 3; ++idir) {
             Efield_aux[lev][idir].reset(new MultiFab(*Efield_fp[lev][idir], amrex::make_alias, 0, ncomps));
             Bfield_aux[lev][idir].reset(new MultiFab(*Bfield_fp[lev][idir], amrex::make_alias, 0, ncomps));
+#ifdef WARPX_MAG_LLG
             Mfield_aux[lev][idir].reset(new MultiFab(*Mfield_fp[lev][idir], amrex::make_alias, 0, 3     ));
+#endif
         }
     }
     else
@@ -967,9 +983,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][1].reset( new MultiFab(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE));
         Efield_aux[lev][2].reset( new MultiFab(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE));
 
+#ifdef WARPX_MAG_LLG
         Mfield_aux[lev][0].reset( new MultiFab(amrex::convert(ba,Mx_nodal_flag),dm,3     ,ngE));
         Mfield_aux[lev][1].reset( new MultiFab(amrex::convert(ba,My_nodal_flag),dm,3     ,ngE));
         Mfield_aux[lev][2].reset( new MultiFab(amrex::convert(ba,Mz_nodal_flag),dm,3     ,ngE));
+#endif
     }
 
     //
@@ -991,10 +1009,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_cp[lev][1].reset( new MultiFab(amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngE));
         Efield_cp[lev][2].reset( new MultiFab(amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngE));
 
-        // Create the MultiFabs for M
+#ifdef WARPX_MAG_LLG
+    // Create the MultiFabs for M
         Mfield_cp[lev][0].reset( new MultiFab(amrex::convert(cba,Mx_nodal_flag),dm,3     ,ngE));
         Mfield_cp[lev][1].reset( new MultiFab(amrex::convert(cba,My_nodal_flag),dm,3     ,ngE));
         Mfield_cp[lev][2].reset( new MultiFab(amrex::convert(cba,Mz_nodal_flag),dm,3     ,ngE));
+#endif
 
         // Create the MultiFabs for the current
         current_cp[lev][0].reset( new MultiFab(amrex::convert(cba,jx_nodal_flag),dm,ncomps,ngJ));

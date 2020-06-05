@@ -117,6 +117,7 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */)
 }
 #endif
 
+#ifdef WARPX_MAG_LLG
 // define WarpX::EvolveM
 void
 WarpX::EvolveM (amrex::Real a_dt)
@@ -223,6 +224,7 @@ WarpX::EvolveM (int lev, PatchType patch_type, amrex::Real a_dt)
         */
     }
 }
+#endif
 
 void
 WarpX::EvolveB (amrex::Real a_dt)

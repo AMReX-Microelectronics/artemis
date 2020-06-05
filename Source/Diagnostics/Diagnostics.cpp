@@ -439,6 +439,7 @@ Diagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Bz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio);
+#ifdef WARPX_MAG_LLG
         } else if ( m_varnames[comp] == "Mx_xface" ){
             // For the magnetization variables (e.g., Mx_xface) we have to pass in an additional integer stating which variable from the Mfield MultiFab
             // will get averaged/interpolated to the ce1ll-centered plotfile MultiFab.  This is the final integer in the calling sequence.
@@ -461,6 +462,7 @@ Diagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Mfield_aux(lev, 1), lev, m_crse_ratio, true, 1, 2);
         } else if ( m_varnames[comp] == "Mz_zface" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Mfield_aux(lev, 2), lev, m_crse_ratio, true, 1, 2);
+#endif
         } else if ( m_varnames[comp] == "jx" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "jy" ){

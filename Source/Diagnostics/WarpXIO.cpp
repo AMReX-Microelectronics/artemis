@@ -162,19 +162,24 @@ WarpX::InitFromCheckpoint ()
             current_fp[lev][i]->setVal(0.0);
             Efield_fp[lev][i]->setVal(0.0);
             Bfield_fp[lev][i]->setVal(0.0);
+#ifdef WARPX_MAG_LLG
             Mfield_fp[lev][i]->setVal(0.0);
+#endif
         }
 
         if (lev > 0) {
             for (int i = 0; i < 3; ++i) {
                 Efield_aux[lev][i]->setVal(0.0);
                 Bfield_aux[lev][i]->setVal(0.0);
+#ifdef WARPX_MAG_LLG
                 Mfield_aux[lev][i]->setVal(0.0);
-
+#endif
                 current_cp[lev][i]->setVal(0.0);
                 Efield_cp[lev][i]->setVal(0.0);
                 Bfield_cp[lev][i]->setVal(0.0);
+#ifdef WARPX_MAG_LLG
                 Mfield_cp[lev][i]->setVal(0.0);
+#endif
             }
         }
 
@@ -192,12 +197,14 @@ WarpX::InitFromCheckpoint ()
         VisMF::Read(*Bfield_fp[lev][2],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_fp"));
 
+#ifdef WARPX_MAG_LLG
         VisMF::Read(*Mfield_fp[lev][0],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mx_fp"));
         VisMF::Read(*Mfield_fp[lev][1],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "My_fp"));
         VisMF::Read(*Mfield_fp[lev][2],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mz_fp"));
+#endif
 
         if (is_synchronized) {
             VisMF::Read(*current_fp[lev][0],
@@ -224,12 +231,14 @@ WarpX::InitFromCheckpoint ()
             VisMF::Read(*Bfield_cp[lev][2],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_cp"));
 
+#ifdef WARPX_MAG_LLG
             VisMF::Read(*Mfield_cp[lev][0],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mx_cp"));
             VisMF::Read(*Mfield_cp[lev][1],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "My_cp"));
             VisMF::Read(*Mfield_cp[lev][2],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mz_cp"));
+#endif
 
             if (is_synchronized) {
                 VisMF::Read(*current_cp[lev][0],

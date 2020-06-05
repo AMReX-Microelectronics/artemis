@@ -298,6 +298,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
            }
         }
 
+#ifdef WARPX_MAG_LLG
         if (M_ext_grid_s == "constant" || M_ext_grid_s == "default"){
             // this if condition finds out if the user-input is constant
             // if not, set initial value to default, default = 0.0
@@ -315,9 +316,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             for (int icomp = 0; icomp < 3; ++icomp){ // icomp is the index of components at each i face
                 Mfield_fp[lev][i]->setVal(M_external_grid[icomp], icomp, 1, nghost);
             }
-
         }
-    }
+#endif
+
+   }
 
     // if the input string for the B-field is "parse_b_ext_grid_function",
     // then the analytical expression or function must be

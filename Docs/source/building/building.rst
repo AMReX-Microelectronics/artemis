@@ -51,6 +51,7 @@ options are:
     * ``COMP=gcc`` or ``intel``: Compiler.
     * ``USE_MPI=TRUE`` or ``FALSE``: Whether to compile with MPI support.
     * ``USE_OMP=TRUE`` or ``FALSE``: Whether to compile with OpenMP support.
+    * ``USE_LLG=TRUE`` or ``FALSE``: Whether to compile with Landau-Lifshitz-Gilbert (LLG) model to compute magnetization.
 
 For a description of these different options, see the `corresponding page <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html>`__ in the AMReX documentation.
 
