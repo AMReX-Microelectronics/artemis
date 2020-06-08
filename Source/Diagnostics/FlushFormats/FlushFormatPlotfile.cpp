@@ -482,6 +482,12 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getBfield_fp(lev, 0), dm, raw_pltname, level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getBfield_fp(lev, 1), dm, raw_pltname, level_prefix, "By_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getBfield_fp(lev, 2), dm, raw_pltname, level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
+#ifdef WARPX_MAG_LLG
+        WriteRawMF( warpx.getMfield_fp(lev, 0), dm, raw_pltname, level_prefix, "M_xface_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getMfield_fp(lev, 1), dm, raw_pltname, level_prefix, "M_yface_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getMfield_fp(lev, 2), dm, raw_pltname, level_prefix, "M_zface_fp", lev, plot_raw_fields_guards);
+#endif
+
         if (plot_raw_F) WriteRawMF( warpx.getF_fp(lev), dm, raw_pltname, level_prefix, "F_fp", lev, plot_raw_fields_guards);
         if (plot_raw_rho) {
             // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization

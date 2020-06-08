@@ -1205,6 +1205,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho``
     ``F`` ``part_per_grid`` ``part_per_proc`` ``divE`` ``divB``.
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
+    If compiled with ``USE_LLG=TRUE``, additional values include
+    ``Mx_xface`` ``Mx_yface`` ``Mx_zface``
+    ``My_xface`` ``My_yface`` ``My_zface``
+    ``Mz_xface`` ``Mz_yface`` ``Mz_zface``
+    since all components of the M-field are stored at each face.  The
+    cell-centered M-field output is the average of the two faces.
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the nodes.
@@ -1213,6 +1219,9 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Only works with ``<diag_name>.format = plotfile``.
     See `this section <https://yt-project.org/doc/examining/loading_data.html#viewing-raw-fields-in-warpx>`_
     in the yt documentation for more details on how to view raw fields.
+    If compiled with ``USE_LLG=TRUE``, ``M_xface`` ``M_yface`` and ``M_zface``
+    are also output, where each of these are face-centered and contain all three
+    components of the M-field.
 
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
     Only used when ``warpx.plot_raw_fields`` is ``1``.
