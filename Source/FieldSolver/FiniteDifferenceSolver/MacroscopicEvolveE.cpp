@@ -50,7 +50,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo>
                        ( Efield, Bfield, Jfield, dt, macroscopic_properties );
 
-        } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
+        } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, BackwardEulerAlgo>
                        ( Efield, Bfield, Jfield, dt, macroscopic_properties );
