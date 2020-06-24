@@ -100,11 +100,13 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     auto& warpx = WarpX::GetInstance();
     const auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    IntVect iv = macro_mf->ixType().toIntVect();     
+    // IntVect to include staggering of MultiFab and account for guard cells
+    IntVect iv_grownBox = iv + amrex::IntVect( macro_mf->nGrow() );
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
-        IntVect iv = macro_mf->ixType().toIntVect();
-        // Initialize ghost cells in addition to valid cells
-        const Box& tb = convert(mfi.growntilebox(), iv);
+        // Initialize ghost cells in addition to valid cells vy using iv_grownBox
+        const Box& tb = mfi.growntilebox(iv_grownBox);
 
         auto const& macro_fab =  macro_mf->array(mfi);
 
