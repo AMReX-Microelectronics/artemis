@@ -568,6 +568,11 @@ WarpX::ReadParameters ()
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+
+#if defined WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
+                   "The problem must not be periodic in the radial direction");
+#endif
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         // Force do_nodal=true (that is, not staggered) and
         // use same shape factors in all directions, for gathering
@@ -1160,6 +1165,15 @@ WarpX::UpperCorner(const Box& bx, int lev)
 #endif
 }
 
+std::array<Real,3>
+WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev)
+{
+    amrex::Real cur_time = gett_new(lev);
+    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    return WarpX::LowerCorner(bx, galilean_shift, lev);
+}
+
 IntVect
 WarpX::RefRatio (int lev)
 {
@@ -1418,14 +1432,4 @@ WarpX::PicsarVersion ()
 #else
     return std::string("Unknown");
 #endif
-}
-
-void
-WarpX::FieldGather ()
-{
-    for (int lev = 0; lev <= finest_level; ++lev) {
-        mypc->FieldGather(lev,
-                          *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                          *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
-    }
 }

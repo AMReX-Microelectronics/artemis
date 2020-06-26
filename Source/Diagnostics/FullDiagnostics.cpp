@@ -401,7 +401,4 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     warpx.FillBoundaryAux(warpx.getngUpdateAux());
 #endif
     warpx.UpdateAuxilaryData();
-
-    warpx.FieldGather();
-
 }
