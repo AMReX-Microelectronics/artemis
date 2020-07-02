@@ -103,3 +103,4 @@ Building for specific platforms
 
    cori
    summit
+   juwels
