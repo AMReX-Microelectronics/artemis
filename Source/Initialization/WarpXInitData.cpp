@@ -252,12 +252,19 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    E_ext_grid_s.end(),
                    E_ext_grid_s.begin(),
                    ::tolower);
-
+#ifdef WARPX_MAG_LLG
     pp.query("M_ext_grid_init_style", M_ext_grid_s); // user-defined initial M
     std::transform(M_ext_grid_s.begin(),
                    M_ext_grid_s.end(),
                    M_ext_grid_s.begin(),
                    ::tolower);
+
+    pp.query("H_bias_ext_grid_init_style", H_bias_ext_grid_s); // user-defined initial M
+    std::transform(H_bias_ext_grid_s.begin(),
+                   H_bias_ext_grid_s.end(),
+                   H_bias_ext_grid_s.begin(),
+                   ::tolower);
+#endif
     // * Functions with the string "arr" in their names get an Array of
     //   values from the given entry in the table.  The array argument is
     //   resized (if necessary) to hold all the values requested.
@@ -275,8 +282,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (E_ext_grid_s == "constant")
         pp.getarr("E_external_grid", E_external_grid);
 
+#ifdef WARPX_MAG_LLG
     if (M_ext_grid_s == "constant")
         pp.getarr("M_external_grid", M_external_grid);
+
+    if (H_bias_ext_grid_s == "constant")
+        pp.getarr("H_bias_external_grid", H_bias_external_grid);
+#endif
 
     for (int i = 0; i < 3; ++i) {
         current_fp[lev][i]->setVal(0.0);
@@ -317,6 +329,15 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 Mfield_fp[lev][i]->setVal(M_external_grid[icomp], icomp, 1, nghost);
             }
         }
+
+        if (H_bias_ext_grid_s == "constant" || H_bias_ext_grid_s == "default") {
+           H_biasfield_fp[lev][i]->setVal(H_bias_external_grid[i]);
+           if (lev > 0) {
+              H_biasfield_aux[lev][i]->setVal(H_bias_external_grid[i]);
+              H_biasfield_cp[lev][i]->setVal(H_bias_external_grid[i]);
+           }
+        }
+
 #endif
 
    }
@@ -420,10 +441,61 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
 #ifdef WARPX_MAG_LLG
+    // if the input string for the Hbias-field is "parse_h_bias_ext_grid_function",
+    // then the analytical expression or function must be
+    // provided in the input file.
+    if (H_bias_ext_grid_s == "parse_h_bias_ext_grid_function") {
+
+#ifdef WARPX_DIM_RZ
+       amrex::Abort("H bias parser for external fields does not work with RZ -- TO DO");
+#endif
+       Store_parserString(pp, "Hx_bias_external_grid_function(x,y,z)",
+                                                    str_Hx_bias_ext_grid_function);
+       Store_parserString(pp, "Hy_bias_external_grid_function(x,y,z)",
+                                                    str_Hy_bias_ext_grid_function);
+       Store_parserString(pp, "Hz_bias_external_grid_function(x,y,z)",
+                                                    str_Hz_bias_ext_grid_function);
+
+       Hx_biasfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Hx_bias_ext_grid_function,{"x","y","z"})));
+       Hy_biasfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Hy_bias_ext_grid_function,{"x","y","z"})));
+       Hz_biasfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Hz_bias_ext_grid_function,{"x","y","z"})));
+
+       // Initialize Efield_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(H_biasfield_fp[lev][0].get(),
+                                                 H_biasfield_fp[lev][1].get(),
+                                                 H_biasfield_fp[lev][2].get(),
+                                                 Hx_biasfield_parser.get(),
+                                                 Hy_biasfield_parser.get(),
+                                                 Hz_biasfield_parser.get(),
+                                                 lev);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(H_biasfield_aux[lev][0].get(),
+                                                    H_biasfield_aux[lev][1].get(),
+                                                    H_biasfield_aux[lev][2].get(),
+                                                    Hx_biasfield_parser.get(),
+                                                    Hy_biasfield_parser.get(),
+                                                    Hz_biasfield_parser.get(),
+                                                    lev);
+
+          InitializeExternalFieldsOnGridUsingParser(H_biasfield_cp[lev][0].get(),
+                                                    H_biasfield_cp[lev][1].get(),
+                                                    H_biasfield_cp[lev][2].get(),
+                                                    Hx_biasfield_parser.get(),
+                                                    Hy_biasfield_parser.get(),
+                                                    Hz_biasfield_parser.get(),
+                                                    lev);
+       }
+    }
+
+
     if (M_ext_grid_s == "parse_m_ext_grid_function") {
         Abort("WarpXInitData: M field initialization parser not implemented yet");
     }
-#endif
+
+#endif //closes #ifdef WARPX_MAG_LLG
 
     if (F_fp[lev]) {
         F_fp[lev]->setVal(0.0);
@@ -454,14 +526,15 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
        ParserWrapper<3> *zfield_parser, const int lev)
 {
-
     const auto dx_lev = geom[lev].CellSizeArray();
     const RealBox& real_box = geom[lev].ProbDomain();
     amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
     amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
+
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
+
        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
@@ -469,7 +542,6 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        auto const& mfxfab = mfx->array(mfi);
        auto const& mfyfab = mfy->array(mfi);
        auto const& mfzfab = mfz->array(mfi);
-
        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift required in the x-, y-, or z- position
@@ -488,7 +560,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #endif
                 // Initialize the x-component of the field.
                 mfxfab(i,j,k) = (*xfield_parser)(x,y,z);
-            },
+         },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;

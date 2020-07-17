@@ -2,9 +2,13 @@ CEXE_sources += FiniteDifferenceSolver.cpp
 CEXE_sources += EvolveB.cpp
 CEXE_sources += EvolveE.cpp
 CEXE_sources += EvolveF.cpp
-CEXE_sources += EvolveM.cpp
 CEXE_sources += ComputeDivE.cpp
 CEXE_sources += MacroscopicEvolveE.cpp
+
+#ifdef WARPX_MAG_LLG
+CEXE_sources += MacroscopicEvolveM.cpp
+#endif
+
 CEXE_sources += EvolveBPML.cpp
 CEXE_sources += EvolveEPML.cpp
 CEXE_sources += EvolveFPML.cpp

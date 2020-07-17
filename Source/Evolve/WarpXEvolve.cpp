@@ -355,15 +355,18 @@ WarpX::OneStep_nosub (Real cur_time)
 #else
         EvolveF(0.5*dt[0], DtType::FirstHalf);
         FillBoundaryF(guard_cells.ng_FieldSolverF);
-#ifdef WARPX_MAG_LLG
-        EvolveM(0.5*dt[0]); // we now have M^{n+1/2}
-#endif
+
         EvolveB(0.5*dt[0]); // We now have B^{n+1/2}
+        FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
 
 #ifdef WARPX_MAG_LLG
-        FillBoundaryM(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
+        if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
+            MacroscopicEvolveM(0.5*dt[0]); // we now have M^{n+1/2}
+            FillBoundaryM(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
+        } else {
+            amrex::Abort("unsupported em_solver_medium for M field");
+        }
 #endif
-        FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
             // vacuum medium
             EvolveE(dt[0]); // We now have E^{n+1}
@@ -376,10 +379,9 @@ WarpX::OneStep_nosub (Real cur_time)
 
         FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
         EvolveF(0.5*dt[0], DtType::SecondHalf);
-#ifdef WARPX_MAG_LLG
-        EvolveM(0.5*dt[0]); // we now have M^{n+1}
-#endif
+
         EvolveB(0.5*dt[0]); // We now have B^{n+1}
+
         //why not implementing FillBoundary here? possibly: implemented in if{safe_guard_cells} Line 452
         if (do_pml) {
             FillBoundaryF(guard_cells.ng_alloc_F);
@@ -391,12 +393,20 @@ WarpX::OneStep_nosub (Real cur_time)
         // E and B are up-to-date in the domain, but all guard cells are
         // outdated.
         if ( safe_guard_cells ){
-#ifdef WARPX_MAG_LLG
-            FillBoundaryM(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-#endif
             FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
         }
-#endif
+#ifdef WARPX_MAG_LLG
+        if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+            MacroscopicEvolveM(0.5*dt[0]); // we now have M^{n+1}
+            if ( safe_guard_cells ){
+                FillBoundaryM(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+            }
+        }
+        else {
+                amrex::Abort("unsupported em_solver_medium for M field");
+        }
+#endif //
+#endif // end for PSATD
     }
 }
 

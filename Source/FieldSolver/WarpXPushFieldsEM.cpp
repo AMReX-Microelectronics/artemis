@@ -117,115 +117,6 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */)
 }
 #endif
 
-#ifdef WARPX_MAG_LLG
-// define WarpX::EvolveM
-void
-WarpX::EvolveM (amrex::Real a_dt)
-{
-    for (int lev = 0; lev <= finest_level; ++lev) {
-        EvolveM(lev, a_dt);
-    }
-}
-
-void
-WarpX::EvolveM (int lev, amrex::Real a_dt)
-{
-    WARPX_PROFILE("WarpX::EvolveM()");
-    EvolveM(lev, PatchType::fine, a_dt);
-    if (lev > 0)
-    {
-        EvolveM(lev, PatchType::coarse, a_dt);
-    }
-}
-
-void
-WarpX::EvolveM (int lev, PatchType patch_type, amrex::Real a_dt)
-{
-
-    if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveM( Mfield_fp[lev], Bfield_fp[lev], a_dt );
-        // the object m_fdtd_solver_fp belongs to class FiniteDifferenceSolver,
-        // which defines EvolveM. See WarpX.H Line 848
-    } else {
-        amrex::Abort("Mfield is only defined on fine patch for now");
-        // m_fdtd_solver_cp[lev]->EvolveM( Mfield_cp[lev], Bfield_cp[lev], a_dt );
-    }
-
-    const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
-    const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
-    const Real dtsdx = a_dt/dx[0], dtsdy = a_dt/dx[1], dtsdz = a_dt/dx[2];
-
-    if (do_pml && pml[lev]->ok())
-    {
-        amrex::Abort("EvolveM is implemented without PML yet");
-        /*
-        const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
-        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*pml_B[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
-        {
-            const Box& tbx  = mfi.tilebox(Bx_nodal_flag);
-            const Box& tby  = mfi.tilebox(By_nodal_flag);
-            const Box& tbz  = mfi.tilebox(Bz_nodal_flag);
-            auto const& pml_Bxfab = pml_B[0]->array(mfi);
-            auto const& pml_Byfab = pml_B[1]->array(mfi);
-            auto const& pml_Bzfab = pml_B[2]->array(mfi);
-            auto const& pml_Exfab = pml_E[0]->array(mfi);
-            auto const& pml_Eyfab = pml_E[1]->array(mfi);
-            auto const& pml_Ezfab = pml_E[2]->array(mfi);
-            if (WarpX::maxwell_fdtd_solver_id == 0) {
-               amrex::ParallelFor(tbx, tby, tbz,
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bx_yee(i,j,k,pml_Bxfab,pml_Eyfab,pml_Ezfab,
-                                        dtsdy,dtsdz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_by_yee(i,j,k,pml_Byfab,pml_Exfab,pml_Ezfab,
-                                         dtsdx,dtsdz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bz_yee(i,j,k,pml_Bzfab,pml_Exfab,pml_Eyfab,
-                                        dtsdx,dtsdy);
-               });
-            }  else if (WarpX::maxwell_fdtd_solver_id == 1) {
-               Real betaxy, betaxz, betayx, betayz, betazx, betazy;
-               Real gammax, gammay, gammaz;
-               Real alphax, alphay, alphaz;
-               warpx_calculate_ckc_coefficients(dtsdx, dtsdy, dtsdz,
-                                                betaxy, betaxz, betayx, betayz,
-                                                betazx, betazy, gammax, gammay,
-                                                gammaz, alphax, alphay, alphaz);
-
-               amrex::ParallelFor(tbx, tby, tbz,
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bx_ckc(i,j,k,pml_Bxfab,pml_Eyfab,pml_Ezfab,
-                                         betaxy, betaxz, betayx, betayz,
-                                         betazx, betazy, gammax, gammay,
-                                         gammaz, alphax, alphay, alphaz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_by_ckc(i,j,k,pml_Byfab,pml_Exfab,pml_Ezfab,
-                                         betaxy, betaxz, betayx, betayz,
-                                         betazx, betazy, gammax, gammay,
-                                         gammaz, alphax, alphay, alphaz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bz_ckc(i,j,k,pml_Bzfab,pml_Exfab,pml_Eyfab,
-                                         betaxy, betaxz, betayx, betayz,
-                                         betazx, betazy, gammax, gammay,
-                                         gammaz, alphax, alphay, alphaz);
-               });
-
-            }
-        }
-        */
-    }
-}
-#endif
-
 void
 WarpX::EvolveB (amrex::Real a_dt)
 {
@@ -403,6 +294,41 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         amrex::Abort("Macroscopic EvolveE is not implemented for pml boundary condition, yet");
     }
 }
+
+#ifdef WARPX_MAG_LLG
+// define WarpX::MacroscopicEvolveM
+void
+WarpX::MacroscopicEvolveM (amrex::Real a_dt)
+{
+    for (int lev = 0; lev <= finest_level; ++lev ) {
+        MacroscopicEvolveM(lev, a_dt);
+    }
+}
+
+void
+WarpX::MacroscopicEvolveM (int lev, amrex::Real a_dt) {
+
+    WARPX_PROFILE("WarpX::MacroscopicEvolveM()");
+    MacroscopicEvolveM(lev, PatchType::fine, a_dt);
+    if (lev > 0) {
+        amrex::Abort("Macroscopic EvolveM is not implemented for lev>0, yet.");
+    }
+}
+
+void
+WarpX::MacroscopicEvolveM (int lev, PatchType patch_type, amrex::Real a_dt) {
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->MacroscopicEvolveM( Mfield_fp[lev], H_biasfield_fp[lev], Bfield_fp[lev],
+                                             a_dt, m_macroscopic_properties);
+    }
+    else {
+        amrex::Abort("Macroscopic EvolveM is not implemented for lev > 0 yet");
+    }
+    if (do_pml) {
+        amrex::Abort("Macroscopic EvolveM is not implemented for pml boundary condition yet");
+    }
+}
+#endif
 
 #ifdef WARPX_DIM_RZ
 // This scales the current by the inverse volume and wraps around the depostion at negative radius.

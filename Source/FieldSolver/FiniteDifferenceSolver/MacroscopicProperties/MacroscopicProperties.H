@@ -12,7 +12,7 @@
 
 #include "Parser/WarpXParser.H"
 #include "Parser/WarpXParserWrapper.H"
-
+#include "Utils/WarpXConst.H"
 
 /**
  * \brief This class contains the macroscopic parameters of the medium needed to
@@ -41,6 +41,88 @@ public:
 
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   ParserWrapper<3> *macro_parser, int lev);
+
+#ifdef WARPX_MAG_LLG
+     amrex::MultiFab& getmag_Ms_mf () {return (*m_mag_Ms_mf);}
+     amrex::MultiFab& getmag_alpha_mf () {return (*m_mag_alpha_mf);}
+     amrex::MultiFab& getmag_gamma_mf () {return (*m_mag_gamma_mf);}
+
+     // interpolate the magnetic properties to B locations
+     // magnetic properties are cell nodal
+     // B locations are face centered
+     // iv is an IntVect with a 1 in the face direction of interest, and 0 in the others
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real macro_avg_to_face (int i, int j, int k, amrex::IntVect iv, amrex::Array4<amrex::Real> const& macro_mag_prop){
+         using namespace amrex;
+         return ( 0.125_rt * ( macro_mag_prop(i        ,j        ,k        )
+                             + macro_mag_prop(i-iv[0]+1,j        ,k        )
+                             + macro_mag_prop(i        ,j-iv[1]+1,k        )
+                             + macro_mag_prop(i        ,j        ,k-iv[2]+1)
+                             + macro_mag_prop(i        ,j-iv[1]+1,k-iv[2]+1)
+                             + macro_mag_prop(i-iv[0]+1,j        ,k-iv[2]+1)
+                             + macro_mag_prop(i-iv[0]+1,j-iv[1]+1,k        )
+                             + macro_mag_prop(i-iv[0]+1,j-iv[1]+1,k-iv[2]+1)
+         ));
+     };
+
+     /** \brief
+         * This GPU kernel averages a face-centered field onto a (possibly different nodality) face.
+         * i,j,k are the spatial indices, n is the component index
+         * iv_in is the nodality of the input field, iv_out is the nodality of the output.
+         * Thus, if iv_in is the same as iv_out the value on the face is returned.
+         * Some other examples when iv_in is different from iv_out:
+
+         * Hy (0,1,0) components (in) to Hx face (1,0,0) (out)
+         * return 0.25*(Hy(i,j,k)+Hy(i,j+1,k)+Hy(i-1,j,k)+Hy(i-1,j+1,k));
+         *
+         * \param[in] Fieldcomp  floating point data to be interpolated from one staggering location to another.
+         * \param[in] iv_in           nodality of the input field, Fieldcomp
+         * \param[in] iv_out         nodality of the output
+         * \param[in] i                index along x of the Array4 Fieldcomp
+         * \param[in] j                index along y of the Array4 Fieldcomp
+         * \param[in] k                index along z of the Array4 Fieldcomp
+     */
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real face_avg_to_face (int i, int j, int k, int n,
+                                           amrex::IntVect iv_in, amrex::IntVect iv_out,
+                                           amrex::Array4<amrex::Real> const& Fieldcomp) {
+         using namespace amrex;
+         return ( 0.125_rt * ( Fieldcomp(i                   , j                   , k                   , n)
+                             + Fieldcomp(i+iv_in[0]-iv_out[0], j                   , k                   , n)
+                             + Fieldcomp(i                   , j+iv_in[1]-iv_out[1], k                   , n)
+                             + Fieldcomp(i                   , j                   , k+iv_in[2]-iv_out[2], n)
+                             + Fieldcomp(i+iv_in[0]-iv_out[0], j+iv_in[1]-iv_out[1], k                   , n)
+                             + Fieldcomp(i+iv_in[0]-iv_out[0], j                   , k+iv_in[2]-iv_out[2], n)
+                             + Fieldcomp(i                   , j+iv_in[1]-iv_out[1], k+iv_in[2]-iv_out[2], n)
+                             + Fieldcomp(i+iv_in[0]-iv_out[0], j+iv_in[1]-iv_out[1], k+iv_in[2]-iv_out[2], n)
+                             ));
+     };
+
+     /** \brief
+     * Calculate local H_maxwell = B / mu_o - M
+     * \param[out] H_Maxwell local H_Maxwell field calculated using the magnetic constitutive relation
+     * H_Maxwell is a scalar
+     * \param[in] i x-index of the location under consideration
+     * \param[in] j y-index of the location under consideration
+     * \param[in] k z-index of the location under consideration
+     * \param[in] n x, y, and z component of the H field we are interested in
+     * \param[in] iv_in nodality of the input B field, Bcomp
+     * \param[in] iv_out nodality of the output H_Maxwell
+     * Note, we call face_avg_to_face on the B field with n=0 (B has only 1 component)
+     * while Mcomp has n=0,1,2, indicating x,y,z components
+     * note Mcomp has the same nodality as the final output H_maxwell
+     */
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real getH_Maxwell (int i, int j, int k, int n,
+                                   amrex::IntVect iv_in, amrex::IntVect iv_out,
+                                   amrex::Array4<amrex::Real> const& Bcomp, amrex::Array4<amrex::Real> const& Mcomp) {
+         using namespace amrex;
+         amrex::Real H_Maxwell = face_avg_to_face(i, j, k, 0, iv_in, iv_out, Bcomp)/PhysConst::mu0
+                                 - Mcomp(i, j, k, n); //magnetic constitutive relation
+         return H_Maxwell;
+     };
+#endif //closes ifdef MAG_LLG
+
 private:
      /** Conductivity, sigma, of the medium */
      amrex::Real m_sigma;
@@ -48,25 +130,63 @@ private:
      amrex::Real m_epsilon;
      /** Permeability, mu, of the medium */
      amrex::Real m_mu;
+#ifdef WARPX_MAG_LLG // preferred to use this tag multiple times for different variable types to keep formatting consistent
+     /** Saturation magnetization, only applies for magnetic materials */
+     amrex::Real m_mag_Ms;
+     /** Gilbert damping, only applies for magnetic materials */
+     amrex::Real m_mag_alpha;
+     /** gyromagnetic ratio, should be a negative value, only applies for magnetic materials */
+     amrex::Real m_mag_gamma;
+#endif
+
      /** Multifab for m_sigma */
      std::unique_ptr<amrex::MultiFab> m_sigma_mf;
      /** Multifab for m_epsilon */
      std::unique_ptr<amrex::MultiFab> m_eps_mf;
      /** Multifab for m_mu */
      std::unique_ptr<amrex::MultiFab> m_mu_mf;
+#ifdef WARPX_MAG_LLG
+     /** Multifab storing spatially varying saturation magnetization */
+     std::unique_ptr<amrex::MultiFab> m_mag_Ms_mf;
+     /** Multifab storing spatially varying Gilbert damping */
+     std::unique_ptr<amrex::MultiFab> m_mag_alpha_mf;
+     /** Multifab storing spatially varying gyromagnetic ratio */
+     std::unique_ptr<amrex::MultiFab> m_mag_gamma_mf;
+#endif
+
      std::string m_sigma_s;
      std::string m_epsilon_s;
      std::string m_mu_s;
-
+#ifdef WARPX_MAG_LLG
+     std::string m_mag_Ms_s;
+     std::string m_mag_alpha_s;
+     std::string m_mag_gamma_s;
+#endif
 
      /** string for storing parser function */
      std::string m_str_sigma_function;
      std::string m_str_epsilon_function;
      std::string m_str_mu_function;
+#ifdef WARPX_MAG_LLG
+     std::string m_str_mag_Ms_function;
+     std::string m_str_mag_alpha_function;
+     std::string m_str_mag_gamma_function;
+#endif
+
      /** Parser Wrappers */
+     // The ParserWrapper struct is constructed to safely use the GpuParser class
+     // that can essentially be though of as a raw pointer. The GpuParser does
+     // not have an explicit destructor and the AddPlasma subroutines handle the GpuParser
+     // in a safe way. The ParserWrapper struct is used to avoid memory leak
+     // in the EB parser functions.
      std::unique_ptr<ParserWrapper<3> > m_sigma_parser;
      std::unique_ptr<ParserWrapper<3> > m_epsilon_parser;
      std::unique_ptr<ParserWrapper<3> > m_mu_parser;
+#ifdef WARPX_MAG_LLG
+     std::unique_ptr<ParserWrapper<3> > m_mag_Ms_parser;
+     std::unique_ptr<ParserWrapper<3> > m_mag_alpha_parser;
+     std::unique_ptr<ParserWrapper<3> > m_mag_gamma_parser;
+#endif
 };
 
 struct LaxWendroffAlgo {

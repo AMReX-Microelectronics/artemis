@@ -620,6 +620,11 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
     Bfield_aux[lev][0]->FillBoundary(ng, period);
     Bfield_aux[lev][1]->FillBoundary(ng, period);
     Bfield_aux[lev][2]->FillBoundary(ng, period);
+#ifdef WARPX_MAG_LLG
+    Mfield_aux[lev][0]->FillBoundary(ng, period);
+    Mfield_aux[lev][1]->FillBoundary(ng, period);
+    Mfield_aux[lev][2]->FillBoundary(ng, period);
+#endif
 }
 
 void

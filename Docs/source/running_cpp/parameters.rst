@@ -1741,3 +1741,106 @@ This is essentially the python slicing syntax except that the stop is inclusive
 Note that if a given period is zero or negative, the correspoding slice is disregarded.
 For example, ``something_int = -1`` deactivates ``something`` and
 ``something_int = ::-1,100:1000:25`` is equivalent to ``something_int = 100:1000:25``.
+
+Solving magnetization using LLG equation
+----------------------------------------
+
+* ``warpx.M_ext_grid_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the
+    magnetization of the material. The "default" style initializes the
+    magnetization (Mx,My,Mz) to (0.0, 0.0, 0.0).
+    The string can be set to "constant" if a constant magnetization is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``warpx.M_external_grid`` must be specified.
+    If set to ``parse_M_ext_grid_function``, then a mathematical expression can
+    be used to initialize the magnetization on the grid. It
+    requires additional parameters in the input file, namely,
+    ``warpx.Mx_external_grid_function(x,y,z)``,
+    ``warpx.My_external_grid_function(x,y,z)``,
+    ``warpx.Mz_external_grid_function(x,y,z)`` to initialize the
+    magnetization for each of the three components on the grid.
+    Constants required in the expression can be set using ``my_constants``.
+    For example, if ``warpx.Mx_external_grid_function(x,y,z)=Mo*x + delta*(y + z)``
+    then the constants `Mo` and `delta` required in the above equation
+    can be set using ``my_constants.Mo=`` and ``my_constants.delta=`` in the
+    input file. For a two-dimensional simulation, it is assumed that the first dimension
+    is `x` and the second dimension in `z`, and the value of `y` is set to zero.
+    Note that the current implementation of the parser for M-field
+    does not work with RZ and the code will abort with an error message.
+    If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
+    then this input parameter must be provided.
+
+* ``warpx.H_bias_ext_grid_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the external magnetic DC
+    bias field applied to the material. The "default" style initializes the
+    magnetic DC bias (Hx_bias,Hy_bias,Hz_bias) to (0.0, 0.0, 0.0).
+    The string can be set to "constant" if a constant magnetic bias is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``warpx.H_bias_external_grid`` must be specified.
+    If set to ``parse_H_bias_ext_grid_function``, then a mathematical expression can
+    be used to initialize the magnetic bias on the grid. It
+    requires additional parameters in the input file, namely,
+    ``warpx.Hx_bias_external_grid_function(x,y,z)``,
+    ``warpx.Hy_bias_external_grid_function(x,y,z)``,
+    ``warpx.Hz_bias_external_grid_function(x,y,z)`` to initialize the external
+    magnetic bias for each of the three components on the grid.
+    Constants required in the expression can be set using ``my_constants``.
+    For example, if ``warpx.Hx_bias_external_grid_function(x,y,z)=Ho_bias*x + delta*(y + z)``
+    then the constants `Ho_bias` and `delta` required in the above equation
+    can be set using ``my_constants.Ho_bias=`` and ``my_constants.delta=`` in the
+    input file. For a two-dimensional simulation, it is assumed that the first dimension
+    is `x` and the second dimension in `z`, and the value of `y` is set to zero.
+    Note that the current implementation of the parser for H_bias-field
+    does not work with RZ and the code will abort with an error message.
+    If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
+    then this input parameter must be provided.
+
+* ``warpx.M_external_grid`` & ``warpx.H_bias_external_grid`` (list of `double`)
+    required when ``warpx.M_ext_grid_init_style="constant"``
+    and when ``warpx.H_bias_ext_grid_init_style="constant"``, respectively.
+    External uniform and constant magnetization and magnetostatic bias field added
+    to the grid at initialization. Use with caution as these fields are used for
+    the field solver. In particular, do not use any other boundary condition
+    than periodic.
+
+* ``macroscopic.mag_Ms_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the saturation magnetization
+    of the material. The "default" style initializes the saturation magnetization mag_Ms to 0.0.
+    The string can be set to "constant" if a constant saturation magnetization is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``macroscopic.mag_Ms`` must be specified.
+    If set to ``parse_mag_Ms_function``, then a mathematical expression can
+    be used to initialize the saturation magnetization on the grid. It
+    requires additional parameters in the input file, namely,
+    ``macroscopic.mag_Ms_function(x,y,z)`` to initialize the saturation magnetization.
+    If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
+    then this input property must be provided.
+
+* ``macroscopic.mag_alpha_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the Gilbert damping factor
+    of the material. The "default" style initializes the Gilbert damping factor ``mag_alpha`` to 0.0.
+    Note that only positive values for Gilbert damping factor ``mag_alpha`` are allowed in the simulation.
+    The string can be set to "constant" if a constant Gilbert damping factor is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``macroscopic.mag_alpha`` must be specified.
+    If set to ``parse_mag_alpha_function``, then a mathematical expression can
+    be used to initialize the Gilbert damping factor on the grid. It
+    requires additional parameters in the input file, namely,
+    ``macroscopic.mag_alpha_function(x,y,z)`` to initialize the Gilbert damping factor.
+    If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
+    then this input property must be provided.
+
+* ``macroscopic.mag_gamma_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the gyromagnetic ratio
+    of the material. The "default" style initializes the gyromagnetic ratio mag_gamma to 0.0.
+    Note that only negative values for gyromagnetic ratio ``mag_gamma`` are allowed in the simulations and positive values for ``mag_alpha`` are allowed.
+    The value of ``mag_gamma`` depends on the type of spins under consideration. For electrons, ``mag_gamma`` is a constant value -1.759e11 Coulomb/kilogram.
+    The string can be set to "constant" if a constant gyromagnetic ratio is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``macroscopic.mag_gamma`` must be specified.
+    If set to ``parse_mag_gamma_function``, then a mathematical expression can
+    be used to initialize the gyromagnetic ratio on the grid. It
+    requires additional parameters in the input file, namely,
+    ``macroscopic.mag_gamma_function(x,y,z)`` to initialize the gyromagnetic ratio.
+    If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
+    then this input property must be provided.
