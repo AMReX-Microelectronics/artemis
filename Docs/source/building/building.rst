@@ -54,6 +54,7 @@ options are:
     * ``USE_GPU=TRUE`` or ``FALSE``: Whether to compile for Nvidia GPUs (requires CUDA).
     * ``USE_OPENPMD=TRUE`` or ``FALSE``: Whether to support openPMD for I/O (requires openPMD-api).
     * ``USE_LLG=TRUE`` or ``FALSE``: Whether to compile with Landau-Lifshitz-Gilbert (LLG) model to compute magnetization.
+    * ``MPI_THREAD_MULTIPLE=TRUE`` or ``FALSE``: Whether to initialize MPI with thread multiple support. Required to use asynchronous IO with more than ``amrex.async_out_nfiles`` (by default, 64) MPI tasks. Please see :doc:`../visualization/visualization` for more information.
 
 For a description of these different options, see the `corresponding page <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html>`__ in the AMReX documentation.
 
