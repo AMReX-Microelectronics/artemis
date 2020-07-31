@@ -255,7 +255,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveM (
                       std::pow(M_zface(i, j, k, 2),2.0_rt) ) / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr);
 
               // check the normalized error
-              if ( std::abs(1.-mag_normalized) > mag_normalized_error ){
+              if ( amrex::Math::abs(1.-mag_normalized) > mag_normalized_error ){
                  printf("i = %d, j=%d, k=%d\n", i, j, k);
                  printf("mag_normalized = %f, mag_normalized_error=%f", mag_normalized, mag_normalized_error);
                  amrex::Abort("Exceed the normalized error of the M_zface field");

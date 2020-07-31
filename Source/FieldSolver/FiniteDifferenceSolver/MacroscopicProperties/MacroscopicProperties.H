@@ -121,6 +121,43 @@ public:
                                  - Mcomp(i, j, k, n); //magnetic constitutive relation
          return H_Maxwell;
      };
+
+     /**
+     update local M_field in the second-order time scheme
+     the objective is to output component n of the M_field
+     a and b have x,y,z components
+     **/
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real updateM_field (int i, int j, int k, int n,
+                                   amrex::Array4<amrex::Real> const& a, amrex::Array4<amrex::Real> const& b) {
+         using namespace amrex;
+         amrex::Real a_square = pow(a(i, j, k, 0), 2.0) + pow(a(i, j, k, 1), 2.0) + pow(a(i, j, k, 2), 2.0);
+         amrex::Real a_dot_b =  a(i, j, k, 0) * b(i, j, k, 0) +
+                                a(i, j, k, 1) * b(i, j, k, 1) +
+                                a(i, j, k, 2) * b(i, j, k, 2);
+         amrex::Real M_field;
+
+     if(n==0){
+         amrex::Real a_cross_b_x = a(i, j, k, 1) * b(i, j, k, 2) -
+                                   a(i, j, k, 2) * b(i, j, k, 1);
+         M_field = ( b(i, j, k, 0) + a_dot_b * a(i, j, k, 0) - a_cross_b_x ) / ( 1.0 + a_square);
+     }
+     else if(n==1){
+         amrex::Real a_cross_b_y = a(i, j, k, 2) * b(i, j, k, 0) -
+                                   a(i, j, k, 0) * b(i, j, k, 2);
+         M_field = ( b(i, j, k, 1) + a_dot_b * a(i, j, k, 1) - a_cross_b_y ) / ( 1.0 + a_square);
+     }
+     else if(n==2){
+         amrex::Real a_cross_b_z = a(i, j, k, 0) * b(i, j, k, 1) -
+                                   a(i, j, k, 1) * b(i, j, k, 0);
+         M_field = ( b(i, j, k, 2) + a_dot_b * a(i, j, k, 2) - a_cross_b_z ) / ( 1.0 + a_square);
+     }
+     else{
+         printf("n=%d\n", n);
+         amrex::Abort("Wrong component n of the M_field");
+     };
+         return M_field;
+     };
 #endif //closes ifdef MAG_LLG
 
 private:

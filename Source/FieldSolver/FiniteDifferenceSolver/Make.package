@@ -7,6 +7,7 @@ CEXE_sources += MacroscopicEvolveE.cpp
 
 #ifdef WARPX_MAG_LLG
 CEXE_sources += MacroscopicEvolveM.cpp
+CEXE_sources += MacroscopicEvolveM_2nd.cpp
 #endif
 
 CEXE_sources += EvolveBPML.cpp
