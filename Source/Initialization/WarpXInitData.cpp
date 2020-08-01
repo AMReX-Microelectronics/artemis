@@ -513,7 +513,49 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
 
     if (M_ext_grid_s == "parse_m_ext_grid_function") {
-        Abort("WarpXInitData: M field initialization parser not implemented yet");
+#ifdef WARPX_DIM_RZ
+        amrex::Abort("M-field parser for external fields does not work with RZ");
+#endif
+       Store_parserString(pp, "Mx_external_grid_function(x,y,z)",
+                                                    str_Mx_ext_grid_function);
+       Store_parserString(pp, "My_external_grid_function(x,y,z)",
+                                                    str_My_ext_grid_function);
+       Store_parserString(pp, "Mz_external_grid_function(x,y,z)",
+                                                    str_Mz_ext_grid_function);
+
+       Mxfield_parser.reset(new ParserWrapper<3>(
+                         makeParser(str_Mx_ext_grid_function,{"x","y","z"})));
+       Myfield_parser.reset(new ParserWrapper<3>(
+                         makeParser(str_My_ext_grid_function,{"x","y","z"})));
+       Mzfield_parser.reset(new ParserWrapper<3>(
+                         makeParser(str_Mz_ext_grid_function,{"x","y","z"})));
+
+       // Initialize Mfield_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(Mfield_fp[lev][0].get(),
+                                                 Mfield_fp[lev][1].get(),
+                                                 Mfield_fp[lev][2].get(),
+                                                 Mxfield_parser.get(),
+                                                 Myfield_parser.get(),
+                                                 Mzfield_parser.get(),
+                                                 lev);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Mfield_aux[lev][0].get(),
+                                                    Mfield_aux[lev][1].get(),
+                                                    Mfield_aux[lev][2].get(),
+                                                    Mxfield_parser.get(),
+                                                    Myfield_parser.get(),
+                                                    Mzfield_parser.get(),
+                                                    lev);
+
+          InitializeExternalFieldsOnGridUsingParser(Mfield_cp[lev][0].get(),
+                                                    Mfield_cp[lev][1].get(),
+                                                    Mfield_cp[lev][2].get(),
+                                                    Mxfield_parser.get(),
+                                                    Myfield_parser.get(),
+                                                    Mzfield_parser.get(),
+                                                    lev);
+       }
+
     }
 
 #endif //closes #ifdef WARPX_MAG_LLG
@@ -552,7 +594,11 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
     amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
-
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        mfx->nComp() == mfy->nComp() and mfx->nComp() == mfz->nComp(),
+        "The number of components for the three Multifabs must be equal");
+    // Number of multifab components
+    int ncomp = mfx->nComp();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
@@ -579,8 +625,18 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 amrex::Real fac_z = (1._rt - x_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
                 amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
-                // Initialize the x-component of the field.
-                mfxfab(i,j,k) = (*xfield_parser)(x,y,z);
+#ifdef WARPX_MAG_LLG
+                if (ncomp > 1) {
+                    // This condition is specific to Mfield, where,
+                    // x-, y-, and z-components are stored on the x-face
+                    mfxfab(i,j,k,0) = (*xfield_parser)(x,y,z);
+                    mfxfab(i,j,k,1) = (*yfield_parser)(x,y,z);
+                    mfxfab(i,j,k,2) = (*zfield_parser)(x,y,z);
+                } else
+#endif
+                {
+                    mfxfab(i,j,k) = (*xfield_parser)(x,y,z);
+                }
          },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
@@ -595,8 +651,18 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 amrex::Real fac_z = (1._rt - y_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
                 amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
-                // Initialize the y-component of the field.
-                mfyfab(i,j,k)  = (*yfield_parser)(x,y,z);
+#ifdef WARPX_MAG_LLG
+                if (ncomp > 1) {
+                    // This condition is specific to Mfield, where,
+                    // x-, y-, and z-components are stored on the y-face
+                    mfyfab(i,j,k,0) = (*xfield_parser)(x,y,z);
+                    mfyfab(i,j,k,1) = (*yfield_parser)(x,y,z);
+                    mfyfab(i,j,k,2) = (*zfield_parser)(x,y,z);
+                } else
+#endif
+                {
+                    mfyfab(i,j,k)  = (*yfield_parser)(x,y,z);
+                }
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
@@ -611,8 +677,18 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 amrex::Real fac_z = (1._rt - z_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
                 amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
-                // Initialize the z-component of the field.
-                mfzfab(i,j,k) = (*zfield_parser)(x,y,z);
+#ifdef WARPX_MAG_LLG
+                if (ncomp > 1) {
+                    // This condition is specific to Mfield, where,
+                    // x-, y-, and z-components are stored on the z-face
+                    mfzfab(i,j,k,0) = (*xfield_parser)(x,y,z);
+                    mfzfab(i,j,k,1) = (*yfield_parser)(x,y,z);
+                    mfzfab(i,j,k,2) = (*zfield_parser)(x,y,z);
+                } else
+#endif
+                {
+                    mfzfab(i,j,k) = (*zfield_parser)(x,y,z);
+                }
             }
         );
     }
