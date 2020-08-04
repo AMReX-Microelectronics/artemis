@@ -47,6 +47,10 @@ public:
      amrex::MultiFab& getmag_alpha_mf () {return (*m_mag_alpha_mf);}
      amrex::MultiFab& getmag_gamma_mf () {return (*m_mag_gamma_mf);}
 
+     amrex::Real getmag_normalized_error () {return m_mag_normalized_error;}
+     int getmag_max_iter () {return m_mag_max_iter;}
+     amrex::Real getmag_tol () {return m_mag_tol;}
+
      // interpolate the magnetic properties to B locations
      // magnetic properties are cell nodal
      // B locations are face centered
@@ -174,6 +178,17 @@ private:
      amrex::Real m_mag_alpha;
      /** gyromagnetic ratio, should be a negative value, only applies for magnetic materials */
      amrex::Real m_mag_gamma;
+
+     // If the magnitude of the magnetization deviates by more than this amount relative
+     // to the user-defined Ms, abort.  Default 0.1.
+     amrex::Real m_mag_normalized_error;
+
+     // maximum iteration count for the second-order time advancement scheme of M field, default 100
+     int m_mag_max_iter;
+
+     // the relative tolerance for the second-order time advancement scheme of M field, default 0.0001
+     amrex::Real m_mag_tol;
+
 #endif
 
      /** Multifab for m_sigma */

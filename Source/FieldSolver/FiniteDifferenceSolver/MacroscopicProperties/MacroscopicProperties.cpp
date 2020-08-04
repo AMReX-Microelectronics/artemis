@@ -73,6 +73,16 @@ MacroscopicProperties::ReadParameters ()
         m_mag_gamma_parser.reset(new ParserWrapper<3>(
                                   makeParser(m_str_mag_gamma_function,{"x","y","z"})));
     }
+
+    m_mag_normalized_error = 0.1;
+    pp.query("mag_normalized_error",m_mag_normalized_error);
+
+    m_mag_max_iter = 100;
+    pp.query("mag_max_iter",m_mag_max_iter);
+
+    m_mag_tol = 0.0001;
+    pp.query("mag_tol",m_mag_tol);
+
 #endif
 }
 
