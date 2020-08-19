@@ -59,6 +59,7 @@ endif
 endif
 
 ifeq ($(USE_LLG),TRUE)
+  USERSuffix := $(USERSuffix).LLG
   DEFINES += -DWARPX_MAG_LLG
 endif
 
