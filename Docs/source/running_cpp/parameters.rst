@@ -1057,6 +1057,18 @@ Numerics and algorithms
     The conductivity, permittivity, and permeability of the computational medium, respectively.
     If ``algo.em_solver_medium`` is set to macroscopic, then these properties must be provided.
 
+* ``macroscopic.mag_normalized_error`` (`double`; default: `0.1`)
+    The maximum relative amount we let M deviate from Ms before aborting for the LLG equation. This requires `USE_LLG=TRUE` in the GNUMakefile.
+
+* ``macroscopic.mag_max_iter`` (`int`; default: `100`)
+    The maximum number of iterations allowed of the 2nd-order trapezoidal scheme for the LLG equation. This requires `USE_LLG=TRUE` in the GNUMakefile.
+
+* ``macroscopic.mag_tol`` (`double`; default: `0.0001`)
+    The relative tolerance stopping criteria for 2nd-order iterative algorithm of the 2nd-order trapezoidal scheme for the LLG equation. This requires `USE_LLG=TRUE` in the GNUMakefile.
+
+* ``warpx.mag_time_scheme_order`` (`1` or `2`; default: `1`)
+    The value of the time advancement scheme of M field. `mag_time_scheme_order==1` is the 1st-order Eulerian scheme and `mag_time_scheme_order==2` is the 2nd-order trapezoidal scheme for the LLG equation. This requires `USE_LLG=TRUE` in the GNUMakefile.
+
 * ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`1`, `2`, or `3` ; default: 1)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
     Lower-order shape factors result in faster simulations, but more noisy results,

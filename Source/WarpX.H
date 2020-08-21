@@ -387,6 +387,10 @@ public:
     void MacroscopicEvolveM (         amrex::Real dt);
     void MacroscopicEvolveM (int lev, amrex::Real dt);
     void MacroscopicEvolveM (int lev, PatchType patch_type, amrex::Real dt);
+
+    void MacroscopicEvolveM_2nd (         amrex::Real dt);
+    void MacroscopicEvolveM_2nd (int lev, amrex::Real dt);
+    void MacroscopicEvolveM_2nd (int lev, PatchType patch_type, amrex::Real dt);
 #endif
 
     /** \brief apply QED correction on electric field
@@ -795,6 +799,7 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
 #ifdef WARPX_MAG_LLG
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp_old;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H_biasfield_fp;
     // define Mfield MultiFab; only fine patches
@@ -854,6 +859,10 @@ private:
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
 
+#ifdef WARPX_MAG_LLG
+    // time advancement scheme of M field
+    int mag_time_scheme_order = 1;
+#endif
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_int" string int the input file
