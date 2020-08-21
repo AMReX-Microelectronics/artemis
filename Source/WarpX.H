@@ -176,9 +176,9 @@ public:
 #endif
 
 #ifdef WARPX_USE_PSATD
-    // If true (overwritten by the user in the input file), the update equation
-    // for E contains both J and rho (at times n and n+1) on the right hand side
-    bool update_with_rho = false;
+    // If true, the update equation for E contains both J and rho (at times n and n+1):
+    // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
+    bool update_with_rho;
 #endif
 
     // div E cleaning
@@ -637,6 +637,10 @@ protected:
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
+    //! Use this function to override the Level 0 grids made by AMReX.
+    //! This function is called in amrex::AmrCore::InitFromScratch.
+    virtual void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
+
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
@@ -646,8 +650,8 @@ protected:
     //! Make a new level using provided BoxArray and
     //! DistributionMapping and fill with interpolated coarse level
     //! data.  Called by AmrCore::regrid.
-    virtual void MakeNewLevelFromCoarse (int lev, amrex::Real time, const amrex::BoxArray& ba,
-                                         const amrex::DistributionMapping& dm) final
+    virtual void MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
+                                         const amrex::DistributionMapping& /*dm*/) final
         { amrex::Abort("MakeNewLevelFromCoarse: To be implemented"); }
 
     //! Remake an existing level using provided BoxArray and
@@ -934,6 +938,9 @@ private:
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;
+
+    // Domain decomposition on Level 0
+    amrex::IntVect numprocs{0};
 
 #ifdef WARPX_USE_PSATD
 private:

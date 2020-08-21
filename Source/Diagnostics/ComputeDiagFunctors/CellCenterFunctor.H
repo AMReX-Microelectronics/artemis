@@ -33,7 +33,7 @@ public:
      * \param[in] dcomp first component of mf_dst in which cell-centered
      *            data is stored
      */
-    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp) const override;
+    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer=0*/) const override;
 
      /** \brief return m_scomp
       * m_scomp is the starting component of mf_src from which values are
