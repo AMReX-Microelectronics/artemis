@@ -46,6 +46,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveM_2nd (
         std::unique_ptr<MacroscopicProperties> const& macroscopic_properties )
     {
 
+        // obtain the maximum relative amount we let M deviate from Ms before aborting
+        amrex::Real mag_normalized_error = macroscopic_properties->getmag_normalized_error();
+
         // build temporary vector<multifab,3> Mfield_prev, Mfield_error, a_temp, a_temp_static, b_temp_static
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > Mfield_prev; // M^n before the iteration
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > Mfield_error; // The error of the M field between the twoiterations
@@ -176,7 +179,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveM_2nd (
               Real Hy_bias_yface = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0,1,0), amrex::IntVect(0,1,0), Hy_bias);
               Real Hz_bias_yface = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0,0,1), amrex::IntVect(0,1,0), Hz_bias);
               // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy ... (only the first two terms are considered here)
-
               Real Hx_eff = Hx_yface + Hx_bias_yface;
               Real Hy_eff = Hy_yface + Hy_bias_yface;
               Real Hz_eff = Hz_yface + Hz_bias_yface;
@@ -383,6 +385,22 @@ void FiniteDifferenceSolver::MacroscopicEvolveM_2nd (
               // z component on x-faces of grid
               M_xface(i, j, k, 2) = MacroscopicProperties::updateM_field(i, j, k, 2, a_temp_xface, b_temp_static_xface);
 
+              // temporary normalized magnitude of M_xface field at the fixed point
+              // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
+              amrex::Real mag_normalized = std::sqrt( std::pow(M_xface(i, j, k, 0),2.0) + std::pow(M_xface(i, j, k, 1),2.0) +
+                      std::pow(M_xface(i, j, k, 2),2.0) ) / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_Ms_arr);
+
+              // check the normalized error
+              if ( amrex::Math::abs(1._rt-mag_normalized) > mag_normalized_error ){
+                  printf("i = %d, j=%d, k=%d\n", i, j, k);
+                  printf("mag_normalized = %f, mag_normalized_error=%f\n", mag_normalized, mag_normalized_error);
+                  amrex::Abort("Exceed the normalized error of the M_xface field");
+              }
+              // normalize the M_xface field
+              M_xface(i,j,k,0) /= mag_normalized;
+              M_xface(i,j,k,1) /= mag_normalized;
+              M_xface(i,j,k,2) /= mag_normalized;
+
               // calculate M_error_xface
               // x component on x-faces of grid
               M_error_xface(i, j, k, 0) = std::abs((M_xface(i, j, k, 0) - M_prev_xface(i, j, k, 0))) / Mfield_prev_max[0];
@@ -442,6 +460,22 @@ void FiniteDifferenceSolver::MacroscopicEvolveM_2nd (
               // z component on y-faces of grid
               M_yface(i, j, k, 2) = MacroscopicProperties::updateM_field(i, j, k, 2, a_temp_yface, b_temp_static_yface);
 
+              // temporary normalized magnitude of M_yface field at the fixed point
+              // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
+              amrex::Real mag_normalized = std::sqrt( std::pow(M_yface(i, j, k, 0),2.0) + std::pow(M_yface(i, j, k, 1),2.0) +
+                      std::pow(M_yface(i, j, k, 2),2.0) ) / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_Ms_arr);
+
+              // check the normalized error
+              if ( amrex::Math::abs(1._rt-mag_normalized) > mag_normalized_error ){
+                 printf("i = %d, j=%d, k=%d\n", i, j, k);
+                 printf("mag_normalized = %f, mag_normalized_error=%f\n",mag_normalized, mag_normalized_error);
+                 amrex::Abort("Exceed the normalized error of the M_yface field");
+              }
+              // normalize the M_yface field
+              M_yface(i,j,k,0) /= mag_normalized;
+              M_yface(i,j,k,1) /= mag_normalized;
+              M_yface(i,j,k,2) /= mag_normalized;
+
               // calculate M_error_yface
               // x component on y-faces of grid
               M_error_yface(i, j, k, 0) = std::abs((M_yface(i, j, k, 0) - M_prev_yface(i, j, k, 0))) / Mfield_prev_max[0];
@@ -499,6 +533,22 @@ void FiniteDifferenceSolver::MacroscopicEvolveM_2nd (
 
               // z component on z-faces of grid
               M_zface(i, j, k, 2) = MacroscopicProperties::updateM_field(i, j, k, 2, a_temp_zface, b_temp_static_zface);
+
+              // temporary normalized magnitude of M_zface field at the fixed point
+              // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
+              amrex::Real mag_normalized = std::sqrt( std::pow(M_zface(i, j, k, 0),2.0_rt) + std::pow(M_zface(i, j, k, 1),2.0_rt) +
+                      std::pow(M_zface(i, j, k, 2),2.0_rt) ) / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr);
+
+              // check the normalized error
+              if ( amrex::Math::abs(1.-mag_normalized) > mag_normalized_error ){
+                 printf("i = %d, j=%d, k=%d\n", i, j, k);
+                 printf("mag_normalized = %f, mag_normalized_error=%f\n", mag_normalized, mag_normalized_error);
+                 amrex::Abort("Exceed the normalized error of the M_zface field");
+              }
+              // normalize the M_zface field
+              M_zface(i,j,k,0) /= mag_normalized;
+              M_zface(i,j,k,1) /= mag_normalized;
+              M_zface(i,j,k,2) /= mag_normalized;
 
               // calculate M_error_zface
               // x component on z-faces of grid
