@@ -18,9 +18,11 @@ amr.max_level = 0
 #################################
 warpx.verbose = 0
 warpx.use_filter = 0
-warpx.cfl = 4000
+warpx.cfl = 0.9
 warpx.do_pml = 0
 warpx.mag_time_scheme_order = 2 # default 1
+warpx.mag_secondorder_normalization = 1
+warpx.mag_LLG_coupling = 1
 particles.nspecies = 0
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
@@ -67,13 +69,13 @@ warpx.E_ext_grid_init_style = parse_E_ext_grid_function
 
 warpx.Ex_external_grid_function(x,y,z) = 0.
 warpx.Ey_external_grid_function(x,y,z) = 0.
-#warpx.Ey_external_grid_function(x,y,z) = "1.e5exp(-z2/L2)cos(2piz/wavelength)"
+#warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)"
 warpx.Ez_external_grid_function(x,y,z) = 0.
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 warpx.Bx_external_grid_function(x,y,z)= 0.1759
 #warpx.Bx_external_grid_function(x,y,z)= 0.
-#warpx.Bx_external_grid_function(x,y,z)= "-1.e5exp(-z2/L2)cos(2piz/wavelength)/c"
+#warpx.Bx_external_grid_function(x,y,z)= "-1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)/c"
 warpx.By_external_grid_function(x,y,z)= 0.
 warpx.Bz_external_grid_function(x,y,z) = 0.
 
@@ -92,7 +94,7 @@ warpx.Hz_bias_external_grid_function(x,y,z)= 3e4 # in A/m, equal to 382 Oersted
 #warpx.Hz_bias_external_grid = 0
 
 #warpx.M_ext_grid_init_style = parse_M_ext_grid_function
-#warpx.Mx_external_grid_function(x,y,z)= "-1.e5exp(-z2/L2)cos(2piz/wavelength)/c"
+#warpx.Mx_external_grid_function(x,y,z)= "-1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)/c"
 #warpx.My_external_grid_function(x,y,z)= 0.
 #warpx.Mz_external_grid_function(x,y,z) = 0.
 
