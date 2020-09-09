@@ -21,7 +21,7 @@ warpx.use_filter = 0
 warpx.cfl = 4000
 warpx.do_pml = 0
 warpx.mag_time_scheme_order = 2 # default 1
-warpx.mag_M_normalization = 2
+warpx.mag_M_normalization = 0
 warpx.mag_LLG_coupling = 0
 particles.nspecies = 0
 
@@ -54,7 +54,7 @@ macroscopic.mag_gamma_function(x,y,z) = "-1.759e11"
 #macroscopic.mag_gamma = -1.759e11 # gyromagnetic ratio is constant for electrons in all materials
 
 macroscopic.mag_max_iter = 100 # maximum number of M iteration in each time step
-macroscopic.mag_tol = 1.e-6 # M magnitude relative error tolerance compared to previous iteration
+macroscopic.mag_tol = 0.00001 # M magnitude relative error tolerance compared to previous iteration
 macroscopic.mag_normalized_error = 0.1 # if M magnitude relatively changes more than this value, raise a red flag
 
 #################################
@@ -101,7 +101,8 @@ warpx.Hz_bias_external_grid_function(x,y,z)= 3e4 # in A/m, equal to 382 Oersted
 #warpx.Mz_external_grid_function(x,y,z) = 0.
 
 warpx.M_ext_grid_init_style = constant
-warpx.M_external_grid = 140000. 0. 0.
+#warpx.M_external_grid = 140000. 0. 0.
+warpx.M_external_grid = 10000. 0. 0.
 
 #Diagnostics
 diagnostics.diags_names = plt

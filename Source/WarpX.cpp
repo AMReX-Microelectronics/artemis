@@ -556,10 +556,14 @@ WarpX::ReadParameters ()
 #ifdef WARPX_MAG_LLG
         // Read the value of the time advancement scheme of M field
         pp.query("mag_time_scheme_order", mag_time_scheme_order);
-        // Read second-order magnetization normalization strategy
-        pp.query("mag_secondorder_normalization", mag_secondorder_normalization);
         // turn on LLG + Maxwell coupling
         pp.query("mag_LLG_coupling",mag_LLG_coupling);
+        // magnetization M magnitude normalization strategy
+        pp.get("mag_M_normalization", mag_M_normalization);
+        if (mag_M_normalization < 0){
+            printf("mag_M_normalization = %d \n", mag_M_normalization);
+            amrex::Abort("Caution: mag_M_normalization must be a non-negative number !");
+        }
 
 #endif
 

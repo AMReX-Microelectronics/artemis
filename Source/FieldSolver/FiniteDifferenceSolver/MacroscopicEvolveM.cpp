@@ -47,6 +47,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveM (
 
         auto& warpx = WarpX::GetInstance();
         int coupling = warpx.mag_LLG_coupling;
+        int M_normalization = warpx.mag_M_normalization;
 
         // build temporary vector<multifab,3> Mfield_prev
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > Mfield_prev; // Mfield data in previous step
@@ -118,9 +119,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveM (
               // magnetic material properties mag_alpha and mag_Ms are defined at cell nodes
               // keep the interpolation. The IntVect is (1,0,0) to interpolate values to the x-face.
               Real mag_gamma_interp = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_gamma_arr);
-              Real Gil_damp = PhysConst::mu0 * mag_gamma_interp
-                              * MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_alpha_arr)
-                              / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_Ms_arr);
+
+              Real M_magnitude = (M_normalization == 0) ?
+                  std::sqrt( std::pow(M_xface(i, j, k, 0),2.0) + std::pow(M_xface(i, j, k, 1),2.0) + std::pow(M_xface(i, j, k, 2),2.0) ) :
+                  MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_Ms_arr);
+              Real Gil_damp = PhysConst::mu0 * mag_gamma_interp * MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_alpha_arr) / M_magnitude;
 
               // now you have access to use M_xface(i,j,k,0) M_xface(i,j,k,1), M_xface(i,j,k,2), Hx(i,j,k), Hy, Hz on the RHS of these update lines below
               // x component on x-faces of grid
@@ -138,22 +141,38 @@ void FiniteDifferenceSolver::MacroscopicEvolveM (
                 + dt * Gil_damp * ( M_xface_prev(i, j, k, 0) * (M_xface_prev(i, j, k, 2) * Hx_eff - M_xface_prev(i, j, k, 0) * Hz_eff)
                 - M_xface_prev(i, j, k, 1) * ( M_xface_prev(i, j, k, 1) * Hz_eff - M_xface_prev(i, j, k, 2) * Hy_eff));
 
-
               // temporary normalized magnitude of M_xface field at the fixed point
               // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
-              amrex::Real mag_normalized = std::sqrt( std::pow(M_xface(i, j, k, 0),2.0) + std::pow(M_xface(i, j, k, 1),2.0) +
+              amrex::Real M_magnitude_normalized = std::sqrt( std::pow(M_xface(i, j, k, 0),2.0) + std::pow(M_xface(i, j, k, 1),2.0) +
                       std::pow(M_xface(i, j, k, 2),2.0) ) / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_Ms_arr);
 
-              // check the normalized error
-              if ( amrex::Math::abs(1._rt-mag_normalized) > mag_normalized_error ){
-                  printf("i = %d, j=%d, k=%d\n", i, j, k);
-                  printf("mag_normalized = %f, mag_normalized_error=%f\n", mag_normalized, mag_normalized_error);
-                  amrex::Abort("Exceed the normalized error of the M_xface field");
+              if (M_normalization > 0){
+                  // check the normalized error
+                  if (amrex::Math::abs(1._rt - M_magnitude_normalized) > mag_normalized_error){
+                      printf("i = %d, j=%d, k=%d\n", i, j, k);
+                      printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
+                      amrex::Abort("Exceed the normalized error of the M_xface field");
+                  }
+                  // normalize the M_xface field
+                  M_xface(i, j, k, 0) /= M_magnitude_normalized;
+                  M_xface(i, j, k, 1) /= M_magnitude_normalized;
+                  M_xface(i, j, k, 2) /= M_magnitude_normalized;
               }
-              // normalize the M_xface field
-              M_xface(i,j,k,0) /= mag_normalized;
-              M_xface(i,j,k,1) /= mag_normalized;
-              M_xface(i,j,k,2) /= mag_normalized;
+              else if (M_normalization == 0){
+                  // check the normalized error
+                  if (M_magnitude_normalized > 1._rt + mag_normalized_error){
+                      printf("i = %d, j=%d, k=%d\n", i, j, k);
+                      printf("M_magnitude_normalized = %f, Ms = %f\n", M_magnitude_normalized,
+                          MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_Ms_arr));
+                      amrex::Abort("Caution: Unsaturated material has M_xface exceeding the saturation magnetization");
+                  }
+                  else if (M_magnitude_normalized > 1._rt && M_magnitude_normalized <= 1._rt + mag_normalized_error){
+                      // normalize the M_xface field
+                      M_xface(i, j, k, 0) /= M_magnitude_normalized;
+                      M_xface(i, j, k, 1) /= M_magnitude_normalized;
+                      M_xface(i, j, k, 2) /= M_magnitude_normalized;
+                  }
+              }
               },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -177,9 +196,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveM (
               // magnetic material properties mag_alpha and mag_Ms are defined at cell nodes
               // keep the interpolation. The IntVect is (0,1,0) to interpolate values to the y-face.
               Real mag_gamma_interp = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_gamma_arr);
-              Real Gil_damp = PhysConst::mu0 * mag_gamma_interp
-                              * MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_alpha_arr)
-                              / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_Ms_arr);
+
+              Real M_magnitude = (M_normalization == 0) ?
+                  std::sqrt( std::pow(M_yface(i, j, k, 0),2.0) + std::pow(M_yface(i, j, k, 1),2.0) + std::pow(M_yface(i, j, k, 2),2.0) ) :
+                  MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_Ms_arr);
+              Real Gil_damp = PhysConst::mu0 * mag_gamma_interp * MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_alpha_arr) / M_magnitude;
 
               // x component on y-faces of grid
               M_yface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gamma_interp) * ( M_yface_prev(i, j, k, 1) * Hz_eff - M_yface_prev(i, j, k, 2) * Hy_eff)
@@ -199,19 +220,36 @@ void FiniteDifferenceSolver::MacroscopicEvolveM (
 
               // temporary normalized magnitude of M_yface field at the fixed point
               // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
-              amrex::Real mag_normalized = std::sqrt( std::pow(M_yface(i, j, k, 0),2.0) + std::pow(M_yface(i, j, k, 1),2.0) +
+              amrex::Real M_magnitude_normalized = std::sqrt( std::pow(M_yface(i, j, k, 0),2.0) + std::pow(M_yface(i, j, k, 1),2.0) +
                       std::pow(M_yface(i, j, k, 2),2.0) ) / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_Ms_arr);
 
-              // check the normalized error
-              if ( amrex::Math::abs(1._rt-mag_normalized) > mag_normalized_error ){
-                 printf("i = %d, j=%d, k=%d\n", i, j, k);
-                 printf("mag_normalized = %f, mag_normalized_error=%f\n",mag_normalized, mag_normalized_error);
-                 amrex::Abort("Exceed the normalized error of the M_yface field");
+              if (M_normalization > 0){
+                  // check the normalized error
+                  if (amrex::Math::abs(1._rt - M_magnitude_normalized) > mag_normalized_error){
+                      printf("i = %d, j=%d, k=%d\n", i, j, k);
+                      printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
+                      amrex::Abort("Exceed the normalized error of the M_yface field");
+                  }
+                  // normalize the M_yface field
+                  M_yface(i, j, k, 0) /= M_magnitude_normalized;
+                  M_yface(i, j, k, 1) /= M_magnitude_normalized;
+                  M_yface(i, j, k, 2) /= M_magnitude_normalized;
               }
-              // normalize the M_yface field
-              M_yface(i,j,k,0) /= mag_normalized;
-              M_yface(i,j,k,1) /= mag_normalized;
-              M_yface(i,j,k,2) /= mag_normalized;
+              else if (M_normalization == 0){
+                  // check the normalized error
+                  if (M_magnitude_normalized > 1._rt + mag_normalized_error){
+                      printf("i = %d, j=%d, k=%d\n", i, j, k);
+                      printf("M_magnitude_normalized = %f, Ms = %f\n", M_magnitude_normalized,
+                          MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_Ms_arr));
+                      amrex::Abort("Caution: Unsaturated material has M_yface exceeding the saturation magnetization");
+                  }
+                  else if (M_magnitude_normalized > 1._rt && M_magnitude_normalized <= 1._rt + mag_normalized_error){
+                      // normalize the M_yface field
+                      M_yface(i, j, k, 0) /= M_magnitude_normalized;
+                      M_yface(i, j, k, 1) /= M_magnitude_normalized;
+                      M_yface(i, j, k, 2) /= M_magnitude_normalized;
+                  }
+              }
               },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -236,9 +274,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveM (
               // magnetic material properties mag_alpha and mag_Ms are defined at cell nodes
               // keep the interpolation. The IntVect is (0,0,1) to interpolate values to the z-face.
               Real mag_gamma_interp = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_gamma_arr);
-              Real Gil_damp = PhysConst::mu0 * mag_gamma_interp
-                              * MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_alpha_arr)
-                              / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr);
+
+              Real M_magnitude = (M_normalization == 0) ?
+                  std::sqrt( std::pow(M_zface(i, j, k, 0),2.0_rt) + std::pow(M_zface(i, j, k, 1),2.0_rt) + std::pow(M_zface(i, j, k, 2),2.0_rt) ) :
+                  MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr);
+              Real Gil_damp = PhysConst::mu0 * mag_gamma_interp * MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_alpha_arr) / M_magnitude;
 
               // x component on z-faces of grid
               M_zface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gamma_interp) * ( M_zface_prev(i, j, k, 1) * Hz_eff - M_zface_prev(i, j, k, 2) * Hy_eff)
@@ -257,19 +297,38 @@ void FiniteDifferenceSolver::MacroscopicEvolveM (
 
               // temporary normalized magnitude of M_zface field at the fixed point
               // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
-              amrex::Real mag_normalized = std::sqrt( std::pow(M_zface(i, j, k, 0),2.0_rt) + std::pow(M_zface(i, j, k, 1),2.0_rt) +
+              amrex::Real M_magnitude_normalized = std::sqrt( std::pow(M_zface(i, j, k, 0),2.0_rt) + std::pow(M_zface(i, j, k, 1),2.0_rt) +
                       std::pow(M_zface(i, j, k, 2),2.0_rt) ) / MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr);
 
-              // check the normalized error
-              if ( amrex::Math::abs(1.-mag_normalized) > mag_normalized_error ){
-                 printf("i = %d, j=%d, k=%d\n", i, j, k);
-                 printf("mag_normalized = %f, mag_normalized_error=%f\n", mag_normalized, mag_normalized_error);
-                 amrex::Abort("Exceed the normalized error of the M_zface field");
+              if (M_normalization > 0){
+                  // check the normalized error
+                  if (amrex::Math::abs(1._rt - M_magnitude_normalized) > mag_normalized_error){
+                      printf("i = %d, j=%d, k=%d\n", i, j, k);
+                      printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
+                      amrex::Abort("Exceed the normalized error of the M_zface field");
+                  }
+                  // normalize the M_zface field
+                  M_zface(i, j, k, 0) /= M_magnitude_normalized;
+                  M_zface(i, j, k, 1) /= M_magnitude_normalized;
+                  M_zface(i, j, k, 2) /= M_magnitude_normalized;
               }
-              // normalize the M_zface field
-              M_zface(i,j,k,0) /= mag_normalized;
-              M_zface(i,j,k,1) /= mag_normalized;
-              M_zface(i,j,k,2) /= mag_normalized;});
+              else if (M_normalization == 0){
+                  // check the normalized error
+                  if (M_magnitude_normalized > 1._rt + mag_normalized_error){
+                      printf("i = %d, j=%d, k=%d\n", i, j, k);
+                      printf("M_magnitude_normalized = %f, Ms = %f\n", M_magnitude_normalized,
+                          MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr));
+                      amrex::Abort("Caution: Unsaturated material has M_zface exceeding the saturation magnetization");
+                  }
+                  else if (M_magnitude_normalized > 1._rt && M_magnitude_normalized <= 1._rt + mag_normalized_error){
+                      // normalize the M_zface field
+                      M_zface(i, j, k, 0) /= M_magnitude_normalized;
+                      M_zface(i, j, k, 1) /= M_magnitude_normalized;
+                      M_zface(i, j, k, 2) /= M_magnitude_normalized;
+                  }
+              }
+
+              });
         }
     }
 #endif
