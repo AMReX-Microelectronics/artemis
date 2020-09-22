@@ -19,6 +19,7 @@
 #include "Deposition/ChargeDeposition.H"
 
 #include <AMReX_AmrParGDB.H>
+#include <AMReX.H>
 
 #include <limits>
 
@@ -98,7 +99,7 @@ void
 WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z,
                                        const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
-                                       int nattr, const ParticleReal* attr, int uniqueparticles, int id)
+                                       int nattr, const ParticleReal* attr, int uniqueparticles, amrex::Long id)
 {
     BL_ASSERT(nattr == 1); //! @fixme nattr is unused below: false sense of safety
     const ParticleReal* weight = attr;
@@ -146,6 +147,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         p.pos(1) = y[i];
         p.pos(2) = z[i];
 #elif (AMREX_SPACEDIM == 2)
+        amrex::ignore_unused(y);
 #ifdef WARPX_DIM_RZ
         theta[i-ibegin] = std::atan2(y[i], x[i]);
         p.pos(0) = std::sqrt(x[i]*x[i] + y[i]*y[i]);
@@ -236,9 +238,8 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     Real q = this->charge;
 
-    WARPX_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
-    WARPX_PROFILE_VAR_NS("PPC::CurrentDeposition", blp_deposit);
-
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Accumulate", blp_accumulate);
 
     // Get tile box where current is deposited.
     // The tile box is different when depositing in the buffers (depos_lev<lev)
@@ -429,8 +430,8 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     const Real q = this->charge;
 
-    WARPX_PROFILE_VAR_NS("PPC::ChargeDeposition", blp_ppc_chd);
-    WARPX_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::ChargeDeposition", blp_ppc_chd);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::Accumulate", blp_accumulate);
 
     // Get tile box where charge is deposited.
     // The tile box is different when depositing in the buffers (depos_lev<lev)
@@ -557,6 +558,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         if (do_rz_volume_scaling) {
             WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
         }
+#else
+        ignore_unused(do_rz_volume_scaling);
 #endif
 
         // Exchange guard cells
@@ -784,7 +787,7 @@ WarpXParticleContainer::PushX (amrex::Real dt)
 void
 WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 {
-    WARPX_PROFILE("WPC::PushX()");
+    WARPX_PROFILE("WarpXParticleContainer::PushX()");
 
     if (do_not_push) return;
 
@@ -861,6 +864,8 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
                                            const ParticleLocData& pld,
                                            const int lev)
 {
+    if (not do_splitting) return;
+
     // Tag particle if goes to higher level.
     // It will be split later in the loop
     if (pld.m_lev == lev+1

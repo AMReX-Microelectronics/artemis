@@ -94,7 +94,7 @@ public:
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::IntVect ng_extra,
                          amrex::Real external_field=0.0, bool useparser = false,
-                         ParserWrapper<3> *field_parser=nullptr);
+                         HostDeviceParser<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -599,9 +599,10 @@ public:
      * \param[in] lev, level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
-        amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
-        ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-        ParserWrapper<3> *zfield_parser, const int lev);
+         amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
+         HostDeviceParser<3> const& xfield_parser, HostDeviceParser<3> const& yfield_parser,
+         HostDeviceParser<3> const& zfield_parser, const int lev);
+
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
      * @param[in] costs vector of (`unique_ptr` to) vectors; expected to be initialized

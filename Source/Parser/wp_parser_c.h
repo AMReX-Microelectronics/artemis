@@ -2,17 +2,107 @@
 #define WP_PARSER_C_H_
 
 #include "wp_parser_y.h"
+
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_GpuPrint.H>
 #include <AMReX_Extension.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Print.H>
+#include <AMReX.H>
+
 #include <cassert>
 #include <set>
 #include <string>
 #include <type_traits>
 
 struct wp_parser* wp_c_parser_new (char const* function_body);
+
+#ifdef AMREX_USE_GPU
+
+template <int Depth, std::enable_if_t<(Depth<WARPX_PARSER_DEPTH), int> = 0>
+AMREX_GPU_DEVICE AMREX_NO_INLINE
+void wp_ast_update_device_ptr (struct wp_node* node, char* droot, char* hroot)
+{
+    switch (node->type)
+    {
+    case WP_NUMBER:
+        break;
+    case WP_SYMBOL:
+    {
+        auto p = (struct wp_symbol*)node;
+        p->name = droot + (p->name - hroot);
+        break;
+    }
+    case WP_ADD:
+    case WP_SUB:
+    case WP_MUL:
+    case WP_DIV:
+    {
+        node->l = (wp_node*)(droot + ((char*)node->l - hroot));
+        node->r = (wp_node*)(droot + ((char*)node->r - hroot));
+        wp_ast_update_device_ptr<Depth+1>(node->l, droot, hroot);
+        wp_ast_update_device_ptr<Depth+1>(node->r, droot, hroot);
+        break;
+    }
+    case WP_NEG:
+    {
+        node->l = (wp_node*)(droot + ((char*)node->l - hroot));
+        wp_ast_update_device_ptr<Depth+1>(node->l, droot, hroot);
+        break;
+    }
+    case WP_F1:
+    {
+        auto p = (struct wp_f1*)node;
+        p->l = (wp_node*)(droot + ((char*)p->l - hroot));
+        wp_ast_update_device_ptr<Depth+1>(p->l, droot, hroot);
+        break;
+    }
+    case WP_F2:
+    {
+        auto p = (struct wp_f2*)node;
+        p->l = (wp_node*)(droot + ((char*)p->l - hroot));
+        p->r = (wp_node*)(droot + ((char*)p->r - hroot));
+        wp_ast_update_device_ptr<Depth+1>(p->l, droot, hroot);
+        wp_ast_update_device_ptr<Depth+1>(p->r, droot, hroot);
+        break;
+    }
+    case WP_ADD_VP:
+    case WP_ADD_PP:
+    case WP_SUB_VP:
+    case WP_SUB_PP:
+    case WP_MUL_VP:
+    case WP_MUL_PP:
+    case WP_DIV_VP:
+    case WP_DIV_PP:
+    case WP_NEG_P:
+    {
+        // No need to update node->l and node->r that contain a string for
+        // variable name because we don't need them for device code.
+        break;
+    }
+    default:
+    {
+#if AMREX_DEVICE_COMPILE
+        AMREX_DEVICE_PRINTF("wp_ast_update_device_ptr: unknown node type %d\n",
+                            static_cast<int>(node->type));
+        amrex::Abort();
+#endif
+    }
+    }
+}
+
+template <int Depth, std::enable_if_t<Depth == WARPX_PARSER_DEPTH,int> = 0>
+AMREX_GPU_DEVICE AMREX_NO_INLINE
+void wp_ast_update_device_ptr (struct wp_node*, char*, char*)
+{
+#if AMREX_DEVICE_COMPILE
+    AMREX_DEVICE_PRINTF("wp_ast_update_device_ptr: WARPX_PARSER_DEPTH %d not big enough\n",
+                        WARPX_PARSER_DEPTH);
+    amrex::Abort();
+#endif
+}
+
+#endif
 
 template <int Depth, std::enable_if_t<(Depth<WARPX_PARSER_DEPTH), int> = 0>
 AMREX_GPU_HOST_DEVICE
@@ -22,7 +112,7 @@ AMREX_NO_INLINE
 amrex::Real
 wp_ast_eval (struct wp_node* node, amrex::Real const* x)
 {
-    amrex::Real result;
+    amrex::Real result = 0.0;
 
     switch (node->type)
     {
@@ -174,11 +264,13 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
         break;
     }
     default:
+    {
 #if AMREX_DEVICE_COMPILE
         AMREX_DEVICE_PRINTF("wp_ast_eval: unknown node type %d\n", node->type);
 #else
         amrex::AllPrint() << "wp_ast_eval: unknown node type " << node->type << "\n";
 #endif
+    }
     }
 
     return result;
@@ -199,6 +291,7 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
     amrex::AllPrint() << "wp_ast_eval: WARPX_PARSER_DEPTH" << WARPX_PARSER_DEPTH
                       << "not big enough\n";
 #endif
+    amrex::ignore_unused(node, x);
     return 0.;
 }
 

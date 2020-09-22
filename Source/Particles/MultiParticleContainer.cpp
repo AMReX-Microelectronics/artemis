@@ -74,7 +74,7 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     // collision
     auto const ncollisions = collision_names.size();
     allcollisions.resize(ncollisions);
-    for (int i = 0; i < ncollisions; ++i) {
+    for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
         allcollisions[i].reset
             (new CollisionType(species_names, collision_names[i]));
     }
@@ -442,7 +442,7 @@ MultiParticleContainer
                    Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const
 {
 
-    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData");
+    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData()");
 
     // Loop over particle species
     for (int i = 0; i < nspecies_back_transformed_diagnostics; ++i){
@@ -544,7 +544,7 @@ MultiParticleContainer::doContinuousInjection () const
 void
 MultiParticleContainer::mapSpeciesProduct ()
 {
-    for (int i=0; i<species_names.size(); i++){
+    for (int i=0; i < static_cast<int>(species_names.size()); i++){
         auto& pc = allcontainers[i];
         // If species pc has ionization on, find species with name
         // pc->ionization_product_name and store its ID into
@@ -589,10 +589,10 @@ MultiParticleContainer::mapSpeciesProduct ()
 int
 MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
-    int i_product;
+    int i_product = 0;
     bool found = 0;
     // Loop over species
-    for (int i=0; i<species_names.size(); i++){
+    for (int i=0; i < static_cast<int>(species_names.size()); i++){
         // If species name matches, store its ID
         // into i_product
         if (species_names[i] == product_str){
@@ -619,7 +619,7 @@ MultiParticleContainer::doFieldIonization (int lev,
                                            const MultiFab& By,
                                            const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doFieldIonization");
+    WARPX_PROFILE("MultiParticleContainer::doFieldIonization()");
 
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
@@ -664,7 +664,7 @@ MultiParticleContainer::doFieldIonization (int lev,
 void
 MultiParticleContainer::doCoulombCollisions ()
 {
-    WARPX_PROFILE("MPC::doCoulombCollisions");
+    WARPX_PROFILE("MultiParticleContainer::doCoulombCollisions()");
 
     for( auto const& collision : allcollisions )
     {
@@ -695,9 +695,22 @@ MultiParticleContainer::doCoulombCollisions ()
     }
 }
 
+void MultiParticleContainer::doResampling (const int timestep)
+{
+    WARPX_PROFILE("MultiParticleContainer::doResampling()");
+
+    for (auto& pc : allcontainers)
+    {
+        // do_resampling can only be true for PhysicalParticleContainers
+        if (!pc->do_resampling){ continue; }
+
+        pc->resample(m_resampler, timestep);
+    }
+}
+
 void MultiParticleContainer::CheckIonizationProductSpecies()
 {
-    for (int i=0; i<species_names.size(); i++){
+    for (int i=0; i < static_cast<int>(species_names.size()); i++){
         if (allcontainers[i]->do_field_ionization){
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != allcontainers[i]->ionization_product,
@@ -1006,7 +1019,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 void
 MultiParticleContainer::doQEDSchwinger ()
 {
-    WARPX_PROFILE("MPC::doQEDSchwinger");
+    WARPX_PROFILE("MultiParticleContainer::doQEDSchwinger()");
 
     if (!m_do_qed_schwinger) {return;}
 
@@ -1033,7 +1046,6 @@ MultiParticleContainer::doQEDSchwinger ()
 // Get cell volume multiplied by temporal step. In 2D the transverse size is
 // chosen by the user in the input file.
     amrex::Geometry const & geom = warpx.Geom(level_0);
-    auto domain_box = geom.Domain();
 #if (AMREX_SPACEDIM == 2)
     const auto dVdt = geom.CellSize(0) * geom.CellSize(1)
         * m_qed_schwinger_y_size * warpx.getdt(level_0);
@@ -1117,7 +1129,7 @@ void MultiParticleContainer::doQedEvents (int lev,
                                           const MultiFab& By,
                                           const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doQedEvents");
+    WARPX_PROFILE("MultiParticleContainer::doQedEvents()");
 
     doQedBreitWheeler(lev, Ex, Ey, Ez, Bx, By, Bz);
     doQedQuantumSync(lev, Ex, Ey, Ez, Bx, By, Bz);
@@ -1131,7 +1143,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
                                                 const MultiFab& By,
                                                 const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doQedBreitWheeler");
+    WARPX_PROFILE("MultiParticleContainer::doQedBreitWheeler()");
 
     // Loop over all species.
     // Photons undergoing Breit Wheeler process create electrons
@@ -1198,7 +1210,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                                                const MultiFab& By,
                                                const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doQedEvents::doQedQuantumSync");
+    WARPX_PROFILE("MultiParticleContainer::doQedQuantumSync()");
 
     // Loop over all species.
     // Electrons or positrons undergoing Quantum photon emission process

@@ -5,8 +5,10 @@
 #else
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#   include "FiniteDifferenceAlgorithms/FieldAccessorFunctors.H"
 #endif
 #include "Utils/WarpXConst.H"
+#include "Utils/CoarsenIO.H"
 #include <AMReX_Gpu.H>
 #include <WarpX.H>
 
@@ -54,15 +56,16 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         // Note : EvolveE is the same for CKC and Yee.
-        // In the templated Yee and CKC calls, the core operations for EvolveE is tihe same.
+        // In the templated Yee and CKC calls, the core operations for EvolveE is the same.
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo>
-                       ( Efield, Bfield,
+                       ( Efield, Bfield, 
 #ifdef WARPX_MAG_LLG
                          Mfield,
 #endif
                          Jfield, dt, macroscopic_properties );
+
         } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, BackwardEulerAlgo>
@@ -71,7 +74,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
                          Mfield,
 #endif
                          Jfield, dt, macroscopic_properties );
-
         }
 
     } else {
@@ -94,33 +96,20 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
 
-    //const int &macroscopic_solver_algo = WarpX::macroscopic_solver_algo;
-    //Real sigma = macroscopic_properties->sigma();
-    //Real const mu = macroscopic_properties->mu();
-    //Real const epsilon = macroscopic_properties->epsilon();
-
     auto& sigma_mf = macroscopic_properties->getsigma_mf();
     auto& epsilon_mf = macroscopic_properties->getepsilon_mf();
     auto& mu_mf = macroscopic_properties->getmu_mf();
 
-    //Real alpha = 0._rt;
-    //Real beta  = 0._rt;
-    //Real fac1 = 0._rt;
-    //Real inv_fac = 0._rt;
-    //if (macroscopic_solver_algo == 0) {
-    //    // sigma_method == 0 for Lax_Wendroff or semi-implicit approach
-    //    fac1 = 0.5_rt * sigma * dt / epsilon;
-    //    inv_fac = 1._rt / ( 1._rt + fac1);
-    //    alpha = (1.0_rt - fac1) * inv_fac;
-    //    beta  = dt * inv_fac / epsilon;
-    //}
-    //else if (macroscopic_solver_algo == 1) { // sigma method == 1
-    //    // sigma_metha == 1 for Backward Euler
-    //    fac1 = sigma * dt / epsilon;
-    //    inv_fac = 1._rt / ( 1._rt + fac1);
-    //    alpha = inv_fac;
-    //    beta  = dt * inv_fac / epsilon;
-    //}
+    // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
+    // properties from their respective staggering to the Ex, Ey, Ez locations
+    amrex::GpuArray<int, 3> const& sigma_stag = macroscopic_properties->sigma_IndexType;
+    amrex::GpuArray<int, 3> const& epsilon_stag = macroscopic_properties->epsilon_IndexType;
+    amrex::GpuArray<int, 3> const& mu_stag = macroscopic_properties->mu_IndexType;
+    amrex::GpuArray<int, 3> const& Ex_stag = macroscopic_properties->Ex_IndexType;
+    amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
+    amrex::GpuArray<int, 3> const& Ez_stag = macroscopic_properties->Ez_IndexType;
+    amrex::GpuArray<int, 3> const& macro_cr     = macroscopic_properties->macro_cr_ratio;
+
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
@@ -135,6 +124,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
+        Array4<Real> const& jx = Jfield[0]->array(mfi);
+        Array4<Real> const& jy = Jfield[1]->array(mfi);
+        Array4<Real> const& jz = Jfield[2]->array(mfi);
+
+        // material prop //
+        Array4<Real> const& sigma_arr = sigma_mf.array(mfi);
+        Array4<Real> const& eps_arr = epsilon_mf.array(mfi);
+        Array4<Real> const& mu_arr = mu_mf.array(mfi);
 
 #ifdef WARPX_MAG_LLG
         Array4<Real> const& M_xface = Mfield[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
@@ -155,101 +152,86 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
 
+        FieldAccessorMacroscopic const Hx(Bx, mu_arr);
+        FieldAccessorMacroscopic const Hy(By, mu_arr);
+        FieldAccessorMacroscopic const Hz(Bz, mu_arr);
+
         // Extract tileboxes for which to loop
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
         Box const& tey  = mfi.tilebox(Efield[1]->ixType().toIntVect());
         Box const& tez  = mfi.tilebox(Efield[2]->ixType().toIntVect());
-
-
+        // starting component to interpolate macro properties to Ex, Ey, Ez locations
+        const int scomp = 0;
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
-
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
-                                                 i, j, k, amrex::IntVect(1,0,0) );
-                amrex::Real beta = T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
-                                                i, j, k, amrex::IntVect(1,0,0) );
-                amrex::Real mu = T_MacroAlgo::macro_avg_to_edge(i, j, k, amrex::IntVect(2,1,1),
-                                                    mu_arr);
+                //// Interpolate conductivity, sigma, to Ex position on the grid
+                amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
+                                           Ex_stag, macro_cr, i, j, k, scomp);
+                // Interpolated permittivity, epsilon, to Ex position on the grid
+                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
+                                           Ex_stag, macro_cr, i, j, k, scomp);
+                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
+                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 #ifdef WARPX_MAG_LLG
                 Ex(i, j, k) = alpha * Ex(i, j, k) + beta
-                     * ((- T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, 0)
-                         + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, 0))/PhysConst::mu0
-                         + T_Algo::DownwardDz(M_yface, coefs_z, n_coefs_z, i, j, k, 1)
-                         - T_Algo::DownwardDy(M_zface, coefs_y, n_coefs_y, i, j, k, 2));
+                            * ((- T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, 0)
+                                + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, 0) )
+                                / PhysConst::mu0
+                            + (T_Algo::DownwardDz(M_yface, coefs_z, n_coefs_z, i, j, k, 1)
+                            - T_Algo::DownwardDy(M_zface, coefs_y, n_coefs_y, i, j, k, 2) ) );
 #else
-                Ex(i, j, k) = alpha * Ex(i, j, k) + (beta/mu)
-                     * ( - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
-                         + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k));
+                Ex(i, j, k) = alpha * Ex(i, j, k)
+                            + beta * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
+                                       + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)
+                                     ) - beta * jx(i, j, k);
 #endif
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
-                                                 i, j, k, amrex::IntVect(0,1,0) );
-                amrex::Real beta = T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
-                                                i, j, k, amrex::IntVect(0,1,0) );
-                amrex::Real mu = T_MacroAlgo::macro_avg_to_edge(i, j, k, amrex::IntVect(1,2,1),
-                                                    mu_arr);
+                amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
+                                           Ey_stag, macro_cr, i, j, k, scomp);
+                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
+                                           Ey_stag, macro_cr, i, j, k, scomp);
+                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
+                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 #ifdef WARPX_MAG_LLG
                 Ey(i, j, k) = alpha * Ey(i, j, k) + beta
-                     * ((- T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, 0)
-                         + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, 0))/PhysConst::mu0
-                         + T_Algo::DownwardDx(M_zface, coefs_x, n_coefs_x, i, j, k, 2)
-                         - T_Algo::DownwardDz(M_xface, coefs_z, n_coefs_z, i, j, k, 0));
+                            * ((- T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, 0)
+                                + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, 0) )
+                                / PhysConst::mu0
+                            + (T_Algo::DownwardDx(M_zface, coefs_x, n_coefs_x, i, j, k, 2)
+                            - T_Algo::DownwardDz(M_xface, coefs_z, n_coefs_z, i, j, k, 0) ) );
 #else
-                Ey(i, j, k) = alpha * Ey(i, j, k) + (beta/mu)
-                     * ( - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
-                         + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k));
+                Ey(i, j, k) = alpha * Ey(i, j, k)
+                            + beta * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
+                                       + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0)
+                                     ) - beta * jy(i, j, k);
 #endif
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
-                                                 i, j, k, amrex::IntVect(0,0,1) );
-                amrex::Real beta = T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
-                                                i, j, k, amrex::IntVect(0,0,1) );
-                amrex::Real mu = T_MacroAlgo::macro_avg_to_edge(i, j, k, amrex::IntVect(1,1,2),
-                                                    mu_arr);
+                amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
+                                           Ez_stag, macro_cr, i, j, k, scomp);
+                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
+                                           Ez_stag, macro_cr, i, j, k, scomp);
+                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
+                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 #ifdef WARPX_MAG_LLG
                 Ez(i, j, k) = alpha * Ez(i, j, k) + beta
-                     * ((- T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, 0)
-                         + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, 0))/PhysConst::mu0
-                         + T_Algo::DownwardDy(M_xface, coefs_y, n_coefs_y, i, j, k, 0)
-                         - T_Algo::DownwardDx(M_yface, coefs_x, n_coefs_x, i, j, k, 1));
+                            * ((- T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, 0)
+                                + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, 0))
+                                / PhysConst::mu0
+                             + (T_Algo::DownwardDy(M_xface, coefs_y, n_coefs_y, i, j, k, 0)
+                             - T_Algo::DownwardDx(M_yface, coefs_x, n_coefs_x, i, j, k, 1) ) );
 #else
-                Ez(i, j, k) = alpha * Ez(i, j, k) + (beta/mu)
-                     * ( - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
-                         + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k));
+                Ez(i, j, k) = alpha * Ez(i, j, k)
+                            + beta * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
+                                       + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0)
+                                     ) - beta * jz(i, j, k);
 #endif
             }
-
         );
-
-        // update E using J, if source currents are specified.
-        if (Jfield[0]) {
-            Array4<Real> const& jx = Jfield[0]->array(mfi);
-            Array4<Real> const& jy = Jfield[1]->array(mfi);
-            Array4<Real> const& jz = Jfield[2]->array(mfi);
-
-            amrex::ParallelFor(tex, tey, tez,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    Ex(i, j, k) += -T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
-                                                      i, j, k, amrex::IntVect(0, 0, 1) )
-                                   * jx(i, j, k);
-                },
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    Ey(i, j, k) += -T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
-                                                      i, j, k, amrex::IntVect(0, 1, 0) )
-                                   * jy(i, j, k);
-                },
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    Ez(i, j, k) += -T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
-                                                      i, j, k, amrex::IntVect(0, 0, 1)  )
-                                    * jz(i, j, k);
-                }
-            );
-        }
     }
 }
 
