@@ -169,6 +169,13 @@ public:
     static int em_solver_medium;
     static int macroscopic_solver_algo;
 
+#ifdef WARPX_MAG_LLG
+    // second-order magnetization normalization strategy
+    int mag_M_normalization;
+    // turn on LLG + Maxwell coupling
+    int mag_LLG_coupling = 1;
+#endif
+
 #ifdef WARPX_USE_PSATD
     // If true (overwritten by the user in the input file), the current correction
     // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
