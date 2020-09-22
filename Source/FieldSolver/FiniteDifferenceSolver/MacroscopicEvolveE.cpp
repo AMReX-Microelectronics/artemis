@@ -130,11 +130,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Array4<Real> const& jy = Jfield[1]->array(mfi);
         Array4<Real> const& jz = Jfield[2]->array(mfi);
 
-        // material prop //
-        Array4<Real> const& sigma_arr = sigma_mf.array(mfi);
-        Array4<Real> const& eps_arr = epsilon_mf.array(mfi);
-        Array4<Real> const& mu_arr = mu_mf.array(mfi);
-
 #ifdef WARPX_MAG_LLG
         Array4<Real> const& M_xface = Mfield[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
         Array4<Real> const& M_yface = Mfield[1]->array(mfi); // note M_yface include x,y,z components at |_y faces

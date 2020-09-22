@@ -524,25 +524,25 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        InitializeExternalFieldsOnGridUsingParser(H_biasfield_fp[lev][0].get(),
                                                  H_biasfield_fp[lev][1].get(),
                                                  H_biasfield_fp[lev][2].get(),
-                                                 Hx_biasfield_parser.get(),
-                                                 Hy_biasfield_parser.get(),
-                                                 Hz_biasfield_parser.get(),
+                                                 getParser(Hx_biasfield_parser),
+                                                 getParser(Hy_biasfield_parser),
+                                                 getParser(Hz_biasfield_parser),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(H_biasfield_aux[lev][0].get(),
                                                     H_biasfield_aux[lev][1].get(),
                                                     H_biasfield_aux[lev][2].get(),
-                                                    Hx_biasfield_parser.get(),
-                                                    Hy_biasfield_parser.get(),
-                                                    Hz_biasfield_parser.get(),
+                                                    getParser(Hx_biasfield_parser),
+                                                    getParser(Hy_biasfield_parser),
+                                                    getParser(Hz_biasfield_parser),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(H_biasfield_cp[lev][0].get(),
                                                     H_biasfield_cp[lev][1].get(),
                                                     H_biasfield_cp[lev][2].get(),
-                                                    Hx_biasfield_parser.get(),
-                                                    Hy_biasfield_parser.get(),
-                                                    Hz_biasfield_parser.get(),
+                                                    getParser(Hx_biasfield_parser),
+                                                    getParser(Hy_biasfield_parser),
+                                                    getParser(Hz_biasfield_parser),
                                                     lev);
        }
     }
@@ -570,25 +570,25 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        InitializeExternalFieldsOnGridUsingParser(Mfield_fp[lev][0].get(),
                                                  Mfield_fp[lev][1].get(),
                                                  Mfield_fp[lev][2].get(),
-                                                 Mxfield_parser.get(),
-                                                 Myfield_parser.get(),
-                                                 Mzfield_parser.get(),
+                                                 getParser(Mxfield_parser),
+                                                 getParser(Myfield_parser),
+                                                 getParser(Mzfield_parser),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Mfield_aux[lev][0].get(),
                                                     Mfield_aux[lev][1].get(),
                                                     Mfield_aux[lev][2].get(),
-                                                    Mxfield_parser.get(),
-                                                    Myfield_parser.get(),
-                                                    Mzfield_parser.get(),
+                                                    getParser(Mxfield_parser),
+                                                    getParser(Myfield_parser),
+                                                    getParser(Mzfield_parser),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Mfield_cp[lev][0].get(),
                                                     Mfield_cp[lev][1].get(),
                                                     Mfield_cp[lev][2].get(),
-                                                    Mxfield_parser.get(),
-                                                    Myfield_parser.get(),
-                                                    Mzfield_parser.get(),
+                                                    getParser(Mxfield_parser),
+                                                    getParser(Myfield_parser),
+                                                    getParser(Mzfield_parser),
                                                     lev);
        }
 
