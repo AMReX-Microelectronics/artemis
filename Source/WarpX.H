@@ -114,6 +114,10 @@ public:
     static std::string B_ext_grid_s;
     static std::string E_ext_grid_s;
 
+    // Initialization Type for External E and B excitation on grid
+    static std::string B_excitation_grid_s;
+    static std::string E_excitation_grid_s;
+
 #ifdef WARPX_MAG_LLG
     static std::string M_ext_grid_s; // added for M;
     static std::string H_bias_ext_grid_s;
@@ -127,6 +131,15 @@ public:
     static std::string str_Ex_ext_grid_function;
     static std::string str_Ey_ext_grid_function;
     static std::string str_Ez_ext_grid_function;
+
+    // Function for B excitation (x,y,z,t) on the grid
+    static std::string str_Bx_excitation_grid_function;
+    static std::string str_By_excitation_grid_function;
+    static std::string str_Bz_excitation_grid_function;
+    // Function for E excitation (x,y,z,t) on the grid
+    static std::string str_Ex_excitation_grid_function;
+    static std::string str_Ey_excitation_grid_function;
+    static std::string str_Ez_excitation_grid_function;
 
 #ifdef WARPX_MAG_LLG
     // Parser for M_external on the grid
@@ -147,6 +160,16 @@ public:
     std::unique_ptr<ParserWrapper<3> > Exfield_parser;
     std::unique_ptr<ParserWrapper<3> > Eyfield_parser;
     std::unique_ptr<ParserWrapper<3> > Ezfield_parser;
+
+
+    // ParserWrapper for B_external excitation on the grid
+    std::unique_ptr<ParserWrapper<4> > Bxfield_xt_grid_parser;
+    std::unique_ptr<ParserWrapper<4> > Byfield_xt_grid_parser;
+    std::unique_ptr<ParserWrapper<4> > Bzfield_xt_grid_parser;
+    // ParserWrapper for E_external excitation on the grid
+    std::unique_ptr<ParserWrapper<4> > Exfield_xt_grid_parser;
+    std::unique_ptr<ParserWrapper<4> > Eyfield_xt_grid_parser;
+    std::unique_ptr<ParserWrapper<4> > Ezfield_xt_grid_parser;
 
 #ifdef WARPX_MAG_LLG
     // ParserWrapper for M_external on the grid
@@ -627,6 +650,16 @@ public:
      * to correct number of boxes and boxes per level
      */
     void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& costs);
+
+    /** \brief adds the contribution of user-defined external field-excitation
+     *   to Efield_fp and Bfield_fp.
+     */
+    void ApplyExternalFieldExcitationOnGrid ();
+    void ApplyExternalFieldExcitationOnGrid ( amrex::MultiFab *mfx,
+         amrex::MultiFab *mfy, amrex::MultiFab *mfz,
+         HostDeviceParser<4> const& xfield_parser,
+         HostDeviceParser<4> const& yfield_parser,
+         HostDeviceParser<4> const& zfield_parser, const int lev );
 
 protected:
 

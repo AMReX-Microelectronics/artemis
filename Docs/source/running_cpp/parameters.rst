@@ -913,6 +913,30 @@ Laser initialization
     B-field to each particle which is then added to the field values gathered
     from the grid in the PIC cycle.
 
+* ``B_excitation_on_grid_style`` (string) optional (default is "default")
+    This parameter is used to set the type of external magnetic field excitation
+    varying in space (x,y,z) and time (t). The excitation is added to the magnetic field
+    on the grid at every timestep. To add an external B-excitation as a function
+    of (x,y,z,t), use the option ``parse_B_excitation_grid_function``. This option requires
+    additional parameters in the input file to set the parser function, namely,
+    ``warpx.Bx_excitation_grid_function(x,y,z,t)``,
+    ``warpx.By_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Bz_excitation_grid_function(x,y,z,t)`` to apply the external B-field on the grid.
+    Constants required in the mathematical expression can be set using ``my_constants``.
+    This function is currently supported only for 3D simulations.
+
+* ``E_excitation_on_grid_style`` (string) optional (default is "default")
+    This parameter is used to set the type of external electric field excitation
+    varying in space (x,y,z) and time (t). The excitation is added to the electric field
+    on the grid at every timestep. To add an external E-excitation as a function
+    of (x,y,z,t), use the option ``parse_E_excitation_grid_function``. This option requires
+    additional parameters in the input file to set the parser function, namely,
+    ``warpx.Ex_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Ey_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Ez_excitation_grid_function(x,y,z,t)`` to apply the external E-field on the grid.
+    Constants required in the mathematical expression can be set using ``my_constants``.
+    This function is currently supported only for 3D simulations.
+
 .. _running-cpp-parameters-collision:
 
 Collision initialization

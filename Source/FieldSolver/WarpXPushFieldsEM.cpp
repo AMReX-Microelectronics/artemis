@@ -11,6 +11,7 @@
 #include "BoundaryConditions/WarpX_PML_kernels.H"
 #include "BoundaryConditions/PML_current.H"
 #include "WarpX_FDTD.H"
+#include "Parser/GpuParser.H"
 #ifdef WARPX_USE_PY
 #   include "Python/WarpX_py.H"
 #endif

@@ -48,6 +48,10 @@ std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
 
+// default type is constant
+std::string WarpX::B_excitation_grid_s = "default";
+std::string WarpX::E_excitation_grid_s = "default";
+
 #ifdef WARPX_MAG_LLG
 std::string WarpX::M_ext_grid_s = "default";
 std::string WarpX::H_bias_ext_grid_s = "default";
@@ -62,6 +66,15 @@ std::string WarpX::str_Bz_ext_grid_function;
 std::string WarpX::str_Ex_ext_grid_function;
 std::string WarpX::str_Ey_ext_grid_function;
 std::string WarpX::str_Ez_ext_grid_function;
+
+// Parser for B_external on the grid
+std::string WarpX::str_Bx_excitation_grid_function;
+std::string WarpX::str_By_excitation_grid_function;
+std::string WarpX::str_Bz_excitation_grid_function;
+// Parser for E_external on the grid
+std::string WarpX::str_Ex_excitation_grid_function;
+std::string WarpX::str_Ey_excitation_grid_function;
+std::string WarpX::str_Ez_excitation_grid_function;
 
 #ifdef WARPX_MAG_LLG
 // Parser for M_external on the grid

@@ -3,6 +3,7 @@ target_sources(WarpX
     ElectrostaticSolver.cpp
     WarpXPushFieldsEM.cpp
     WarpX_QED_Field_Pushers.cpp
+    WarpXExternalEMFields.cpp
 )
 
 add_subdirectory(FiniteDifferenceSolver)
