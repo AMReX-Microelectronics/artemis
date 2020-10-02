@@ -277,6 +277,11 @@ Particle initialization
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
 
+* ``particles.boundary_conditions`` (`string`) optional (default `none`)
+    Boundary conditions applied to particles. Options are:
+    * ``none``: the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
+    * ``absorbing``: particles exiting the simulation domain are discarded.
+
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
     method is useful when injecting a relativistic particle beam, in boosted-frame
@@ -588,6 +593,37 @@ Particle initialization
     If a photon species has the Breit-Wheeler process, a positron product species must be specified
     (the name of an existing positron species must be provided).
     **This feature requires to compile with QED=TRUE**
+
+* ``<species>.do_resampling`` (`0` or `1`) optional (default `0`)
+    If `1` resampling is performed for this species. This means that the number of macroparticles
+    will be reduced at specific timesteps while preserving the distribution function as much as
+    possible (in particular the weight of the remaining particles will be increased on average).
+    This can be useful in situations with continuous creation of particles (e.g. with ionization
+    or with QED effects). At least one resampling trigger (see below) must be specified to actually
+    perform resampling.
+
+* ``<species>.resampling_algorithm`` (`string`) optional (default `leveling_thinning`)
+    The algorithm used for resampling. Currently there is only one option, which is already set by
+    default:
+
+    * ``leveling_thinning`` This algorithm is defined in `Muraviev et al., arXiv:2006.08593 (2020) <https://arxiv.org/abs/2006.08593>`_.
+      It has two parameters:
+
+        * ``<species>.resampling_algorithm_target_ratio`` (`float`) optional (default `1.5`)
+            This **roughly** corresponds to the ratio between the number of particles before and
+            after resampling.
+
+        * ``<species>.resampling_algorithm_min_ppc`` (`int`) optional (default `1`)
+            Resampling is not performed in cells with a number of macroparticles strictly smaller
+            than this parameter.
+
+* ``<species>.resampling_trigger_intervals`` (`string`) optional (default `0`)
+    Using the `Intervals parser`_ syntax, this string defines timesteps at which resampling is
+    performed.
+
+* ``<species>.resampling_trigger_max_avg_ppc`` (`float`) optional (default `infinity`)
+    Resampling is performed everytime the number of macroparticles per cell of the species
+    averaged over the whole simulation domain exceeds this parameter.
 
 .. _running-cpp-parameters-laser:
 
@@ -1489,13 +1525,16 @@ s disabled.
     Which species dumped in this diagnostics.
 
 * ``<diag_name>.<species_name>.variables`` (list of `strings` separated by spaces, optional)
-    List of particle quantities to write to output file.
-    By defaults, all quantities are written to file. Choices are
+    List of particle quantities or species-specific field quantities to write to output file.
+    Choices are
 
     * ``w`` for the particle weight,
 
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
 
+    * ``rho`` to dump the charge density of the particles belonging to species ``<species_name>``.
+
+    By defaults, all quantities are written to output file, except the charge density.
     The particle positions are always included.
     Use ``<species>.variables = none`` to plot no particle data, except particle position.
 
@@ -1657,6 +1696,23 @@ Reduced Diagnostics
         :math:`E` field energy,
         :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
 
+    * ``FieldMaximum``
+        This type computes the maximum value of each component of the electric and magnetic fields
+        and of the norm of the electric and magnetic field vectors.
+        Measuring maximum fields in a plasma might be very noisy in PIC, use this instead
+        for analysis of scenarios such as an electromagnetic wave propagating in vacuum.
+
+        The output columns are
+        the maximum value of the :math:`E_x` field,
+        the maximum value of the :math:`E_y` field,
+        the maximum value of the :math:`E_z` field,
+        the maximum value of the norm :math:`|E|` of the electric field,
+        the maximum value of the :math:`B_x` field,
+        the maximum value of the :math:`B_y` field,
+        the maximum value of the :math:`B_z` field and
+        the maximum value of the norm :math:`|B|` of the magnetic field,
+        at mesh refinement levels from  0 to :math:`n`.
+
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,
         like position, momentum, emittance, etc.
@@ -1780,8 +1836,9 @@ Reduced Diagnostics
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
-* ``<reduced_diags_name>.frequency`` (`int`)
-    The output frequency (every # time steps).
+* ``<reduced_diags_name>.frequency`` (`string`) optional (default ``1``)
+    Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
+    diagnostics are written to file.
 
 * ``<reduced_diags_name>.path`` (`string`) optional (default `./diags/reducedfiles/`)
     The path that the output file will be stored.
