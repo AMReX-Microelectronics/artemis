@@ -246,8 +246,11 @@ MultiParticleContainer::ReadParameters ()
             pc.queryarr("collision_names", collision_names);
 
         }
-
         pp.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
+#ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
+                            "ERROR: use_fdtd_nci_corr is not supported in RZ");
+#endif
         pp.query("galerkin_interpolation", WarpX::galerkin_interpolation);
 
         std::string boundary_conditions = "none";
@@ -715,8 +718,6 @@ MultiParticleContainer::doCoulombCollisions ()
 
 void MultiParticleContainer::doResampling (const int timestep)
 {
-    WARPX_PROFILE("MultiParticleContainer::doResampling()");
-
     for (auto& pc : allcontainers)
     {
         // do_resampling can only be true for PhysicalParticleContainers
