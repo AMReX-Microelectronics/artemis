@@ -18,9 +18,10 @@ using namespace amrex;
 
 void FiniteDifferenceSolver::MacroscopicEvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+#ifndef WARPX_MAG_LLG
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-#ifdef WARPX_MAG_LLG
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Mfield,
+#else
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
 #endif
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
@@ -39,18 +40,22 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
             MacroscopicEvolveECartesian <CartesianYeeAlgorithm, LaxWendroffAlgo>
-                       ( Efield, Bfield,
-#ifdef WARPX_MAG_LLG
-                         Mfield,
+                       ( Efield,
+#ifndef WARPX_MAG_LLG
+                         Bfield,
+#else
+                         Hfield,
 #endif
                          Jfield, dt, macroscopic_properties );
         }
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianYeeAlgorithm, BackwardEulerAlgo>
-                       ( Efield, Bfield,
-#ifdef WARPX_MAG_LLG
-                         Mfield,
+                       ( Efield,
+#ifndef WARPX_MAG_LLG
+                         Bfield,
+#else
+                         Hfield,
 #endif
                          Jfield, dt, macroscopic_properties );
 
@@ -63,18 +68,22 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo>
-                       ( Efield, Bfield,
-#ifdef WARPX_MAG_LLG
-                         Mfield,
+                       ( Efield,
+#ifndef WARPX_MAG_LLG
+                         Bfield,
+#else
+                         Hfield,
 #endif
                          Jfield, dt, macroscopic_properties );
 
         } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, BackwardEulerAlgo>
-                       ( Efield, Bfield,
-#ifdef WARPX_MAG_LLG
-                         Mfield,
+                       ( Efield,
+#ifndef WARPX_MAG_LLG
+                         Bfield,
+#else
+                         Hfield,
 #endif
                          Jfield, dt, macroscopic_properties );
         }
@@ -92,9 +101,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 template<typename T_Algo, typename T_MacroAlgo>
 void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+#ifndef WARPX_MAG_LLG
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-#ifdef WARPX_MAG_LLG
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Mfield,
+#else
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
 #endif
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
@@ -123,17 +133,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-        Array4<Real> const& Bx = Bfield[0]->array(mfi);
-        Array4<Real> const& By = Bfield[1]->array(mfi);
-        Array4<Real> const& Bz = Bfield[2]->array(mfi);
         Array4<Real> const& jx = Jfield[0]->array(mfi);
         Array4<Real> const& jy = Jfield[1]->array(mfi);
         Array4<Real> const& jz = Jfield[2]->array(mfi);
 
-#ifdef WARPX_MAG_LLG
-        Array4<Real> const& M_xface = Mfield[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
-        Array4<Real> const& M_yface = Mfield[1]->array(mfi); // note M_yface include x,y,z components at |_y faces
-        Array4<Real> const& M_zface = Mfield[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
+#ifndef WARPX_MAG_LLG
+        Array4<Real> const& Bx = Bfield[0]->array(mfi);
+        Array4<Real> const& By = Bfield[1]->array(mfi);
+        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+#else
+        Array4<Real> const& M_xface = Hfield[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
+        Array4<Real> const& M_yface = Hfield[1]->array(mfi); // note M_yface include x,y,z components at |_y faces
+        Array4<Real> const& M_zface = Hfield[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
 #endif
 
         // material prop //
@@ -149,9 +160,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
 
+#ifndef WARPX_MAG_LLG
         FieldAccessorMacroscopic const Hx(Bx, mu_arr);
         FieldAccessorMacroscopic const Hy(By, mu_arr);
         FieldAccessorMacroscopic const Hz(Bz, mu_arr);
+#else
+        Array4<Real> const& Hx = Hfield[0]->array(mfi);
+        Array4<Real> const& Hy = Hfield[1]->array(mfi);
+        Array4<Real> const& Hz = Hfield[2]->array(mfi);
+#endif
 
         // Extract tileboxes for which to loop
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
@@ -170,19 +187,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
-#ifdef WARPX_MAG_LLG
-                Ex(i, j, k) = alpha * Ex(i, j, k) + beta
-                            * ((- T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, 0)
-                                + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, 0) )
-                                / PhysConst::mu0
-                            + (T_Algo::DownwardDz(M_yface, coefs_z, n_coefs_z, i, j, k, 1)
-                            - T_Algo::DownwardDy(M_zface, coefs_y, n_coefs_y, i, j, k, 2) ) );
-#else
+
                 Ex(i, j, k) = alpha * Ex(i, j, k)
                             + beta * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
                                        + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)
                                      ) - beta * jx(i, j, k);
-#endif
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -192,19 +201,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                            Ey_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
-#ifdef WARPX_MAG_LLG
-                Ey(i, j, k) = alpha * Ey(i, j, k) + beta
-                            * ((- T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, 0)
-                                + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, 0) )
-                                / PhysConst::mu0
-                            + (T_Algo::DownwardDx(M_zface, coefs_x, n_coefs_x, i, j, k, 2)
-                            - T_Algo::DownwardDz(M_xface, coefs_z, n_coefs_z, i, j, k, 0) ) );
-#else
+
                 Ey(i, j, k) = alpha * Ey(i, j, k)
                             + beta * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
                                        + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0)
                                      ) - beta * jy(i, j, k);
-#endif
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -214,19 +215,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                            Ez_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
-#ifdef WARPX_MAG_LLG
-                Ez(i, j, k) = alpha * Ez(i, j, k) + beta
-                            * ((- T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, 0)
-                                + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, 0))
-                                / PhysConst::mu0
-                             + (T_Algo::DownwardDy(M_xface, coefs_y, n_coefs_y, i, j, k, 0)
-                             - T_Algo::DownwardDx(M_yface, coefs_x, n_coefs_x, i, j, k, 1) ) );
-#else
+
                 Ez(i, j, k) = alpha * Ez(i, j, k)
                             + beta * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
                                        + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0)
                                      ) - beta * jz(i, j, k);
-#endif
             }
         );
     }

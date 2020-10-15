@@ -31,6 +31,19 @@ WarpX::ApplyExternalFieldExcitationOnGrid ()
                                                getParser(Bzfield_xt_grid_parser),
                                                lev );
         }
+
+#ifdef WARPX_MAG_LLG
+        if (H_excitation_grid_s == "parse_h_excitation_grid_function")
+        {
+            ApplyExternalFieldExcitationOnGrid(Hfield_fp[lev][0].get(),
+                                               Hfield_fp[lev][1].get(),
+                                               Hfield_fp[lev][2].get(),
+                                               getParser(Hxfield_xt_grid_parser),
+                                               getParser(Hyfield_xt_grid_parser),
+                                               getParser(Hzfield_xt_grid_parser),
+                                               lev );
+        }
+#endif
     } // for loop over level
 }
 

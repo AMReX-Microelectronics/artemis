@@ -479,6 +479,9 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getBfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "By_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getBfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
 #ifdef WARPX_MAG_LLG
+        WriteRawMF( warpx.getHfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Hx_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getHfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "Hy_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getHfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Hz_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getMfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "M_xface_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getMfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "M_yface_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getMfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "M_zface_fp", lev, plot_raw_fields_guards);

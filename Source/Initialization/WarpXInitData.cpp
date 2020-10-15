@@ -296,6 +296,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    M_ext_grid_s.begin(),
                    ::tolower);
 
+    pp.query("H_ext_grid_init_style", H_ext_grid_s); // user-defined initial H
+    std::transform(H_ext_grid_s.begin(),
+                   H_ext_grid_s.end(),
+                   H_ext_grid_s.begin(),
+                   ::tolower);
+
     pp.query("H_bias_ext_grid_init_style", H_bias_ext_grid_s); // user-defined initial M
     std::transform(H_bias_ext_grid_s.begin(),
                    H_bias_ext_grid_s.end(),
@@ -315,6 +321,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    E_excitation_grid_s.end(),
                    E_excitation_grid_s.begin(),
                    ::tolower);
+
+#ifdef WARPX_MAG_LLG
+    pp.query("H_excitation_on_grid_style", H_excitation_grid_s);
+    std::transform(H_excitation_grid_s.begin(),
+                   H_excitation_grid_s.end(),
+                   H_excitation_grid_s.begin(),
+                   ::tolower);
+#endif
 
     // * Functions with the string "arr" in their names get an Array of
     //   values from the given entry in the table.  The array argument is
@@ -371,10 +385,33 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    makeParser(str_Ez_excitation_grid_function,{"x","y","z","t"})));
     }
 
+#ifdef WARPX_MAG_LLG
+    // make parser for the external H-excitation in space-time
+    if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
+#ifdef WARPX_DIM_RZ
+       amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
+#endif
+       Store_parserString(pp, "Hx_excitation_grid_function(x,y,z,t)",
+                                                    str_Hx_excitation_grid_function);
+       Store_parserString(pp, "Hy_excitation_grid_function(x,y,z,t)",
+                                                    str_Hy_excitation_grid_function);
+       Store_parserString(pp, "Hz_excitation_grid_function(x,y,z,t)",
+                                                    str_Hz_excitation_grid_function);
+       Hxfield_xt_grid_parser.reset(new ParserWrapper<4>(
+                   makeParser(str_Hx_excitation_grid_function,{"x","y","z","t"})));
+       Hyfield_xt_grid_parser.reset(new ParserWrapper<4>(
+                   makeParser(str_Hy_excitation_grid_function,{"x","y","z","t"})));
+       Hzfield_xt_grid_parser.reset(new ParserWrapper<4>(
+                   makeParser(str_Hz_excitation_grid_function,{"x","y","z","t"})));
+    }
+#endif
 
 #ifdef WARPX_MAG_LLG
     if (M_ext_grid_s == "constant")
         pp.getarr("M_external_grid", M_external_grid);
+
+    if (H_ext_grid_s == "constant")
+        pp.getarr("H_external_grid", H_external_grid);
 
     if (H_bias_ext_grid_s == "constant")
         pp.getarr("H_bias_external_grid", H_bias_external_grid);
@@ -439,6 +476,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             for (int icomp = 0; icomp < 3; ++icomp){ // icomp is the index of components at each i face
                 Mfield_fp[lev][i]->setVal(M_external_grid[icomp], icomp, 1, nghost);
             }
+        }
+
+        if (H_ext_grid_s == "constant" || H_ext_grid_s == "default") {
+           Hfield_fp[lev][i]->setVal(H_external_grid[i]);
+           if (lev > 0) {
+              Hfield_aux[lev][i]->setVal(H_external_grid[i]);
+              Hfield_cp[lev][i]->setVal(H_external_grid[i]);
+           }
         }
 
         if (H_bias_ext_grid_s == "constant" || H_bias_ext_grid_s == "default") {
@@ -600,6 +645,51 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        }
     }
 
+    if (H_ext_grid_s == "parse_h_ext_grid_function") {
+
+#ifdef WARPX_DIM_RZ
+       amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
+#endif
+       Store_parserString(pp, "Hx_external_grid_function(x,y,z)",
+                                                    str_Hx_ext_grid_function);
+       Store_parserString(pp, "Hy_external_grid_function(x,y,z)",
+                                                    str_Hy_ext_grid_function);
+       Store_parserString(pp, "Hz_external_grid_function(x,y,z)",
+                                                    str_Hz_ext_grid_function);
+
+       Hxfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Hx_ext_grid_function,{"x","y","z"})));
+       Hyfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Hy_ext_grid_function,{"x","y","z"})));
+       Hzfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Hz_ext_grid_function,{"x","y","z"})));
+
+       // Initialize Hfield_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(Hfield_fp[lev][0].get(),
+                                                 Hfield_fp[lev][1].get(),
+                                                 Hfield_fp[lev][2].get(),
+                                                 getParser(Hxfield_parser),
+                                                 getParser(Hyfield_parser),
+                                                 getParser(Hzfield_parser),
+                                                 lev);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Hfield_aux[lev][0].get(),
+                                                    Hfield_aux[lev][1].get(),
+                                                    Hfield_aux[lev][2].get(),
+                                                    getParser(Hxfield_parser),
+                                                    getParser(Hyfield_parser),
+                                                    getParser(Hzfield_parser),
+                                                    lev);
+
+          InitializeExternalFieldsOnGridUsingParser(Hfield_cp[lev][0].get(),
+                                                    Hfield_cp[lev][1].get(),
+                                                    Hfield_cp[lev][2].get(),
+                                                    getParser(Hxfield_parser),
+                                                    getParser(Hyfield_parser),
+                                                    getParser(Hzfield_parser),
+                                                    lev);
+       }
+    }
 
     if (M_ext_grid_s == "parse_m_ext_grid_function") {
 #ifdef WARPX_DIM_RZ

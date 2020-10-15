@@ -69,9 +69,10 @@ class FiniteDifferenceSolver
           */
 
         void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+#ifndef WARPX_MAG_LLG
                             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-#ifdef WARPX_MAG_LLG
-                            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Mfield,
+#else
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Hfield,
 #endif
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                             amrex::Real const dt,
@@ -104,6 +105,23 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield_old,
                        amrex::Real const dt,
                        std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
+
+        void MacroscopicEvolveHM ( std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
+                       amrex::Real const dt,
+                       std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
+
+        void MacroscopicEvolveHM_2nd ( std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
+                       amrex::Real const dt,
+                       std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
+
 #endif
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
@@ -200,9 +218,10 @@ class FiniteDifferenceSolver
         template< typename T_Algo, typename T_MacroAlgo >
         void MacroscopicEvolveECartesian (
             std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
+#ifndef WARPX_MAG_LLG
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,
-#ifdef WARPX_MAG_LLG
-            std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Mfield,
+#else
+            std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Hfield,
 #endif
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
             amrex::Real const dt,
@@ -225,6 +244,26 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield_old,
             amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties );
+
+        template< typename T_Algo >
+        void MacroscopicEvolveHMCartesian(
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
+            amrex::Real const dt,
+            std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
+
+        template< typename T_Algo >
+        void MacroscopicEvolveHMCartesian_2nd(
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
+            amrex::Real const dt,
+            std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 #endif
 
         template< typename T_Algo >

@@ -978,6 +978,19 @@ Laser initialization
     Constants required in the mathematical expression can be set using ``my_constants``.
     This function is currently supported only for 3D simulations.
 
+* ``H_excitation_on_grid_style`` (string) optional (default is "default")
+    This parameter is used to set the type of external magnetic field excitation
+    varying in space (x,y,z) and time (t). The excitation is added to the magnetic field
+    on the grid at every timestep. To add an external H-excitation as a function
+    of (x,y,z,t), use the option ``parse_H_excitation_grid_function``. This option requires
+    additional parameters in the input file to set the parser function, namely,
+    ``warpx.Hx_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Hy_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Hz_excitation_grid_function(x,y,z,t)`` to apply the external H-field on the grid.
+    Constants required in the mathematical expression can be set using ``my_constants``.
+    This function is currently supported only for 3D simulations.
+    This requires `USE_LLG=TRUE` in the GNUMakefile.
+
 .. _running-cpp-parameters-collision:
 
 Collision initialization
@@ -1481,6 +1494,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``F`` ``part_per_grid`` ``part_per_proc`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species.
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
     If compiled with ``USE_LLG=TRUE``, additional values include
+    ``Hx`` ``Hy`` ``Hz``
     ``Mx_xface`` ``Mx_yface`` ``Mx_zface``
     ``My_xface`` ``My_yface`` ``My_zface``
     ``Mz_xface`` ``Mz_yface`` ``Mz_zface``

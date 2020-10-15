@@ -92,8 +92,11 @@ WarpX::Evolve (int numsteps)
         if (is_synchronized) {
             // Not called at each iteration, so exchange all guard cells
             FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+#ifndef WARPX_MAG_LLG
             FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+#endif
 #ifdef WARPX_MAG_LLG
+            FillBoundaryH(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
             FillBoundaryM(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
 #endif
             UpdateAuxilaryData();
@@ -113,6 +116,7 @@ WarpX::Evolve (int numsteps)
             FillBoundaryE(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
             FillBoundaryB(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
 #ifdef WARPX_MAG_LLG
+            FillBoundaryH(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
             FillBoundaryM(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
 #endif
             // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
@@ -366,18 +370,21 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveF(0.5*dt[0], DtType::FirstHalf);
         FillBoundaryF(guard_cells.ng_FieldSolverF);
 
+#ifndef WARPX_MAG_LLG
         EvolveB(0.5*dt[0]); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
+#endif
 
 #ifdef WARPX_MAG_LLG
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
             if (mag_time_scheme_order==1){
-                MacroscopicEvolveM(0.5*dt[0]); // we now have M^{n+1/2}
+                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveM_2nd(0.5*dt[0]); // we now have M^{n+1/2}
+                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }
+            FillBoundaryH(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
             FillBoundaryM(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
         } else {
             amrex::Abort("unsupported em_solver_medium for M field");
@@ -395,9 +402,9 @@ WarpX::OneStep_nosub (Real cur_time)
 
         FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
         EvolveF(0.5*dt[0], DtType::SecondHalf);
-
+#ifndef WARPX_MAG_LLG
         EvolveB(0.5*dt[0]); // We now have B^{n+1}
-
+#endif
         //why not implementing FillBoundary here? possibly: implemented in if{safe_guard_cells} Line 452
         if (do_pml) {
             FillBoundaryF(guard_cells.ng_alloc_F);
@@ -414,22 +421,32 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifdef WARPX_MAG_LLG
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
             if (mag_time_scheme_order==1){
-                MacroscopicEvolveM(0.5*dt[0]); // we now have M^{n+1}
+                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveM_2nd(0.5*dt[0]); // we now have M^{n+1}
+                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
-            }
-            if ( safe_guard_cells ){
-                FillBoundaryM(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
             }
         }
         else {
                 amrex::Abort("unsupported em_solver_medium for M field");
         }
+        // H and M are up-to-date in the domain, but all guard cells are
+        // outdated.
+        if ( safe_guard_cells ){
+            FillBoundaryH(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+            FillBoundaryM(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+        }
 #endif //
-#endif // end for PSATD
+#endif // end for #if PSATD
     }
+
+/* for output */
+#ifdef WARPX_MAG_LLG
+    // output the field variables on level 0
+    MacroscopicfieldOutput(Mfield_fp[0], Hfield_fp[0], Efield_fp[0], Bfield_fp[0], cur_time);
+#endif
+
 }
 
 /* /brief Perform one PIC iteration, with subcycling
