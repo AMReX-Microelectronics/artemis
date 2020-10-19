@@ -82,7 +82,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     }
 
     // calculate the b_temp_static, a_temp_static
-    for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) /* remember to FIX */ {
+    for (MFIter mfi(*a_temp_static[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) {
         auto& mag_Ms_mf = macroscopic_properties->getmag_Ms_mf();
         auto& mag_alpha_mf = macroscopic_properties->getmag_alpha_mf();
         auto& mag_gamma_mf = macroscopic_properties->getmag_gamma_mf();

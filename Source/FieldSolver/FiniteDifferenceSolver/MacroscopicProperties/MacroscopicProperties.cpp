@@ -135,17 +135,17 @@ MacroscopicProperties::InitData ()
     int ng = 3;
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
-    m_sigma_mf = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dmap, 1, ng);
+    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     // epsilon is cell-centered MultiFab
-    m_eps_mf = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dmap, 1, ng);
+    m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     // mu is cell-centered MultiFab
-    m_mu_mf = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dmap, 1, ng);
+    m_mu_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
 
 #ifdef WARPX_MAG_LLG
-    // all magnetic macroparameters are stored on cell nodes
-    m_mag_Ms_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
-    m_mag_alpha_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
-    m_mag_gamma_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
+    // all magnetic macroparameters are stored on cell centers
+    m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_mag_gamma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
 #endif
 
     // Initialize sigma
@@ -249,7 +249,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     const auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
     IntVect iv = macro_mf->ixType().toIntVect();
-    IntVect grown_iv = iv ;
+    IntVect grown_iv = macro_mf->nGrowVect();
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
 
