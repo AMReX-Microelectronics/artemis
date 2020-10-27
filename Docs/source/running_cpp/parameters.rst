@@ -963,6 +963,19 @@ Laser initialization
     ``warpx.Bx_excitation_grid_function(x,y,z,t)``,
     ``warpx.By_excitation_grid_function(x,y,z,t)``,
     ``warpx.Bz_excitation_grid_function(x,y,z,t)`` to apply the external B-field on the grid.
+    Additionally, the option also requires a flag function to set the type of excitation,
+    ``warpx.Bx_excitation_flag_function(x,y,z)``,
+    ``warpx.By_excitation_flag_function(x,y,z)``,
+    ``warpx.Bz_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    set to have three values, namely 0, 1, or 2.
+    If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
+    field component at that location.
+    If the flag is set to 1 at a given `(x,y,z)`, then the excitation is treated as a hard
+    source and the field component at that location is set exactly equal to the value
+    from the `excitation_grid_function` of the corresponding field component.
+    If the flag is set to 2, then the excittaion is treated as a soft source and the
+    field component is updated with the contribution from the `excitation_grid_function`
+    of the corresponding field component.
     Constants required in the mathematical expression can be set using ``my_constants``.
     This function is currently supported only for 3D simulations.
 
@@ -975,6 +988,19 @@ Laser initialization
     ``warpx.Ex_excitation_grid_function(x,y,z,t)``,
     ``warpx.Ey_excitation_grid_function(x,y,z,t)``,
     ``warpx.Ez_excitation_grid_function(x,y,z,t)`` to apply the external E-field on the grid.
+    Additionally, the option also requires a flag function to set the type of excitation,
+    ``warpx.Ex_excitation_flag_function(x,y,z)``,
+    ``warpx.Ey_excitation_flag_function(x,y,z)``,
+    ``warpx.Ez_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    set to have three values, namely 0, 1, or 2.
+    If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
+    field component at that location.
+    If the flag is set to 1 at a given `(x,y,z)`, then the excitation is treated as a hard
+    source and the field component at that location is set exactly equal to the value
+    from the `excitation_grid_function` of the corresponding field component.
+    If the flag is set to 2, then the excittaion is treated as a soft source and the
+    field component is updated with the contribution from the `excitation_grid_function`
+    of the corresponding field component.
     Constants required in the mathematical expression can be set using ``my_constants``.
     This function is currently supported only for 3D simulations.
 
@@ -987,6 +1013,19 @@ Laser initialization
     ``warpx.Hx_excitation_grid_function(x,y,z,t)``,
     ``warpx.Hy_excitation_grid_function(x,y,z,t)``,
     ``warpx.Hz_excitation_grid_function(x,y,z,t)`` to apply the external H-field on the grid.
+    Additionally, the option also requires a flag function to set the type of excitation,
+    ``warpx.Hx_excitation_flag_function(x,y,z)``,
+    ``warpx.Hy_excitation_flag_function(x,y,z)``,
+    ``warpx.Hz_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    set to have three values, namely 0, 1, or 2.
+    If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
+    field component at that location.
+    If the flag is set to 1 at a given `(x,y,z)`, then the excitation is treated as a hard
+    source and the field component at that location is set exactly equal to the value
+    from the `excitation_grid_function` of the corresponding field component.
+    If the flag is set to 2, then the excittaion is treated as a soft source and the
+    field component is updated with the contribution from the `excitation_grid_function`
+    of the corresponding field component.
     Constants required in the mathematical expression can be set using ``my_constants``.
     This function is currently supported only for 3D simulations.
     This requires `USE_LLG=TRUE` in the GNUMakefile.

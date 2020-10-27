@@ -329,7 +329,63 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    H_excitation_grid_s.begin(),
                    ::tolower);
 #endif
+    if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
+        // if E excitation type is set to parser then the corresponding
+        // source type (hard=0, soft=1) must be specified for all components
+        // using the flag function. Note that a flag value of -1 will not update
+        // the field with the excitation.
+        Store_parserString(pp, "Ex_excitation_flag_function(x,y,z)",
+                                str_Ex_excitation_flag_function);
+        Store_parserString(pp, "Ey_excitation_flag_function(x,y,z)",
+                                str_Ey_excitation_flag_function);
+        Store_parserString(pp, "Ez_excitation_flag_function(x,y,z)",
+                                str_Ez_excitation_flag_function);
+    }
+    if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
+        // if B excitation type is set to parser then the corresponding
+        // source type (hard=0, soft=1) must be specified for all components
+        // using the flag function. Note that a flag value of -1 will not update
+        // the field with the excitation.
+        Store_parserString(pp, "Bx_excitation_flag_function(x,y,z)",
+                                str_Bx_excitation_flag_function);
+        Store_parserString(pp, "By_excitation_flag_function(x,y,z)",
+                                str_By_excitation_flag_function);
+        Store_parserString(pp, "Bz_excitation_flag_function(x,y,z)",
+                                str_Bz_excitation_flag_function);
+    }
+    Exfield_flag_parser.reset(new ParserWrapper<3>(
+        makeParser(str_Ex_excitation_flag_function,{"x","y","z"})));
+    Eyfield_flag_parser.reset(new ParserWrapper<3>(
+        makeParser(str_Ey_excitation_flag_function,{"x","y","z"})));
+    Ezfield_flag_parser.reset(new ParserWrapper<3>(
+        makeParser(str_Ez_excitation_flag_function,{"x","y","z"})));
+    Bxfield_flag_parser.reset(new ParserWrapper<3>(
+        makeParser(str_Bx_excitation_flag_function,{"x","y","z"})));
+    Byfield_flag_parser.reset(new ParserWrapper<3>(
+        makeParser(str_By_excitation_flag_function,{"x","y","z"})));
+    Bzfield_flag_parser.reset(new ParserWrapper<3>(
+        makeParser(str_Bz_excitation_flag_function,{"x","y","z"})));
 
+#ifdef WARPX_MAG_LLG
+    if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
+        // if H excitation type is set to parser then the corresponding
+        // source type (hard=0, soft=1) must be specified for all components
+        // using the flag function. Note that a flag value of -1 will not update
+        // the field with the excitation.
+        Store_parserString(pp, "Hx_excitation_flag_function(x,y,z)",
+                                str_Hx_excitation_flag_function);
+        Store_parserString(pp, "Hy_excitation_flag_function(x,y,z)",
+                                str_Hy_excitation_flag_function);
+        Store_parserString(pp, "Hz_excitation_flag_function(x,y,z)",
+                                str_Hz_excitation_flag_function);
+    }
+    Hxfield_flag_parser.reset(new ParserWrapper<3>(
+        makeParser(str_Hx_excitation_flag_function,{"x","y","z"})));
+    Hyfield_flag_parser.reset(new ParserWrapper<3>(
+        makeParser(str_Hy_excitation_flag_function,{"x","y","z"})));
+    Hzfield_flag_parser.reset(new ParserWrapper<3>(
+        makeParser(str_Hz_excitation_flag_function,{"x","y","z"})));
+#endif
     // * Functions with the string "arr" in their names get an Array of
     //   values from the given entry in the table.  The array argument is
     //   resized (if necessary) to hold all the values requested.
