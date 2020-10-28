@@ -69,7 +69,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
     // A flag is used to determine the type of excitation.
     // If flag == 1, it is a hard source and the field = excitation
     // If flag == 2, if is a soft source and the field += excitation
-    // If flag == 0, the excitation parser is not computed and the field is unchanged. 
+    // If flag == 0, the excitation parser is not computed and the field is unchanged.
     // If flag is not 0, or 1, or 2, the code will Abort!
 
     // Gpu vector to store Ex-Bz staggering (Hx-Hz for LLG)
