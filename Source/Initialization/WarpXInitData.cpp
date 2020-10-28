@@ -335,8 +335,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
     if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
         // if E excitation type is set to parser then the corresponding
-        // source type (hard=0, soft=1) must be specified for all components
-        // using the flag function. Note that a flag value of -1 will not update
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
         // the field with the excitation.
         Store_parserString(pp, "Ex_excitation_flag_function(x,y,z)",
                                 str_Ex_excitation_flag_function);
@@ -353,8 +353,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
     if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
         // if B excitation type is set to parser then the corresponding
-        // source type (hard=0, soft=1) must be specified for all components
-        // using the flag function. Note that a flag value of -1 will not update
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
         // the field with the excitation.
         Store_parserString(pp, "Bx_excitation_flag_function(x,y,z)",
                                 str_Bx_excitation_flag_function);
@@ -373,8 +373,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_MAG_LLG
     if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
         // if H excitation type is set to parser then the corresponding
-        // source type (hard=0, soft=1) must be specified for all components
-        // using the flag function. Note that a flag value of -1 will not update
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
         // the field with the excitation.
         Store_parserString(pp, "Hx_excitation_flag_function(x,y,z)",
                                 str_Hx_excitation_flag_function);
