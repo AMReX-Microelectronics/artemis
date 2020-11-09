@@ -47,6 +47,7 @@ option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
 option(WarpX_QED           "PICSAR QED (requires Boost and PICSAR)"     OFF)
+option(WarpX_MAG_LLG       "LLG for magnetization modeling"             OFF)
 # TODO: python, sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
@@ -191,6 +192,10 @@ if(WarpX_OPENPMD)
     target_link_libraries(WarpX PUBLIC openPMD::openPMD)
 endif()
 
+if(WarpX_MAG_LLG)
+    target_compile_definitions(WarpX PUBLIC WARPX_MAG_LLG)
+endif()
+
 if(WarpX_QED)
     target_compile_definitions(WarpX PUBLIC WARPX_QED)
     # FIXME WARPX_QED_TABLE_GEN
@@ -236,6 +241,10 @@ endif()
 
 if(WarpX_PSATD)
     target_compile_definitions(WarpX PRIVATE WARPX_USE_PSATD)
+endif()
+
+if(WarpX_MAG_LLG)
+    target_compile_definitions(WarpX PRIVATE WARPX_MAG_LLG)
 endif()
 
 target_compile_definitions(WarpX PRIVATE
