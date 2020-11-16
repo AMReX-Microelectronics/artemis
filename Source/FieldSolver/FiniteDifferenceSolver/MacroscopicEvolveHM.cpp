@@ -12,6 +12,7 @@
 #include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
 #include "Utils/WarpXConst.H"
+#include "Utils/CoarsenIO.H"
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
@@ -63,6 +64,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     // temporary Multifab storing M from previous timestep (old_time) before updating to M(new_time)
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Mfield_old; // Mfield_old is M(old_time)
 
+    amrex::GpuArray<int, 3> const& mag_Ms_stag    = macroscopic_properties->mag_Ms_IndexType;
+    amrex::GpuArray<int, 3> const& mag_alpha_stag = macroscopic_properties->mag_alpha_IndexType;
+    amrex::GpuArray<int, 3> const& mag_gamma_stag = macroscopic_properties->mag_gamma_IndexType;
+    amrex::GpuArray<int, 3> const& Mx_stag        = macroscopic_properties->Mx_IndexType;
+    amrex::GpuArray<int, 3> const& My_stag        = macroscopic_properties->My_IndexType;
+    amrex::GpuArray<int, 3> const& Mz_stag        = macroscopic_properties->Mz_IndexType;
+    amrex::GpuArray<int, 3> const& macro_cr       = macroscopic_properties->macro_cr_ratio;
+
     for (int i = 0; i < 3; i++)
     {
         // Mfield_old is M(n)
@@ -102,14 +111,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Array4<Real> const &Hy_bias = H_biasfield[1]->array(mfi);    // Hy_bias is the y component at |_y faces
         Array4<Real> const &Hz_bias = H_biasfield[2]->array(mfi);    // Hz_bias is the z component at |_z faces
 
-        // extract stencil coefficients
-        Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        int const n_coefs_x = m_stencil_coefs_x.size();
-        Real const *const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        int const n_coefs_y = m_stencil_coefs_y.size();
-        Real const *const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
-
         // extract tileboxes for which to loop
         Box const &tbx = mfi.tilebox(Hfield[0]->ixType().toIntVect()); /* just define which grid type */
         Box const &tby = mfi.tilebox(Hfield[1]->ixType().toIntVect());
@@ -119,9 +120,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                amrex::Real mag_Ms_arrx    = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_Ms_arr);
-                amrex::Real mag_alpha_arrx = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_alpha_arr);
-                amrex::Real mag_gamma_arrx = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_gamma_arr);
+                Real mag_Ms_arrx    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
+                Real mag_alpha_arrx = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mx_stag, macro_cr, i, j, k, 0);
+                Real mag_gamma_arrx = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
 
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrx > 0._rt)
@@ -209,9 +210,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                Real mag_Ms_arry    = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_Ms_arr);
-                Real mag_alpha_arry = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_alpha_arr);
-                Real mag_gamma_arry = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_gamma_arr);
+                Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
+                Real mag_alpha_arry = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, My_stag, macro_cr, i, j, k, 0);
+                Real mag_gamma_arry = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
 
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arry > 0._rt)
@@ -298,9 +299,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                Real mag_Ms_arrz    = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr);
-                Real mag_alpha_arrz = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_alpha_arr);
-                Real mag_gamma_arrz = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_gamma_arr);
+                Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
+                Real mag_alpha_arrz = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mz_stag, macro_cr, i, j, k, 0);
+                Real mag_gamma_arrz = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
 
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrz > 0._rt)
@@ -485,14 +486,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Array4<Real> const &M_xface = Mfield[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
         Array4<Real> const &M_yface = Mfield[1]->array(mfi); // note M_yface include x,y,z components at |_y faces
         Array4<Real> const &M_zface = Mfield[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
-
-        // Extract stencil coefficients
-        Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        int const n_coefs_x = m_stencil_coefs_x.size();
-        Real const *const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        int const n_coefs_y = m_stencil_coefs_y.size();
-        Real const *const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
 
         // Extract tileboxes for which to loop
         Box const &tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect());

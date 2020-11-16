@@ -8,6 +8,7 @@ blank
 #include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 
 #include "Utils/WarpXConst.H"
+#include "Utils/CoarsenIO.H"
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
@@ -63,6 +64,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     std::array<std::unique_ptr<amrex::MultiFab>, 3> a_temp_static; // α M^(old_time)/|M| in the right-hand side of vector a, see the documentation
     std::array<std::unique_ptr<amrex::MultiFab>, 3> b_temp_static; // right-hand side of vector b, see the documentation
 
+    amrex::GpuArray<int, 3> const& mag_Ms_stag    = macroscopic_properties->mag_Ms_IndexType;
+    amrex::GpuArray<int, 3> const& mag_alpha_stag = macroscopic_properties->mag_alpha_IndexType;
+    amrex::GpuArray<int, 3> const& mag_gamma_stag = macroscopic_properties->mag_gamma_IndexType;
+    amrex::GpuArray<int, 3> const& mu_stag        = macroscopic_properties->mu_IndexType;
+    amrex::GpuArray<int, 3> const& Mx_stag        = macroscopic_properties->Mx_IndexType;
+    amrex::GpuArray<int, 3> const& My_stag        = macroscopic_properties->My_IndexType;
+    amrex::GpuArray<int, 3> const& Mz_stag        = macroscopic_properties->Mz_IndexType;
+    amrex::GpuArray<int, 3> const& macro_cr       = macroscopic_properties->macro_cr_ratio;
+
     // Initialize Hfield_old (H^(old_time)), Mfield_old (M^(old_time)), Mfield_prev (M^[(new_time),r-1]), Mfield_error
     for (int i = 0; i < 3; i++){
         Hfield_old[i].reset(new MultiFab(Hfield[i]->boxArray(), Hfield[i]->DistributionMap(), 1, Hfield[i]->nGrow()));
@@ -110,14 +120,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Array4<Real> const &b_temp_static_yface = b_temp_static[1]->array(mfi);
         Array4<Real> const &b_temp_static_zface = b_temp_static[2]->array(mfi);
 
-        // extract stencil coefficients
-        Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        int const n_coefs_x = m_stencil_coefs_x.size();
-        Real const *const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        int const n_coefs_y = m_stencil_coefs_y.size();
-        Real const *const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
-
         // extract tileboxes for which to loop
         Box const &tbx = mfi.tilebox(Mfield[0]->ixType().toIntVect()); /* just define which grid type */
         Box const &tby = mfi.tilebox(Mfield[1]->ixType().toIntVect());
@@ -127,9 +129,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                Real mag_Ms_arrx    = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_Ms_arr);
-                Real mag_alpha_arrx = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_alpha_arr);
-                Real mag_gamma_arrx = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_gamma_arr);
+                Real mag_Ms_arrx    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
+                Real mag_alpha_arrx = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mx_stag, macro_cr, i, j, k, 0);
+                Real mag_gamma_arrx = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
 
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrx > 0._rt){
@@ -181,9 +183,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                Real mag_Ms_arry    = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_Ms_arr);
-                Real mag_alpha_arry = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_alpha_arr);
-                Real mag_gamma_arry = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_gamma_arr);
+                Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
+                Real mag_alpha_arry = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, My_stag, macro_cr, i, j, k, 0);
+                Real mag_gamma_arry = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
 
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arry > 0._rt){
@@ -235,9 +237,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                Real mag_Ms_arrz    = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr);
-                Real mag_alpha_arrz = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_alpha_arr);
-                Real mag_gamma_arrz = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_gamma_arr);
+                Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
+                Real mag_alpha_arrz = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mz_stag, macro_cr, i, j, k, 0);
+                Real mag_gamma_arrz = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
 
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrz > 0._rt){
@@ -340,14 +342,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             Array4<Real> const &b_temp_static_yface = b_temp_static[1]->array(mfi);
             Array4<Real> const &b_temp_static_zface = b_temp_static[2]->array(mfi);
 
-            // extract stencil coefficients
-            Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-            int const n_coefs_x = m_stencil_coefs_x.size();
-            Real const *const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-            int const n_coefs_y = m_stencil_coefs_y.size();
-            Real const *const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-            int const n_coefs_z = m_stencil_coefs_z.size();
-
             // extract tileboxes for which to loop
             Box const &tbx = mfi.tilebox(Hfield[0]->ixType().toIntVect()); /* just define which grid type */
             Box const &tby = mfi.tilebox(Hfield[1]->ixType().toIntVect());
@@ -357,9 +351,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             amrex::ParallelFor(tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                    Real mag_Ms_arrx    = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_Ms_arr);
-                    Real mag_alpha_arrx = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_alpha_arr);
-                    Real mag_gamma_arrx = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_gamma_arr);
+                    Real mag_Ms_arrx    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
+                    Real mag_alpha_arrx = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mx_stag, macro_cr, i, j, k, 0);
+                    Real mag_gamma_arrx = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
 
                     // determine if the material is nonmagnetic or not
                     if (mag_Ms_arrx > 0._rt){
@@ -445,9 +439,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                    Real mag_Ms_arry    = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_Ms_arr);
-                    Real mag_alpha_arry = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_alpha_arr);
-                    Real mag_gamma_arry = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_gamma_arr);
+                    Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
+                    Real mag_alpha_arry = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, My_stag, macro_cr, i, j, k, 0);
+                    Real mag_gamma_arry = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
 
                     // determine if the material is nonmagnetic or not
                     if (mag_Ms_arry > 0._rt){
@@ -533,9 +527,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                    Real mag_Ms_arrz    = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr);
-                    Real mag_alpha_arrz = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_alpha_arr);
-                    Real mag_gamma_arrz = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_gamma_arr);
+                    Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
+                    Real mag_alpha_arrz = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mz_stag, macro_cr, i, j, k, 0);
+                    Real mag_gamma_arrz = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
 
                     // determine if the material is nonmagnetic or not
                     if (mag_Ms_arrz > 0._rt){
@@ -666,14 +660,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             amrex::ParallelFor(tbx, tby, tbz,
 
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                    Real mag_Ms_arrx = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(1,0,0), mag_Ms_arr);
+                    Real mag_Ms_arrx    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
                     if (mag_Ms_arrx == 0._rt){ // nonmagnetic region
-                        Real mu_arrx = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(1,0,0), mu_arr);
-                        Hx(i, j, k) += 1. / mu_arrx * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
-                                                          - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
+                        Real mu_arrx    = CoarsenIO::Interp( mu_arr, mu_stag, Mx_stag, macro_cr, i, j, k, 0);
+                        Hx(i, j, k) = Hx_old(i, j, k) + 1. / mu_arrx * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
+                                                                           - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
                     } else if (mag_Ms_arrx > 0){ // magnetic region
-                        Hx(i, j, k) += mu0_inv * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
-                                                     - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
+                        Hx(i, j, k) = Hx_old(i, j, k) + mu0_inv * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
+                                                                      - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
                         if (coupling == 1) {
                         Hx(i, j, k) += - M_xface(i, j, k, 0) + M_xface_old(i, j, k, 0);
                         }
@@ -681,14 +675,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 },
 
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                    Real mag_Ms_arry = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(0,1,0), mag_Ms_arr);
+                    Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
                     if (mag_Ms_arry == 0._rt){ // nonmagnetic region
-                        Real mu_arry = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(0,1,0), mu_arr);
-                        Hy(i, j, k) += 1. / mu_arry * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
-                                                          - T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k));
+                        Real mu_arry    = CoarsenIO::Interp( mu_arr, mu_stag, My_stag, macro_cr, i, j, k, 0);
+                        Hy(i, j, k) = Hy_old(i, j, k) + 1. / mu_arry * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
+                                                                           - T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k));
                     } else if (mag_Ms_arry > 0){ // magnetic region
-                        Hy(i, j, k) += mu0_inv * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
-                                                 - T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k));
+                        Hy(i, j, k) = Hy_old(i, j, k) + mu0_inv * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
+                                                                      - T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k));
                         if (coupling == 1){
                             Hy(i, j, k) += - M_yface(i, j, k, 1) + M_yface_old(i, j, k, 1);
                         }
@@ -696,14 +690,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 },
 
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                    Real mag_Ms_arrz = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(0,0,1), mag_Ms_arr);
+                    Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
                     if (mag_Ms_arrz == 0._rt){ // nonmagnetic region
-                        Real mu_arrz = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(0,0,1), mu_arr);
-                        Hz(i, j, k) += 1. / mu_arrz * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
-                                                          - T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k));
+                        Real mu_arrz    = CoarsenIO::Interp( mu_arr, mu_stag, Mz_stag, macro_cr, i, j, k, 0);
+                        Hz(i, j, k) = Hz_old(i, j, k) + 1. / mu_arrz * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
+                                                                           - T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k));
                     } else if (mag_Ms_arrz > 0){ // magnetic region
-                        Hz(i, j, k) += mu0_inv * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
-                                                     - T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k));
+                        Hz(i, j, k) = Hz_old(i, j, k) + mu0_inv * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
+                                                                      - T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k));
                         if (coupling == 1){
                             Hz(i, j, k) += - M_zface(i, j, k, 2) + M_zface_old(i, j, k, 2);
                         }
@@ -852,14 +846,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Array4<Real> const &M_xface = Mfield[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
         Array4<Real> const &M_yface = Mfield[1]->array(mfi); // note M_yface include x,y,z components at |_y faces
         Array4<Real> const &M_zface = Mfield[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
-
-        // Extract stencil coefficients
-        Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        int const n_coefs_x = m_stencil_coefs_x.size();
-        Real const *const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        int const n_coefs_y = m_stencil_coefs_y.size();
-        Real const *const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
 
         // Extract tileboxes for which to loop
         Box const &tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect());

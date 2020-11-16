@@ -45,6 +45,20 @@ public:
      amrex::GpuArray<int, 3> Ey_IndexType;
      /** Gpu Vector with index type of the Ez multifab */
      amrex::GpuArray<int, 3> Ez_IndexType;
+#ifdef WARPX_MAG_LLG
+     /** Gpu Vector with index type of the saturation magnetization multifab */
+     amrex::GpuArray<int, 3> mag_Ms_IndexType;
+     /** Gpu Vector with index type of the Gilbert damping factor multifab */
+     amrex::GpuArray<int, 3> mag_alpha_IndexType;
+     /** Gpu Vector with index type of the gyromagnetic ratio multifab */
+     amrex::GpuArray<int, 3> mag_gamma_IndexType;
+     /** Gpu Vector with index type of the Mx multifab */
+     amrex::GpuArray<int, 3> Mx_IndexType;
+     /** Gpu Vector with index type of the My multifab */
+     amrex::GpuArray<int, 3> My_IndexType;
+     /** Gpu Vector with index type of the Mz multifab */
+     amrex::GpuArray<int, 3> Mz_IndexType;
+#endif
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;
 

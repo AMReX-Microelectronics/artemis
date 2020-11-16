@@ -521,7 +521,7 @@ WarpX::FillBoundaryM (int lev, PatchType patch_type, IntVect ng)
     {
         if (do_pml && pml[lev]->ok())
         {
-            amrex:Abort("PML not included for EvolveM yet");
+            amrex:Abort("PML not included for EvolveHM yet");
             /*
             pml[lev]->ExchangeM(patch_type,
                             { Mfield_fp[lev][0].get(),
@@ -546,7 +546,7 @@ WarpX::FillBoundaryM (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
-        amrex::Abort("EvolveM does not come with coarse patch yet");
+        amrex::Abort("EvolveHM does not come with coarse patch yet");
         /*
         if (do_pml && pml[lev]->ok())
         {
