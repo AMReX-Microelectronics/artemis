@@ -882,6 +882,8 @@ Laser initialization
     input file. For a two-dimensional simulation, it is assumed that the first dimension     is `x` and the second dimension in `z`, and the value of `y` is set to zero.
     Note that the current implementation of the parser for external B-field
     does not work with RZ and the code will abort with an error message.
+    Note that the implementation of the parser for external B-field does not work
+    with USE_LLG=TRUE and the code will abort with an error message
 
 * ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
@@ -892,7 +894,7 @@ Laser initialization
     additional parameter, namely, ``warpx.E_external_grid`` must be specified
     in the input file.
     If set to ``parse_E_ext_grid_function``, then a mathematical expression can
-    be used to initialize the external magnetic field on the grid. It
+    be used to initialize the external electric field on the grid. It
     required additional parameters in the input file, namely,
     ``warpx.Ex_external_grid_function(x,y,z)``,
     ``warpx.Ey_external_grid_function(x,y,z)``,
@@ -908,6 +910,30 @@ Laser initialization
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
 
+* ``warpx.H_ext_grid_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the external
+    magnetic field intensity. The "default" style initializes the
+    external magnetic field (Hx,Hy,Hz) to (0.0, 0.0, 0.0).
+    The string can be set to "constant" if a constant magnetic field is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``warpx.H_external_grid`` must be specified
+    in the input file.
+    If set to ``parse_H_ext_grid_function``, then a mathematical expression can
+    be used to initialize the external magnetic field on the grid. It
+    required additional parameters in the input file, namely,
+    ``warpx.Hx_external_grid_function(x,y,z)``,
+    ``warpx.Hy_external_grid_function(x,y,z)``,
+    ``warpx.Hz_external_grid_function(x,y,z)`` to initialize the external
+    magnetic field intensity for each of the three components on the grid.
+    Constants required in the expression can be set using ``my_constants``.
+    For example, if ``warpx.Hx_external_grid_function(x,y,z)=Ho*x + delta*(y + z)``
+    then the constants `Ho` and `delta` required in the above equation
+    can be set using ``my_constants.Ho=`` and ``my_constants.delta=`` in the
+    input file. This function is currently supported only for 3D simulations.
+    Note that the current implementation of the parser for external H-field
+    does not work with RZ and the code will abort with an error message.
+    This requires `USE_LLG=TRUE` in the GNUMakefile.
+
 * ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
     required when ``warpx.E_ext_grid_init_style="constant"``
     and when ``warpx.B_ext_grid_init_style="constant"``, respectively.
@@ -915,6 +941,16 @@ Laser initialization
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
     than periodic.
+    Note that the implementation of the parser for external B-field does not work
+    with USE_LLG=TRUE and the code will abort with an error message
+
+* ``warpx.H_external_grid`` (list of `3 floats`)
+    required when ``warpx.H_ext_grid_init_style="constant"``.
+    External uniform and constant magnetostatic field added
+    to the grid at initialization. Use with caution as these fields are used for
+    the field solver. In particular, do not use any other boundary condition
+    than periodic.
+    This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 *  ``particles.B_ext_particle_init_style`` (string) optional (default is "default")
      This parameter determines the type of initialization for the external
@@ -987,6 +1023,8 @@ Laser initialization
     of the corresponding field component.
     Constants required in the mathematical expression can be set using ``my_constants``.
     This function is currently supported only for 3D simulations.
+    Note that the implementation of the parser for excitation B-field does not work
+    with LLG and the code will abort with an error message
 
 * ``E_excitation_on_grid_style`` (string) optional (default is "default")
     This parameter is used to set the type of external electric field excitation

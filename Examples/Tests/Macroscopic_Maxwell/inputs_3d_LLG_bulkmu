@@ -1,5 +1,8 @@
 ####################################################################################################
-## This input file is a convergence test for a coupled Maxwell+LLG system                         ##
+## This input file simulates the bulk ferromagnetic material's permeability spectrum
+## Periodic boundary conditions at all boundaries, which needs to be modified
+## The plane wave excitation is the time-dependent modified Gaussian pulse
+## This input file requires USE_LLG=TRUE in the GNUMakefile.
 ####################################################################################################
 
 ################################
@@ -22,6 +25,9 @@ my_constants.h = 1.0e-3 # thickness of the film
 my_constants.c = 299792458.
 my_constants.wavelength = 0.2308 # frequency is 1.30 GHz
 my_constants.TP = 1.5385e-9 # Gaussian pulse width
+my_constants.flag_none = 0
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
 
 #################################
 ############ NUMERICS ###########
@@ -69,6 +75,9 @@ warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0.0"
 warpx.Ey_excitation_grid_function(x,y,z,t) = "1000*(exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (z>=h) * (z<h+6.0e-4)"
 warpx.Ez_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z>=h) * (z<h+6.0e-4) + flag_none * (z<h) + flag_none * (z>=h+6.0e-4)"
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
 
 warpx.H_ext_grid_init_style = parse_H_ext_grid_function
 warpx.Hx_external_grid_function(x,y,z)= 0.
@@ -91,6 +100,5 @@ warpx.Mz_external_grid_function(x,y,z) = 0.
 diagnostics.diags_names = plt
 plt.period = 10
 plt.diag_type = Full
-#plt.fields_to_plot = Ex Ey Ez Bx By Bz
 plt.fields_to_plot = Ex Ey Ez Hx Hy Hz Bx By Bz Mx_xface My_xface Mz_xface Mx_yface My_yface Mz_yface Mx_zface My_zface Mz_zface
 plt.plot_raw_fields = 0

@@ -282,11 +282,20 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // default values of E_external_grid and B_external_grid
     // are used to set the E and B field when "constant" or
     // "parser" is not explicitly used in the input.
-    pp.query("B_ext_grid_init_style", B_ext_grid_s);
-    std::transform(B_ext_grid_s.begin(),
+    bool B_ext_specified = false;
+    if (pp.query("B_ext_grid_init_style", B_ext_grid_s)){
+        std::transform(B_ext_grid_s.begin(),
                    B_ext_grid_s.end(),
                    B_ext_grid_s.begin(),
                    ::tolower);
+        B_ext_specified = true;
+    }
+
+#ifdef WARPX_MAG_LLG
+    if (B_ext_specified) {
+        amrex::Abort("ERROR: Initialization of B field is not allowed in the LLG simulation! \nThe initial magnetic field must be H and M! \n");
+    }
+#endif
 
     pp.query("E_ext_grid_init_style", E_ext_grid_s);
     std::transform(E_ext_grid_s.begin(),
@@ -314,11 +323,20 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
 
     // Query for type of external space-time (xt) varying excitation
-    pp.query("B_excitation_on_grid_style", B_excitation_grid_s);
-    std::transform(B_excitation_grid_s.begin(),
+    bool B_excitation_specified = false;
+    if (pp.query("B_excitation_on_grid_style", B_excitation_grid_s)){
+        std::transform(B_excitation_grid_s.begin(),
                    B_excitation_grid_s.end(),
                    B_excitation_grid_s.begin(),
                    ::tolower);
+        B_excitation_specified = true;
+    };
+
+#ifdef WARPX_MAG_LLG
+    if (B_excitation_specified) {
+        amrex::Abort("ERROR: Excitation of B field is not allowed in the LLG simulation! \nThe excited magnetic field must be H field! \n");
+    }
+#endif
 
     pp.query("E_excitation_on_grid_style", E_excitation_grid_s);
     std::transform(E_excitation_grid_s.begin(),
