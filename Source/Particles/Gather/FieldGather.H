@@ -71,10 +71,10 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
-    const amrex::Real dxi = 1.0/dx[0];
-    const amrex::Real dzi = 1.0/dx[2];
+    const amrex::Real dxi = 1.0_rt/dx[0];
+    const amrex::Real dzi = 1.0_rt/dx[2];
 #if (AMREX_SPACEDIM == 3)
-    const amrex::Real dyi = 1.0/dx[1];
+    const amrex::Real dyi = 1.0_rt/dx[1];
 #endif
 
     const amrex::Real xmin = xyzmin[0];
@@ -103,8 +103,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // arrays will be needed.
     amrex::Real sx_node[depos_order + 1];
     amrex::Real sx_cell[depos_order + 1];
-    amrex::Real sx_node_galerkin[depos_order + 1 - galerkin_interpolation];
-    amrex::Real sx_cell_galerkin[depos_order + 1 - galerkin_interpolation];
+    amrex::Real sx_node_galerkin[depos_order + 1 - galerkin_interpolation] = {0._rt};
+    amrex::Real sx_cell_galerkin[depos_order + 1 - galerkin_interpolation] = {0._rt};
+
     int j_node = 0;
     int j_cell = 0;
     int j_node_v = 0;
