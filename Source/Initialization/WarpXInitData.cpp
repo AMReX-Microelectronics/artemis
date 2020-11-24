@@ -282,11 +282,20 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // default values of E_external_grid and B_external_grid
     // are used to set the E and B field when "constant" or
     // "parser" is not explicitly used in the input.
-    pp.query("B_ext_grid_init_style", B_ext_grid_s);
-    std::transform(B_ext_grid_s.begin(),
+    bool B_ext_specified = false;
+    if (pp.query("B_ext_grid_init_style", B_ext_grid_s)){
+        std::transform(B_ext_grid_s.begin(),
                    B_ext_grid_s.end(),
                    B_ext_grid_s.begin(),
                    ::tolower);
+        B_ext_specified = true;
+    }
+
+#ifdef WARPX_MAG_LLG
+    if (B_ext_specified) {
+        amrex::Abort("ERROR: Initialization of B field is not allowed in the LLG simulation! \nThe initial magnetic field must be H and M! \n");
+    }
+#endif
 
     pp.query("E_ext_grid_init_style", E_ext_grid_s);
     std::transform(E_ext_grid_s.begin(),
@@ -300,6 +309,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    M_ext_grid_s.begin(),
                    ::tolower);
 
+    pp.query("H_ext_grid_init_style", H_ext_grid_s); // user-defined initial H
+    std::transform(H_ext_grid_s.begin(),
+                   H_ext_grid_s.end(),
+                   H_ext_grid_s.begin(),
+                   ::tolower);
+
     pp.query("H_bias_ext_grid_init_style", H_bias_ext_grid_s); // user-defined initial M
     std::transform(H_bias_ext_grid_s.begin(),
                    H_bias_ext_grid_s.end(),
@@ -308,11 +323,20 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
 
     // Query for type of external space-time (xt) varying excitation
-    pp.query("B_excitation_on_grid_style", B_excitation_grid_s);
-    std::transform(B_excitation_grid_s.begin(),
+    bool B_excitation_specified = false;
+    if (pp.query("B_excitation_on_grid_style", B_excitation_grid_s)){
+        std::transform(B_excitation_grid_s.begin(),
                    B_excitation_grid_s.end(),
                    B_excitation_grid_s.begin(),
                    ::tolower);
+        B_excitation_specified = true;
+    };
+
+#ifdef WARPX_MAG_LLG
+    if (B_excitation_specified) {
+        amrex::Abort("ERROR: Excitation of B field is not allowed in the LLG simulation! \nThe excited magnetic field must be H field! \n");
+    }
+#endif
 
     pp.query("E_excitation_on_grid_style", E_excitation_grid_s);
     std::transform(E_excitation_grid_s.begin(),
@@ -320,6 +344,70 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    E_excitation_grid_s.begin(),
                    ::tolower);
 
+#ifdef WARPX_MAG_LLG
+    pp.query("H_excitation_on_grid_style", H_excitation_grid_s);
+    std::transform(H_excitation_grid_s.begin(),
+                   H_excitation_grid_s.end(),
+                   H_excitation_grid_s.begin(),
+                   ::tolower);
+#endif
+    if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
+        // if E excitation type is set to parser then the corresponding
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
+        // the field with the excitation.
+        Store_parserString(pp, "Ex_excitation_flag_function(x,y,z)",
+                                str_Ex_excitation_flag_function);
+        Store_parserString(pp, "Ey_excitation_flag_function(x,y,z)",
+                                str_Ey_excitation_flag_function);
+        Store_parserString(pp, "Ez_excitation_flag_function(x,y,z)",
+                                str_Ez_excitation_flag_function);
+        Exfield_flag_parser.reset(new ParserWrapper<3>(
+                   makeParser(str_Ex_excitation_flag_function,{"x","y","z"})));
+        Eyfield_flag_parser.reset(new ParserWrapper<3>(
+                   makeParser(str_Ey_excitation_flag_function,{"x","y","z"})));
+        Ezfield_flag_parser.reset(new ParserWrapper<3>(
+                   makeParser(str_Ez_excitation_flag_function,{"x","y","z"})));
+    }
+    if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
+        // if B excitation type is set to parser then the corresponding
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
+        // the field with the excitation.
+        Store_parserString(pp, "Bx_excitation_flag_function(x,y,z)",
+                                str_Bx_excitation_flag_function);
+        Store_parserString(pp, "By_excitation_flag_function(x,y,z)",
+                                str_By_excitation_flag_function);
+        Store_parserString(pp, "Bz_excitation_flag_function(x,y,z)",
+                                str_Bz_excitation_flag_function);
+        Bxfield_flag_parser.reset(new ParserWrapper<3>(
+                   makeParser(str_Bx_excitation_flag_function,{"x","y","z"})));
+        Byfield_flag_parser.reset(new ParserWrapper<3>(
+                   makeParser(str_By_excitation_flag_function,{"x","y","z"})));
+        Bzfield_flag_parser.reset(new ParserWrapper<3>(
+                   makeParser(str_Bz_excitation_flag_function,{"x","y","z"})));
+    }
+
+#ifdef WARPX_MAG_LLG
+    if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
+        // if H excitation type is set to parser then the corresponding
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
+        // the field with the excitation.
+        Store_parserString(pp, "Hx_excitation_flag_function(x,y,z)",
+                                str_Hx_excitation_flag_function);
+        Store_parserString(pp, "Hy_excitation_flag_function(x,y,z)",
+                                str_Hy_excitation_flag_function);
+        Store_parserString(pp, "Hz_excitation_flag_function(x,y,z)",
+                                str_Hz_excitation_flag_function);
+        Hxfield_flag_parser.reset(new ParserWrapper<3>(
+                   makeParser(str_Hx_excitation_flag_function,{"x","y","z"})));
+        Hyfield_flag_parser.reset(new ParserWrapper<3>(
+                   makeParser(str_Hy_excitation_flag_function,{"x","y","z"})));
+        Hzfield_flag_parser.reset(new ParserWrapper<3>(
+                   makeParser(str_Hz_excitation_flag_function,{"x","y","z"})));
+    }
+#endif
     // * Functions with the string "arr" in their names get an Array of
     //   values from the given entry in the table.  The array argument is
     //   resized (if necessary) to hold all the values requested.
@@ -375,10 +463,33 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    makeParser(str_Ez_excitation_grid_function,{"x","y","z","t"})));
     }
 
+#ifdef WARPX_MAG_LLG
+    // make parser for the external H-excitation in space-time
+    if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
+#ifdef WARPX_DIM_RZ
+       amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
+#endif
+       Store_parserString(pp, "Hx_excitation_grid_function(x,y,z,t)",
+                                                    str_Hx_excitation_grid_function);
+       Store_parserString(pp, "Hy_excitation_grid_function(x,y,z,t)",
+                                                    str_Hy_excitation_grid_function);
+       Store_parserString(pp, "Hz_excitation_grid_function(x,y,z,t)",
+                                                    str_Hz_excitation_grid_function);
+       Hxfield_xt_grid_parser.reset(new ParserWrapper<4>(
+                   makeParser(str_Hx_excitation_grid_function,{"x","y","z","t"})));
+       Hyfield_xt_grid_parser.reset(new ParserWrapper<4>(
+                   makeParser(str_Hy_excitation_grid_function,{"x","y","z","t"})));
+       Hzfield_xt_grid_parser.reset(new ParserWrapper<4>(
+                   makeParser(str_Hz_excitation_grid_function,{"x","y","z","t"})));
+    }
+#endif
 
 #ifdef WARPX_MAG_LLG
     if (M_ext_grid_s == "constant")
         pp.getarr("M_external_grid", M_external_grid);
+
+    if (H_ext_grid_s == "constant")
+        pp.getarr("H_external_grid", H_external_grid);
 
     if (H_bias_ext_grid_s == "constant")
         pp.getarr("H_bias_external_grid", H_bias_external_grid);
@@ -443,6 +554,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             for (int icomp = 0; icomp < 3; ++icomp){ // icomp is the index of components at each i face
                 Mfield_fp[lev][i]->setVal(M_external_grid[icomp], icomp, 1, nghost);
             }
+        }
+
+        if (H_ext_grid_s == "constant" || H_ext_grid_s == "default") {
+           Hfield_fp[lev][i]->setVal(H_external_grid[i]);
+           if (lev > 0) {
+              Hfield_aux[lev][i]->setVal(H_external_grid[i]);
+              Hfield_cp[lev][i]->setVal(H_external_grid[i]);
+           }
         }
 
         if (H_bias_ext_grid_s == "constant" || H_bias_ext_grid_s == "default") {
@@ -604,51 +723,222 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        }
     }
 
+    if (H_ext_grid_s == "parse_h_ext_grid_function") {
+
+#ifdef WARPX_DIM_RZ
+       amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
+#endif
+       Store_parserString(pp, "Hx_external_grid_function(x,y,z)",
+                                                    str_Hx_ext_grid_function);
+       Store_parserString(pp, "Hy_external_grid_function(x,y,z)",
+                                                    str_Hy_ext_grid_function);
+       Store_parserString(pp, "Hz_external_grid_function(x,y,z)",
+                                                    str_Hz_ext_grid_function);
+
+       Hxfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Hx_ext_grid_function,{"x","y","z"})));
+       Hyfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Hy_ext_grid_function,{"x","y","z"})));
+       Hzfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Hz_ext_grid_function,{"x","y","z"})));
+
+       // Initialize Hfield_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(Hfield_fp[lev][0].get(),
+                                                 Hfield_fp[lev][1].get(),
+                                                 Hfield_fp[lev][2].get(),
+                                                 getParser(Hxfield_parser),
+                                                 getParser(Hyfield_parser),
+                                                 getParser(Hzfield_parser),
+                                                 lev);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Hfield_aux[lev][0].get(),
+                                                    Hfield_aux[lev][1].get(),
+                                                    Hfield_aux[lev][2].get(),
+                                                    getParser(Hxfield_parser),
+                                                    getParser(Hyfield_parser),
+                                                    getParser(Hzfield_parser),
+                                                    lev);
+
+          InitializeExternalFieldsOnGridUsingParser(Hfield_cp[lev][0].get(),
+                                                    Hfield_cp[lev][1].get(),
+                                                    Hfield_cp[lev][2].get(),
+                                                    getParser(Hxfield_parser),
+                                                    getParser(Hyfield_parser),
+                                                    getParser(Hzfield_parser),
+                                                    lev);
+       }
+    }
 
     if (M_ext_grid_s == "parse_m_ext_grid_function") {
 #ifdef WARPX_DIM_RZ
         amrex::Abort("M-field parser for external fields does not work with RZ");
 #endif
-       Store_parserString(pp, "Mx_external_grid_function(x,y,z)",
+        Store_parserString(pp, "Mx_external_grid_function(x,y,z)",
                                                     str_Mx_ext_grid_function);
-       Store_parserString(pp, "My_external_grid_function(x,y,z)",
+        Store_parserString(pp, "My_external_grid_function(x,y,z)",
                                                     str_My_ext_grid_function);
-       Store_parserString(pp, "Mz_external_grid_function(x,y,z)",
+        Store_parserString(pp, "Mz_external_grid_function(x,y,z)",
                                                     str_Mz_ext_grid_function);
 
-       Mxfield_parser.reset(new ParserWrapper<3>(
-                         makeParser(str_Mx_ext_grid_function,{"x","y","z"})));
-       Myfield_parser.reset(new ParserWrapper<3>(
-                         makeParser(str_My_ext_grid_function,{"x","y","z"})));
-       Mzfield_parser.reset(new ParserWrapper<3>(
-                         makeParser(str_Mz_ext_grid_function,{"x","y","z"})));
+        Mxfield_parser.reset(new ParserWrapper<3>(
+                                 makeParser(str_Mx_ext_grid_function,{"x","y","z"})));
+        Myfield_parser.reset(new ParserWrapper<3>(
+                                 makeParser(str_My_ext_grid_function,{"x","y","z"})));
+        Mzfield_parser.reset(new ParserWrapper<3>(
+                                 makeParser(str_Mz_ext_grid_function,{"x","y","z"})));
 
-       // Initialize Mfield_fp with external function
-       InitializeExternalFieldsOnGridUsingParser(Mfield_fp[lev][0].get(),
-                                                 Mfield_fp[lev][1].get(),
-                                                 Mfield_fp[lev][2].get(),
-                                                 getParser(Mxfield_parser),
-                                                 getParser(Myfield_parser),
-                                                 getParser(Mzfield_parser),
-                                                 lev);
-       if (lev > 0) {
-          InitializeExternalFieldsOnGridUsingParser(Mfield_aux[lev][0].get(),
-                                                    Mfield_aux[lev][1].get(),
-                                                    Mfield_aux[lev][2].get(),
-                                                    getParser(Mxfield_parser),
-                                                    getParser(Myfield_parser),
-                                                    getParser(Mzfield_parser),
-                                                    lev);
+        {   // use this brace so Mx, My, Mz go out of scope
+            // we need 1 more ghost cell than Mfield_fp has because
+            // we are averaging to faces, including the ghost faces
+            BoxArray bx = Mfield_fp[lev][0]->boxArray();
+            amrex::MultiFab Mx(bx.enclosedCells(), Mfield_fp[lev][0]->DistributionMap(), 1, Mfield_fp[lev][0]->nGrow()+1);
+            amrex::MultiFab My(bx.enclosedCells(), Mfield_fp[lev][1]->DistributionMap(), 1, Mfield_fp[lev][1]->nGrow()+1);
+            amrex::MultiFab Mz(bx.enclosedCells(), Mfield_fp[lev][2]->DistributionMap(), 1, Mfield_fp[lev][2]->nGrow()+1);
 
-          InitializeExternalFieldsOnGridUsingParser(Mfield_cp[lev][0].get(),
-                                                    Mfield_cp[lev][1].get(),
-                                                    Mfield_cp[lev][2].get(),
-                                                    getParser(Mxfield_parser),
-                                                    getParser(Myfield_parser),
-                                                    getParser(Mzfield_parser),
-                                                    lev);
-       }
+            // Initialize Mfield_fp with external function
+            InitializeExternalFieldsOnGridUsingParser(&Mx,
+                                                      &My,
+                                                      &Mz,
+                                                      getParser(Mxfield_parser),
+                                                      getParser(Myfield_parser),
+                                                      getParser(Mzfield_parser),
+                                                      lev);
 
+            // average Mx, My, Mz to faces in Mfield_fp
+            for (MFIter mfi(*Mfield_fp[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+                const amrex::Box& tbx = mfi.tilebox( IntVect(1,0,0), Mfield_fp[lev][0]->nGrowVect() );
+                const amrex::Box& tby = mfi.tilebox( IntVect(0,1,0), Mfield_fp[lev][1]->nGrowVect() );
+                const amrex::Box& tbz = mfi.tilebox( IntVect(0,0,1), Mfield_fp[lev][2]->nGrowVect() );
+
+                auto const& mx_cc = Mx.array(mfi);
+                auto const& my_cc = My.array(mfi);
+                auto const& mz_cc = Mz.array(mfi);
+
+                auto const& m_xface = Mfield_fp[lev][0]->array(mfi);
+                auto const& m_yface = Mfield_fp[lev][1]->array(mfi);
+                auto const& m_zface = Mfield_fp[lev][2]->array(mfi);
+
+                amrex::ParallelFor (tbx, tby, tbz,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    m_xface(i,j,k,0) = 0.5*(mx_cc(i-1,j,k) + mx_cc(i,j,k));
+                    m_xface(i,j,k,1) = 0.5*(my_cc(i-1,j,k) + my_cc(i,j,k));
+                    m_xface(i,j,k,2) = 0.5*(mz_cc(i-1,j,k) + mz_cc(i,j,k));
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    m_yface(i,j,k,0) = 0.5*(mx_cc(i,j-1,k) + mx_cc(i,j,k));
+                    m_yface(i,j,k,1) = 0.5*(my_cc(i,j-1,k) + my_cc(i,j,k));
+                    m_yface(i,j,k,2) = 0.5*(mz_cc(i,j-1,k) + mz_cc(i,j,k));
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    m_zface(i,j,k,0) = 0.5*(mx_cc(i,j,k-1) + mx_cc(i,j,k));
+                    m_zface(i,j,k,1) = 0.5*(my_cc(i,j,k-1) + my_cc(i,j,k));
+                    m_zface(i,j,k,2) = 0.5*(mz_cc(i,j,k-1) + mz_cc(i,j,k));
+                });
+            }
+        }
+
+        if (lev > 0) {
+            {   // use this brace so Mx, My, Mz go out of scope
+                // we need 1 more ghost cell than Mfield_fp has because
+                // we are averaging to faces, including the ghost faces
+                BoxArray bx = Mfield_aux[lev][0]->boxArray();
+                amrex::MultiFab Mx(bx.enclosedCells(), Mfield_aux[lev][0]->DistributionMap(), 1, Mfield_aux[lev][0]->nGrow()+1);
+                amrex::MultiFab My(bx.enclosedCells(), Mfield_aux[lev][1]->DistributionMap(), 1, Mfield_aux[lev][1]->nGrow()+1);
+                amrex::MultiFab Mz(bx.enclosedCells(), Mfield_aux[lev][2]->DistributionMap(), 1, Mfield_aux[lev][2]->nGrow()+1);
+
+                InitializeExternalFieldsOnGridUsingParser(&Mx,
+                                                          &My,
+                                                          &Mz,
+                                                          getParser(Mxfield_parser),
+                                                          getParser(Myfield_parser),
+                                                          getParser(Mzfield_parser),
+                                                          lev);
+
+                // average Mx, My, Mz to faces in Mfield_aux
+                for (MFIter mfi(*Mfield_aux[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+                    const amrex::Box& tbx = mfi.tilebox( IntVect(1,0,0), Mfield_aux[lev][0]->nGrowVect() );
+                    const amrex::Box& tby = mfi.tilebox( IntVect(0,1,0), Mfield_aux[lev][1]->nGrowVect() );
+                    const amrex::Box& tbz = mfi.tilebox( IntVect(0,0,1), Mfield_aux[lev][2]->nGrowVect() );
+
+                    auto const& mx_cc = Mx.array(mfi);
+                    auto const& my_cc = My.array(mfi);
+                    auto const& mz_cc = Mz.array(mfi);
+
+                    auto const& m_xface = Mfield_aux[lev][0]->array(mfi);
+                    auto const& m_yface = Mfield_aux[lev][1]->array(mfi);
+                    auto const& m_zface = Mfield_aux[lev][2]->array(mfi);
+
+                    amrex::ParallelFor (tbx, tby, tbz,
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                        m_xface(i,j,k,0) = 0.5*(mx_cc(i-1,j,k) + mx_cc(i,j,k));
+                        m_xface(i,j,k,1) = 0.5*(my_cc(i-1,j,k) + my_cc(i,j,k));
+                        m_xface(i,j,k,2) = 0.5*(mz_cc(i-1,j,k) + mz_cc(i,j,k));
+                    },
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                        m_yface(i,j,k,0) = 0.5*(mx_cc(i,j-1,k) + mx_cc(i,j,k));
+                        m_yface(i,j,k,1) = 0.5*(my_cc(i,j-1,k) + my_cc(i,j,k));
+                        m_yface(i,j,k,2) = 0.5*(mz_cc(i,j-1,k) + mz_cc(i,j,k));
+                    },
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                        m_zface(i,j,k,0) = 0.5*(mx_cc(i,j,k-1) + mx_cc(i,j,k));
+                        m_zface(i,j,k,1) = 0.5*(my_cc(i,j,k-1) + my_cc(i,j,k));
+                        m_zface(i,j,k,2) = 0.5*(mz_cc(i,j,k-1) + mz_cc(i,j,k));
+                    });
+                }
+            }
+
+            {   // use this brace so Mx, My, Mz go out of scope
+                // we need 1 more ghost cell than Mfield_fp has because
+                // we are averaging to faces, including the ghost faces
+                BoxArray bx = Mfield_cp[lev][0]->boxArray();
+                amrex::MultiFab Mx(bx.enclosedCells(), Mfield_cp[lev][0]->DistributionMap(), 1, Mfield_cp[lev][0]->nGrow()+1);
+                amrex::MultiFab My(bx.enclosedCells(), Mfield_cp[lev][1]->DistributionMap(), 1, Mfield_cp[lev][1]->nGrow()+1);
+                amrex::MultiFab Mz(bx.enclosedCells(), Mfield_cp[lev][2]->DistributionMap(), 1, Mfield_cp[lev][2]->nGrow()+1);
+
+                InitializeExternalFieldsOnGridUsingParser(&Mx,
+                                                          &My,
+                                                          &Mz,
+                                                          getParser(Mxfield_parser),
+                                                          getParser(Myfield_parser),
+                                                          getParser(Mzfield_parser),
+                                                          lev);
+
+                // average Mx, My, Mz to faces in Mfield_cp
+                for (MFIter mfi(*Mfield_cp[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+                    const amrex::Box& tbx = mfi.tilebox( IntVect(1,0,0), Mfield_cp[lev][0]->nGrowVect() );
+                    const amrex::Box& tby = mfi.tilebox( IntVect(0,1,0), Mfield_cp[lev][1]->nGrowVect() );
+                    const amrex::Box& tbz = mfi.tilebox( IntVect(0,0,1), Mfield_cp[lev][2]->nGrowVect() );
+
+                    auto const& mx_cc = Mx.array(mfi);
+                    auto const& my_cc = My.array(mfi);
+                    auto const& mz_cc = Mz.array(mfi);
+
+                    auto const& m_xface = Mfield_cp[lev][0]->array(mfi);
+                    auto const& m_yface = Mfield_cp[lev][1]->array(mfi);
+                    auto const& m_zface = Mfield_cp[lev][2]->array(mfi);
+
+                    amrex::ParallelFor (tbx, tby, tbz,
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                        m_xface(i,j,k,0) = 0.5*(mx_cc(i-1,j,k) + mx_cc(i,j,k));
+                        m_xface(i,j,k,1) = 0.5*(my_cc(i-1,j,k) + my_cc(i,j,k));
+                        m_xface(i,j,k,2) = 0.5*(mz_cc(i-1,j,k) + mz_cc(i,j,k));
+                    },
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                        m_yface(i,j,k,0) = 0.5*(mx_cc(i,j-1,k) + mx_cc(i,j,k));
+                        m_yface(i,j,k,1) = 0.5*(my_cc(i,j-1,k) + my_cc(i,j,k));
+                        m_yface(i,j,k,2) = 0.5*(mz_cc(i,j-1,k) + mz_cc(i,j,k));
+                    },
+                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                        m_zface(i,j,k,0) = 0.5*(mx_cc(i,j,k-1) + mx_cc(i,j,k));
+                        m_zface(i,j,k,1) = 0.5*(my_cc(i,j,k-1) + my_cc(i,j,k));
+                        m_zface(i,j,k,2) = 0.5*(mz_cc(i,j,k-1) + mz_cc(i,j,k));
+                    });
+                }
+            }
+        }
     }
 
 #endif //closes #ifdef WARPX_MAG_LLG

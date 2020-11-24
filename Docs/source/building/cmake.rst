@@ -136,6 +136,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_amrex_branch``        ``development``                              Repository branch for ``WarpX_amrex_repo``
 ``WarpX_amrex_internal``      **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
 ``WarpX_openpmd_internal``    **ON**/OFF                                   Needs a pre-installed openPMD library if set to ``OFF``
+``WarpX_MAG_LLG``              ON/**OFF**                                  LLG module for modeling spin for magnetized materials if set to ``ON``
 ============================= ============================================ =======================================================
 
 For example, one can also build against a local AMReX git repo.

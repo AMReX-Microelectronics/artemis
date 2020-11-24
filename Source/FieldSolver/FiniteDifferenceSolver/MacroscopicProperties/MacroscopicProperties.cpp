@@ -60,7 +60,7 @@ MacroscopicProperties::ReadParameters ()
                                  makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
-    // Query input for material permittivity, epsilon.
+    // Query input for material permeability, mu
     bool mu_specified = false;
     if (pp.query("mu", m_mu)) {
         m_mu_s = "constant";
@@ -71,7 +71,7 @@ MacroscopicProperties::ReadParameters ()
         mu_specified = true;
     }
     if (!mu_specified) {
-        amrex::Print() << "WARNING: Material permittivity is not specified. Using default vacuum value of " << m_mu << " in the simulation\n";
+        amrex::Print() << "WARNING: Material permeability is not specified. Using default vacuum value of " << m_mu << " in the simulation\n";
     }
 
     // initialization of mu (permeability) with parser
@@ -137,17 +137,17 @@ MacroscopicProperties::InitData ()
     int ng = 3;
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
-    m_sigma_mf = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dmap, 1, ng);
+    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     // epsilon is cell-centered MultiFab
-    m_eps_mf = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dmap, 1, ng);
+    m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     // mu is cell-centered MultiFab
-    m_mu_mf = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dmap, 1, ng);
+    m_mu_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
 
 #ifdef WARPX_MAG_LLG
-    // all magnetic macroparameters are stored on cell nodes
-    m_mag_Ms_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
-    m_mag_alpha_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
-    m_mag_gamma_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
+    // all magnetic macroparameters are stored on cell centers
+    m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_mag_gamma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
 #endif
 
     // Initialize sigma
@@ -188,6 +188,15 @@ MacroscopicProperties::InitData ()
     else if (m_mag_Ms_s == "parse_mag_Ms_function"){
         InitializeMacroMultiFabUsingParser(m_mag_Ms_mf.get(), getParser(m_mag_Ms_parser), lev);
     }
+    // if there are regions with Ms=0, the user must provide mur value there
+    if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) < 0._rt){
+        amrex::Abort("Ms must be non-negative values");
+    }
+    else if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) == 0._rt){
+        if (m_mu_s != "constant" && m_mu_s != "parse_mu_function"){
+            amrex::Abort("permeability must be specified since part of the simulation domain is non-magnetic !");
+        }
+    }
 
     // mag_alpha - defined at node
     if (m_mag_alpha_s == "constant") {
@@ -196,7 +205,7 @@ MacroscopicProperties::InitData ()
     else if (m_mag_alpha_s == "parse_mag_alpha_function"){
         InitializeMacroMultiFabUsingParser(m_mag_alpha_mf.get(), getParser(m_mag_alpha_parser), lev);
     }
-    if (m_mag_alpha_mf->min(0,m_mag_alpha_mf->nGrow()) < 0) {
+    if (m_mag_alpha_mf->min(0,m_mag_alpha_mf->nGrow()) < 0._rt) {
         amrex::Abort("alpha should be positive, but the user input has negative values");
     }
 
@@ -208,7 +217,7 @@ MacroscopicProperties::InitData ()
     else if (m_mag_gamma_s == "parse_mag_gamma_function"){
         InitializeMacroMultiFabUsingParser(m_mag_gamma_mf.get(), getParser(m_mag_gamma_parser), lev);
     }
-    if (m_mag_gamma_mf->max(0,m_mag_gamma_mf->nGrow()) > 0) {
+    if (m_mag_gamma_mf->max(0,m_mag_gamma_mf->nGrow()) > 0._rt) {
         amrex::Abort("gamma should be negative, but the user input has positive values");
     }
 #endif
@@ -219,7 +228,14 @@ MacroscopicProperties::InitData ()
     IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
     IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
     IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
-
+#ifdef WARPX_MAG_LLG
+    IntVect mag_Ms_stag = m_mag_Ms_mf->ixType().toIntVect(); //cell-centered
+    IntVect mag_alpha_stag = m_mag_alpha_mf->ixType().toIntVect();
+    IntVect mag_gamma_stag = m_mag_gamma_mf->ixType().toIntVect();
+    IntVect Mx_stag = warpx.getMfield_fp(0,0).ixType().toIntVect(); // face-centered
+    IntVect My_stag = warpx.getMfield_fp(0,1).ixType().toIntVect();
+    IntVect Mz_stag = warpx.getMfield_fp(0,2).ixType().toIntVect();
+#endif
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         sigma_IndexType[idim]   = sigma_stag[idim];
         epsilon_IndexType[idim] = epsilon_stag[idim];
@@ -227,6 +243,14 @@ MacroscopicProperties::InitData ()
         Ex_IndexType[idim]      = Ex_stag[idim];
         Ey_IndexType[idim]      = Ey_stag[idim];
         Ez_IndexType[idim]      = Ez_stag[idim];
+#ifdef WARPX_MAG_LLG
+        mag_Ms_IndexType[idim]    = mag_Ms_stag[idim];
+        mag_alpha_IndexType[idim] = mag_alpha_stag[idim];
+        mag_gamma_IndexType[idim] = mag_gamma_stag[idim];
+        Mx_IndexType[idim]        = Mx_stag[idim];
+        My_IndexType[idim]        = My_stag[idim];
+        Mz_IndexType[idim]        = Mz_stag[idim];
+#endif
         macro_cr_ratio[idim]    = 1;
     }
 #if (AMREX_SPACEDIM==2)
@@ -236,6 +260,14 @@ MacroscopicProperties::InitData ()
         Ex_IndexType[2]      = 0;
         Ey_IndexType[2]      = 0;
         Ez_IndexType[2]      = 0;
+#ifdef WARPX_MAG_LLG
+        mag_Ms_IndexType[2]    = 0;
+        mag_alpha_IndexType[2] = 0;
+        mag_gamma_IndexType[2] = 0;
+        Mx_IndexType[2]        = 0;
+        My_IndexType[2]        = 0;
+        Mz_IndexType[2]        = 0;
+#endif
         macro_cr_ratio[2]    = 1;
 #endif
 
@@ -251,7 +283,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     const auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
     IntVect iv = macro_mf->ixType().toIntVect();
-    IntVect grown_iv = iv ;
+    IntVect grown_iv = macro_mf->nGrowVect();
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
 

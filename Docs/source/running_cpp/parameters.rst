@@ -882,6 +882,8 @@ Laser initialization
     input file. For a two-dimensional simulation, it is assumed that the first dimension     is `x` and the second dimension in `z`, and the value of `y` is set to zero.
     Note that the current implementation of the parser for external B-field
     does not work with RZ and the code will abort with an error message.
+    Note that the implementation of the parser for external B-field does not work
+    with USE_LLG=TRUE and the code will abort with an error message
 
 * ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
@@ -892,7 +894,7 @@ Laser initialization
     additional parameter, namely, ``warpx.E_external_grid`` must be specified
     in the input file.
     If set to ``parse_E_ext_grid_function``, then a mathematical expression can
-    be used to initialize the external magnetic field on the grid. It
+    be used to initialize the external electric field on the grid. It
     required additional parameters in the input file, namely,
     ``warpx.Ex_external_grid_function(x,y,z)``,
     ``warpx.Ey_external_grid_function(x,y,z)``,
@@ -908,6 +910,30 @@ Laser initialization
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
 
+* ``warpx.H_ext_grid_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the external
+    magnetic field intensity. The "default" style initializes the
+    external magnetic field (Hx,Hy,Hz) to (0.0, 0.0, 0.0).
+    The string can be set to "constant" if a constant magnetic field is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``warpx.H_external_grid`` must be specified
+    in the input file.
+    If set to ``parse_H_ext_grid_function``, then a mathematical expression can
+    be used to initialize the external magnetic field on the grid. It
+    required additional parameters in the input file, namely,
+    ``warpx.Hx_external_grid_function(x,y,z)``,
+    ``warpx.Hy_external_grid_function(x,y,z)``,
+    ``warpx.Hz_external_grid_function(x,y,z)`` to initialize the external
+    magnetic field intensity for each of the three components on the grid.
+    Constants required in the expression can be set using ``my_constants``.
+    For example, if ``warpx.Hx_external_grid_function(x,y,z)=Ho*x + delta*(y + z)``
+    then the constants `Ho` and `delta` required in the above equation
+    can be set using ``my_constants.Ho=`` and ``my_constants.delta=`` in the
+    input file. This function is currently supported only for 3D simulations.
+    Note that the current implementation of the parser for external H-field
+    does not work with RZ and the code will abort with an error message.
+    This requires `USE_LLG=TRUE` in the GNUMakefile.
+
 * ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
     required when ``warpx.E_ext_grid_init_style="constant"``
     and when ``warpx.B_ext_grid_init_style="constant"``, respectively.
@@ -915,6 +941,16 @@ Laser initialization
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
     than periodic.
+    Note that the implementation of the parser for external B-field does not work
+    with USE_LLG=TRUE and the code will abort with an error message
+
+* ``warpx.H_external_grid`` (list of `3 floats`)
+    required when ``warpx.H_ext_grid_init_style="constant"``.
+    External uniform and constant magnetostatic field added
+    to the grid at initialization. Use with caution as these fields are used for
+    the field solver. In particular, do not use any other boundary condition
+    than periodic.
+    This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 *  ``particles.B_ext_particle_init_style`` (string) optional (default is "default")
      This parameter determines the type of initialization for the external
@@ -972,8 +1008,23 @@ Laser initialization
     ``warpx.Bx_excitation_grid_function(x,y,z,t)``,
     ``warpx.By_excitation_grid_function(x,y,z,t)``,
     ``warpx.Bz_excitation_grid_function(x,y,z,t)`` to apply the external B-field on the grid.
+    Additionally, the option also requires a flag function to set the type of excitation,
+    ``warpx.Bx_excitation_flag_function(x,y,z)``,
+    ``warpx.By_excitation_flag_function(x,y,z)``,
+    ``warpx.Bz_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    set to have three values, namely 0, 1, or 2.
+    If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
+    field component at that location.
+    If the flag is set to 1 at a given `(x,y,z)`, then the excitation is treated as a hard
+    source and the field component at that location is set exactly equal to the value
+    from the `excitation_grid_function` of the corresponding field component.
+    If the flag is set to 2, then the excittaion is treated as a soft source and the
+    field component is updated with the contribution from the `excitation_grid_function`
+    of the corresponding field component.
     Constants required in the mathematical expression can be set using ``my_constants``.
     This function is currently supported only for 3D simulations.
+    Note that the implementation of the parser for excitation B-field does not work
+    with LLG and the code will abort with an error message
 
 * ``E_excitation_on_grid_style`` (string) optional (default is "default")
     This parameter is used to set the type of external electric field excitation
@@ -984,8 +1035,47 @@ Laser initialization
     ``warpx.Ex_excitation_grid_function(x,y,z,t)``,
     ``warpx.Ey_excitation_grid_function(x,y,z,t)``,
     ``warpx.Ez_excitation_grid_function(x,y,z,t)`` to apply the external E-field on the grid.
+    Additionally, the option also requires a flag function to set the type of excitation,
+    ``warpx.Ex_excitation_flag_function(x,y,z)``,
+    ``warpx.Ey_excitation_flag_function(x,y,z)``,
+    ``warpx.Ez_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    set to have three values, namely 0, 1, or 2.
+    If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
+    field component at that location.
+    If the flag is set to 1 at a given `(x,y,z)`, then the excitation is treated as a hard
+    source and the field component at that location is set exactly equal to the value
+    from the `excitation_grid_function` of the corresponding field component.
+    If the flag is set to 2, then the excittaion is treated as a soft source and the
+    field component is updated with the contribution from the `excitation_grid_function`
+    of the corresponding field component.
     Constants required in the mathematical expression can be set using ``my_constants``.
     This function is currently supported only for 3D simulations.
+
+* ``H_excitation_on_grid_style`` (string) optional (default is "default")
+    This parameter is used to set the type of external magnetic field excitation
+    varying in space (x,y,z) and time (t). The excitation is added to the magnetic field
+    on the grid at every timestep. To add an external H-excitation as a function
+    of (x,y,z,t), use the option ``parse_H_excitation_grid_function``. This option requires
+    additional parameters in the input file to set the parser function, namely,
+    ``warpx.Hx_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Hy_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Hz_excitation_grid_function(x,y,z,t)`` to apply the external H-field on the grid.
+    Additionally, the option also requires a flag function to set the type of excitation,
+    ``warpx.Hx_excitation_flag_function(x,y,z)``,
+    ``warpx.Hy_excitation_flag_function(x,y,z)``,
+    ``warpx.Hz_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    set to have three values, namely 0, 1, or 2.
+    If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
+    field component at that location.
+    If the flag is set to 1 at a given `(x,y,z)`, then the excitation is treated as a hard
+    source and the field component at that location is set exactly equal to the value
+    from the `excitation_grid_function` of the corresponding field component.
+    If the flag is set to 2, then the excittaion is treated as a soft source and the
+    field component is updated with the contribution from the `excitation_grid_function`
+    of the corresponding field component.
+    Constants required in the mathematical expression can be set using ``my_constants``.
+    This function is currently supported only for 3D simulations.
+    This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 .. _running-cpp-parameters-collision:
 
@@ -1493,6 +1583,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
     Note that the fields are averaged on the cell centers before they are written to file.
     If compiled with ``USE_LLG=TRUE``, additional values include
+    ``Hx`` ``Hy`` ``Hz``
     ``Mx_xface`` ``Mx_yface`` ``Mx_zface``
     ``My_xface`` ``My_yface`` ``My_zface``
     ``Mz_xface`` ``Mz_yface`` ``Mz_zface``

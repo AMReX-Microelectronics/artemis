@@ -40,6 +40,7 @@ Vector<Real> WarpX::B_external_grid(3, 0.0);
 
 #ifdef WARPX_MAG_LLG
 Vector<Real> WarpX::M_external_grid(3, 0.0);
+Vector<Real> WarpX::H_external_grid(3, 0.0);
 Vector<Real> WarpX::H_bias_external_grid(3, 0.0);
 // M could be one 9-comp vector or a vector of vectors
 #endif
@@ -51,9 +52,13 @@ std::string WarpX::E_ext_grid_s = "default";
 // default type is constant
 std::string WarpX::B_excitation_grid_s = "default";
 std::string WarpX::E_excitation_grid_s = "default";
+#ifdef WARPX_MAG_LLG
+std::string WarpX::H_excitation_grid_s = "default";
+#endif
 
 #ifdef WARPX_MAG_LLG
 std::string WarpX::M_ext_grid_s = "default";
+std::string WarpX::H_ext_grid_s = "default";
 std::string WarpX::H_bias_ext_grid_s = "default";
 // "default" sets M to zero but will be overwritten by user defined input file
 #endif
@@ -75,12 +80,34 @@ std::string WarpX::str_Bz_excitation_grid_function;
 std::string WarpX::str_Ex_excitation_grid_function;
 std::string WarpX::str_Ey_excitation_grid_function;
 std::string WarpX::str_Ez_excitation_grid_function;
+#ifdef WARPX_MAG_LLG
+// Parser for H_external on the grid
+std::string WarpX::str_Hx_excitation_grid_function;
+std::string WarpX::str_Hy_excitation_grid_function;
+std::string WarpX::str_Hz_excitation_grid_function;
+#endif
+// Flag for type of excitation 0=none, 1=hard, 2=soft
+std::string WarpX::str_Ex_excitation_flag_function;
+std::string WarpX::str_Ey_excitation_flag_function;
+std::string WarpX::str_Ez_excitation_flag_function;
+std::string WarpX::str_Bx_excitation_flag_function;
+std::string WarpX::str_By_excitation_flag_function;
+std::string WarpX::str_Bz_excitation_flag_function;
+#ifdef WARPX_MAG_LLG
+std::string WarpX::str_Hx_excitation_flag_function;
+std::string WarpX::str_Hy_excitation_flag_function;
+std::string WarpX::str_Hz_excitation_flag_function;
+#endif
 
 #ifdef WARPX_MAG_LLG
 // Parser for M_external on the grid
 std::string WarpX::str_Mx_ext_grid_function;
 std::string WarpX::str_My_ext_grid_function;
 std::string WarpX::str_Mz_ext_grid_function;
+// Parser for H_external on the grid
+std::string WarpX::str_Hx_ext_grid_function;
+std::string WarpX::str_Hy_ext_grid_function;
+std::string WarpX::str_Hz_ext_grid_function;
 // Parser for H_bias_external on the grid
 std::string WarpX::str_Hx_bias_ext_grid_function;
 std::string WarpX::str_Hy_bias_ext_grid_function;
@@ -232,6 +259,7 @@ WarpX::WarpX ()
     Bfield_aux.resize(nlevs_max);
 #ifdef WARPX_MAG_LLG
     Mfield_aux.resize(nlevs_max);
+    Hfield_aux.resize(nlevs_max);
     H_biasfield_aux.resize(nlevs_max);
 #endif
 
@@ -246,6 +274,7 @@ WarpX::WarpX ()
 #ifdef WARPX_MAG_LLG
     Bfield_fp_old.resize(nlevs_max);
     Mfield_fp.resize(nlevs_max);
+    Hfield_fp.resize(nlevs_max);
     H_biasfield_fp.resize(nlevs_max);
 #endif
     Efield_avg_fp.resize(nlevs_max);
@@ -260,6 +289,7 @@ WarpX::WarpX ()
     Bfield_cp.resize(nlevs_max);
 #ifdef WARPX_MAG_LLG
     Mfield_cp.resize(nlevs_max);
+    Hfield_cp.resize(nlevs_max);
     H_biasfield_cp.resize(nlevs_max);
 #endif
     Efield_avg_cp.resize(nlevs_max);
@@ -269,6 +299,7 @@ WarpX::WarpX ()
     Bfield_cax.resize(nlevs_max);
 #ifdef WARPX_MAG_LLG
     Mfield_cax.resize(nlevs_max);
+    Hfield_cax.resize(nlevs_max);
     H_biasfield_cax.resize(nlevs_max);
 #endif
     current_buffer_masks.resize(nlevs_max);
@@ -891,6 +922,7 @@ WarpX::ClearLevel (int lev)
         Bfield_aux[lev][i].reset();
 #ifdef WARPX_MAG_LLG
         Mfield_aux[lev][i].reset();
+        Hfield_aux[lev][i].reset();
         H_biasfield_aux[lev][i].reset();
 #endif
         current_fp[lev][i].reset();
@@ -899,6 +931,7 @@ WarpX::ClearLevel (int lev)
 #ifdef WARPX_MAG_LLG
         Bfield_fp_old [lev][i].reset();
         Mfield_fp [lev][i].reset();
+        Hfield_fp [lev][i].reset();
         H_biasfield_fp [lev][i].reset();
 #endif
         current_store[lev][i].reset();
@@ -908,12 +941,14 @@ WarpX::ClearLevel (int lev)
         Bfield_cp [lev][i].reset();
 #ifdef WARPX_MAG_LLG
         Mfield_cp [lev][i].reset();
+        Hfield_cp [lev][i].reset();
         H_biasfield_cp [lev][i].reset();
 #endif
         Efield_cax[lev][i].reset();
         Bfield_cax[lev][i].reset();
 #ifdef WARPX_MAG_LLG
         Mfield_cax[lev][i].reset();
+        Hfield_cax[lev][i].reset();
         H_biasfield_cax[lev][i].reset();
 #endif
         current_buf[lev][i].reset();
@@ -1001,6 +1036,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Mx_nodal_flag = IntVect(1,0);
     My_nodal_flag = IntVect(0,0);
     Mz_nodal_flag = IntVect(0,1);
+    Hx_nodal_flag = IntVect(1,0);
+    Hy_nodal_flag = IntVect(0,0);
+    Hz_nodal_flag = IntVect(0,1);
     Hx_bias_nodal_flag = IntVect(1,0);
     Hy_bias_nodal_flag = IntVect(0,0);
     Hz_bias_nodal_flag = IntVect(0,1);
@@ -1019,6 +1057,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Mx_nodal_flag = IntVect(1,0,0);
     My_nodal_flag = IntVect(0,1,0);
     Mz_nodal_flag = IntVect(0,0,1);
+    Hx_nodal_flag = IntVect(1,0,0);
+    Hy_nodal_flag = IntVect(0,1,0);
+    Hz_nodal_flag = IntVect(0,0,1);
     Hx_bias_nodal_flag = IntVect(1,0,0);
     Hy_bias_nodal_flag = IntVect(0,1,0);
     Hz_bias_nodal_flag = IntVect(0,0,1);
@@ -1043,6 +1084,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Mx_nodal_flag  = IntVect::TheNodeVector();
         My_nodal_flag  = IntVect::TheNodeVector();
         Mz_nodal_flag  = IntVect::TheNodeVector();
+        Hx_nodal_flag  = IntVect::TheNodeVector();
+        Hy_nodal_flag  = IntVect::TheNodeVector();
+        Hz_nodal_flag  = IntVect::TheNodeVector();
         Hx_bias_nodal_flag  = IntVect::TheNodeVector();
         Hy_bias_nodal_flag  = IntVect::TheNodeVector();
         Hz_bias_nodal_flag  = IntVect::TheNodeVector();
@@ -1090,25 +1134,33 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Bfield_fp_old[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE+ngextra);
     Bfield_fp_old[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE+ngextra);
 #endif
+
     Efield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE+ngextra);
     Efield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE+ngextra);
     Efield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE+ngextra);
+
 #ifdef WARPX_MAG_LLG
+    // each Mfield[] is three components
     Mfield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Mx_nodal_flag),dm,3     ,ngE+ngextra);
     Mfield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,My_nodal_flag),dm,3     ,ngE+ngextra);
     Mfield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Mz_nodal_flag),dm,3     ,ngE+ngextra);
-    // each Mfield[] is three components
+
+    Hfield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Hx_nodal_flag),dm,ncomps,ngE+ngextra);
+    Hfield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Hy_nodal_flag),dm,ncomps,ngE+ngextra);
+    Hfield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Hz_nodal_flag),dm,ncomps,ngE+ngextra);
 
     H_biasfield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Hx_bias_nodal_flag),dm,ncomps,ngE+ngextra);
     H_biasfield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Hy_bias_nodal_flag),dm,ncomps,ngE+ngextra);
     H_biasfield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Hz_bias_nodal_flag),dm,ncomps,ngE+ngextra);
-    // H_biasfield is very similar to Bfield setup
 #endif
+
     current_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ);
     current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ);
     current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ);
 
-
+    Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE);
+    Bfield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE);
+    Bfield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE);
 
     Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE);
     Bfield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE);
@@ -1205,6 +1257,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Mfield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,3     ,ngE);
         Mfield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,3     ,ngE);
 
+        Hfield_aux[lev][0] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE);
+        Hfield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE);
+        Hfield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE);
+
         H_biasfield_aux[lev][0] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE);
         H_biasfield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE);
         H_biasfield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE);
@@ -1215,6 +1271,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         for (int idir = 0; idir < 3; ++idir) {
 #ifdef WARPX_MAG_LLG
             H_biasfield_aux[lev][idir] = std::make_unique<MultiFab>(*H_biasfield_fp[lev][idir], amrex::make_alias, 0, ncomps);
+            Hfield_aux[lev][idir] = std::make_unique<MultiFab>(*Hfield_fp[lev][idir], amrex::make_alias, 0, ncomps);
             Mfield_aux[lev][idir] = std::make_unique<MultiFab>(*Mfield_fp[lev][idir], amrex::make_alias, 0, 3);
 #endif
 
@@ -1235,6 +1292,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE);
         Efield_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE);
 
+
         Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE);
         Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE);
         Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE);
@@ -1247,6 +1305,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Mfield_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Mx_nodal_flag),dm,3     ,ngE);
         Mfield_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,My_nodal_flag),dm,3     ,ngE);
         Mfield_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Mz_nodal_flag),dm,3     ,ngE);
+
+        Hfield_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Hx_nodal_flag),dm,ncomps,ngE);
+        Hfield_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Hy_nodal_flag),dm,ncomps,ngE);
+        Hfield_aux[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Hz_nodal_flag),dm,ncomps,ngE);
 
         H_biasfield_aux[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Hx_bias_nodal_flag),dm,ncomps,ngE);
         H_biasfield_aux[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Hy_bias_nodal_flag),dm,ncomps,ngE);
@@ -1268,6 +1330,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Mfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Mx_nodal_flag),dm,3     ,ngE);
         Mfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,My_nodal_flag),dm,3     ,ngE);
         Mfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Mz_nodal_flag),dm,3     ,ngE);
+
+        // Create the MultiFabs for H
+        Hfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Hx_nodal_flag),dm,ncomps,ngE);
+        Hfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Hy_nodal_flag),dm,ncomps,ngE);
+        Hfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Hz_nodal_flag),dm,ncomps,ngE);
 
         // Create the MultiFabs for H_bias
         H_biasfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Hx_bias_nodal_flag),dm,ncomps,ngE);
@@ -1363,6 +1430,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 Mfield_cax[lev][0] = std::make_unique<MultiFab>(cnba,dm,3     ,ngE);
                 Mfield_cax[lev][1] = std::make_unique<MultiFab>(cnba,dm,3     ,ngE);
                 Mfield_cax[lev][2] = std::make_unique<MultiFab>(cnba,dm,3     ,ngE);
+                Hfield_cax[lev][0] = std::make_unique<MultiFab>(cnba,dm,ncomps,ngE);
+                Hfield_cax[lev][1] = std::make_unique<MultiFab>(cnba,dm,ncomps,ngE);
+                Hfield_cax[lev][2] = std::make_unique<MultiFab>(cnba,dm,ncomps,ngE);
                 H_biasfield_cax[lev][0] = std::make_unique<MultiFab>(cnba,dm,ncomps,ngE);
                 H_biasfield_cax[lev][1] = std::make_unique<MultiFab>(cnba,dm,ncomps,ngE);
                 H_biasfield_cax[lev][2] = std::make_unique<MultiFab>(cnba,dm,ncomps,ngE);
@@ -1384,6 +1454,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 Mfield_cax[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Mz_nodal_flag),dm,3     ,ngE);
 
                 // Create the MultiFabs for H
+                Hfield_cax[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Hx_nodal_flag),dm,ncomps,ngE);
+                Hfield_cax[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Hy_nodal_flag),dm,ncomps,ngE);
+                Hfield_cax[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Hz_nodal_flag),dm,ncomps,ngE);
+
+                // Create the MultiFabs for H_bias
                 H_biasfield_cax[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Hx_bias_nodal_flag),dm,ncomps,ngE);
                 H_biasfield_cax[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Hy_bias_nodal_flag),dm,ncomps,ngE);
                 H_biasfield_cax[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Hz_bias_nodal_flag),dm,ncomps,ngE);
@@ -1731,3 +1806,77 @@ WarpX::PicsarVersion ()
     return std::string("Unknown");
 #endif
 }
+
+/* for output */
+#ifdef WARPX_MAG_LLG
+    void WarpX::MacroscopicfieldOutput (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Mfield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+        amrex::Real const time)
+    {
+        for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) /* remember to FIX */
+        {
+            // extract field data
+            Array4<Real> const& M_xface = Mfield[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
+            Array4<Real> const& M_yface = Mfield[1]->array(mfi); // note M_yface include x,y,z components at |_y faces
+            Array4<Real> const& M_zface = Mfield[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
+            Array4<Real> const& Hx = Hfield[0]->array(mfi);
+            Array4<Real> const& Hy = Hfield[1]->array(mfi);
+            Array4<Real> const& Hz = Hfield[2]->array(mfi);
+            Array4<Real> const& Ex = Efield[0]->array(mfi);
+            Array4<Real> const& Ey = Efield[1]->array(mfi);
+            Array4<Real> const& Ez = Efield[2]->array(mfi);
+            Array4<Real> const& Bx = Bfield[0]->array(mfi); // Bx is the x component at |_x faces
+            Array4<Real> const& By = Bfield[1]->array(mfi); // By is the y component at |_y faces
+            Array4<Real> const& Bz = Bfield[2]->array(mfi); // Bz is the z component at |_z faces
+            // extract tileboxes for which to loop
+            Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect()); /* just define which grid type */
+            Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect());
+            Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect());
+            // loop over cells and output fields
+            amrex::ParallelFor(tbx, tby, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+            if(i==2 && j==4 && k==4){
+            std::ofstream ofs1("./Mfield_xface_left.txt", std::ofstream::app);
+            amrex::Print(ofs1).SetPrecision(16) << time << " " << M_xface(i,j,k,0) << " " << M_xface(i,j,k,1) << " " << M_xface(i,j,k,2) << " "
+                                                                   << M_yface(i,j,k,0) << " " << M_yface(i,j,k,1) << " " << M_yface(i,j,k,2) << " "
+                                                                   << M_zface(i,j,k,0) << " " << M_zface(i,j,k,1) << " " << M_zface(i,j,k,2) << std::endl;
+            ofs1.close();
+            std::ofstream ofs1_2("./Bfield_xface_left.txt", std::ofstream::app);
+            amrex::Print(ofs1_2).SetPrecision(16) << time << " " << Bx(i,j,k) << " " << By(i,j,k) << " " << Bz(i,j,k) << " " << std::endl;
+            ofs1_2.close();
+            std::ofstream ofs1_3("./Efield_xface_left.txt", std::ofstream::app);
+            amrex::Print(ofs1_3).SetPrecision(16) << time << " " << Ex(i,j,k) << " " << Ey(i,j,k) << " " << Ez(i,j,k) << " " << std::endl;
+            ofs1_3.close();
+            std::ofstream ofs1_4("./Hfield_xface_left.txt", std::ofstream::app);
+            amrex::Print(ofs1_4).SetPrecision(16) << time << " " << Hx(i,j,k) << " " << Hy(i,j,k) << " " << Hz(i,j,k) << " " << std::endl;
+            ofs1_4.close();
+            }
+            if(i==32 && j==32 && k==32){
+            std::ofstream ofs2("./Mfield_xface_right.txt", std::ofstream::app);
+            amrex::Print(ofs2).SetPrecision(16) << time << " " << M_xface(i,j,k,0) << " " << M_xface(i,j,k,1) << " " << M_xface(i,j,k,2) << " "
+                                                                   << M_yface(i,j,k,0) << " " << M_yface(i,j,k,1) << " " << M_yface(i,j,k,2) << " "
+                                                                   << M_zface(i,j,k,0) << " " << M_zface(i,j,k,1) << " " << M_zface(i,j,k,2) << std::endl;
+            ofs2.close();
+            std::ofstream ofs2_2("./Bfield_xface_right.txt", std::ofstream::app);
+            amrex::Print(ofs2_2).SetPrecision(16) << time << " " << Bx(i,j,k) << " " << By(i,j,k) << " " << Bz(i,j,k) << " " << std::endl;
+            ofs2_2.close();
+
+            std::ofstream ofs2_3("./Efield_xface_right.txt", std::ofstream::app);
+            amrex::Print(ofs2_3).SetPrecision(16) << time << " " << Ex(i,j,k) << " " << Ey(i,j,k) << " " << Ez(i,j,k) << " " << std::endl;
+            ofs2_3.close();
+
+            std::ofstream ofs2_4("./Hfield_xface_right.txt", std::ofstream::app);
+            amrex::Print(ofs2_4).SetPrecision(16) << time << " " << Hx(i,j,k) << " " << Hy(i,j,k) << " " << Hz(i,j,k) << " " << std::endl;
+            ofs2_4.close();
+            }
+              },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+              },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+              });
+        }
+    }
+#endif

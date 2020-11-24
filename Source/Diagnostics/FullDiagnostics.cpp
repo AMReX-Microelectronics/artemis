@@ -386,6 +386,12 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "Bz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio);
 #ifdef WARPX_MAG_LLG
+        } else if ( m_varnames[comp] == "Hx" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Hfield_aux(lev, 0), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "Hy" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Hfield_aux(lev, 1), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "Hz" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Hfield_aux(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Mx_xface" ){
             // For the magnetization variables (e.g., Mx_xface) we have to pass in an additional integer stating which variable from the Mfield MultiFab
             // will get averaged/interpolated to the ce1ll-centered plotfile MultiFab.  This is the final integer in the calling sequence.

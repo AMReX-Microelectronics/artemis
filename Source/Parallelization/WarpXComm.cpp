@@ -521,14 +521,14 @@ WarpX::FillBoundaryM (int lev, PatchType patch_type, IntVect ng)
     {
         if (do_pml && pml[lev]->ok())
         {
-            amrex:Abort("PML not included for EvolveM yet");
+            amrex:Abort("PML not included for EvolveHM yet");
             /*
-            pml[lev]->ExchangeB(patch_type,
-                            { Bfield_fp[lev][0].get(),
-                              Bfield_fp[lev][1].get(),
-                              Bfield_fp[lev][2].get() },
+            pml[lev]->ExchangeM(patch_type,
+                            { Mfield_fp[lev][0].get(),
+                              Mfield_fp[lev][1].get(),
+                              Mfield_fp[lev][2].get() },
                               do_pml_in_domain);
-        pml[lev]->FillBoundaryB(patch_type);
+        pml[lev]->FillBoundaryM(patch_type);
         */
         }
         const auto& period = Geom(lev).periodicity();
@@ -546,28 +546,103 @@ WarpX::FillBoundaryM (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
-        amrex::Abort("EvolveM does not come with coarse patch yet");
+        amrex::Abort("EvolveHM does not come with coarse patch yet");
         /*
         if (do_pml && pml[lev]->ok())
         {
-        pml[lev]->ExchangeB(patch_type,
-                      { Bfield_cp[lev][0].get(),
-                        Bfield_cp[lev][1].get(),
-                        Bfield_cp[lev][2].get() },
+        pml[lev]->ExchangeM(patch_type,
+                      { Mfield_cp[lev][0].get(),
+                        Mfield_cp[lev][1].get(),
+                        Mfield_cp[lev][2].get() },
                         do_pml_in_domain);
-        pml[lev]->FillBoundaryB(patch_type);
+        pml[lev]->FillBoundaryM(patch_type);
         }
         const auto& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
-            Vector<MultiFab*> mf{Bfield_cp[lev][0].get(),Bfield_cp[lev][1].get(),Bfield_cp[lev][2].get()};
+            Vector<MultiFab*> mf{Mfield_cp[lev][0].get(),Mfield_cp[lev][1].get(),Mfield_cp[lev][2].get()};
             amrex::FillBoundary(mf, cperiod);
         } else {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_cp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryB, requested more guard cells than allocated");
-            Bfield_cp[lev][0]->FillBoundary(ng, cperiod);
-            Bfield_cp[lev][1]->FillBoundary(ng, cperiod);
-            Bfield_cp[lev][2]->FillBoundary(ng, cperiod);
+                ng <= Mfield_cp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryM, requested more guard cells than allocated");
+            Mfield_cp[lev][0]->FillBoundary(ng, cperiod);
+            Mfield_cp[lev][1]->FillBoundary(ng, cperiod);
+            Mfield_cp[lev][2]->FillBoundary(ng, cperiod);
+        }
+        */
+    }
+}
+
+void
+WarpX::FillBoundaryH (IntVect ng, IntVect ng_extra_fine)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        FillBoundaryH(lev, ng, ng_extra_fine);
+    }
+}
+
+void
+WarpX::FillBoundaryH (int lev, IntVect ng, IntVect ng_extra_fine)
+{
+    FillBoundaryH(lev, PatchType::fine, ng + ng_extra_fine);
+    if (lev > 0) FillBoundaryH(lev, PatchType::coarse, ng);
+}
+
+void
+WarpX::FillBoundaryH (int lev, PatchType patch_type, IntVect ng)
+{
+    if (patch_type == PatchType::fine)
+    {
+        if (do_pml && pml[lev]->ok())
+        {
+            amrex:Abort("PML not included for EvolveHM yet");
+            /*
+            pml[lev]->ExchangeH(patch_type,
+                            { Hfield_fp[lev][0].get(),
+                              Hfield_fp[lev][1].get(),
+                              Hfield_fp[lev][2].get() },
+                              do_pml_in_domain);
+        pml[lev]->FillBoundaryH(patch_type);
+        */
+        }
+        const auto& period = Geom(lev).periodicity();
+        if ( safe_guard_cells ) {
+            Vector<MultiFab*> mf{Hfield_fp[lev][0].get(),Hfield_fp[lev][1].get(),Hfield_fp[lev][2].get()};
+            amrex::FillBoundary(mf, period);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Hfield_fp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryH, requested more guard cells than allocated");
+            Hfield_fp[lev][0]->FillBoundary(ng, period);
+            Hfield_fp[lev][1]->FillBoundary(ng, period);
+            Hfield_fp[lev][2]->FillBoundary(ng, period); //Hfield_fp is an amrex object
+        }
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        amrex::Abort("EvolveHM does not come with coarse patch yet");
+        /*
+        if (do_pml && pml[lev]->ok())
+        {
+        pml[lev]->ExchangeH(patch_type,
+                      { Hfield_cp[lev][0].get(),
+                        Hfield_cp[lev][1].get(),
+                        Hfield_cp[lev][2].get() },
+                        do_pml_in_domain);
+        pml[lev]->FillBoundaryH(patch_type);
+        }
+        const auto& cperiod = Geom(lev-1).periodicity();
+        if ( safe_guard_cells ){
+            Vector<MultiFab*> mf{Hfield_cp[lev][0].get(),Hfield_cp[lev][1].get(),Hfield_cp[lev][2].get()};
+            amrex::FillBoundary(mf, cperiod);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Hfield_cp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryH, requested more guard cells than allocated");
+            Hfield_cp[lev][0]->FillBoundary(ng, cperiod);
+            Hfield_cp[lev][1]->FillBoundary(ng, cperiod);
+            Hfield_cp[lev][2]->FillBoundary(ng, cperiod);
         }
         */
     }
