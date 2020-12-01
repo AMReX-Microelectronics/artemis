@@ -128,6 +128,12 @@ class FiniteDifferenceSolver
                      std::array< amrex::MultiFab*, 3 > const Efield,
                      amrex::Real const dt );
 
+#ifdef WARPX_MAG_LLG
+        void EvolveHPML ( std::array< amrex::MultiFab*, 3 > Hfield,
+                      std::array< amrex::MultiFab*, 3 > const Efield,
+                      amrex::Real const dt );
+#endif
+
     private:
 
         int m_fdtd_algo;
@@ -257,6 +263,14 @@ class FiniteDifferenceSolver
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt );
+
+#ifdef WARPX_MAG_LLG
+        template< typename T_Algo >
+        void EvolveHPMLCartesian (
+            std::array< amrex::MultiFab*, 3 > Bfield,
+            std::array< amrex::MultiFab*, 3 > const Efield,
+            amrex::Real const dt );
+#endif
 
 #endif
 

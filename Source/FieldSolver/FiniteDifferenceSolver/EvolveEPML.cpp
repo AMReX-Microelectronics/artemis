@@ -73,7 +73,11 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
     MultiSigmaBox const& sigba,
     amrex::Real const dt, bool pml_has_particles ) {
 
-    Real constexpr c2 = PhysConst::c * PhysConst::c;
+    Real c2 = PhysConst::c * PhysConst::c;
+
+#ifdef WARPX_MAG_LLG
+    c2 *= PhysConst::mu0;
+#endif
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP

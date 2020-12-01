@@ -117,6 +117,10 @@ public:
     std::array<amrex::MultiFab*,3> GetE_cp ();
     std::array<amrex::MultiFab*,3> GetB_cp ();
     std::array<amrex::MultiFab*,3> Getj_cp ();
+#ifdef WARPX_MAG_LLG
+    std::array<amrex::MultiFab*,3> GetH_fp ();
+    std::array<amrex::MultiFab*,3> GetH_cp ();
+#endif
 
     amrex::MultiFab* GetF_fp ();
     amrex::MultiFab* GetF_cp ();
@@ -149,6 +153,13 @@ public:
     void ExchangeF (amrex::MultiFab* F_fp, amrex::MultiFab* F_cp, int do_pml_in_domain);
     void ExchangeF (PatchType patch_type, amrex::MultiFab* Fp, int do_pml_in_domain);
 
+#ifdef WARPX_MAG_LLG
+    void ExchangeH (const std::array<amrex::MultiFab*,3>& H_fp,
+                    const std::array<amrex::MultiFab*,3>& H_cp, int do_pml_in_domain);
+    void ExchangeH (PatchType patch_type,
+                    const std::array<amrex::MultiFab*,3>& Hp, int do_pml_in_domain);
+#endif
+
     void FillBoundary ();
     void FillBoundaryE ();
     void FillBoundaryB ();
@@ -156,6 +167,10 @@ public:
     void FillBoundaryE (PatchType patch_type);
     void FillBoundaryB (PatchType patch_type);
     void FillBoundaryF (PatchType patch_type);
+#ifdef WARPX_MAG_LLG
+    void FillBoundaryH ();
+    void FillBoundaryH (PatchType patch_type);
+#endif
 
     bool ok () const { return m_ok; }
 
@@ -180,6 +195,11 @@ private:
 
     std::unique_ptr<amrex::MultiFab> pml_F_fp;
     std::unique_ptr<amrex::MultiFab> pml_F_cp;
+
+#ifdef WARPX_MAG_LLG
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_H_fp;
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_H_cp;
+#endif
 
     std::unique_ptr<MultiSigmaBox> sigba_fp;
     std::unique_ptr<MultiSigmaBox> sigba_cp;

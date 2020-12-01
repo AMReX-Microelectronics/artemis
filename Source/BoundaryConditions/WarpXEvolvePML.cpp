@@ -50,6 +50,9 @@ WarpX::DampPML (int lev, PatchType patch_type)
         const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
                                                               : pml[lev]->GetMultiSigmaBox_cp();
+#if WARPX_MAG_LLG
+        const auto& pml_H = (patch_type == PatchType::fine) ? pml[lev]->GetH_fp() : pml[lev]->GetH_cp();
+#endif
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -66,9 +69,15 @@ WarpX::DampPML (int lev, PatchType patch_type)
             auto const& pml_Exfab = pml_E[0]->array(mfi);
             auto const& pml_Eyfab = pml_E[1]->array(mfi);
             auto const& pml_Ezfab = pml_E[2]->array(mfi);
+#ifndef WARPX_MAG_LLG
             auto const& pml_Bxfab = pml_B[0]->array(mfi);
             auto const& pml_Byfab = pml_B[1]->array(mfi);
             auto const& pml_Bzfab = pml_B[2]->array(mfi);
+#else
+            auto const& pml_Hxfab = pml_H[0]->array(mfi);
+            auto const& pml_Hyfab = pml_H[1]->array(mfi);
+            auto const& pml_Hzfab = pml_H[2]->array(mfi);
+#endif
             amrex::Real const * AMREX_RESTRICT sigma_fac_x = sigba[mfi].sigma_fac[0].data();
 #if (AMREX_SPACEDIM == 3)
             amrex::Real const * AMREX_RESTRICT sigma_fac_y = sigba[mfi].sigma_fac[1].data();
@@ -108,6 +117,7 @@ WarpX::DampPML (int lev, PatchType patch_type)
                                   sigma_star_fac_z,x_lo,y_lo,z_lo);
             });
 
+#ifndef WARPX_MAG_LLG
             amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 warpx_damp_pml_bx(i,j,k,pml_Bxfab,sigma_star_fac_y,
@@ -121,6 +131,21 @@ WarpX::DampPML (int lev, PatchType patch_type)
                 warpx_damp_pml_bz(i,j,k,pml_Bzfab,sigma_star_fac_x,
                                   sigma_star_fac_y,x_lo,y_lo);
             });
+#else
+            amrex::ParallelFor(tbx, tby, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                warpx_damp_pml_bx(i,j,k,pml_Hxfab,sigma_star_fac_y,
+                                  sigma_star_fac_z,y_lo,z_lo);
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                warpx_damp_pml_by(i,j,k,pml_Hyfab,sigma_star_fac_z,
+                                  sigma_star_fac_x,z_lo,x_lo);
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                warpx_damp_pml_bz(i,j,k,pml_Hzfab,sigma_star_fac_x,
+                                  sigma_star_fac_y,x_lo,y_lo);
+            });
+#endif
 
             if (pml_F) {
                // Note that for warpx_damp_pml_F(), mfi.nodaltilebox is used in
