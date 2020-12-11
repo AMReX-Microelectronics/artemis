@@ -141,10 +141,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
-#else
-        Array4<Real> const& M_xface = Hfield[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
-        Array4<Real> const& M_yface = Hfield[1]->array(mfi); // note M_yface include x,y,z components at |_y faces
-        Array4<Real> const& M_zface = Hfield[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
 #endif
 
         // material prop //
