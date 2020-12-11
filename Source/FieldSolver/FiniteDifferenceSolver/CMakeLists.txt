@@ -9,6 +9,7 @@ target_sources(WarpX
     EvolveFPML.cpp
     FiniteDifferenceSolver.cpp
     MacroscopicEvolveE.cpp
+    MacroscopicEvolveEPML.cpp
 )
 
 if(WarpX_MAG_LLG)

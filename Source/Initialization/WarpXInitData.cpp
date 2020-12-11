@@ -176,7 +176,7 @@ WarpX::InitPML ()
 #endif
                              do_dive_cleaning, do_moving_window,
                              pml_has_particles, do_pml_in_domain,
-                             do_pml_Lo_corrected, do_pml_Hi);
+                             do_pml_Lo_corrected, do_pml_Hi,0);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
@@ -194,7 +194,7 @@ WarpX::InitPML ()
 #endif
                                    do_dive_cleaning, do_moving_window,
                                    pml_has_particles, do_pml_in_domain,
-                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector());
+                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector(), lev);
         }
     }
 }

@@ -432,7 +432,8 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 #endif
           int do_dive_cleaning, int do_moving_window,
           int /*pml_has_particles*/, int do_pml_in_domain,
-          const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
+          const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi,
+          const int lev)
     : m_geom(geom),
       m_cgeom(cgeom)
 {
@@ -514,6 +515,42 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     pml_H_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getHfield_fp(0,2).ixType().toIntVect() ), dm, 2, ngb );
 #endif
+
+    if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+        // Allocating macroproperties in pml at cell-centers
+        pml_eps_fp = std::make_unique<MultiFab>(ba, dm, 1, nge);
+        pml_mu_fp = std::make_unique<MultiFab>(ba, dm, 1, nge);
+        pml_sigma_fp = std::make_unique<MultiFab>(ba, dm, 1, nge);
+
+        // Initializing macroparameter multifab //
+        auto& warpx = WarpX::GetInstance();
+        auto& macroscopic_properties = warpx.m_macroscopic_properties;
+
+        // Initialize sigma, conductivity
+        if (macroscopic_properties->m_sigma_s == "constant") {
+            pml_sigma_fp->setVal(macroscopic_properties->m_sigma);
+        } else if (macroscopic_properties->m_sigma_s == "parse_sigma_function") {
+            macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_sigma_fp.get(),
+                getParser(macroscopic_properties->m_sigma_parser), lev);
+        }
+
+        // Initialize epsilon, permittivity
+        if (macroscopic_properties->m_epsilon_s == "constant") {
+            pml_eps_fp->setVal(macroscopic_properties->m_epsilon);
+        } else if (macroscopic_properties->m_epsilon_s == "parse_epsilon_function") {
+            macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_eps_fp.get(),
+                getParser(macroscopic_properties->m_epsilon_parser), lev);
+        }
+
+        // Initialize mu, permeability
+        if (macroscopic_properties->m_mu_s == "constant") {
+            pml_mu_fp->setVal(macroscopic_properties->m_mu);
+        } else if (macroscopic_properties->m_mu_s == "parse_mu_function") {
+            macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_mu_fp.get(),
+                getParser(macroscopic_properties->m_mu_parser), lev);
+        }
+
+    }
 
     pml_E_fp[0]->setVal(0.0);
     pml_E_fp[1]->setVal(0.0);
@@ -601,6 +638,44 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         pml_H_cp[2] = std::make_unique<MultiFab>(amrex::convert( cba,
             WarpX::GetInstance().getHfield_cp(1,2).ixType().toIntVect() ), cdm, 2, ngb );
 #endif
+
+
+        // Allocating macroproperties in pml at cell-centers
+        if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+            pml_eps_cp = std::make_unique<MultiFab>(cba, dm, 1, nge);
+            pml_mu_cp = std::make_unique<MultiFab>(cba, dm, 1, nge);
+            pml_sigma_cp = std::make_unique<MultiFab>(cba, dm, 1, nge);
+
+            // Initializing macroparameter multifab //
+            auto& warpx = WarpX::GetInstance();
+            auto& macroscopic_properties = warpx.m_macroscopic_properties;
+
+            // Initialize sigma, conductivity
+            if (macroscopic_properties->m_sigma_s == "constant") {
+                pml_sigma_cp->setVal(macroscopic_properties->m_sigma);
+            } else if (macroscopic_properties->m_sigma_s == "parse_sigma_function") {
+                macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_sigma_cp.get(),
+                    getParser(macroscopic_properties->m_sigma_parser), lev);
+            }
+
+            // Initialize epsilon, permittivity
+            if (macroscopic_properties->m_epsilon_s == "constant") {
+                pml_eps_cp->setVal(macroscopic_properties->m_epsilon);
+            } else if (macroscopic_properties->m_epsilon_s == "parse_epsilon_function") {
+                macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_eps_cp.get(),
+                    getParser(macroscopic_properties->m_epsilon_parser), lev);
+            }
+
+            // Initialize mu, permeability
+            if (macroscopic_properties->m_mu_s == "constant") {
+                pml_mu_cp->setVal(macroscopic_properties->m_mu);
+            } else if (macroscopic_properties->m_sigma_s == "parse_mu_function") {
+                macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_mu_cp.get(),
+                    getParser(macroscopic_properties->m_mu_parser), lev);
+            }
+
+
+        }
 
         pml_E_cp[0]->setVal(0.0);
         pml_E_cp[1]->setVal(0.0);
@@ -803,6 +878,43 @@ MultiFab*
 PML::GetF_cp ()
 {
     return pml_F_cp.get();
+}
+
+// Return macroscopic pml multifabs
+amrex::MultiFab*
+PML::Geteps_fp()
+{
+    return pml_eps_fp.get();
+}
+
+amrex::MultiFab*
+PML::Getmu_fp()
+{
+    return pml_mu_fp.get();
+}
+
+amrex::MultiFab*
+PML::Getsigma_fp()
+{
+    return pml_sigma_fp.get();
+}
+
+amrex::MultiFab*
+PML::Geteps_cp()
+{
+    return pml_eps_cp.get();
+}
+
+amrex::MultiFab*
+PML::Getmu_cp()
+{
+    return pml_mu_cp.get();
+}
+
+amrex::MultiFab*
+PML::Getsigma_cp()
+{
+    return pml_sigma_cp.get();
 }
 
 void

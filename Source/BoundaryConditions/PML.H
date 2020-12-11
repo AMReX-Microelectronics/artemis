@@ -107,7 +107,8 @@ public:
          int do_dive_cleaning, int do_moving_window,
          int pml_has_particles, int do_pml_in_domain,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
-         const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
+         const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector(),
+         const int lev = 0);
 
     void ComputePMLFactors (amrex::Real dt);
 
@@ -124,6 +125,14 @@ public:
 
     amrex::MultiFab* GetF_fp ();
     amrex::MultiFab* GetF_cp ();
+
+    // return macroscopic pml multifabs
+    amrex::MultiFab* Geteps_fp();
+    amrex::MultiFab* Geteps_cp();
+    amrex::MultiFab* Getmu_fp();
+    amrex::MultiFab* Getmu_cp();
+    amrex::MultiFab* Getsigma_fp();
+    amrex::MultiFab* Getsigma_cp();
 
     const MultiSigmaBox& GetMultiSigmaBox_fp () const
         { return *sigba_fp; }
@@ -200,6 +209,14 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_H_fp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_H_cp;
 #endif
+
+    // macroproperties in PML, eps-permittivity, mu-permeability, sigma-condictivity
+    std::unique_ptr<amrex::MultiFab> pml_eps_fp;
+    std::unique_ptr<amrex::MultiFab> pml_mu_fp;
+    std::unique_ptr<amrex::MultiFab> pml_sigma_fp;
+    std::unique_ptr<amrex::MultiFab> pml_eps_cp;
+    std::unique_ptr<amrex::MultiFab> pml_mu_cp;
+    std::unique_ptr<amrex::MultiFab> pml_sigma_cp;
 
     std::unique_ptr<MultiSigmaBox> sigba_fp;
     std::unique_ptr<MultiSigmaBox> sigba_cp;

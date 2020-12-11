@@ -128,6 +128,22 @@ class FiniteDifferenceSolver
                      std::array< amrex::MultiFab*, 3 > const Efield,
                      amrex::Real const dt );
 
+       void MacroscopicEvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
+#ifndef WARPX_MAG_LLG
+                      std::array< amrex::MultiFab*, 3 > const Bfield,
+#else
+                      std::array< amrex::MultiFab*, 3 > const Hfield,
+#endif
+                      std::array< amrex::MultiFab*, 3 > const Jfield,
+                      amrex::MultiFab* const Ffield,
+                      MultiSigmaBox const& sigba,
+                      amrex::Real const dt, bool pml_has_particles,
+                      std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+                      amrex::MultiFab* const eps_mf,
+                      amrex::MultiFab* const mu_mf,
+                      amrex::MultiFab* const sigma_mf);
+
+
 #ifdef WARPX_MAG_LLG
         void EvolveHPML ( std::array< amrex::MultiFab*, 3 > Hfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
@@ -263,6 +279,24 @@ class FiniteDifferenceSolver
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt );
+
+        template< typename T_Algo, typename T_MacroAlgo >
+        void MacroscopicEvolveEPMLCartesian (
+            std::array< amrex::MultiFab*, 3 > Efield,
+#ifndef WARPX_MAG_LLG
+            std::array< amrex::MultiFab*, 3 > const Bfield,
+#else
+            std::array< amrex::MultiFab*, 3 > const Hfield,
+#endif
+            std::array< amrex::MultiFab*, 3 > const Jfield,
+            amrex::MultiFab* const Ffield,
+            MultiSigmaBox const& sigba,
+            amrex::Real const dt, bool pml_has_particles,
+            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+            amrex::MultiFab* const eps_mf,
+            amrex::MultiFab* const mu_mf,
+            amrex::MultiFab* const sigma_mf );
+
 
 #ifdef WARPX_MAG_LLG
         template< typename T_Algo >
