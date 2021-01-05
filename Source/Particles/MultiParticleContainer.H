@@ -11,12 +11,13 @@
 #ifndef WARPX_ParticleContainer_H_
 #define WARPX_ParticleContainer_H_
 
+#include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
 #include "PhysicalParticleContainer.H"
 #include "PhotonParticleContainer.H"
 #include "Laser/LaserParticleContainer.H"
 #include "Parser/WarpXParserWrapper.H"
-#include "Particles/Collision/CollisionType.H"
+#include "Particles/Collision/CollisionHandler.H"
 #include "Particles/ParticleCreation/SmartUtils.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/ParticleCreation/SmartCreate.H"
@@ -64,6 +65,14 @@ public:
 
     WarpXParticleContainer*
     GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
+
+    WarpXParticleContainer&
+    GetParticleContainerFromName (std::string name) const {
+        auto it = std::find(species_names.begin(), species_names.end(), name);
+        WarpXUtilMsg::AlwaysAssert(it != species_names.end(), "ERROR: Unknown species name");
+        int i = std::distance(species_names.begin(), it);
+        return *allcontainers[i];
+    }
 
 #ifdef WARPX_USE_OPENPMD
     std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
@@ -130,7 +139,7 @@ public:
                             const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                             const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
-    void doCoulombCollisions (amrex::Real cur_time);
+    void doCollisions (amrex::Real cur_time);
 
     /**
     * \brief This function loops over all species and performs resampling if appropriate.
@@ -148,6 +157,12 @@ public:
      * particles.
      */
     void doQEDSchwinger ();
+
+    /** This function computes the box outside which Schwinger process is disabled. The box is
+     * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the warpx level 0 geometry
+     * object (to make the link between Real and int quatities).
+     */
+    amrex::Box ComputeSchwingerGlobalBox () const;
 #endif
 
     void Restart (const std::string& dir);
@@ -282,9 +297,7 @@ protected:
 
     std::vector<std::string> lasers_names;
 
-    std::vector<std::string> collision_names;
-
-    amrex::Vector<std::unique_ptr<CollisionType> > allcollisions;
+    std::unique_ptr<CollisionHandler> collisionhandler;
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     std::vector<bool> m_deposit_on_main_grid;
@@ -391,6 +404,15 @@ protected:
      * a Poisson distribution for the pair production rate calculations
      */
     int m_qed_schwinger_threshold_poisson_gaussian = 25;
+    /** The 6 following variables are spatial boundaries beyond which Schwinger process is
+     *  deactivated
+     */
+    amrex::Real m_qed_schwinger_xmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_xmax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real m_qed_schwinger_ymin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_ymax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real m_qed_schwinger_zmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_zmax = std::numeric_limits<amrex::Real>::max();
 
 #endif
 
