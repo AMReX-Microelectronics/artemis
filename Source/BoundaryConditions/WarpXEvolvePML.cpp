@@ -64,6 +64,11 @@ WarpX::DampPML (int lev, PatchType patch_type)
         const amrex::IntVect By_stag = pml_B[1]->ixType().toIntVect();
         const amrex::IntVect Bz_stag = pml_B[2]->ixType().toIntVect();
 
+#if WARPX_MAG_LLG
+        const amrex::IntVect Hx_stag = pml_H[0]->ixType().toIntVect();
+        const amrex::IntVect Hy_stag = pml_H[1]->ixType().toIntVect();
+        const amrex::IntVect Hz_stag = pml_H[2]->ixType().toIntVect();
+#endif
         amrex::IntVect F_stag;
         if (pml_F) {
             F_stag = pml_F->ixType().toIntVect();
@@ -152,16 +157,16 @@ WarpX::DampPML (int lev, PatchType patch_type)
 #else
             amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_bx(i,j,k,pml_Hxfab,sigma_star_fac_y,
-                                  sigma_star_fac_z,y_lo,z_lo);
+                warpx_damp_pml_bx(i, j, k, pml_Hxfab, Hx_stag, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_y, sigma_star_fac_z, y_lo, z_lo);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_by(i,j,k,pml_Hyfab,sigma_star_fac_z,
-                                  sigma_star_fac_x,z_lo,x_lo);
+                warpx_damp_pml_by(i, j, k, pml_Hyfab, Hy_stag, sigma_fac_x, sigma_fac_z,
+                                  sigma_star_fac_z, sigma_star_fac_x, z_lo, x_lo);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_bz(i,j,k,pml_Hzfab,sigma_star_fac_x,
-                                  sigma_star_fac_y,x_lo,y_lo);
+                warpx_damp_pml_bz(i, j, k, pml_Hzfab, Hz_stag, sigma_fac_x, sigma_fac_y,
+                                  sigma_star_fac_x, sigma_star_fac_y, x_lo, y_lo);
             });
 #endif
 
