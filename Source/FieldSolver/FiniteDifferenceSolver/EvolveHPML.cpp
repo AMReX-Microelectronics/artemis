@@ -19,16 +19,15 @@
 #include <AMReX.H>
 
 using namespace amrex;
-
 #ifdef WARPX_MAG_LLG
-
 /**
  * \brief Update the H field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveHPML (
     std::array< amrex::MultiFab*, 3 > Hfield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    amrex::Real const dt ) {
+    amrex::Real const dt,
+    const bool dive_cleaning) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
@@ -38,18 +37,18 @@ void FiniteDifferenceSolver::EvolveHPML (
 #else
     if (m_do_nodal) {
 
-        EvolveHPMLCartesian <CartesianNodalAlgorithm> ( Hfield, Efield, dt );
+        EvolveHPMLCartesian <CartesianNodalAlgorithm> (Hfield, Efield, dt, dive_cleaning);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveHPMLCartesian <CartesianYeeAlgorithm> ( Hfield, Efield, dt );
+        EvolveHPMLCartesian <CartesianYeeAlgorithm> (Hfield, Efield, dt, dive_cleaning);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveHPMLCartesian <CartesianCKCAlgorithm> ( Hfield, Efield, dt );
+        EvolveHPMLCartesian <CartesianCKCAlgorithm> (Hfield, Efield, dt, dive_cleaning);
 
     } else {
-        amrex::Abort("Unknown algorithm");
+        amrex::Abort("EvolveHPML: Unknown algorithm");
     }
 #endif
 }
@@ -61,7 +60,8 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveHPMLCartesian (
     std::array< amrex::MultiFab*, 3 > Hfield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    amrex::Real const dt ) {
+    amrex::Real const dt,
+    const bool dive_cleaning) {
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
@@ -96,36 +96,66 @@ void FiniteDifferenceSolver::EvolveHPMLCartesian (
         amrex::ParallelFor(tbx, tby, tbz,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                amrex::Real UpwardDz_Ey_yy = 0._rt;
+                amrex::Real UpwardDy_Ez_zz = 0._rt;
+                if (dive_cleaning)
+                {
+                    UpwardDz_Ey_yy = T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yy);
+                    UpwardDy_Ez_zz = T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k, PMLComp::zz);
+                }
+
                 Hx(i, j, k, PMLComp::xz) += mu0_inv * dt * (
                     T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yx)
-                  + T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yy)
-                  + T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yz) );
+                  + T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yz)
+                  + UpwardDz_Ey_yy);
+
                 Hx(i, j, k, PMLComp::xy) -= mu0_inv * dt * (
                     T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k, PMLComp::zx)
                   + T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k, PMLComp::zy)
-                  + T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k, PMLComp::zz) );
+                  + UpwardDy_Ez_zz);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                amrex::Real UpwardDx_Ez_zz = 0._rt;
+                amrex::Real UpwardDz_Ex_xx = 0._rt;
+                if (dive_cleaning)
+                {
+                    UpwardDx_Ez_zz = T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k, PMLComp::zz);
+                    UpwardDz_Ex_xx = T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xx);
+                }
+
                 Hy(i, j, k, PMLComp::yx) += mu0_inv * dt * (
                     T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k, PMLComp::zx)
                   + T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k, PMLComp::zy)
-                  + T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k, PMLComp::zz) );
+                  + UpwardDx_Ez_zz);
+
                 Hy(i, j, k, PMLComp::yz) -= mu0_inv * dt * (
-                    T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xx)
+                    UpwardDz_Ex_xx
                   + T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xy)
-                  + T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xz) );
+                  + T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xz));
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                amrex::Real UpwardDy_Ex_xx = 0._rt;
+                amrex::Real UpwardDx_Ey_yy = 0._rt;
+                if (dive_cleaning)
+                {
+                    UpwardDy_Ex_xx = T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k, PMLComp::xx);
+                    UpwardDx_Ey_yy = T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yy);
+                }
+
                 Hz(i, j, k, PMLComp::zy) += mu0_inv * dt * (
-                    T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k, PMLComp::xx)
+                    UpwardDy_Ex_xx
                   + T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k, PMLComp::xy)
                   + T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k, PMLComp::xz) );
+
                 Hz(i, j, k, PMLComp::zx) -= mu0_inv * dt * (
                     T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yx)
-                  + T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yy)
-                  + T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yz) );
+                  + T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yz)
+                  + UpwardDx_Ey_yy);
             }
 
         );
@@ -136,4 +166,4 @@ void FiniteDifferenceSolver::EvolveHPMLCartesian (
 
 #endif // corresponds to ifndef WARPX_DIM_RZ
 
-#endif // #ifdef WARPX_MAG_LLG
+#endif // corresponds to ifdef WARPX_MAG_LLG

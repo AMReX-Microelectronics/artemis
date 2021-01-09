@@ -428,10 +428,10 @@ WarpX::MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real a_dt) {
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveHPML(
-                pml[lev]->GetH_fp(), pml[lev]->GetE_fp(), a_dt );
+                pml[lev]->GetH_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning);
         } else {
             m_fdtd_solver_cp[lev]->EvolveHPML(
-                pml[lev]->GetH_cp(), pml[lev]->GetE_cp(), a_dt );
+                pml[lev]->GetH_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning );
         }
     }
 }
@@ -471,10 +471,10 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveHPML(
-                pml[lev]->GetH_fp(), pml[lev]->GetE_fp(), a_dt );
+                pml[lev]->GetH_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning );
         } else {
             m_fdtd_solver_cp[lev]->EvolveHPML(
-                pml[lev]->GetH_cp(), pml[lev]->GetE_cp(), a_dt );
+                pml[lev]->GetH_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning );
         }
     }
 }
