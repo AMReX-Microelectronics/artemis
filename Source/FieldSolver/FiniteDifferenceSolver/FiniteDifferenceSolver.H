@@ -38,13 +38,13 @@ class FiniteDifferenceSolver
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-                       amrex::Real const dt );
+                       int lev, amrex::Real const dt );
 
         void EvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                        std::unique_ptr<amrex::MultiFab> const& Ffield,
-                       amrex::Real const dt );
+                       int lev, amrex::Real const dt );
 
         void EvolveF ( std::unique_ptr<amrex::MultiFab>& Ffield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -52,6 +52,11 @@ class FiniteDifferenceSolver
                        int const rhocomp,
                        amrex::Real const dt );
 
+        void ApplySilverMuellerBoundary(
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            amrex::Box domain_box,
+            amrex::Real const dt );
 
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
@@ -176,6 +181,7 @@ class FiniteDifferenceSolver
         void EvolveBCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+            const int lev,
             amrex::Real const dt );
 
         template< typename T_Algo >
@@ -184,6 +190,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             std::unique_ptr<amrex::MultiFab> const& Ffield,
+            const int lev,
             amrex::Real const dt );
 
         template< typename T_Algo >
@@ -204,7 +211,7 @@ class FiniteDifferenceSolver
         void EvolveBCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-            amrex::Real const dt );
+            int lev, amrex::Real const dt );
 
         template< typename T_Algo >
         void EvolveECartesian (
@@ -212,7 +219,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             std::unique_ptr<amrex::MultiFab> const& Ffield,
-            amrex::Real const dt );
+            int lev, amrex::Real const dt );
 
         template< typename T_Algo >
         void EvolveFCartesian (

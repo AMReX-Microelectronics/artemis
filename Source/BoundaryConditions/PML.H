@@ -98,15 +98,15 @@ enum struct PatchType : int;
 class PML
 {
 public:
-    PML (const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
+    PML (const int lev,
+         const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
          const amrex::Geometry* geom, const amrex::Geometry* cgeom,
          int ncell, int delta, amrex::IntVect ref_ratio,
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
          int do_dive_cleaning, int do_moving_window,
          int pml_has_particles, int do_pml_in_domain,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
-         const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector(),
-         const int lev = 0);
+         const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
 
     void ComputePMLFactors (amrex::Real dt);
 
@@ -139,7 +139,7 @@ public:
         { return *sigba_cp; }
 
 #ifdef WARPX_USE_PSATD
-    void PushPSATD ();
+    void PushPSATD (const int lev);
 #endif
 
     void ExchangeB (const std::array<amrex::MultiFab*,3>& B_fp,
@@ -234,7 +234,8 @@ private:
 };
 
 #ifdef WARPX_USE_PSATD
-void PushPMLPSATDSinglePatch( SpectralSolver& solver,
+void PushPMLPSATDSinglePatch( const int lev,
+    SpectralSolver& solver,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B );
 #endif

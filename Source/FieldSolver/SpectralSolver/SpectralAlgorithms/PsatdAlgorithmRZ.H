@@ -19,7 +19,8 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         PsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                          amrex::DistributionMapping const & dm,
                          int const n_rz_azimuthal_modes, int const norder_z,
-                         bool const nodal, amrex::Real const dt_step);
+                         bool const nodal, amrex::Real const dt_step,
+                         bool const update_with_rho);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
         virtual int getRequiredNumberOfFields() const override final {
@@ -40,7 +41,8 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          *                           the three components of the current density
          * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection (SpectralFieldDataRZ& field_data,
+        virtual void CurrentCorrection (const int lev,
+                                        SpectralFieldDataRZ& field_data,
                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                         const std::unique_ptr<amrex::MultiFab>& rho) override final;
 
@@ -55,13 +57,15 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
          */
-        virtual void VayDeposition (SpectralFieldDataRZ& field_data,
+        virtual void VayDeposition (const int lev,
+                                    SpectralFieldDataRZ& field_data,
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
         bool coefficients_initialized;
         // Note that dt is saved to use in InitializeSpectralCoefficients
         amrex::Real m_dt;
+        bool m_update_with_rho;
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
 };
 

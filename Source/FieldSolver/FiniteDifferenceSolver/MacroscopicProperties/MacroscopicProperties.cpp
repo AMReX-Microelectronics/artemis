@@ -16,7 +16,7 @@ MacroscopicProperties::MacroscopicProperties ()
 void
 MacroscopicProperties::ReadParameters ()
 {
-    ParmParse pp("macroscopic");
+    ParmParse pp_macroscopic("macroscopic");
     // Since macroscopic maxwell solve is turned on,
     // user-defined sigma, mu, and epsilon are queried.
     // The vacuum values are used as default for the macroscopic parameters
@@ -24,11 +24,11 @@ MacroscopicProperties::ReadParameters ()
 
     // Query input for material conductivity, sigma.
     bool sigma_specified = false;
-    if (queryWithParser(pp, "sigma", m_sigma)) {
+    if (queryWithParser(pp_macroscopic, "sigma", m_sigma)) {
         m_sigma_s = "constant";
         sigma_specified = true;
     }
-    if (pp.query("sigma_function(x,y,z)", m_str_sigma_function) ) {
+    if (pp_macroscopic.query("sigma_function(x,y,z)", m_str_sigma_function) ) {
         m_sigma_s = "parse_sigma_function";
         sigma_specified = true;
     }
@@ -37,17 +37,17 @@ MacroscopicProperties::ReadParameters ()
     }
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
-        Store_parserString(pp, "sigma_function(x,y,z)", m_str_sigma_function);
+        Store_parserString(pp_macroscopic, "sigma_function(x,y,z)", m_str_sigma_function);
         m_sigma_parser = std::make_unique<ParserWrapper<3>>(
                                  makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
     bool epsilon_specified = false;
-    if (queryWithParser(pp, "epsilon", m_epsilon)) {
+    if (queryWithParser(pp_macroscopic, "epsilon", m_epsilon)) {
         m_epsilon_s = "constant";
         epsilon_specified = true;
     }
-    if (pp.query("epsilon_function(x,y,z)", m_str_epsilon_function) ) {
+    if (pp_macroscopic.query("epsilon_function(x,y,z)", m_str_epsilon_function) ) {
         m_epsilon_s = "parse_epsilon_function";
         epsilon_specified = true;
     }
@@ -57,18 +57,18 @@ MacroscopicProperties::ReadParameters ()
 
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
-        Store_parserString(pp, "epsilon_function(x,y,z)", m_str_epsilon_function);
+        Store_parserString(pp_macroscopic, "epsilon_function(x,y,z)", m_str_epsilon_function);
         m_epsilon_parser = std::make_unique<ParserWrapper<3>>(
                                  makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
     // Query input for material permeability, mu
     bool mu_specified = false;
-    if (queryWithParser(pp, "mu", m_mu)) {
+    if (queryWithParser(pp_macroscopic, "mu", m_mu)) {
         m_mu_s = "constant";
         mu_specified = true;
     }
-    if (pp.query("mu_function(x,y,z)", m_str_mu_function) ) {
+    if (pp_macroscopic.query("mu_function(x,y,z)", m_str_mu_function) ) {
         m_mu_s = "parse_mu_function";
         mu_specified = true;
     }
@@ -78,50 +78,50 @@ MacroscopicProperties::ReadParameters ()
 
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
-        Store_parserString(pp, "mu_function(x,y,z)", m_str_mu_function);
+        Store_parserString(pp_macroscopic, "mu_function(x,y,z)", m_str_mu_function);
         m_mu_parser = std::make_unique<ParserWrapper<3>>(
                                  makeParser(m_str_mu_function,{"x","y","z"}));
     }
 
 #ifdef WARPX_MAG_LLG
-    pp.get("mag_Ms_init_style", m_mag_Ms_s);
-    if (m_mag_Ms_s == "constant") pp.get("mag_Ms", m_mag_Ms);
+    pp_macroscopic.get("mag_Ms_init_style", m_mag_Ms_s);
+    if (m_mag_Ms_s == "constant") pp_macroscopic.get("mag_Ms", m_mag_Ms);
     // _mag_ such that it's clear the Ms variable is only meaningful for magnetic materials
     //initialization with parser
     if (m_mag_Ms_s == "parse_mag_Ms_function") {
-        Store_parserString(pp, "mag_Ms_function(x,y,z)", m_str_mag_Ms_function);
+        Store_parserString(pp_macroscopic, "mag_Ms_function(x,y,z)", m_str_mag_Ms_function);
         m_mag_Ms_parser.reset(new ParserWrapper<3>(
                                   makeParser(m_str_mag_Ms_function,{"x","y","z"})));
     }
 
-    pp.get("mag_alpha_init_style", m_mag_alpha_s);
-    if (m_mag_alpha_s == "constant") pp.get("mag_alpha", m_mag_alpha);
+    pp_macroscopic.get("mag_alpha_init_style", m_mag_alpha_s);
+    if (m_mag_alpha_s == "constant") pp_macroscopic.get("mag_alpha", m_mag_alpha);
     // _mag_ such that it's clear the alpha variable is only meaningful for magnetic materials
     //initialization with parser
     if (m_mag_alpha_s == "parse_mag_alpha_function") {
-        Store_parserString(pp, "mag_alpha_function(x,y,z)", m_str_mag_alpha_function);
+        Store_parserString(pp_macroscopic, "mag_alpha_function(x,y,z)", m_str_mag_alpha_function);
         m_mag_alpha_parser.reset(new ParserWrapper<3>(
                                   makeParser(m_str_mag_alpha_function,{"x","y","z"})));
     }
 
-    pp.get("mag_gamma_init_style", m_mag_gamma_s);
-    if (m_mag_gamma_s == "constant") pp.get("mag_gamma", m_mag_gamma);
+    pp_macroscopic.get("mag_gamma_init_style", m_mag_gamma_s);
+    if (m_mag_gamma_s == "constant") pp_macroscopic.get("mag_gamma", m_mag_gamma);
     // _mag_ such that it's clear the gamma variable parsed here is only meaningful for magnetic materials
     //initialization with parser
     if (m_mag_gamma_s == "parse_mag_gamma_function") {
-        Store_parserString(pp, "mag_gamma_function(x,y,z)", m_str_mag_gamma_function);
+        Store_parserString(pp_macroscopic, "mag_gamma_function(x,y,z)", m_str_mag_gamma_function);
         m_mag_gamma_parser.reset(new ParserWrapper<3>(
                                   makeParser(m_str_mag_gamma_function,{"x","y","z"})));
     }
 
     m_mag_normalized_error = 0.1;
-    pp.query("mag_normalized_error",m_mag_normalized_error);
+    pp_macroscopic.query("mag_normalized_error",m_mag_normalized_error);
 
     m_mag_max_iter = 100;
-    pp.query("mag_max_iter",m_mag_max_iter);
+    pp_macroscopic.query("mag_max_iter",m_mag_max_iter);
 
     m_mag_tol = 0.0001;
-    pp.query("mag_tol",m_mag_tol);
+    pp_macroscopic.query("mag_tol",m_mag_tol);
 
 #endif
 }

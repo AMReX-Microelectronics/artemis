@@ -23,7 +23,7 @@ LoadBalanceCosts::LoadBalanceCosts (std::string rd_name)
 // function that gathers costs
 void LoadBalanceCosts::ComputeDiags (int step)
 {
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
     const amrex::LayoutData<amrex::Real>* cost = warpx.getCosts(0);
@@ -50,8 +50,8 @@ void LoadBalanceCosts::ComputeDiags (int step)
     const size_t dataSize =
         static_cast<size_t>(m_nDataFields)*
         static_cast<size_t>(nBoxes);
-    m_data.resize(dataSize, 0.0);
-    m_data.assign(dataSize, 0.0);
+    m_data.resize(dataSize, 0.0_rt);
+    m_data.assign(dataSize, 0.0_rt);
 
     // read in WarpX costs to local copy; compute if using `Heuristic` update
     amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
@@ -83,8 +83,16 @@ void LoadBalanceCosts::ComputeDiags (int step)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 1] = dm[mfi.index()];
             m_data[shift_m_data + mfi.index()*m_nDataFields + 2] = lev;
             m_data[shift_m_data + mfi.index()*m_nDataFields + 3] = tbx.loVect()[0];
+#if (AMREX_SPACEDIM >= 2)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 4] = tbx.loVect()[1];
+#else
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 4] = 0.;
+#endif
+#if (AMREX_SPACEDIM == 3)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = tbx.loVect()[2];
+#else
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = 0.;
+#endif
 #ifdef AMREX_USE_GPU
             m_data[shift_m_data + mfi.index()*m_nDataFields + 6] = amrex::Gpu::Device::deviceId();
 #endif
@@ -218,7 +226,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     ofs.close();
 
 
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
     if (!ParallelDescriptor::IOProcessor()) return;

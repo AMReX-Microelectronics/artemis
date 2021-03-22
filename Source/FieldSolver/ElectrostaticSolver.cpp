@@ -7,7 +7,12 @@
 
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_MLMG.H>
+#ifdef WARPX_DIM_RZ
+#include <AMReX_MLNodeLaplacian.H>
+#else
 #include <AMReX_MLNodeTensorLaplacian.H>
+#endif
+#include <AMReX_REAL.H>
 
 #include <WarpX.H>
 
@@ -40,6 +45,11 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
             }
         }
     }
+    // Transfer fields from 'fp' array to 'aux' array.
+    // This is needed when using momentum conservation
+    // since they are different arrays in that case.
+    UpdateAuxilaryData();
+    FillBoundaryAux(guard_cells.ng_UpdateAux);
 
 }
 
@@ -48,7 +58,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
 
 #ifdef WARPX_DIM_RZ
-    amrex::Abort("The initialization of space-charge field has not yet been implemented in RZ geometry.");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                     "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
     // Allocate fields for charge and potential
@@ -56,7 +67,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
     // Use number of guard cells used for local deposition of rho
-    const int ng = guard_cells.ng_depos_rho.max();
+    const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
@@ -90,7 +101,8 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 {
 
 #ifdef WARPX_DIM_RZ
-    amrex::Abort("The calculation of space-charge field has not yet been implemented in RZ geometry.");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                     "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
     // Allocate fields for charge
@@ -98,7 +110,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     // Use number of guard cells used for local deposition of rho
-    const int ng = guard_cells.ng_depos_rho.max();
+    const amrex::IntVect ng = guard_cells.ng_depos_rho;
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
@@ -118,6 +130,11 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyFilterandSumBoundaryRho (lev, lev, *rho[lev], 0, 1);
     }
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
+    }
+#endif
 
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0
@@ -136,11 +153,6 @@ WarpX::AddSpaceChargeFieldLabFrame ()
    a source, assuming that the source moves at a constant speed \f$\vec{\beta}\f$.
    This uses the amrex solver.
 
-   More specifically, this solves the equation
-   \f[
-       \vec{\nabla}^2\phi - (\vec{\beta}\cdot\vec{\nabla})^2\phi = -\frac{\rho}{\epsilon_0}
-   \f]
-
    \param[in] rho The charge density a given species
    \param[out] phi The potential to be computed by this function
    \param[in] beta Represents the velocity of the source of `phi`
@@ -152,6 +164,161 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    Real const required_precision,
                    int const max_iters) const
 {
+#ifdef WARPX_DIM_RZ
+    computePhiRZ( rho, phi, beta, required_precision, max_iters );
+#else
+    computePhiCartesian( rho, phi, beta, required_precision, max_iters );
+#endif
+
+}
+
+#ifdef WARPX_DIM_RZ
+/* Compute the potential `phi` in cylindrical geometry by solving the Poisson equation
+   with `rho` as a source, assuming that the source moves at a constant
+   speed \f$\vec{\beta}\f$.
+   This uses the amrex solver.
+
+   More specifically, this solves the equation
+   \f[
+       \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
+   \f]
+
+   \param[in] rho The charge density a given species
+   \param[out] phi The potential to be computed by this function
+   \param[in] beta Represents the velocity of the source of `phi`
+*/
+void
+WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                   amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<Real, 3> const beta,
+                   Real const required_precision,
+                   int const max_iters) const
+{
+    // Create a new geometry with the z coordinate scaled by gamma
+    amrex::Real const gamma = std::sqrt(1._rt/(1. - beta[2]*beta[2]));
+
+    amrex::Vector<amrex::Geometry> geom_scaled(max_level + 1);
+    for (int lev = 0; lev <= max_level; ++lev) {
+        const amrex::Geometry & geom_lev = Geom(lev);
+        const amrex::Real* current_lo = geom_lev.ProbLo();
+        const amrex::Real* current_hi = geom_lev.ProbHi();
+        amrex::Real scaled_lo[AMREX_SPACEDIM];
+        amrex::Real scaled_hi[AMREX_SPACEDIM];
+        scaled_lo[0] = current_lo[0];
+        scaled_hi[0] = current_hi[0];
+        scaled_lo[1] = current_lo[1]*gamma;
+        scaled_hi[1] = current_hi[1]*gamma;
+        amrex::RealBox rb = RealBox(scaled_lo, scaled_hi);
+        geom_scaled[lev].define(geom_lev.Domain(), &rb);
+    }
+
+    // Setup the sigma = radius
+    // sigma must be cell centered
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > sigma(max_level+1);
+    for (int lev = 0; lev <= max_level; ++lev) {
+        const amrex::Real * problo = geom_scaled[lev].ProbLo();
+        const amrex::Real * dx = geom_scaled[lev].CellSize();
+        const amrex::Real rmin = problo[0];
+        const amrex::Real dr = dx[0];
+
+        amrex::BoxArray nba = boxArray(lev);
+        nba.enclosedCells(); // Get cell centered array (correct?)
+        sigma[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 0);
+        for ( MFIter mfi(*sigma[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            const amrex::Box& tbx = mfi.tilebox();
+            const amrex::Dim3 lo = amrex::lbound(tbx);
+            const int irmin = lo.x;
+            Array4<amrex::Real> const& sigma_arr = sigma[lev]->array(mfi);
+            amrex::ParallelFor( tbx,
+                [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/) {
+                    sigma_arr(i,j,0) = rmin + (i - irmin + 0.5_rt)*dr;
+                }
+            );
+        }
+
+        // Also, multiply rho by radius (rho is node centered)
+        // Note that this multiplication is not undone since rho is
+        // a temporary array.
+        for ( MFIter mfi(*rho[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
+        {
+            const amrex::Box& tbx = mfi.tilebox();
+            const amrex::Dim3 lo = amrex::lbound(tbx);
+            const int irmin = lo.x;
+            int const ncomp = rho[lev]->nComp(); // This should be 1!
+            Array4<Real> const& rho_arr = rho[lev]->array(mfi);
+            amrex::ParallelFor(tbx, ncomp,
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int icomp)
+            {
+                amrex::Real r = rmin + (i - irmin)*dr;
+                if (r == 0.) {
+                    // dr/3 is used to be consistent with the finite volume formulism
+                    // that is used to solve Poisson's equation
+                    rho_arr(i,j,0,icomp) *= dr/3._rt;
+                } else {
+                    rho_arr(i,j,0,icomp) *= r;
+                }
+            });
+        }
+    }
+
+    // Define the boundary conditions
+    Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
+    lobc[0] = LinOpBCType::Neumann;
+    hibc[0] = LinOpBCType::Dirichlet;
+    if ( Geom(0).isPeriodic(1) ) {
+        lobc[1] = LinOpBCType::Periodic;
+        hibc[1] = LinOpBCType::Periodic;
+    } else {
+        // Use Dirichlet boundary condition by default.
+        // Ideally, we would often want open boundary conditions here.
+        lobc[1] = LinOpBCType::Dirichlet;
+        hibc[1] = LinOpBCType::Dirichlet;
+    }
+
+    // Define the linear operator (Poisson operator)
+    MLNodeLaplacian linop( geom_scaled, boxArray(), dmap );
+    for (int lev = 0; lev <= max_level; ++lev) {
+        linop.setSigma( lev, *sigma[lev] );
+    }
+
+    // Solve the Poisson equation
+    linop.setDomainBC( lobc, hibc );
+    MLMG mlmg(linop);
+    mlmg.setVerbose(2);
+    mlmg.setMaxIter(max_iters);
+    mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
+
+    // Normalize by the correct physical constant
+    for (int lev=0; lev < rho.size(); lev++){
+        phi[lev]->mult(-1._rt/PhysConst::ep0);
+    }
+}
+
+#else
+
+/* Compute the potential `phi` in Cartesian geometry by solving the Poisson equation
+   hwith `rho` as a source, assuming that the source moves at a constant
+   speed \f$\vec{\beta}\f$.
+   This uses the amrex solver.
+
+   More specifically, this solves the equation
+   \f[
+       \vec{\nabla}^2\phi - (\vec{\beta}\cdot\vec{\nabla})^2\phi = -\frac{\rho}{\epsilon_0}
+   \f]
+
+   \param[in] rho The charge density a given species
+   \param[out] phi The potential to be computed by this function
+   \param[in] beta Represents the velocity of the source of `phi`
+*/
+void
+WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                            amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                            std::array<Real, 3> const beta,
+                            Real const required_precision,
+                            int const max_iters) const
+{
+
     // Define the boundary conditions
     Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
     for (int idim=0; idim<AMREX_SPACEDIM; idim++){
@@ -168,7 +335,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
     // Define the linear operator (Poisson operator)
     MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
-    linop.setDomainBC( lobc, hibc );
     // Set the value of beta
     amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
 #if (AMREX_SPACEDIM==2)
@@ -179,6 +345,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     linop.setBeta( beta_solver );
 
     // Solve the Poisson equation
+    linop.setDomainBC( lobc, hibc );
     MLMG mlmg(linop);
     mlmg.setVerbose(2);
     mlmg.setMaxIter(max_iters);
@@ -186,9 +353,10 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
     // Normalize by the correct physical constant
     for (int lev=0; lev < rho.size(); lev++){
-        phi[lev]->mult(-1./PhysConst::ep0);
+        phi[lev]->mult(-1._rt/PhysConst::ep0);
     }
 }
+#endif
 
 /* \bried Compute the electric field that corresponds to `phi`, and
           add it to the set of MultiFab `E`.
@@ -214,17 +382,17 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
         const Real* dx = Geom(lev).CellSize();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #    pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Real inv_dx = 1./dx[0];
+            const Real inv_dx = 1._rt/dx[0];
 #if (AMREX_SPACEDIM == 3)
-            const Real inv_dy = 1./dx[1];
-            const Real inv_dz = 1./dx[2];
+            const Real inv_dy = 1._rt/dx[1];
+            const Real inv_dz = 1._rt/dx[2];
 #else
-            const Real inv_dz = 1./dx[1];
+            const Real inv_dz = 1._rt/dx[1];
 #endif
             const Box& tbx  = mfi.tilebox( E[lev][0]->ixType().toIntVect() );
 #if (AMREX_SPACEDIM == 3)
@@ -250,24 +418,24 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
                         +(beta_x*beta_x-1)*inv_dx*( phi_arr(i+1,j,k)-phi_arr(i,j,k) )
-                        +beta_x*beta_y*0.25*inv_dy*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
+                        +beta_x*beta_y*0.25_rt*inv_dy*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i+1,j-1,k))
-                        +beta_x*beta_z*0.25*inv_dz*(phi_arr(i  ,j,k+1)-phi_arr(i  ,j,k-1)
+                        +beta_x*beta_z*0.25_rt*inv_dz*(phi_arr(i  ,j,k+1)-phi_arr(i  ,j,k-1)
                                                   + phi_arr(i+1,j,k+1)-phi_arr(i+1,j,k-1));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ey_arr(i,j,k) +=
-                        +beta_y*beta_x*0.25*inv_dx*(phi_arr(i+1,j  ,k)-phi_arr(i-1,j  ,k)
+                        +beta_y*beta_x*0.25_rt*inv_dx*(phi_arr(i+1,j  ,k)-phi_arr(i-1,j  ,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i-1,j+1,k))
                         +(beta_y*beta_y-1)*inv_dy*( phi_arr(i,j+1,k)-phi_arr(i,j,k) )
-                        +beta_y*beta_z*0.25*inv_dz*(phi_arr(i,j  ,k+1)-phi_arr(i,j  ,k-1)
+                        +beta_y*beta_z*0.25_rt*inv_dz*(phi_arr(i,j  ,k+1)-phi_arr(i,j  ,k-1)
                                                   + phi_arr(i,j+1,k+1)-phi_arr(i,j+1,k-1));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ez_arr(i,j,k) +=
-                        +beta_z*beta_x*0.25*inv_dx*(phi_arr(i+1,j,k  )-phi_arr(i-1,j,k  )
+                        +beta_z*beta_x*0.25_rt*inv_dx*(phi_arr(i+1,j,k  )-phi_arr(i-1,j,k  )
                                                   + phi_arr(i+1,j,k+1)-phi_arr(i-1,j,k+1))
-                        +beta_z*beta_y*0.25*inv_dy*(phi_arr(i,j+1,k  )-phi_arr(i,j-1,k  )
+                        +beta_z*beta_y*0.25_rt*inv_dy*(phi_arr(i,j+1,k  )-phi_arr(i,j-1,k  )
                                                   + phi_arr(i,j+1,k+1)-phi_arr(i,j-1,k+1))
                         +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j,k+1)-phi_arr(i,j,k) );
                 }
@@ -277,12 +445,12 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
                         +(beta_x*beta_x-1)*inv_dx*( phi_arr(i+1,j,k)-phi_arr(i,j,k) )
-                        +beta_x*beta_z*0.25*inv_dz*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
+                        +beta_x*beta_z*0.25_rt*inv_dz*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i+1,j-1,k));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ez_arr(i,j,k) +=
-                        +beta_z*beta_x*0.25*inv_dx*(phi_arr(i+1,j  ,k)-phi_arr(i-1,j  ,k)
+                        +beta_z*beta_x*0.25_rt*inv_dx*(phi_arr(i+1,j  ,k)-phi_arr(i-1,j  ,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i-1,j+1,k))
                         +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j+1,k)-phi_arr(i,j,k) );
                 }
@@ -316,17 +484,17 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
         const Real* dx = Geom(lev).CellSize();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #    pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Real inv_dx = 1./dx[0];
+            const Real inv_dx = 1._rt/dx[0];
 #if (AMREX_SPACEDIM == 3)
-            const Real inv_dy = 1./dx[1];
-            const Real inv_dz = 1./dx[2];
+            const Real inv_dy = 1._rt/dx[1];
+            const Real inv_dz = 1._rt/dx[2];
 #else
-            const Real inv_dz = 1./dx[1];
+            const Real inv_dz = 1._rt/dx[1];
 #endif
             const Box& tbx  = mfi.tilebox( B[lev][0]->ixType().toIntVect() );
             const Box& tby  = mfi.tilebox( B[lev][1]->ixType().toIntVect() );
@@ -341,7 +509,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
             Real beta_y = beta[1];
             Real beta_z = beta[2];
 
-            constexpr Real inv_c = 1./PhysConst::c;
+            constexpr Real inv_c = 1._rt/PhysConst::c;
 
             // Calculate the magnetic field
             // Use discretized derivative that matches the staggering of the grid.
@@ -349,23 +517,23 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bx_arr(i,j,k) += inv_c * (
-                        -beta_y*inv_dz*0.5*(phi_arr(i,j  ,k+1)-phi_arr(i,j  ,k)
+                        -beta_y*inv_dz*0.5_rt*(phi_arr(i,j  ,k+1)-phi_arr(i,j  ,k)
                                           + phi_arr(i,j+1,k+1)-phi_arr(i,j+1,k))
-                        +beta_z*inv_dy*0.5*(phi_arr(i,j+1,k  )-phi_arr(i,j,k  )
+                        +beta_z*inv_dy*0.5_rt*(phi_arr(i,j+1,k  )-phi_arr(i,j,k  )
                                           + phi_arr(i,j+1,k+1)-phi_arr(i,j,k+1)));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     By_arr(i,j,k) += inv_c * (
-                        -beta_z*inv_dx*0.5*(phi_arr(i+1,j,k  )-phi_arr(i,j,k  )
+                        -beta_z*inv_dx*0.5_rt*(phi_arr(i+1,j,k  )-phi_arr(i,j,k  )
                                           + phi_arr(i+1,j,k+1)-phi_arr(i,j,k+1))
-                        +beta_x*inv_dz*0.5*(phi_arr(i  ,j,k+1)-phi_arr(i  ,j,k)
+                        +beta_x*inv_dz*0.5_rt*(phi_arr(i  ,j,k+1)-phi_arr(i  ,j,k)
                                           + phi_arr(i+1,j,k+1)-phi_arr(i+1,j,k)));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bz_arr(i,j,k) += inv_c * (
-                        -beta_x*inv_dy*0.5*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j,k)
+                        -beta_x*inv_dy*0.5_rt*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j,k)
                                           + phi_arr(i+1,j+1,k)-phi_arr(i+1,j,k))
-                        +beta_y*inv_dx*0.5*(phi_arr(i+1,j  ,k)-phi_arr(i,j  ,k)
+                        +beta_y*inv_dx*0.5_rt*(phi_arr(i+1,j  ,k)-phi_arr(i,j  ,k)
                                           + phi_arr(i+1,j+1,k)-phi_arr(i,j+1,k)));
                 }
             );
@@ -377,9 +545,9 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     By_arr(i,j,k) += inv_c * (
-                        -beta_z*inv_dx*0.5*(phi_arr(i+1,j  ,k)-phi_arr(i,j  ,k)
+                        -beta_z*inv_dx*0.5_rt*(phi_arr(i+1,j  ,k)-phi_arr(i,j  ,k)
                                           + phi_arr(i+1,j+1,k)-phi_arr(i,j+1,k))
-                        +beta_x*inv_dz*0.5*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j,k)
+                        +beta_x*inv_dz*0.5_rt*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j,k)
                                           + phi_arr(i+1,j+1,k)-phi_arr(i+1,j,k)));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {

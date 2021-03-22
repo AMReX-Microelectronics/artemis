@@ -3,6 +3,7 @@
 #include "Utils/Interpolate.H"
 #include "Particles/Filter/FilterFunctors.H"
 
+#include <AMReX_AmrParticles.H>
 #include <AMReX_buildInfo.H>
 
 using namespace amrex;
@@ -20,7 +21,9 @@ FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F) const
+    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
+    bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool /*isLastBTDFlush*/) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
@@ -34,7 +37,7 @@ FlushFormatPlotfile::WriteToFile (
     amrex::WriteMultiLevelPlotfile(filename, nlev,
                                    amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
-                                   time, iteration, warpx.refRatio(),
+                                   static_cast<Real>(time), iteration, warpx.refRatio(),
                                    "HyperCLaw-V1.1",
                                    "Level_",
                                    "Cell",
@@ -48,7 +51,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteJobInfo(filename);
 
-    WriteWarpXHeader(filename, particle_diags);
+    WriteWarpXHeader(filename, particle_diags, geom);
 
     VisMF::SetHeaderVersion(current_version);
 }
@@ -78,7 +81,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         jobInfoFile << PrettyLine;
 
         jobInfoFile << "number of MPI processes: " << ParallelDescriptor::NProcs() << "\n";
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         jobInfoFile << "number of threads:       " << omp_get_max_threads() << "\n";
 #endif
 
@@ -178,7 +181,8 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 void
 FlushFormatPlotfile::WriteWarpXHeader(
     const std::string& name,
-    const amrex::Vector<ParticleDiag>& particle_diags) const
+    const amrex::Vector<ParticleDiag>& particle_diags,
+    amrex::Vector<amrex::Geometry>& geom) const
 {
     auto & warpx = WarpX::GetInstance();
     if (ParallelDescriptor::IOProcessor())
@@ -231,11 +235,11 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         // Geometry
         for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-            HeaderFile << warpx.Geom(0).ProbLo(i) << ' ';
+            HeaderFile << geom[0].ProbLo(i) << ' ';
         }
         HeaderFile << '\n';
         for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-            HeaderFile << warpx.Geom(0).ProbHi(i) << ' ';
+            HeaderFile << geom[0].ProbHi(i) << ' ';
         }
         HeaderFile << '\n';
 
@@ -268,7 +272,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        amrex::ParticleContainer<0, 0, PIdx::nattribs> tmp(pc->GetParGDB());
+        amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
+            tmp(&WarpX::GetInstance());
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
@@ -304,15 +309,16 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         }
 #endif
 
-        // Convert momentum to SI
         pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
         RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                          particle_diags[i].m_random_fraction);
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
-        ParserFilter const parser_filter(particle_diags[i].m_do_parser_filter,
-                                         getParser(particle_diags[i].m_particle_filter_parser));
+        ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+                                   getParser(particle_diags[i].m_particle_filter_parser),
+                                   pc->getMass());
+        parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                              particle_diags[i].m_diag_domain);
 
@@ -332,7 +338,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             particle_diags[i].plot_flags, int_flags,
             real_names, int_names);
 
-        // Convert momentum back to WarpX units
         pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }
@@ -372,7 +377,7 @@ WriteZeroRawMF( const MultiFab& F, const DistributionMapping& dm,
                 const std::string& filename,
                 const std::string& level_prefix,
                 const std::string& field_name,
-                const int lev, const int ng )
+                const int lev, const IntVect ng )
 {
     std::string prefix = amrex::MultiFabFileFullPrefix(lev,
                             filename, level_prefix, field_name);
@@ -400,8 +405,8 @@ WriteCoarseVector( const std::string field_name,
     const std::string& level_prefix,
     const int lev, const bool plot_guards )
 {
-    int ng = 0;
-    if (plot_guards) ng = Fx_fp->nGrow();
+    IntVect ng(0);
+    if (plot_guards) ng = Fx_fp->nGrowVect();
 
     if (lev == 0) {
         // No coarse field for level 0: instead write a MultiFab
@@ -437,8 +442,8 @@ WriteCoarseScalar( const std::string field_name,
     const int lev, const bool plot_guards,
     const int icomp )
 {
-    int ng = 0;
-    if (plot_guards) ng = F_fp->nGrow();
+    IntVect ng(0);
+    if (plot_guards) ng = F_fp->nGrowVect();
 
     if (lev == 0) {
         // No coarse field for level 0: instead write a MultiFab

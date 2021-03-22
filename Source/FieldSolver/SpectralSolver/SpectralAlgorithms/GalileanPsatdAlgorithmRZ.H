@@ -21,7 +21,8 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
                                   int const n_rz_azimuthal_modes, int const norder_z,
                                   bool const nodal,
                                   const amrex::Array<amrex::Real,3>& v_galilean,
-                                  amrex::Real const dt_step);
+                                  amrex::Real const dt_step,
+                                  bool const update_with_rho);
         // Redefine functions from base class
         virtual void pushSpectralFields (SpectralFieldDataRZ & f) override final;
         virtual int getRequiredNumberOfFields () const override final {
@@ -41,7 +42,8 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          *                           storing the three components of the current density
          * \param[in]     rho        unique pointer to MultiFab storing the charge density
          */
-        virtual void CurrentCorrection ( SpectralFieldDataRZ& field_data,
+        virtual void CurrentCorrection ( const int lev,
+                                         SpectralFieldDataRZ& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                          const std::unique_ptr<amrex::MultiFab>& rho ) override final;
 
@@ -55,7 +57,7 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
          */
-        virtual void VayDeposition (SpectralFieldDataRZ& field_data,
+        virtual void VayDeposition (const int lev, SpectralFieldDataRZ& field_data,
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
@@ -63,9 +65,10 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         // Note that dt and v_galilean are saved to use in InitializeSpectralCoefficients
         amrex::Real const m_dt;
         amrex::Array<amrex::Real,3> m_v_galilean;
+        bool m_update_with_rho;
 
         SpectralRealCoefficients C_coef, S_ck_coef;
-        SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
+        SpectralComplexCoefficients Theta2_coef, T_rho_coef, X1_coef, X2_coef, X3_coef, X4_coef;
 
 };
 

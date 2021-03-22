@@ -16,7 +16,7 @@ See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`_ for
 * `Production directories <https://apps.fz-juelich.de/jsc/hps/juwels/environment.html?highlight=scratch#available-filesystems>`_:
 
   * ``$SCRATCH``: Scratch filesystem for temporary data (90 day purge)
-  * ``$FASTDATA/``: Storage location for large data (backuped)
+  * ``$FASTDATA/``: Storage location for large data (backed up)
   * Note that the ``$HOME`` directory is not designed for simulation runs and producing output there will impact performance.
 
 Installation
@@ -68,7 +68,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 .. code-block:: bash
 
-   make -j 16 COMP=gcc USE_GPU=TRUE
+   make -j 16 COMP=gcc USE_GPU=TRUE MPI_THREAD_MULTIPLE=FALSE
 
 The other :ref:`general compile-time options <building-source>` apply as usual.
 

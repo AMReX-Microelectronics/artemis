@@ -67,6 +67,10 @@ void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
+    Print() << "WarpX (" << WarpX::Version() << ")\n";
+#ifdef WARPX_QED
+    Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
+#endif
 
     if (restart_chkfile.empty())
     {
@@ -116,6 +120,8 @@ WarpX::InitData ()
             reduced_diags->WriteToFile(-1);
         }
     }
+
+    PerformanceHints();
 }
 
 void
@@ -126,8 +132,10 @@ WarpX::InitDiagnostics () {
         const Real* current_hi = geom[0].ProbHi();
         Real dt_boost = dt[0];
         // Find the positions of the lab-frame box that corresponds to the boosted-frame box at t=0
-        Real zmin_lab = current_lo[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
-        Real zmax_lab = current_hi[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
+        Real zmin_lab = static_cast<Real>(
+            current_lo[moving_window_dir]/( (1.+beta_boost)*gamma_boost ));
+        Real zmax_lab = static_cast<Real>(
+            current_hi[moving_window_dir]/( (1.+beta_boost)*gamma_boost ));
         myBFD = std::make_unique<BackTransformedDiagnostic>(
                                                zmin_lab,
                                                zmax_lab,
@@ -169,12 +177,12 @@ WarpX::InitPML ()
 #ifdef WARPX_DIM_RZ
         do_pml_Lo_corrected[0] = 0; // no PML at r=0, in cylindrical geometry
 #endif
-        pml[0] = std::make_unique<PML>(boxArray(0), DistributionMap(0), &Geom(0), nullptr,
+        pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
                              do_dive_cleaning, do_moving_window,
                              pml_has_particles, do_pml_in_domain,
-                             do_pml_Lo_corrected, do_pml_Hi,0);
+                             do_pml_Lo_corrected, do_pml_Hi);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
@@ -184,13 +192,13 @@ WarpX::InitPML ()
                 do_pml_Lo_MR[0] = 0;
             }
 #endif
-            pml[lev] = std::make_unique<PML>(boxArray(lev), DistributionMap(lev),
+            pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_dive_cleaning, do_moving_window,
                                    pml_has_particles, do_pml_in_domain,
-                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector(), lev);
+                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector());
         }
     }
 }
@@ -242,7 +250,7 @@ WarpX::InitNCICorrector ()
 void
 WarpX::InitFilter (){
     if (WarpX::use_filter){
-        WarpX::bilinear_filter.npass_each_dir = WarpX::filter_npass_each_dir;
+        WarpX::bilinear_filter.npass_each_dir = WarpX::filter_npass_each_dir.toArray<unsigned int>();
         WarpX::bilinear_filter.ComputeStencils();
     }
 }
@@ -261,57 +269,42 @@ void
 WarpX::InitLevelData (int lev, Real /*time*/)
 {
 
-    ParmParse pp("warpx");
-    // ParmParse stores all entries in a static table which is built the
-    // first time a ParmParse object is constructed (usually in main()).
-    // Subsequent invocations have access to this table.
-    // A ParmParse constructor has an optional "prefix" argument that will
-    // limit the searches to only those entries of the table with this prefix
-    // in name.  For example:
-    //     ParmParse pp("plot");
-    // will find only those entries with name given by "plot.<string>".
-
-    // * Functions with the string "query" in their names attempt to get a
-    //   value or an array of values from the table.  They return the value 1
-    //   (true) if they are successful and 0 (false) if not.
+    ParmParse pp_warpx("warpx");
 
     // default values of E_external_grid and B_external_grid
     // are used to set the E and B field when "constant" or
     // "parser" is not explicitly used in the input.
-    bool B_ext_specified = false;
-    if (pp.query("B_ext_grid_init_style", B_ext_grid_s)){
-        std::transform(B_ext_grid_s.begin(),
+    pp_warpx.query("B_ext_grid_init_style", B_ext_grid_s);
+    std::transform(B_ext_grid_s.begin(),
                    B_ext_grid_s.end(),
                    B_ext_grid_s.begin(),
                    ::tolower);
-        B_ext_specified = true;
-    }
 
 #ifdef WARPX_MAG_LLG
-    if (B_ext_specified) {
+    if (pp_warpx.query("B_ext_grid_init_style", B_ext_grid_s) ) {
         amrex::Abort("ERROR: Initialization of B field is not allowed in the LLG simulation! \nThe initial magnetic field must be H and M! \n");
     }
 #endif
 
-    pp.query("E_ext_grid_init_style", E_ext_grid_s);
+    pp_warpx.query("E_ext_grid_init_style", E_ext_grid_s);
     std::transform(E_ext_grid_s.begin(),
                    E_ext_grid_s.end(),
                    E_ext_grid_s.begin(),
                    ::tolower);
 #ifdef WARPX_MAG_LLG
-    pp.query("M_ext_grid_init_style", M_ext_grid_s); // user-defined initial M
+    pp_warpx.query("M_ext_grid_init_style", M_ext_grid_s); // user-defined initial M
     std::transform(M_ext_grid_s.begin(),
                    M_ext_grid_s.end(),
                    M_ext_grid_s.begin(),
                    ::tolower);
 
-    pp.query("H_ext_grid_init_style", H_ext_grid_s); // user-defined initial H
+    pp_warpx.query("H_ext_grid_init_style", H_ext_grid_s); // user-defined initial H
     std::transform(H_ext_grid_s.begin(),
                    H_ext_grid_s.end(),
                    H_ext_grid_s.begin(),
                    ::tolower);
 
-    pp.query("H_bias_ext_grid_init_style", H_bias_ext_grid_s); // user-defined initial M
+    pp_warpx.query("H_bias_ext_grid_init_style", H_bias_ext_grid_s); // user-defined initial M
     std::transform(H_bias_ext_grid_s.begin(),
                    H_bias_ext_grid_s.end(),
                    H_bias_ext_grid_s.begin(),
@@ -319,29 +312,26 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
 
     // Query for type of external space-time (xt) varying excitation
-    bool B_excitation_specified = false;
-    if (pp.query("B_excitation_on_grid_style", B_excitation_grid_s)){
-        std::transform(B_excitation_grid_s.begin(),
-                   B_excitation_grid_s.end(),
-                   B_excitation_grid_s.begin(),
-                   ::tolower);
-        B_excitation_specified = true;
-    };
+    pp_warpx.query("B_excitation_on_grid_style", B_excitation_grid_s);
+    std::transform(B_excitation_grid_s.begin(),
+               B_excitation_grid_s.end(),
+               B_excitation_grid_s.begin(),
+               ::tolower);
 
 #ifdef WARPX_MAG_LLG
-    if (B_excitation_specified) {
+    if (pp_warpx.query("B_excitation_on_grid_style", B_excitation_grid_s)) {
         amrex::Abort("ERROR: Excitation of B field is not allowed in the LLG simulation! \nThe excited magnetic field must be H field! \n");
     }
 #endif
 
-    pp.query("E_excitation_on_grid_style", E_excitation_grid_s);
+    pp_warpx.query("E_excitation_on_grid_style", E_excitation_grid_s);
     std::transform(E_excitation_grid_s.begin(),
                    E_excitation_grid_s.end(),
                    E_excitation_grid_s.begin(),
                    ::tolower);
 
 #ifdef WARPX_MAG_LLG
-    pp.query("H_excitation_on_grid_style", H_excitation_grid_s);
+    pp_warpx.query("H_excitation_on_grid_style", H_excitation_grid_s);
     std::transform(H_excitation_grid_s.begin(),
                    H_excitation_grid_s.end(),
                    H_excitation_grid_s.begin(),
@@ -352,11 +342,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         // source type (hard=1, soft=2) must be specified for all components
         // using the flag function. Note that a flag value of 0 will not update
         // the field with the excitation.
-        Store_parserString(pp, "Ex_excitation_flag_function(x,y,z)",
+        Store_parserString(pp_warpx, "Ex_excitation_flag_function(x,y,z)",
                                 str_Ex_excitation_flag_function);
-        Store_parserString(pp, "Ey_excitation_flag_function(x,y,z)",
+        Store_parserString(pp_warpx, "Ey_excitation_flag_function(x,y,z)",
                                 str_Ey_excitation_flag_function);
-        Store_parserString(pp, "Ez_excitation_flag_function(x,y,z)",
+        Store_parserString(pp_warpx, "Ez_excitation_flag_function(x,y,z)",
                                 str_Ez_excitation_flag_function);
         Exfield_flag_parser.reset(new ParserWrapper<3>(
                    makeParser(str_Ex_excitation_flag_function,{"x","y","z"})));
@@ -370,11 +360,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         // source type (hard=1, soft=2) must be specified for all components
         // using the flag function. Note that a flag value of 0 will not update
         // the field with the excitation.
-        Store_parserString(pp, "Bx_excitation_flag_function(x,y,z)",
+        Store_parserString(pp_warpx, "Bx_excitation_flag_function(x,y,z)",
                                 str_Bx_excitation_flag_function);
-        Store_parserString(pp, "By_excitation_flag_function(x,y,z)",
+        Store_parserString(pp_warpx, "By_excitation_flag_function(x,y,z)",
                                 str_By_excitation_flag_function);
-        Store_parserString(pp, "Bz_excitation_flag_function(x,y,z)",
+        Store_parserString(pp_warpx, "Bz_excitation_flag_function(x,y,z)",
                                 str_Bz_excitation_flag_function);
         Bxfield_flag_parser.reset(new ParserWrapper<3>(
                    makeParser(str_Bx_excitation_flag_function,{"x","y","z"})));
@@ -390,11 +380,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         // source type (hard=1, soft=2) must be specified for all components
         // using the flag function. Note that a flag value of 0 will not update
         // the field with the excitation.
-        Store_parserString(pp, "Hx_excitation_flag_function(x,y,z)",
+        Store_parserString(pp_warpx, "Hx_excitation_flag_function(x,y,z)",
                                 str_Hx_excitation_flag_function);
-        Store_parserString(pp, "Hy_excitation_flag_function(x,y,z)",
+        Store_parserString(pp_warpx, "Hy_excitation_flag_function(x,y,z)",
                                 str_Hy_excitation_flag_function);
-        Store_parserString(pp, "Hz_excitation_flag_function(x,y,z)",
+        Store_parserString(pp_warpx, "Hz_excitation_flag_function(x,y,z)",
                                 str_Hz_excitation_flag_function);
         Hxfield_flag_parser.reset(new ParserWrapper<3>(
                    makeParser(str_Hx_excitation_flag_function,{"x","y","z"})));
@@ -414,23 +404,23 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (B_ext_grid_s == "constant")
-        pp.getarr("B_external_grid", B_external_grid);
+        pp_warpx.getarr("B_external_grid", B_external_grid);
 
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (E_ext_grid_s == "constant")
-        pp.getarr("E_external_grid", E_external_grid);
+        pp_warpx.getarr("E_external_grid", E_external_grid);
 
     // make parser for the external B-excitation in space-time
     if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
 #ifdef WARPX_DIM_RZ
        amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Bx_excitation_grid_function(x,y,z,t)",
+       Store_parserString(pp_warpx, "Bx_excitation_grid_function(x,y,z,t)",
                                                     str_Bx_excitation_grid_function);
-       Store_parserString(pp, "By_excitation_grid_function(x,y,z,t)",
+       Store_parserString(pp_warpx, "By_excitation_grid_function(x,y,z,t)",
                                                     str_By_excitation_grid_function);
-       Store_parserString(pp, "Bz_excitation_grid_function(x,y,z,t)",
+       Store_parserString(pp_warpx, "Bz_excitation_grid_function(x,y,z,t)",
                                                     str_Bz_excitation_grid_function);
        Bxfield_xt_grid_parser.reset(new ParserWrapper<4>(
                    makeParser(str_Bx_excitation_grid_function,{"x","y","z","t"})));
@@ -445,11 +435,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Ex_excitation_grid_function(x,y,z,t)",
+       Store_parserString(pp_warpx, "Ex_excitation_grid_function(x,y,z,t)",
                                                     str_Ex_excitation_grid_function);
-       Store_parserString(pp, "Ey_excitation_grid_function(x,y,z,t)",
+       Store_parserString(pp_warpx, "Ey_excitation_grid_function(x,y,z,t)",
                                                     str_Ey_excitation_grid_function);
-       Store_parserString(pp, "Ez_excitation_grid_function(x,y,z,t)",
+       Store_parserString(pp_warpx, "Ez_excitation_grid_function(x,y,z,t)",
                                                     str_Ez_excitation_grid_function);
        Exfield_xt_grid_parser.reset(new ParserWrapper<4>(
                    makeParser(str_Ex_excitation_grid_function,{"x","y","z","t"})));
@@ -465,11 +455,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Hx_excitation_grid_function(x,y,z,t)",
+       Store_parserString(pp_warpx, "Hx_excitation_grid_function(x,y,z,t)",
                                                     str_Hx_excitation_grid_function);
-       Store_parserString(pp, "Hy_excitation_grid_function(x,y,z,t)",
+       Store_parserString(pp_warpx, "Hy_excitation_grid_function(x,y,z,t)",
                                                     str_Hy_excitation_grid_function);
-       Store_parserString(pp, "Hz_excitation_grid_function(x,y,z,t)",
+       Store_parserString(pp_warpx, "Hz_excitation_grid_function(x,y,z,t)",
                                                     str_Hz_excitation_grid_function);
        Hxfield_xt_grid_parser.reset(new ParserWrapper<4>(
                    makeParser(str_Hx_excitation_grid_function,{"x","y","z","t"})));
@@ -482,23 +472,33 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
 #ifdef WARPX_MAG_LLG
     if (M_ext_grid_s == "constant")
-        pp.getarr("M_external_grid", M_external_grid);
+        pp_warpx.getarr("M_external_grid", M_external_grid);
 
     if (H_ext_grid_s == "constant")
-        pp.getarr("H_external_grid", H_external_grid);
+        pp_warpx.getarr("H_external_grid", H_external_grid);
 
     if (H_bias_ext_grid_s == "constant")
-        pp.getarr("H_bias_external_grid", H_bias_external_grid);
+        pp_warpx.getarr("H_bias_external_grid", H_bias_external_grid);
 #endif
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
-    ParmParse ppsatd("psatd");
-    ppsatd.query("do_time_averaging", fft_do_time_averaging );
+    ParmParse pp_psatd("psatd");
+    pp_psatd.query("do_time_averaging", fft_do_time_averaging );
 
     for (int i = 0; i < 3; ++i) {
         current_fp[lev][i]->setVal(0.0);
         if (lev > 0)
            current_cp[lev][i]->setVal(0.0);
+
+        // Initialize aux MultiFabs on level 0
+        if (lev == 0) {
+            Bfield_aux[lev][i]->setVal(0.0);
+            Efield_aux[lev][i]->setVal(0.0);
+            if (fft_do_time_averaging) {
+                Bfield_avg_aux[lev][i]->setVal(0.0);
+                Efield_avg_aux[lev][i]->setVal(0.0);
+            }
+        }
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
@@ -528,7 +528,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                   Efield_avg_aux[lev][i]->setVal(E_external_grid[i]);
                   Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
               }
-
            }
         }
 
@@ -580,11 +579,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Bx_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
                                                     str_Bx_ext_grid_function);
-       Store_parserString(pp, "By_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
                                                     str_By_ext_grid_function);
-       Store_parserString(pp, "Bz_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
                                                     str_Bz_ext_grid_function);
        Bxfield_parser = std::make_unique<ParserWrapper<3>>(
                                 makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
@@ -628,11 +627,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Ex_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
                                                     str_Ex_ext_grid_function);
-       Store_parserString(pp, "Ey_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
                                                     str_Ey_ext_grid_function);
-       Store_parserString(pp, "Ez_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
                                                     str_Ez_ext_grid_function);
 
        Exfield_parser = std::make_unique<ParserWrapper<3>>(
@@ -678,11 +677,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("H bias parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Hx_bias_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Hx_bias_external_grid_function(x,y,z)",
                                                     str_Hx_bias_ext_grid_function);
-       Store_parserString(pp, "Hy_bias_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Hy_bias_external_grid_function(x,y,z)",
                                                     str_Hy_bias_ext_grid_function);
-       Store_parserString(pp, "Hz_bias_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Hz_bias_external_grid_function(x,y,z)",
                                                     str_Hz_bias_ext_grid_function);
 
        Hx_biasfield_parser.reset(new ParserWrapper<3>(
@@ -724,11 +723,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
        amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
 #endif
-       Store_parserString(pp, "Hx_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Hx_external_grid_function(x,y,z)",
                                                     str_Hx_ext_grid_function);
-       Store_parserString(pp, "Hy_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Hy_external_grid_function(x,y,z)",
                                                     str_Hy_ext_grid_function);
-       Store_parserString(pp, "Hz_external_grid_function(x,y,z)",
+       Store_parserString(pp_warpx, "Hz_external_grid_function(x,y,z)",
                                                     str_Hz_ext_grid_function);
 
        Hxfield_parser.reset(new ParserWrapper<3>(
@@ -769,11 +768,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef WARPX_DIM_RZ
         amrex::Abort("M-field parser for external fields does not work with RZ");
 #endif
-        Store_parserString(pp, "Mx_external_grid_function(x,y,z)",
+        Store_parserString(pp_warpx, "Mx_external_grid_function(x,y,z)",
                                                     str_Mx_ext_grid_function);
-        Store_parserString(pp, "My_external_grid_function(x,y,z)",
+        Store_parserString(pp_warpx, "My_external_grid_function(x,y,z)",
                                                     str_My_ext_grid_function);
-        Store_parserString(pp, "Mz_external_grid_function(x,y,z)",
+        Store_parserString(pp_warpx, "Mz_external_grid_function(x,y,z)",
                                                     str_Mz_ext_grid_function);
 
         Mxfield_parser.reset(new ParserWrapper<3>(
@@ -865,6 +864,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (costs[lev]) {
         for (int i : costs[lev]->IndexArray()) {
             (*costs[lev])[i] = 0.0;
+            WarpX::setLoadBalanceEfficiency(lev, -1);
         }
     }
 }
@@ -1021,4 +1021,37 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             }
         );
     }
+}
+
+void
+WarpX::PerformanceHints ()
+{
+    // Check requested MPI ranks and available boxes
+    amrex::Long total_nboxes = 0; // on all MPI ranks
+    for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
+        total_nboxes += boxArray(ilev).size();
+    }
+    if (ParallelDescriptor::NProcs() > total_nboxes)
+        amrex::Print() << "\n[Warning] [Performance] Too many resources / too little work!\n"
+            << "  It looks like you requested more compute resources than "
+            << "there are total number of boxes of cells available ("
+            << total_nboxes << "). "
+            << "You started with (" << ParallelDescriptor::NProcs()
+            << ") MPI ranks, so (" << ParallelDescriptor::NProcs() - total_nboxes
+            << ") rank(s) will have no work.\n"
+#ifdef AMREX_USE_GPU
+            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+            << "each GPU's memory sufficiently. If you do not rely on dynamic "
+            << "load-balancing, then one large box per GPU is ideal.\n"
+#endif
+            << "  More information:\n"
+            << "  https://warpx.readthedocs.io/en/latest/running_cpp/parallelization.html\n";
+
+    // TODO: warn if some ranks have disproportionally more work than all others
+    //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
+    //               all other ranks; we need to measure this with our load-balancing
+    //               routines and issue a warning only of some ranks stall all other ranks
+    // TODO: check MPI-rank to GPU ratio (should be 1:1)
+    // TODO: check memory per MPI rank, especially if GPUs are underutilized
+    // TODO: CPU tiling hints with OpenMP
 }

@@ -6,12 +6,14 @@
  */
 
 #include "LoadBalanceCosts.H"
+#include "LoadBalanceEfficiency.H"
 #include "ParticleHistogram.H"
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
 #include "ParticleExtrema.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
+#include "RhoMaximum.H"
 #include "ParticleNumber.H"
 #include "MultiReducedDiags.H"
 
@@ -27,8 +29,8 @@ MultiReducedDiags::MultiReducedDiags ()
 {
 
     // read reduced diags names
-    ParmParse pp("warpx");
-    m_plot_rd = pp.queryarr("reduced_diags_names", m_rd_names);
+    ParmParse pp_warpx("warpx");
+    m_plot_rd = pp_warpx.queryarr("reduced_diags_names", m_rd_names);
 
     // if names are not given, reduced diags will not be done
     if ( m_plot_rd == 0 ) { return; }
@@ -40,11 +42,11 @@ MultiReducedDiags::MultiReducedDiags ()
     for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {
 
-        ParmParse pp_rd(m_rd_names[i_rd]);
+        ParmParse pp_rd_name(m_rd_names[i_rd]);
 
         // read reduced diags type
         std::string rd_type;
-        pp_rd.query("type", rd_type);
+        pp_rd_name.query("type", rd_type);
 
         // match diags
         if (rd_type.compare("ParticleEnergy") == 0)
@@ -62,6 +64,11 @@ MultiReducedDiags::MultiReducedDiags ()
             m_multi_rd[i_rd] =
                 std::make_unique<FieldMaximum>(m_rd_names[i_rd]);
         }
+        else if (rd_type.compare("RhoMaximum") == 0)
+        {
+            m_multi_rd[i_rd] =
+                std::make_unique<RhoMaximum>(m_rd_names[i_rd]);
+        }
         else if (rd_type.compare("BeamRelevant") == 0)
         {
             m_multi_rd[i_rd] =
@@ -71,6 +78,11 @@ MultiReducedDiags::MultiReducedDiags ()
         {
             m_multi_rd[i_rd] =
                 std::make_unique<LoadBalanceCosts>(m_rd_names[i_rd]);
+        }
+        else if (rd_type.compare("LoadBalanceEfficiency") == 0)
+        {
+            m_multi_rd[i_rd] =
+                std::make_unique<LoadBalanceEfficiency>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("ParticleHistogram") == 0)
         {

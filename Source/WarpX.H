@@ -45,6 +45,7 @@
 #include <AMReX_AmrCore.H>
 #include <AMReX_BLProfiler.H>
 #include <AMReX_Print.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_iMultiFab.H>
 #include <AMReX_VisMF.H>
@@ -52,7 +53,7 @@
 #include <AMReX_Interpolater.H>
 #include <AMReX_FillPatchUtil.H>
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -92,9 +93,8 @@ public:
     MultiParticleContainer& GetPartContainer () { return *mypc; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
-                         int num_shift, int dir, amrex::IntVect ng_extra,
-                         amrex::Real external_field=0.0, bool useparser = false,
-                         HostDeviceParser<3> const& field_parser={});
+                         int num_shift, int dir, amrex::Real external_field=0.0,
+                         bool useparser = false, HostDeviceParser<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -239,6 +239,11 @@ public:
     static long load_balance_costs_update_algo;
     static int em_solver_medium;
     static int macroscopic_solver_algo;
+    static amrex::Vector<int> field_boundary_lo;
+    static amrex::Vector<int> field_boundary_hi;
+    static amrex::Vector<int> particle_boundary_lo;
+    static amrex::Vector<int> particle_boundary_hi;
+
 
 #ifdef WARPX_MAG_LLG
     // second-order magnetization normalization strategy
@@ -423,12 +428,27 @@ public:
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
 
-    static amrex::LayoutData<amrex::Real>* getCosts (int lev) {
-        if (m_instance) {
-            return m_instance->costs[lev].get();
+    static amrex::LayoutData<amrex::Real>* getCosts (int lev);
+
+    void setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency)
+    {
+        if (m_instance)
+        {
+            m_instance->load_balance_efficiency[lev] = efficiency;
         } else
         {
-            return nullptr;
+            return;
+        }
+    }
+
+    amrex::Real getLoadBalanceEfficiency (const int lev)
+    {
+        if (m_instance)
+        {
+            return m_instance->load_balance_efficiency[lev];
+        } else
+        {
+            return -1;
         }
     }
 
@@ -477,6 +497,7 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void ApplySilverMuellerBoundary (amrex::Real dt);
 
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
@@ -563,6 +584,21 @@ public:
 
     void CopyJPML ();
 
+    /**
+     * \brief Synchronize the nodal points of the PML MultiFabs
+     */
+    void NodalSyncPML ();
+
+    /**
+     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level
+     */
+    void NodalSyncPML (int lev);
+
+    /**
+     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level and patch
+     */
+    void NodalSyncPML (int lev, PatchType patch_type);
+
     PML* GetPML (int lev);
 
     /** Run the ionization module on all species */
@@ -591,26 +627,25 @@ public:
     void UpdateAuxilaryDataSameType ();
 
     // Fill boundary cells including coarse/fine boundaries
-    void FillBoundaryB   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryE   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryB   (amrex::IntVect ng);
+    void FillBoundaryE   (amrex::IntVect ng);
+    void FillBoundaryB_avg   (amrex::IntVect ng);
+    void FillBoundaryE_avg   (amrex::IntVect ng);
 #ifdef WARPX_MAG_LLG
-    void FillBoundaryM   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryH   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-#endif
-    //find out where this is implemented
-    void FillBoundaryB_avg   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryE_avg   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryM   (amrex::IntVect ng);
+    void FillBoundaryH   (amrex::IntVect ng);
+#endif    
 
     void FillBoundaryF   (amrex::IntVect ng);
     void FillBoundaryAux (amrex::IntVect ng);
-    void FillBoundaryE   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryB   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryE   (int lev, amrex::IntVect ng);
+    void FillBoundaryB   (int lev, amrex::IntVect ng);
+    void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
+    void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 #ifdef WARPX_MAG_LLG
-    void FillBoundaryM   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryH   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-#endif
-    void FillBoundaryE_avg   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
-    void FillBoundaryB_avg   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryM   (int lev, amrex::IntVect ng);
+    void FillBoundaryH   (int lev, amrex::IntVect ng);
+#endif    
 
     void FillBoundaryF   (int lev, amrex::IntVect ng);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
@@ -639,7 +674,7 @@ public:
     amrex::Real stopTime () const {return stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
-        amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
+        amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
 
     void prepareFields( int const step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
@@ -686,13 +721,12 @@ public:
 
     static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                              const std::array<const amrex::MultiFab* const, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int const ngrow);
+                             const std::array<amrex::Real,3>& dx, amrex::IntVect const ngrow);
 
     void ComputeDivE(amrex::MultiFab& divE, const int lev);
 
     const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; }
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
-    const amrex::IntVect getngExtra() const { return guard_cells.ng_Extra; }
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
     const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
@@ -714,6 +748,17 @@ public:
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
                      const int max_iters=200) const;
+    void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                       std::array<amrex::Real, 3> const beta,
+                       amrex::Real const required_precision,
+                       int const max_iters) const;
+    void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                       std::array<amrex::Real, 3> const beta,
+                       amrex::Real const required_precision,
+                       int const max_iters) const;
+
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
@@ -795,6 +840,16 @@ public:
                                amrex::MultiFab& Mx_face,
                                amrex::MultiFab& My_face,
                                amrex::MultiFab& Mz_face);
+#endif
+
+#ifdef WARPX_USE_PSATD
+    // Host and device vectors for ordered Fornberg stencil coefficients used for finite-order centering
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_x;
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
+    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_x;
+    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_y;
+    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_z;
 #endif
 
 protected:
@@ -932,11 +987,10 @@ private:
 
     void InitNCICorrector ();
 
-    std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
+    /** Check the requested resources and write performance hints */
+    void PerformanceHints ();
 
-    void ExchangeWithPmlB (int lev);
-    void ExchangeWithPmlE (int lev); // do M & H need this???
-    void ExchangeWithPmlF (int lev);
+    std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
     void BuildBufferMasks ();
     void BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
@@ -948,10 +1002,14 @@ private:
         return gather_buffer_masks[lev].get();
     }
 
+    void ReorderFornbergCoefficients(amrex::Vector<amrex::Real>& ordered_coeffs,
+                                     amrex::Vector<amrex::Real>& unordered_coeffs,
+                                     const int order);
+
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
-                        const amrex::IntVect& ngextra, const bool aux_is_nodal);
+                        const bool aux_is_nodal);
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?
@@ -1032,6 +1090,7 @@ private:
 
     // PML
     int do_pml = 1;
+    int do_silver_mueller = 0;
     int pml_ncell = 10;
     int pml_delta = 10;
     int pml_has_particles = 0;
@@ -1061,7 +1120,7 @@ private:
 #endif
 
     // Load balancing
-    /** Load balancing intervals that reads the "load_balance_int" string int the input file
+    /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
      * for getting steps at which load balancing is performed */
     IntervalsParser load_balance_intervals;
     /** Collection of LayoutData to keep track of weights used in load balancing
@@ -1080,6 +1139,8 @@ private:
      * distribution mapping efficiency is larger than the threshold; 'efficiency'
      * here means the average cost per MPI rank.  */
     amrex::Real load_balance_efficiency_ratio_threshold = amrex::Real(1.1);
+    /** Current load balance efficiency for each level.  */
+    amrex::Vector<amrex::Real> load_balance_efficiency;
     /** Weight factor for cells in `Heuristic` costs update.
      * Default values on GPU are determined from single-GPU tests on Summit.
      * The problem setup for these tests is an empty (i.e. no particles) domain
@@ -1146,6 +1207,24 @@ private:
 
     // Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
+
+    //
+    // Embeded Boundary
+    //
+
+    // Factory for field data
+    amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > > m_field_factory;
+
+    amrex::FabFactory<amrex::FArrayBox> const& fieldFactory (int lev) const noexcept {
+        return *m_field_factory[lev];
+    }
+#ifdef AMREX_USE_EB
+    amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
+        return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
+    }
+#endif
+
+    void InitEB ();
 
 private:
     // void EvolvePSATD (int numsteps);

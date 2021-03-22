@@ -32,7 +32,7 @@ void FiniteDifferenceSolver::EvolveBPML (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Bfield, Efield, dt);
+    amrex::ignore_unused(Bfield, Efield, dt, dive_cleaning);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
@@ -64,7 +64,7 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
     const bool dive_cleaning) {
 
     // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {

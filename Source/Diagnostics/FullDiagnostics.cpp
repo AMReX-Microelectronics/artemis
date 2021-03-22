@@ -23,6 +23,7 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
 {
     ReadParameters();
+    BackwardCompatibility();
 }
 
 void
@@ -48,21 +49,21 @@ FullDiagnostics::ReadParameters ()
 {
     // Read list of full diagnostics fields requested by the user.
     bool checkpoint_compatibility = BaseReadParameters();
-    amrex::ParmParse pp(m_diag_name);
+    amrex::ParmParse pp_diag_name(m_diag_name);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" ||
         m_format == "checkpoint" || m_format == "ascent" ||
         m_format == "sensei",
         "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
-    std::vector<std::string> period_string_vec = {"0"};
-    pp.queryarr("period", period_string_vec);
-    m_intervals = IntervalsParser(period_string_vec);
-    bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
-    raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
-    raw_specified += pp.query("plot_raw_rho", m_plot_raw_rho);
+    std::vector<std::string> intervals_string_vec = {"0"};
+    pp_diag_name.queryarr("intervals", intervals_string_vec);
+    m_intervals = IntervalsParser(intervals_string_vec);
+    bool raw_specified = pp_diag_name.query("plot_raw_fields", m_plot_raw_fields);
+    raw_specified += pp_diag_name.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
+    raw_specified += pp_diag_name.query("plot_raw_rho", m_plot_raw_rho);
 
 #ifdef WARPX_DIM_RZ
-    pp.query("dump_rz_modes", m_dump_rz_modes);
+    pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
 #else
     amrex::ignore_unused(m_dump_rz_modes);
 #endif
@@ -77,6 +78,17 @@ FullDiagnostics::ReadParameters ()
     // Number of buffers = 1 for FullDiagnostics.
     // It is used to allocate the number of output multi-level MultiFab, m_mf_output
     m_num_buffers = 1;
+}
+
+void
+FullDiagnostics::BackwardCompatibility ()
+{
+    amrex::ParmParse pp_diag_name(m_diag_name);
+    std::vector<std::string> backward_strings;
+    if (pp_diag_name.queryarr("period", backward_strings)){
+        amrex::Abort("<diag_name>.period is no longer a valid option. "
+                     "Please use the renamed option <diag_name>.intervals instead.");
+    }
 }
 
 void
@@ -468,8 +480,8 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     // First, make sure all guard cells are properly filled
     // Probably overkill/unnecessary, but safe and shouldn't happen often !!
     auto & warpx = WarpX::GetInstance();
-    warpx.FillBoundaryE(warpx.getngE(), warpx.getngExtra());
-    warpx.FillBoundaryB(warpx.getngE(), warpx.getngExtra());
+    warpx.FillBoundaryE(warpx.getngE());
+    warpx.FillBoundaryB(warpx.getngE());
     warpx.UpdateAuxilaryData();
     warpx.FillBoundaryAux(warpx.getngUpdateAux());
 

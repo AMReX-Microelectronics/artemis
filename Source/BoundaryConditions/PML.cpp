@@ -12,10 +12,11 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
 #include <AMReX_Print.H>
 #include <AMReX_VisMF.H>
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -399,8 +400,8 @@ MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
 
     dt_B = dt;
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -415,8 +416,8 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 
     dt_E = dt;
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -424,14 +425,13 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     }
 }
 
-PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
+PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
           int do_dive_cleaning, int do_moving_window,
           int /*pml_has_particles*/, int do_pml_in_domain,
-          const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi,
-          const int lev)
+          const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_geom(geom),
       m_cgeom(cgeom)
 {
@@ -482,9 +482,17 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         // of the stencil for the spectral solver
         IntVect ngFFT;
         if (do_nodal) {
-            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
+#if (AMREX_SPACEDIM==3)
+            ngFFT = IntVect(nox_fft, noy_fft, noz_fft);
+#else
+            ngFFT = IntVect(nox_fft, noz_fft);
+#endif
         } else {
-            ngFFT = IntVect(AMREX_D_DECL(nox_fft / 2, noy_fft / 2, noz_fft / 2));
+#if (AMREX_SPACEDIM==3)
+            ngFFT = IntVect(nox_fft / 2, noy_fft / 2, noz_fft / 2);
+#else
+            ngFFT = IntVect(nox_fft / 2, noz_fft / 2);
+#endif
         }
         // Set the number of guard cells to the maximum of each field
         // (all fields should have the same number of guard cells)
@@ -595,6 +603,10 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
+        amrex::ignore_unused(lev, dt);
+#   if(AMREX_SPACEDIM!=3)
+        amrex::ignore_unused(noy_fft);
+#   endif
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                          "PML: PSATD solver selected but not built.");
 #else
@@ -605,7 +617,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         Array<Real,3> const v_galilean_zero = {0., 0., 0.};
         Array<Real,3> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
-        spectral_solver_fp = std::make_unique<SpectralSolver>(realspace_ba, dm,
+        spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, dx, dt, in_pml );
 #endif
     }
@@ -743,6 +755,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
+            amrex::ignore_unused(dt);
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                              "PML: PSATD solver selected but not built.");
 #else
@@ -754,7 +767,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
             const bool in_pml = true; // Tells spectral solver to use split-PML equations
 
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
-            spectral_solver_cp = std::make_unique<SpectralSolver>(realspace_cba, cdm,
+            spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
                 nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, cdx, dt, in_pml );
 #endif
         }
@@ -1119,7 +1132,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         if (ngr.max() > 0) {
             MultiFab::Copy(tmpregmf, reg, 0, 0, 1, ngr);
             tmpregmf.ParallelCopy(totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(reg); mfi.isValid(); ++mfi)
@@ -1340,17 +1353,18 @@ PML::Restart (const std::string& dir)
 
 #ifdef WARPX_USE_PSATD
 void
-PML::PushPSATD () {
+PML::PushPSATD (const int lev) {
 
     // Update the fields on the fine and coarse patch
-    PushPMLPSATDSinglePatch( *spectral_solver_fp, pml_E_fp, pml_B_fp );
+    PushPMLPSATDSinglePatch( lev, *spectral_solver_fp, pml_E_fp, pml_B_fp );
     if (spectral_solver_cp) {
-        PushPMLPSATDSinglePatch( *spectral_solver_cp, pml_E_cp, pml_B_cp );
+        PushPMLPSATDSinglePatch( lev, *spectral_solver_cp, pml_E_cp, pml_B_cp );
     }
 }
 
 void
 PushPMLPSATDSinglePatch (
+    const int lev,
     SpectralSolver& solver,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B ) {
@@ -1362,32 +1376,32 @@ PushPMLPSATDSinglePatch (
     // (Exy, Ezx, etc.) and the component (PMLComp::xy, PMComp::zx, etc.)
     // of the MultiFabs (e.g. pml_E) is dictated by the
     // function that damps the PML
-    solver.ForwardTransform(*pml_E[0], SpIdx::Exy, PMLComp::xy);
-    solver.ForwardTransform(*pml_E[0], SpIdx::Exz, PMLComp::xz);
-    solver.ForwardTransform(*pml_E[1], SpIdx::Eyz, PMLComp::yz);
-    solver.ForwardTransform(*pml_E[1], SpIdx::Eyx, PMLComp::yx);
-    solver.ForwardTransform(*pml_E[2], SpIdx::Ezx, PMLComp::zx);
-    solver.ForwardTransform(*pml_E[2], SpIdx::Ezy, PMLComp::zy);
-    solver.ForwardTransform(*pml_B[0], SpIdx::Bxy, PMLComp::xy);
-    solver.ForwardTransform(*pml_B[0], SpIdx::Bxz, PMLComp::xz);
-    solver.ForwardTransform(*pml_B[1], SpIdx::Byz, PMLComp::yz);
-    solver.ForwardTransform(*pml_B[1], SpIdx::Byx, PMLComp::yx);
-    solver.ForwardTransform(*pml_B[2], SpIdx::Bzx, PMLComp::zx);
-    solver.ForwardTransform(*pml_B[2], SpIdx::Bzy, PMLComp::zy);
+    solver.ForwardTransform(lev, *pml_E[0], SpIdx::Exy, PMLComp::xy);
+    solver.ForwardTransform(lev, *pml_E[0], SpIdx::Exz, PMLComp::xz);
+    solver.ForwardTransform(lev, *pml_E[1], SpIdx::Eyz, PMLComp::yz);
+    solver.ForwardTransform(lev, *pml_E[1], SpIdx::Eyx, PMLComp::yx);
+    solver.ForwardTransform(lev, *pml_E[2], SpIdx::Ezx, PMLComp::zx);
+    solver.ForwardTransform(lev, *pml_E[2], SpIdx::Ezy, PMLComp::zy);
+    solver.ForwardTransform(lev, *pml_B[0], SpIdx::Bxy, PMLComp::xy);
+    solver.ForwardTransform(lev, *pml_B[0], SpIdx::Bxz, PMLComp::xz);
+    solver.ForwardTransform(lev, *pml_B[1], SpIdx::Byz, PMLComp::yz);
+    solver.ForwardTransform(lev, *pml_B[1], SpIdx::Byx, PMLComp::yx);
+    solver.ForwardTransform(lev, *pml_B[2], SpIdx::Bzx, PMLComp::zx);
+    solver.ForwardTransform(lev, *pml_B[2], SpIdx::Bzy, PMLComp::zy);
     // Advance fields in spectral space
     solver.pushSpectralFields();
     // Perform backward Fourier Transform
-    solver.BackwardTransform(*pml_E[0], SpIdx::Exy, PMLComp::xy);
-    solver.BackwardTransform(*pml_E[0], SpIdx::Exz, PMLComp::xz);
-    solver.BackwardTransform(*pml_E[1], SpIdx::Eyz, PMLComp::yz);
-    solver.BackwardTransform(*pml_E[1], SpIdx::Eyx, PMLComp::yx);
-    solver.BackwardTransform(*pml_E[2], SpIdx::Ezx, PMLComp::zx);
-    solver.BackwardTransform(*pml_E[2], SpIdx::Ezy, PMLComp::zy);
-    solver.BackwardTransform(*pml_B[0], SpIdx::Bxy, PMLComp::xy);
-    solver.BackwardTransform(*pml_B[0], SpIdx::Bxz, PMLComp::xz);
-    solver.BackwardTransform(*pml_B[1], SpIdx::Byz, PMLComp::yz);
-    solver.BackwardTransform(*pml_B[1], SpIdx::Byx, PMLComp::yx);
-    solver.BackwardTransform(*pml_B[2], SpIdx::Bzx, PMLComp::zx);
-    solver.BackwardTransform(*pml_B[2], SpIdx::Bzy, PMLComp::zy);
+    solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exy, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exz, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyz, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyx, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezx, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezy, PMLComp::zy);
+    solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxy, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxz, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byz, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byx, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzx, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzy, PMLComp::zy);
 }
 #endif

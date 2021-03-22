@@ -15,7 +15,7 @@
 #include "WarpXParticleContainer.H"
 #include "PhysicalParticleContainer.H"
 #include "PhotonParticleContainer.H"
-#include "Laser/LaserParticleContainer.H"
+#include "LaserParticleContainer.H"
 #include "Parser/WarpXParserWrapper.H"
 #include "Particles/Collision/CollisionHandler.H"
 #include "Particles/ParticleCreation/SmartUtils.H"
@@ -177,6 +177,8 @@ public:
 
     void Redistribute ();
 
+    void defineAllParticleTiles ();
+
     void RedistributeLocal (const int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
@@ -322,7 +324,7 @@ protected:
             info.EnableTiling(pc_src.tile_size);
         }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         info.SetDynamic(true);
 #endif
 

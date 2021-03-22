@@ -28,6 +28,7 @@ class constants:
     m_p = 1.67262192369e-27
     hbar = 1.054571817e-34
 
+picmistandard.register_constants(constants)
 
 class Species(picmistandard.PICMI_Species):
     def init(self, kw):
@@ -72,6 +73,10 @@ class Species(picmistandard.PICMI_Species):
 
         self.boost_adjust_transverse_positions = kw.pop('warpx_boost_adjust_transverse_positions', None)
 
+        # For the relativistic electrostatic solver
+        self.self_fields_required_precision = kw.pop('warpx_self_fields_required_precision', None)
+        self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
+
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -83,12 +88,17 @@ class Species(picmistandard.PICMI_Species):
 
         pywarpx.particles.species_names.append(self.name)
 
+        if initialize_self_fields is None:
+            initialize_self_fields = False
+
         self.species = pywarpx.Bucket.Bucket(self.name,
                                              mass = self.mass,
                                              charge = self.charge,
                                              injection_style = 'python',
                                              initialize_self_fields = int(initialize_self_fields),
-                                             boost_adjust_transverse_positions = self.boost_adjust_transverse_positions)
+                                             boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
+                                             self_fields_required_precision = self.self_fields_required_precision,
+                                             self_fields_max_iters = self.self_fields_max_iters)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -113,9 +123,15 @@ class Species(picmistandard.PICMI_Species):
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
 class MultiSpecies(picmistandard.PICMI_MultiSpecies):
-    def initialize_inputs(self, layout, initialize_self_fields=False):
+    def initialize_inputs(self, layout,
+                          initialize_self_fields = False,
+                          injection_plane_position = None,
+                          injection_plane_normal_vector = None):
         for species in self.species_instances_list:
-            species.initialize_inputs(layout, initialize_self_fields)
+            species.initialize_inputs(layout,
+                                      initialize_self_fields,
+                                      injection_plane_position,
+                                      injection_plane_normal_vector)
 
 
 class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
@@ -285,18 +301,20 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
 
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
-
-        if len(self.x) > 1:
-            raise Exception('Only a single particle can be loaded')
+        pass
 
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
-        species.injection_style = "singleparticle"
-        species.single_particle_pos = [self.x[0], self.y[0], self.z[0]]
-        species.single_particle_vel = [self.ux[0]/constants.c, self.uy[0]/constants.c, self.uz[0]/constants.c]
-        species.single_particle_weight = self.weight
+        species.injection_style = "multipleparticles"
+        species.multiple_particles_pos_x = self.x
+        species.multiple_particles_pos_y = self.y
+        species.multiple_particles_pos_z = self.z
+        species.multiple_particles_vel_x = self.ux/constants.c
+        species.multiple_particles_vel_y = self.uy/constants.c
+        species.multiple_particles_vel_z = self.uz/constants.c
+        species.multiple_particles_weight = self.weight
         if density_scale is not None:
-            species.single_particle_weight *= density_scale
+            species.multiple_particles_weight = self.weight*density_scale
 
 
 class ParticleDistributionPlanarInjector(picmistandard.PICMI_ParticleDistributionPlanarInjector):
@@ -514,8 +532,19 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
+    def init(self, kw):
+        self.relativistic = kw.pop('warpx_relativistic', False)
+
     def initialize_inputs(self):
-        pass
+
+        self.grid.initialize_inputs()
+
+        if self.relativistic:
+            pywarpx.warpx.do_electrostatic = 'relativistic'
+        else:
+            pywarpx.warpx.do_electrostatic = 'labframe'
+            pywarpx.warpx.self_fields_required_precision = self.required_precision
+            pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
 
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
@@ -644,8 +673,13 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_filter = kw.pop('warpx_use_filter', None)
         self.serialize_ics = kw.pop('warpx_serialize_ics', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
-        self.load_balance_int = kw.pop('warpx_load_balance_int', None)
+        self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
+        self.load_balance_efficiency_ratio_threshold = kw.pop('warpx_load_balance_efficiency_ratio_threshold', None)
         self.load_balance_with_sfc = kw.pop('warpx_load_balance_with_sfc', None)
+        self.load_balance_knapsack_factor = kw.pop('warpx_load_balance_knapsack_factor', None)
+        self.load_balance_costs_update = kw.pop('warpx_load_balance_costs_update', None)
+        self.costs_heuristic_particles_wt = kw.pop('warpx_costs_heuristic_particles_wt', None)
+        self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
 
         self.inputs_initialized = False
@@ -659,7 +693,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.verbose = self.verbose
         if self.time_step_size is not None:
-            pywarpx.warpx.const_dt = self.timestep
+            pywarpx.warpx.const_dt = self.time_step_size
 
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
@@ -669,13 +703,18 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
         pywarpx.algo.field_gathering = self.field_gathering_algo
         pywarpx.algo.particle_pusher = self.particle_pusher_algo
+        pywarpx.algo.load_balance_intervals = self.load_balance_intervals
+        pywarpx.algo.load_balance_efficiency_ratio_threshold = self.load_balance_efficiency_ratio_threshold
+        pywarpx.algo.load_balance_with_sfc = self.load_balance_with_sfc
+        pywarpx.algo.load_balance_knapsack_factor = self.load_balance_knapsack_factor
+        pywarpx.algo.load_balance_costs_update = self.load_balance_costs_update
+        pywarpx.algo.costs_heuristic_particles_wt = self.costs_heuristic_particles_wt
+        pywarpx.algo.costs_heuristic_cells_wt = self.costs_heuristic_cells_wt
 
         pywarpx.warpx.use_filter = self.use_filter
         pywarpx.warpx.serialize_ics = self.serialize_ics
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
-        pywarpx.warpx.load_balance_int = self.load_balance_int
-        pywarpx.warpx.load_balance_with_sfc = self.load_balance_with_sfc
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
@@ -750,7 +789,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 # ----------------------------
 
 
-class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
+class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
     def init(self, kw):
 
         self.plot_raw_fields = kw.pop('warpx_plot_raw_fields', None)
@@ -779,7 +818,7 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.dump_rz_modes = self.dump_rz_modes
-        self.diagnostic.period = self.period
+        self.diagnostic.intervals = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
         if self.number_of_cells is not None:
@@ -801,10 +840,13 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                 fields_to_plot.add('jx')
                 fields_to_plot.add('jy')
                 fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number', 'part_per_cell']:
+            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
                 fields_to_plot.add(dataname)
             elif dataname in ['Jx', 'Jy', 'Jz']:
                 fields_to_plot.add(dataname.lower())
+            elif dataname.startswith('rho_'):
+                # Adds rho_species diagnostic
+                fields_to_plot.add(dataname)
             elif dataname == 'dive':
                 fields_to_plot.add('divE')
             elif dataname == 'divb':
@@ -835,16 +877,7 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
             self.diagnostic.file_prefix = write_dir + '/' + file_prefix
 
 
-class FieldDiagnostic(_WarpX_FieldDiagnostic, picmistandard.PICMI_FieldDiagnostic):
-    pass
-
-
-class ElectrostaticFieldDiagnostic(_WarpX_FieldDiagnostic, picmistandard.PICMI_ElectrostaticFieldDiagnostic):
-    def initialize_inputs(self):
-        if 'phi' in self.data_list:
-            # --- phi is not supported by WarpX, but is in the default data_list
-            self.data_list.remove('phi')
-        _WarpX_FieldDiagnostic.initialize_inputs(self)
+ElectrostaticFieldDiagnostic = FieldDiagnostic
 
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
@@ -884,7 +917,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
-        self.diagnostic.period = self.period
+        self.diagnostic.intervals = self.period
 
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()

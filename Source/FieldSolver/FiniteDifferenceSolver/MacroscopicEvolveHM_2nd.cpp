@@ -300,7 +300,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     // begin the iteration
     while (!stop_iter){
 
-        warpx.FillBoundaryH(warpx.getngE(), warpx.getngExtra());
+        warpx.FillBoundaryH(warpx.getngE());
 
         for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi){
             auto& mag_Ms_mf = macroscopic_properties->getmag_Ms_mf();

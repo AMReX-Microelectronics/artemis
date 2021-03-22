@@ -8,6 +8,7 @@
 #define GUARDCELLMANAGER_H_
 
 #include <AMReX_IntVect.H>
+#include <AMReX_RealVect.H>
 
 /**
  * \brief This class computes and stores the number of guard cells needed for
@@ -35,11 +36,12 @@ public:
      * \param max_level max level of the simulation
      */
     void Init(
+        const amrex::Real dt,
+        const amrex::RealVect dx,
         const bool do_subcycling,
         const bool do_fdtd_nci_corr,
         const bool do_nodal,
         const bool do_moving_window,
-        const bool aux_is_nodal,
         const int moving_window_dir,
         const int nox,
         const int nox_fft, const int noy_fft, const int noz_fft,
@@ -48,7 +50,8 @@ public:
         const int max_level,
         const amrex::Array<amrex::Real,3> v_galilean,
         const amrex::Array<amrex::Real,3> v_comoving,
-        const bool safe_guard_cells);
+        const bool safe_guard_cells,
+        const int do_electrostatic);
 
     // Guard cells allocated for MultiFabs E and B
     amrex::IntVect ng_alloc_EB = amrex::IntVect::TheZeroVector();
@@ -71,12 +74,6 @@ public:
     amrex::IntVect ng_UpdateAux = amrex::IntVect::TheZeroVector();
     // Number of guard cells of all MultiFabs that must exchanged before moving window
     amrex::IntVect ng_MovingWindow = amrex::IntVect::TheZeroVector();
-
-    // When the auxiliary grid is nodal but the field solver is staggered
-    // (typically with momentum-conserving gather with FDTD Yee solver),
-    // An extra guard cell is needed on the fine grid to do the interpolation
-    // for E and B.
-    amrex::IntVect ng_Extra = amrex::IntVect::TheZeroVector();
 
     // Number of guard cells for local deposition of J and rho
     amrex::IntVect ng_depos_J   = amrex::IntVect::TheZeroVector();
