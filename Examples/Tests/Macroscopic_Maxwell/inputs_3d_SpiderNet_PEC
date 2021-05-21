@@ -8,10 +8,10 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 300000
-amr.n_cell = 1024 4 512 # number of cells spanning the domain in each coordinate direction at level 0
-amr.max_grid_size = 1024 # maximum size of each AMReX box, used to decompose the domain
-amr.blocking_factor = 4 # only meaningful for AMR
+max_step = 30000
+amr.n_cell = 512 128 1024 # number of cells spanning the domain in each coordinate direction at level 0
+amr.max_grid_size = 64 # maximum size of each AMReX box, used to decompose the domain
+amr.blocking_factor = 8 # only meaningful for AMR
 geometry.coord_sys = 0
 geometry.is_periodic = 0 0 0 
 
@@ -80,10 +80,10 @@ warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
 warpx.Ez_excitation_flag_function(x,y,z) = "flag_hs * (x < width_line/2 + gap_cpw + width_gnd/2) * (x > -width_line/2 - gap_cpw - width_gnd/2) * (z > - h_domain/2) * (z < - h_domain/2 + 2*th_si + th_nb) * (y < -length_cpw/2 + rjy/2) + flag_none * (x >= width_line/2 + gap_cpw + width_gnd/2) * (x <= -width/2 - gap_cpw - width_gnd/2) * (z >= - h_domain/2 + 2*th_si + th_nb) * (y >= -length_cpw/2 + rjy/2)" 
 
 #Diagnostics
-diagnostics.diags_names = zline_BernadoFilter0111_
+diagnostics.diags_names = plt_spidernet0521_
 
-zline_BernadoFilter0111_.period = 2
-zline_BernadoFilter0111_.diag_lo = 0.0 0.0 -250.e-3
-zline_BernadoFilter0111_.diag_hi = 0.0 0.0  250.e-3
-zline_BernadoFilter0111_.diag_type = Full
-zline_BernadoFilter0111_.fields_to_plot = Ey Hx Hz
+plt_spidernet0521_.period = 2
+plt_spidernet0521_.diag_lo = 0.0 0.0 -250.e-3
+plt_spidernet0521_.diag_hi = 0.0 0.0  250.e-3
+plt_spidernet0521_.diag_type = Full
+plt_spidernet0521_.fields_to_plot = Ey Hx Hz
