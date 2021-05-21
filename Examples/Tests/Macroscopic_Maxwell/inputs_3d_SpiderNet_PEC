@@ -1,0 +1,89 @@
+####################################################################################################
+## This input file simulates the simplified TRL
+## Superconducting metal is simplified to PEC
+## The plane wave excitation is the time-dependent modified Gaussian pulse
+## This input file requires USE_LLG=FALSE in the GNUMakefile.
+####################################################################################################
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 300000
+amr.n_cell = 1024 4 512 # number of cells spanning the domain in each coordinate direction at level 0
+amr.max_grid_size = 1024 # maximum size of each AMReX box, used to decompose the domain
+amr.blocking_factor = 4 # only meaningful for AMR
+geometry.coord_sys = 0
+geometry.is_periodic = 0 0 0 
+
+# total dimention in x is summation: 2*my_constants.gap_cpw + my_constants.width_line + 2*my_constants.width_gnd
+# total dimension in y is CPW length: my_constants.length_cpw
+# total dimenion in z has no direct relation with the geometries, z dimension needs to be large enough to encompass all leackage fields
+# z dimension must be consistent w/ my_constants.h_domain
+geometry.prob_lo = -36.0e-6 -10.0e-2 -50.0e-6 # must be consistent with .diag_hi/lo
+geometry.prob_hi =  36.0e-6  10.0e-2  50.0e-6
+
+amr.max_level = 0
+
+my_constants.pi = 3.14159265359
+my_constants.c = 299792458.
+my_constants.th_si = 30.0e-6 # thickness of the silicon substrate is 70um
+my_constants.th_nb = 250.0e-9 # thickness of niobium metal is 250nm
+my_constants.gap_chip = 3.25e-6 # gap between silicon surfaces of wiring & qubit chips
+my_constants.gap_cpw = 6.0e-6 # air gap of CPW
+my_constants.width_line = 10.0e-6 # line width of CPW
+my_constants.width_gnd = 25.0e-6 # width of each ground patch
+my_constants.length_cpw = 20.0e-2 # length of CPW in longitudinal direction
+my_constants.h_domain = 100.0e-6 # total z-height of entire simulation domain 
+
+my_constants.rjy = 1.0e-4 # the y dimension of current source cross-section; should be just larger than 2*dy
+my_constants.wavelength = 0.0545 # center frequency is 5.5 GHz
+my_constants.TP = 5.4545e-10 # Gaussian pulse width, 3 x time period of excitation
+my_constants.flag_none = 0 # no source flag
+my_constants.flag_hs = 1 # hard source flag
+my_constants.flag_ss = 2 # soft source flag
+my_constants.epr = 11.7 # relative permittivity of ferrite slab
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 0
+warpx.use_filter = 0
+warpx.cfl = 0.8
+warpx.do_pml_Lo = 1 0 1 # PEC on side walls; PML at -z end to extend Si substrate; PML at -x to extend GND patches
+warpx.do_pml_Hi = 1 1 1 # PEC on side walls; PEC at +z end to extend air; PML at +x to extend GND patches
+particles.nspecies = 0
+
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+
+macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
+macroscopic.sigma_function(x,y,z) = "0.0" # Nb is approximately PEC, with infinite conductivity
+macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
+macroscopic.epsilon_function(x,y,z) = "epr * 8.8541878128e-12 * (z<=-h_domain/2+th_si)" # EPr is 11.7 for silicon
+macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06" # nonmagnetic material allover
+
+#################################
+############ FIELDS #############
+#################################
+
+# vertical electric voltage excitation superimposed with PEC at one end of CPW
+# in the waveform of modified Gaussian pulse
+warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "1.0 * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (x < width_line/2 + gap_cpw + width_gnd/2) * (x > -width_line/2 - gap_cpw - width_gnd/2) * (z > - h_domain/2) * (z < - h_domain/2 + 2*th_si + th_nb) * (y < -length_cpw/2 + rjy/2)"
+
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_hs * (x < width_line/2 + gap_cpw + width_gnd/2) * (x > -width_line/2 - gap_cpw - width_gnd/2) * (z > - h_domain/2) * (z < - h_domain/2 + 2*th_si + th_nb) * (y < -length_cpw/2 + rjy/2) + flag_none * (x >= width_line/2 + gap_cpw + width_gnd/2) * (x <= -width/2 - gap_cpw - width_gnd/2) * (z >= - h_domain/2 + 2*th_si + th_nb) * (y >= -length_cpw/2 + rjy/2)" 
+
+#Diagnostics
+diagnostics.diags_names = zline_BernadoFilter0111_
+
+zline_BernadoFilter0111_.period = 2
+zline_BernadoFilter0111_.diag_lo = 0.0 0.0 -250.e-3
+zline_BernadoFilter0111_.diag_hi = 0.0 0.0  250.e-3
+zline_BernadoFilter0111_.diag_type = Full
+zline_BernadoFilter0111_.fields_to_plot = Ey Hx Hz
