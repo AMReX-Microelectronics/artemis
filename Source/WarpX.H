@@ -660,7 +660,7 @@ public:
 #ifdef WARPX_MAG_LLG
     void FillBoundaryM   (amrex::IntVect ng);
     void FillBoundaryH   (amrex::IntVect ng);
-#endif    
+#endif
 
     void FillBoundaryF   (amrex::IntVect ng);
     void FillBoundaryG   (amrex::IntVect ng);
@@ -672,7 +672,7 @@ public:
 #ifdef WARPX_MAG_LLG
     void FillBoundaryM   (int lev, amrex::IntVect ng);
     void FillBoundaryH   (int lev, amrex::IntVect ng);
-#endif    
+#endif
 
     void FillBoundaryF   (int lev, amrex::IntVect ng);
     void FillBoundaryG   (int lev, amrex::IntVect ng);
