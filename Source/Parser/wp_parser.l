@@ -6,12 +6,13 @@
 %}
 
 %option nounput
+%option noinput
 %option prefix="wxparser"
 
  /* Tokens NUMBER, SYMBOL, F1, POW, F2, etc. are defined in wp_parser.y. */
  /* Types WP_SQRT, WP_SQRT, etc. are defined in wp_parser_y.h. */
 
- /* Used leater to define NUMBER */
+ /* Used later to define NUMBER */
 EXP	([Ee][-+]?[0-9]+)
 
 %%
@@ -56,8 +57,10 @@ EXP	([Ee][-+]?[0-9]+)
 "or"          { wxparserlval.f2 = WP_OR;        return OR;}
 "pow"         { wxparserlval.f2 = WP_POW;       return F2; }
 "heaviside"   { wxparserlval.f2 = WP_HEAVISIDE; return F2; }
+"jn"          { wxparserlval.f2 = WP_JN;        return F2; }
 "min"         { wxparserlval.f2 = WP_MIN;       return F2; }
 "max"         { wxparserlval.f2 = WP_MAX;       return F2; }
+"if"          { wxparserlval.f3 = WP_IF;        return F3; }
 
  /* We use SYMBOL to hold variables and constants */
 [a-zA-Z_][a-zA-Z0-9_]*  { wxparserlval.s = wp_makesymbol(wxparsertext); return SYMBOL; }

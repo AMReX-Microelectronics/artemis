@@ -11,7 +11,7 @@ WARN_ALL = TRUE
 #DIM     = 2
 DIM = 3
 
-QED	       = TRUE
+QED	       = FALSE
 #QED_TABLE_GEN = TRUE
 
 COMP = gcc
@@ -28,6 +28,7 @@ USE_GPU   = FALSE
 
 EBASE     = main
 
+USE_GPUCLOCK = TRUE
 USE_PYTHON_MAIN = FALSE
 
 USE_SENSEI_INSITU = FALSE

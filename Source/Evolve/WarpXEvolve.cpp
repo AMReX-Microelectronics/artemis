@@ -21,7 +21,6 @@
 #include <cmath>
 #include <limits>
 
-
 using namespace amrex;
 
 void
@@ -30,10 +29,6 @@ WarpX::Evolve (int numsteps)
     WARPX_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];
-
-    if (do_compute_max_step_from_zmax) {
-        computeMaxStepBoostAccelerator(geom[0]);
-    }
 
     int numsteps_max;
     if (numsteps < 0) {  // Note that the default argument is numsteps = -1
@@ -45,6 +40,7 @@ WarpX::Evolve (int numsteps)
     bool early_params_checked = false; // check typos in inputs after step 1
 
     Real walltime, walltime_start = amrex::second();
+
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         Real walltime_beg_step = amrex::second();
@@ -58,8 +54,6 @@ WarpX::Evolve (int numsteps)
 
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
         if (cost) {
-            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-                amrex::Abort("LoadBalance for PSATD: TODO");
             if (step > 0 && load_balance_intervals.contains(step+1))
             {
                 LoadBalance();
@@ -148,7 +142,13 @@ WarpX::Evolve (int numsteps)
 
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
-        if (do_subcycling == 0 || finest_level == 0) {
+        if ( do_electrostatic != ElectrostaticSolverAlgo::None ) {
+            // Special case: electrostatic solver.
+            // In this case, we only gather fields and push particles
+            // The deposition and calculation of fields is done further below
+            bool const skip_deposition=true;
+            PushParticlesandDepose(cur_time, skip_deposition);
+        } else if (do_subcycling == 0 || finest_level == 0) {
             OneStep_nosub(cur_time);
             // E : guard cells are up-to-date
             // B : guard cells are NOT up-to-date
@@ -178,6 +178,13 @@ WarpX::Evolve (int numsteps)
 
         if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
             // At the end of last step, push p by 0.5*dt to synchronize
+            FillBoundaryE(guard_cells.ng_FieldGather);
+            FillBoundaryB(guard_cells.ng_FieldGather);
+            if (fft_do_time_averaging)
+            {
+                FillBoundaryE_avg(guard_cells.ng_FieldGather);
+                FillBoundaryB_avg(guard_cells.ng_FieldGather);
+            }
             UpdateAuxilaryData();
             FillBoundaryAux(guard_cells.ng_UpdateAux);
             for (int lev = 0; lev <= finest_level; ++lev) {
@@ -315,6 +322,7 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_particlescraper) warpx_py_particlescraper();
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
     PushParticlesandDepose(cur_time);
+
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 
     // Synchronize J and rho
@@ -329,7 +337,6 @@ WarpX::OneStep_nosub (Real cur_time)
             VayDeposition();
     }
 
-
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
     // solve.
@@ -342,37 +349,42 @@ WarpX::OneStep_nosub (Real cur_time)
     ApplyExternalFieldExcitationOnGrid();
     if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
 
-    if( do_electrostatic == ElectrostaticSolverAlgo::None ) {
-        // Electromagnetic solver:
-        // Push E and B from {n} to {n+1}
-        // (And update guard cells immediately afterwards)
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            if (use_hybrid_QED)
-            {
-                WarpX::Hybrid_QED_Push(dt);
-                FillBoundaryE(guard_cells.ng_alloc_EB);
-            }
-            PushPSATD(dt[0]);
+    // Push E and B from {n} to {n+1}
+    // (And update guard cells immediately afterwards)
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (use_hybrid_QED)
+        {
+            WarpX::Hybrid_QED_Push(dt);
             FillBoundaryE(guard_cells.ng_alloc_EB);
-            FillBoundaryB(guard_cells.ng_alloc_EB);
+        }
+        PushPSATD(dt[0]);
+        FillBoundaryE(guard_cells.ng_alloc_EB);
+        FillBoundaryB(guard_cells.ng_alloc_EB);
 
-            if (use_hybrid_QED)
-            {
-                WarpX::Hybrid_QED_Push(dt);
-                FillBoundaryE(guard_cells.ng_alloc_EB);
-            }
-            if (do_pml) {
-                DampPML();
-                NodalSyncPML();
-            }
-        } else {
-            EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
-            FillBoundaryF(guard_cells.ng_FieldSolverF);
+        if (use_hybrid_QED) {
+            WarpX::Hybrid_QED_Push(dt);
+            FillBoundaryE(guard_cells.ng_alloc_EB);
+        }
+
+        // Synchronize E and B fields on nodal points
+        NodalSyncE();
+        NodalSyncB();
+
+        if (do_pml) {
+            DampPML();
+            NodalSyncPML();
+        }
+    } else {
+        EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
+        EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
+        FillBoundaryF(guard_cells.ng_FieldSolverF);
+        FillBoundaryG(guard_cells.ng_FieldSolverG);
 #ifndef WARPX_MAG_LLG
-            EvolveB(0.5 * dt[0]); // We now have B^{n+1/2}
-            if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
-            FillBoundaryB(guard_cells.ng_FieldSolver);
+        EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
+        if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
+        FillBoundaryB(guard_cells.ng_FieldSolver);
 #endif
+
 #ifdef WARPX_MAG_LLG
             if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
                 if (mag_time_scheme_order==1){
@@ -388,37 +400,43 @@ WarpX::OneStep_nosub (Real cur_time)
                 amrex::Abort("unsupported em_solver_medium for M field");
             }
 #endif
-            if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
-                // vacuum medium
-                EvolveE(dt[0]); // We now have E^{n+1}
-            } else if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
-                // macroscopic medium
-                MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
-            } else {
-                amrex::Abort(" Medium for EM is unknown \n");
-            }
+        if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
+            // vacuum medium
+            EvolveE(dt[0]); // We now have E^{n+1}
+        } else if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+            // macroscopic medium
+            MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
+        } else {
+            amrex::Abort(" Medium for EM is unknown \n");
+        }
 
-            FillBoundaryE(guard_cells.ng_FieldSolver);
-            EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        FillBoundaryE(guard_cells.ng_FieldSolver);
+        EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
 #ifndef WARPX_MAG_LLG
-            EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
+        EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
+
+        // Synchronize E and B fields on nodal points
+        NodalSyncE();
+        NodalSyncB();
 #endif
-            if (do_pml) {
-                FillBoundaryF(guard_cells.ng_alloc_F);
-                DampPML();
-                NodalSyncPML();
-                FillBoundaryE(guard_cells.ng_MovingWindow);
-                FillBoundaryF(guard_cells.ng_MovingWindow);
-                FillBoundaryB(guard_cells.ng_MovingWindow);
-#ifdef WARPX_MAG_LLG
-                FillBoundaryH(guard_cells.ng_MovingWindow);
+
+        if (do_pml) {
+            FillBoundaryF(guard_cells.ng_alloc_F);
+            DampPML();
+            NodalSyncPML();
+            FillBoundaryE(guard_cells.ng_MovingWindow);
+            FillBoundaryF(guard_cells.ng_MovingWindow);
+#ifndef WARPX_MAG_LLG
+            FillBoundaryB(guard_cells.ng_MovingWindow);
+#else
+            FillBoundaryH(guard_cells.ng_MovingWindow);
 #endif
-            }
-            // E and B are up-to-date in the domain, but all guard cells are
-            // outdated.
-            if (safe_guard_cells) {
-                FillBoundaryB(guard_cells.ng_alloc_EB);
-            }
+        }
+        // E and B are up-to-date in the domain, but all guard cells are
+        // outdated.
+        if (safe_guard_cells)
+            FillBoundaryB(guard_cells.ng_alloc_EB);
 #ifdef WARPX_MAG_LLG
             if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
                 if (mag_time_scheme_order==1){
@@ -439,9 +457,7 @@ WarpX::OneStep_nosub (Real cur_time)
                 FillBoundaryM(guard_cells.ng_alloc_EB);
             }
 #endif //
-        } // !PSATD
-
-    } // !do_electrostatic
+    } // !PSATD
 
     if (warpx_py_afterEsolve) warpx_py_afterEsolve();
 }
@@ -644,90 +660,51 @@ WarpX::doQEDEvents (int lev)
 #endif
 
 void
-WarpX::PushParticlesandDepose (amrex::Real cur_time)
+WarpX::PushParticlesandDepose (amrex::Real cur_time, bool skip_deposition)
 {
     // Evolve particles to p^{n+1/2} and x^{n+1}
     // Depose current, j^{n+1/2}
     for (int lev = 0; lev <= finest_level; ++lev) {
-        PushParticlesandDepose(lev, cur_time);
+        PushParticlesandDepose(lev, cur_time, DtType::Full, skip_deposition);
     }
 }
 
 void
-WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
+WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_deposition)
 {
+    // If warpx.do_current_centering = 1, the current is deposited on the nodal MultiFab current_fp_nodal
+    // and then centered onto the staggered MultiFab current_fp
+    amrex::MultiFab* current_x = (WarpX::do_current_centering) ? current_fp_nodal[lev][0].get()
+                                                               : current_fp[lev][0].get();
+    amrex::MultiFab* current_y = (WarpX::do_current_centering) ? current_fp_nodal[lev][1].get()
+                                                               : current_fp[lev][1].get();
+    amrex::MultiFab* current_z = (WarpX::do_current_centering) ? current_fp_nodal[lev][2].get()
+                                                               : current_fp[lev][2].get();
+
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
-                 *Efield_avg_aux[lev][0],*Efield_avg_aux[lev][1],*Efield_avg_aux[lev][2],
-                 *Bfield_avg_aux[lev][0],*Bfield_avg_aux[lev][1],*Bfield_avg_aux[lev][2],
-                 *current_fp[lev][0],*current_fp[lev][1],*current_fp[lev][2],
+                 *current_x, *current_y, *current_z,
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
                  rho_fp[lev].get(), charge_buf[lev].get(),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
-                 cur_time, dt[lev], a_dt_type);
+                 cur_time, dt[lev], a_dt_type, skip_deposition);
 #ifdef WARPX_DIM_RZ
-    // This is called after all particles have deposited their current and charge.
-    ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
-    if (current_buf[lev][0].get()) {
-        ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
-    }
-    if (rho_fp[lev].get()) {
-        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
-        if (charge_buf[lev].get()) {
-            ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
+    if (! skip_deposition) {
+        // This is called after all particles have deposited their current and charge.
+        ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
+        if (current_buf[lev][0].get()) {
+            ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
+        }
+        if (rho_fp[lev].get()) {
+            ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
+            if (charge_buf[lev].get()) {
+                ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
+            }
         }
     }
 #endif
-}
-
-/* \brief computes max_step for wakefield simulation in boosted frame.
- * \param geom: Geometry object that contains simulation domain.
- *
- * max_step is set so that the simulation stop when the lower corner of the
- * simulation box passes input parameter zmax_plasma_to_compute_max_step.
- */
-void
-WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
-    // Sanity checks: can use zmax_plasma_to_compute_max_step only if
-    // the moving window and the boost are all in z direction.
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::moving_window_dir == AMREX_SPACEDIM-1,
-        "Can use zmax_plasma_to_compute_max_step only if " +
-        "moving window along z. TODO: all directions.");
-    if (gamma_boost > 1){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (WarpX::boost_direction[0]-0)*(WarpX::boost_direction[0]-0) +
-            (WarpX::boost_direction[1]-0)*(WarpX::boost_direction[1]-0) +
-            (WarpX::boost_direction[2]-1)*(WarpX::boost_direction[2]-1) < 1.e-12,
-            "Can use zmax_plasma_to_compute_max_step in boosted frame only if " +
-            "warpx.boost_direction = z. TODO: all directions.");
-    }
-
-    // Lower end of the simulation domain. All quantities are given in boosted
-    // frame except zmax_plasma_to_compute_max_step.
-    const Real zmin_domain_boost = a_geom.ProbLo(AMREX_SPACEDIM-1);
-    // End of the plasma: Transform input argument
-    // zmax_plasma_to_compute_max_step to boosted frame.
-    const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
-    // Plasma velocity
-    const Real v_plasma_boost = -beta_boost * PhysConst::c;
-    // Get time at which the lower end of the simulation domain passes the
-    // upper end of the plasma (in the z direction).
-    const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost)/
-        (moving_window_v-v_plasma_boost);
-    // Divide by dt, and update value of max_step.
-    int computed_max_step;
-    if (do_subcycling){
-        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
-    } else {
-        computed_max_step =
-            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
-    }
-    max_step = computed_max_step;
-    Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
-           <<computed_max_step<<std::endl;
 }
 
 /* \brief Apply perfect mirror condition inside the box (not at a boundary).

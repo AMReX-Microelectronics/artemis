@@ -1,10 +1,10 @@
 #include "FlushFormatOpenPMD.H"
 #include "WarpX.H"
-#include "Utils/Interpolate.H"
 
-#include <AMReX_buildInfo.H>
+#include <memory>
 
 using namespace amrex;
+
 
 FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 {
@@ -16,9 +16,9 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     pp_diag_name.query("openpmd_backend", openpmd_backend);
     pp_diag_name.query("openpmd_tspf", openpmd_tspf);
     auto & warpx = WarpX::GetInstance();
-    m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(
+    m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
         openpmd_tspf, openpmd_backend, warpx.getPMLdirections()
-        );
+    );
 }
 
 void
@@ -50,16 +50,12 @@ FlushFormatOpenPMD::WriteToFile (
     m_OpenPMDPlotWriter->SetStep(output_iteration, prefix, isBTD);
 
     // fields: only dumped for coarse level
-    m_OpenPMDPlotWriter->WriteOpenPMDFields(
-        varnames, mf[0], geom[0], output_iteration, time, isBTD, full_BTD_snapshot);
+    m_OpenPMDPlotWriter->WriteOpenPMDFieldsAll(
+        varnames, mf, geom, output_iteration, time, isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags);
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);
-}
-
-FlushFormatOpenPMD::~FlushFormatOpenPMD (){
-    delete m_OpenPMDPlotWriter;
 }
