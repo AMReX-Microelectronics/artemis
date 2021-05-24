@@ -106,7 +106,7 @@ public:
    * @note If an iteration has been written, then it will give a warning
    *
    */
-  void SetStep (int ts, const std::string& filePrefix,
+  void SetStep (int ts, const std::string& dirPrefix,
                 bool isBTD=false);
 
   /** Close the step
@@ -117,17 +117,33 @@ public:
 
   void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
 
-  void WriteOpenPMDFields (
+  void WriteOpenPMDFieldsAll (
               const std::vector<std::string>& varnames,
-              const amrex::MultiFab& mf,
-              const amrex::Geometry& geom,
+              const amrex::Vector<amrex::MultiFab>& mf,
+              amrex::Vector<amrex::Geometry>& geom,
               const int iteration, const double time,
               bool isBTD = false,
               const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
 
 private:
-  void Init (openPMD::Access access, const std::string& filePrefix, bool isBTD);
+  void Init (openPMD::Access access, bool isBTD);
+
+  /** This function does initial setup for the fields when interation is newly created
+   *  @param[in] meshes   The meshes in a series
+   *  @param[in] full_geom The geometry
+   */
+  void SetupFields(  openPMD::Container< openPMD::Mesh >& meshes, amrex::Geometry& full_geom  ) const;
+
+  void SetupMeshComp( openPMD::Mesh& mesh,
+                      amrex::Geometry& full_geom,
+                      openPMD::MeshRecordComponent& mesh_comp
+                     ) const;
+
+  void GetMeshCompNames( int meshLevel,
+                         const std::string& varname,
+                         std::string& field_name,
+                         std::string& comp_name ) const;
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
@@ -209,6 +225,14 @@ private:
   std::string GetFileName (std::string& filepath);
 
   std::unique_ptr<openPMD::Series> m_Series;
+
+  /** This is the output directory
+   *
+   * This usually does not yet end in a `/`.
+   * It does not yet include the file prefix of the openPMD series, which will
+   * be appended by the GetFileName function.
+   */
+  std::string m_dirPrefix;
 
   int m_MPIRank = 0;
   int m_MPISize = 1;

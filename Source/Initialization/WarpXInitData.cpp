@@ -86,6 +86,14 @@ WarpX::InitData ()
         PostRestart();
     }
 
+#ifdef AMREX_USE_EB
+    ComputeEdgeLengths();
+    ComputeFaceAreas();
+    ScaleEdges();
+    ScaleAreas();
+#endif
+    ComputeMaxStep();
+
     ComputePMLFactors();
 
     if (WarpX::use_fdtd_nci_corr) {
@@ -108,6 +116,10 @@ WarpX::InitData ()
         std::cout << "\nGrids Summary:\n";
         printGridSummary(std::cout, 0, finestLevel());
     }
+
+    // Check that the number of guard cells is smaller than the number of valid cells for all MultiFabs
+    // (example: a box with 16 valid cells and 32 guard cells in z will not be considered valid)
+    CheckGuardCells();
 
     if (restart_chkfile.empty())
     {
@@ -170,6 +182,34 @@ WarpX::InitFromScratch ()
 void
 WarpX::InitPML ()
 {
+
+    // if periodicity defined in input, use existing pml interface
+    amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
+    ParmParse pp_geometry("geometry");
+    if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (geom_periodicity[idim] == 1) {
+                do_pml_Lo[idim] = 0;
+                do_pml_Hi[idim] = 0;
+            }
+        }
+    } else {
+        // setting do_pml = 0 as default and turning it on only when user-input is set to PML.
+        do_pml = 0;
+        do_pml_Lo = amrex::IntVect::TheZeroVector();
+        do_pml_Hi = amrex::IntVect::TheZeroVector();
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
+                do_pml = 1;
+                do_pml_Lo[idim] = 1;
+            }
+            if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) {
+                do_pml = 1;
+                do_pml_Hi[idim] = 1;
+            }
+        }
+    }
+    if (finest_level > 0) do_pml = 1;
     if (do_pml)
     {
         amrex::IntVect do_pml_Lo_corrected = do_pml_Lo;
@@ -180,12 +220,24 @@ WarpX::InitPML ()
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
-                             do_dive_cleaning, do_moving_window,
-                             pml_has_particles, do_pml_in_domain,
+                             do_moving_window, pml_has_particles, do_pml_in_domain,
+                             do_pml_dive_cleaning, do_pml_divb_cleaning,
                              do_pml_Lo_corrected, do_pml_Hi);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
+            amrex::IntVect do_pml_Hi_MR = amrex::IntVect::TheUnitVector();
+            // check if fine patch edges co-incide with domain boundary
+            amrex::Box levelBox = boxArray(lev).minimalBox();
+            // Domain box at level, lev
+            amrex::Box DomainBox = Geom(lev).Domain();
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if (levelBox.smallEnd(idim) == DomainBox.smallEnd(idim))
+                    do_pml_Lo_MR[idim] = do_pml_Lo[idim];
+                if (levelBox.bigEnd(idim) == DomainBox.bigEnd(idim))
+                    do_pml_Hi_MR[idim] = do_pml_Hi[idim];
+            }
+
 #ifdef WARPX_DIM_RZ
             //In cylindrical geometry, if the edge of the patch is at r=0, do not add PML
             if ((max_level > 0) && (fine_tag_lo[0]==0.)) {
@@ -196,9 +248,9 @@ WarpX::InitPML ()
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
-                                   do_dive_cleaning, do_moving_window,
-                                   pml_has_particles, do_pml_in_domain,
-                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector());
+                                   do_moving_window, pml_has_particles, do_pml_in_domain,
+                                   do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   do_pml_Lo_MR, do_pml_Hi_MR);
         }
     }
 }
@@ -213,6 +265,74 @@ WarpX::ComputePMLFactors ()
             pml[lev]->ComputePMLFactors(dt[lev]);
         }
     }
+}
+
+void
+WarpX::ComputeMaxStep ()
+{
+    if (do_compute_max_step_from_zmax) {
+        computeMaxStepBoostAccelerator(geom[0]);
+    }
+
+    // Make max_step and stop_time self-consistent, assuming constant dt.
+
+    // If max_step is the limiting condition, decrease stop_time consistently
+    if (stop_time > t_new[0] + dt[0]*(max_step - istep[0]) ) {
+        stop_time = t_new[0] + dt[0]*(max_step - istep[0]);
+    }
+    // If stop_time is the limiting condition instead, decrease max_step consistently
+    else {
+        // The static_cast should not overflow since stop_time is the limiting condition here
+        max_step = static_cast<int>(istep[0] + std::ceil( (stop_time-t_new[0])/dt[0] ));
+    }
+}
+
+/* \brief computes max_step for wakefield simulation in boosted frame.
+ * \param geom: Geometry object that contains simulation domain.
+ *
+ * max_step is set so that the simulation stop when the lower corner of the
+ * simulation box passes input parameter zmax_plasma_to_compute_max_step.
+ */
+void
+WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
+    // Sanity checks: can use zmax_plasma_to_compute_max_step only if
+    // the moving window and the boost are all in z direction.
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WarpX::moving_window_dir == AMREX_SPACEDIM-1,
+        "Can use zmax_plasma_to_compute_max_step only if " +
+        "moving window along z. TODO: all directions.");
+    if (gamma_boost > 1){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (WarpX::boost_direction[0]-0)*(WarpX::boost_direction[0]-0) +
+            (WarpX::boost_direction[1]-0)*(WarpX::boost_direction[1]-0) +
+            (WarpX::boost_direction[2]-1)*(WarpX::boost_direction[2]-1) < 1.e-12,
+            "Can use zmax_plasma_to_compute_max_step in boosted frame only if " +
+            "warpx.boost_direction = z. TODO: all directions.");
+    }
+
+    // Lower end of the simulation domain. All quantities are given in boosted
+    // frame except zmax_plasma_to_compute_max_step.
+    const Real zmin_domain_boost = a_geom.ProbLo(AMREX_SPACEDIM-1);
+    // End of the plasma: Transform input argument
+    // zmax_plasma_to_compute_max_step to boosted frame.
+    const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
+    // Plasma velocity
+    const Real v_plasma_boost = -beta_boost * PhysConst::c;
+    // Get time at which the lower end of the simulation domain passes the
+    // upper end of the plasma (in the z direction).
+    const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost)/
+        (moving_window_v-v_plasma_boost);
+    // Divide by dt, and update value of max_step.
+    int computed_max_step;
+    if (do_subcycling){
+        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
+    } else {
+        computed_max_step =
+            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
+    }
+    max_step = computed_max_step;
+    Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
+           <<computed_max_step<<std::endl;
 }
 
 void
@@ -404,12 +524,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (B_ext_grid_s == "constant")
-        pp_warpx.getarr("B_external_grid", B_external_grid);
+        getArrWithParser(pp_warpx, "B_external_grid", B_external_grid);
 
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (E_ext_grid_s == "constant")
-        pp_warpx.getarr("E_external_grid", E_external_grid);
+        getArrWithParser(pp_warpx, "E_external_grid", E_external_grid);
 
     // make parser for the external B-excitation in space-time
     if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
@@ -494,10 +614,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if (lev == 0) {
             Bfield_aux[lev][i]->setVal(0.0);
             Efield_aux[lev][i]->setVal(0.0);
-            if (fft_do_time_averaging) {
-                Bfield_avg_aux[lev][i]->setVal(0.0);
-                Efield_avg_aux[lev][i]->setVal(0.0);
-            }
+        }
+
+        if (WarpX::do_current_centering)
+        {
+            current_fp_nodal[lev][i]->setVal(0.0);
         }
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
@@ -510,7 +631,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               Bfield_aux[lev][i]->setVal(B_external_grid[i]);
               Bfield_cp[lev][i]->setVal(B_external_grid[i]);
               if (fft_do_time_averaging) {
-                  Bfield_avg_aux[lev][i]->setVal(B_external_grid[i]);
                   Bfield_avg_cp[lev][i]->setVal(B_external_grid[i]);
               }
            }
@@ -525,7 +645,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               Efield_aux[lev][i]->setVal(E_external_grid[i]);
               Efield_cp[lev][i]->setVal(E_external_grid[i]);
               if (fft_do_time_averaging) {
-                  Efield_avg_aux[lev][i]->setVal(E_external_grid[i]);
                   Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
               }
            }
@@ -849,12 +968,20 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         F_fp[lev]->setVal(0.0);
     }
 
+    if (G_fp[lev]) {
+        G_fp[lev]->setVal(0.0);
+    }
+
     if (rho_fp[lev]) {
         rho_fp[lev]->setVal(0.0);
     }
 
     if (F_cp[lev]) {
         F_cp[lev]->setVal(0.0);
+    }
+
+    if (G_cp[lev]) {
+        G_cp[lev]->setVal(0.0);
     }
 
     if (rho_cp[lev]) {
@@ -1054,4 +1181,82 @@ WarpX::PerformanceHints ()
     // TODO: check MPI-rank to GPU ratio (should be 1:1)
     // TODO: check memory per MPI rank, especially if GPUs are underutilized
     // TODO: CPU tiling hints with OpenMP
+}
+
+void WarpX::CheckGuardCells()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        for (int dim = 0; dim < 3; ++dim)
+        {
+            CheckGuardCells(*Efield_fp[lev][dim]);
+            CheckGuardCells(*Bfield_fp[lev][dim]);
+            CheckGuardCells(*current_fp[lev][dim]);
+
+            if (WarpX::fft_do_time_averaging)
+            {
+                CheckGuardCells(*Efield_avg_fp[lev][dim]);
+                CheckGuardCells(*Bfield_avg_fp[lev][dim]);
+            }
+        }
+
+        if (rho_fp[lev])
+        {
+            CheckGuardCells(*rho_fp[lev]);
+        }
+
+        if (F_fp[lev])
+        {
+            CheckGuardCells(*F_fp[lev]);
+        }
+
+        // MultiFabs on coarse patch
+        if (lev > 0)
+        {
+            for (int dim = 0; dim < 3; ++dim)
+            {
+                CheckGuardCells(*Efield_cp[lev][dim]);
+                CheckGuardCells(*Bfield_cp[lev][dim]);
+                CheckGuardCells(*current_cp[lev][dim]);
+
+                if (WarpX::fft_do_time_averaging)
+                {
+                    CheckGuardCells(*Efield_avg_cp[lev][dim]);
+                    CheckGuardCells(*Bfield_avg_cp[lev][dim]);
+                }
+            }
+
+            if (rho_cp[lev])
+            {
+                CheckGuardCells(*rho_cp[lev]);
+            }
+
+            if (F_cp[lev])
+            {
+                CheckGuardCells(*F_cp[lev]);
+            }
+        }
+    }
+}
+
+void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
+{
+    for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
+    {
+        const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
+        const amrex::IntVect gc = mf.nGrowVect();
+        if (vc.allGT(gc) == false)
+        {
+            std::stringstream ss;
+            ss << "\nMultiFab "
+               << mf.tags()[1]
+               << ":\nthe number of guard cells "
+               << gc
+               << " is larger than or equal to the number of valid cells "
+               << vc
+               << ",\nplease reduce the number of guard cells"
+               << " or increase the grid size by changing domain decomposition";
+            amrex::Abort(ss.str());
+        }
+    }
 }
