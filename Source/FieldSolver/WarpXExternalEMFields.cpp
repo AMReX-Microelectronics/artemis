@@ -6,40 +6,47 @@
 
 using namespace amrex;
 
+// which_variable determines which field component the external excitation is applied on
+// which_variable = 0 : external field excitation applied to all three field components, E, B and H
+// which_variable = 1 : external field excitation applied to E field only
+// which_variable = 2 : external field excitation applied to B field only
+// which_variable = 3 : external field excitation applied to H field only; this option is only valid when USE_LLG == TRUE
+
 void
-WarpX::ApplyExternalFieldExcitationOnGrid ()
+WarpX::ApplyExternalFieldExcitationOnGrid (int which_variable) 
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
-        if (E_excitation_grid_s == "parse_e_excitation_grid_function")
-        {
-            ApplyExternalFieldExcitationOnGrid(Efield_fp[lev][0].get(),
-                                               Efield_fp[lev][1].get(),
-                                               Efield_fp[lev][2].get(),
-                                               getParser(Exfield_xt_grid_parser),
-                                               getParser(Eyfield_xt_grid_parser),
-                                               getParser(Ezfield_xt_grid_parser),
-                                               getParser(Exfield_flag_parser),
-                                               getParser(Eyfield_flag_parser),
-                                               getParser(Ezfield_flag_parser),
-                                               lev );
+        if (which_variable == 0 || which_variable == 1) {
+            if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
+                ApplyExternalFieldExcitationOnGrid(Efield_fp[lev][0].get(),
+                                                   Efield_fp[lev][1].get(),
+                                                   Efield_fp[lev][2].get(),
+                                                   getParser(Exfield_xt_grid_parser),
+                                                   getParser(Eyfield_xt_grid_parser),
+                                                   getParser(Ezfield_xt_grid_parser),
+                                                   getParser(Exfield_flag_parser),
+                                                   getParser(Eyfield_flag_parser),
+                                                   getParser(Ezfield_flag_parser),
+                                                   lev );
+            }
         }
-        if (B_excitation_grid_s == "parse_b_excitation_grid_function")
-        {
-            ApplyExternalFieldExcitationOnGrid(Bfield_fp[lev][0].get(),
-                                               Bfield_fp[lev][1].get(),
-                                               Bfield_fp[lev][2].get(),
-                                               getParser(Bxfield_xt_grid_parser),
-                                               getParser(Byfield_xt_grid_parser),
-                                               getParser(Bzfield_xt_grid_parser),
-                                               getParser(Bxfield_flag_parser),
-                                               getParser(Byfield_flag_parser),
-                                               getParser(Bzfield_flag_parser),
-                                               lev );
+        if (which_variable == 0 || which_variable == 2) {
+            if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
+                ApplyExternalFieldExcitationOnGrid(Bfield_fp[lev][0].get(),
+                                                   Bfield_fp[lev][1].get(),
+                                                   Bfield_fp[lev][2].get(),
+                                                   getParser(Bxfield_xt_grid_parser),
+                                                   getParser(Byfield_xt_grid_parser),
+                                                   getParser(Bzfield_xt_grid_parser),
+                                                   getParser(Bxfield_flag_parser),
+                                                   getParser(Byfield_flag_parser),
+                                                   getParser(Bzfield_flag_parser),
+                                                   lev );
+            }
         }
-
 #ifdef WARPX_MAG_LLG
-        if (H_excitation_grid_s == "parse_h_excitation_grid_function")
-        {
+        if (which_variable == 0 || which_variable == 3) {
+            if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
             ApplyExternalFieldExcitationOnGrid(Hfield_fp[lev][0].get(),
                                                Hfield_fp[lev][1].get(),
                                                Hfield_fp[lev][2].get(),
@@ -50,6 +57,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid ()
                                                getParser(Hyfield_flag_parser),
                                                getParser(Hzfield_flag_parser),
                                                lev );
+            }
         }
 #endif
     } // for loop over level

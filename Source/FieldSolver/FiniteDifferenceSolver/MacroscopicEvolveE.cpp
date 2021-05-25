@@ -188,14 +188,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                             + beta * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
                                        + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)
                                      ) - beta * jx(i, j, k);
-
-                // Here we hack in PEC representing the superconducting Nb metal of CPW TRL
-                // metal strip tops && CPW end
-                if ((k == 310 && (i <= 178 || (i >= 220 && i <= 292) || i >= 334)) // metal strip tops, including GNDs and center line
-                    || j == 0 ) // CPW end 
-                {
-                    Ex(i, j, k) = 0;
-                }
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -210,12 +202,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                             + beta * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
                                        + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0)
                                      ) - beta * jy(i, j, k);
-                // metal strip tops && metal strip sides
-                if ((k == 310 && (i <= 178 || (i >= 220 && i <= 292) || i >= 334)) // metal strip tops, including GNDs and center line
-                    || (k <= 310 && (i == 178 || i == 220 || i == 292 || i == 334))) // metal strip sides, including GNDs and center line
-                {
-                    Ey(i, j, k) = 0;
-                }
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -230,12 +216,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                             + beta * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
                                        + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0)
                                      ) - beta * jz(i, j, k);
-                // metal strip sides
-                if ((k <= 310 && (i == 178 || i == 220 || i == 292 || i == 334))  // metal strip sides, including GNDs and center line
-                    || j == 0 ) // CPW end 
-                { 
-                    Ez(i, j, k) = 0;
-                }
             }
         );
     }
