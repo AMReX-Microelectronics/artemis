@@ -6,11 +6,13 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_GpuPrint.H>
 #include <AMReX_Extension.H>
+#include <AMReX_Math.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Print.H>
 #include <AMReX.H>
 
 #include <cassert>
+#include <cmath>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -64,6 +66,17 @@ void wp_ast_update_device_ptr (struct wp_node* node, char* droot, char* hroot)
         p->r = (wp_node*)(droot + ((char*)p->r - hroot));
         wp_ast_update_device_ptr<Depth+1>(p->l, droot, hroot);
         wp_ast_update_device_ptr<Depth+1>(p->r, droot, hroot);
+        break;
+    }
+    case WP_F3:
+    {
+        auto p = (struct wp_f3*)node;
+        p->n1 = (wp_node*)(droot + ((char*)p->n1 - hroot));
+        p->n2 = (wp_node*)(droot + ((char*)p->n2 - hroot));
+        p->n3 = (wp_node*)(droot + ((char*)p->n3 - hroot));
+        wp_ast_update_device_ptr<Depth+1>(p->n1, droot, hroot);
+        wp_ast_update_device_ptr<Depth+1>(p->n2, droot, hroot);
+        wp_ast_update_device_ptr<Depth+1>(p->n3, droot, hroot);
         break;
     }
     case WP_ADD_VP:
@@ -167,6 +180,15 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
         result = wp_call_f2(((struct wp_f2*)node)->ftype,
                 wp_ast_eval<Depth+1>(((struct wp_f2*)node)->l,x),
                 wp_ast_eval<Depth+1>(((struct wp_f2*)node)->r,x));
+        break;
+    }
+    case WP_F3:
+    {
+        if (wp_ast_eval<Depth+1>(((struct wp_f3*)node)->n1,x) != amrex::Real(0.)) {
+            result = wp_ast_eval<Depth+1>(((struct wp_f3*)node)->n2,x);
+        } else {
+            result = wp_ast_eval<Depth+1>(((struct wp_f3*)node)->n3,x);
+        }
         break;
     }
     case WP_ADD_VP:
@@ -273,6 +295,27 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
     }
     }
 
+    // check for NaN & Infs, e.g. if individual terms invalidate the whole
+    // expression in piecewise constructed functions, etc.
+    if
+#if __cplusplus >= 201703L
+    constexpr
+#endif
+    (Depth == 0)
+    {
+        if (!amrex::Math::isfinite(result))
+        {
+            constexpr char const * const err_msg =
+                "wp_ast_eval: function parser encountered an invalid result value (NaN or Inf)!";
+#if AMREX_DEVICE_COMPILE
+            AMREX_DEVICE_PRINTF("%s\n", err_msg);
+#else
+            amrex::AllPrint() << err_msg << "\n";
+#endif
+            amrex::Abort(err_msg);
+        }
+    }
+
     return result;
 }
 
@@ -327,6 +370,11 @@ wp_ast_get_symbols (struct wp_node* node, std::set<std::string>& symbols)
     case WP_F2:
         wp_ast_get_symbols(((struct wp_f2*)node)->l, symbols);
         wp_ast_get_symbols(((struct wp_f2*)node)->r, symbols);
+        break;
+    case WP_F3:
+        wp_ast_get_symbols(((struct wp_f3*)node)->n1, symbols);
+        wp_ast_get_symbols(((struct wp_f3*)node)->n2, symbols);
+        wp_ast_get_symbols(((struct wp_f3*)node)->n3, symbols);
         break;
     case WP_ADD_VP:
     case WP_SUB_VP:

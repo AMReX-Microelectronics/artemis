@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.7.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -31,8 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_WXPARSER_WP_PARSER_TAB_H_INCLUDED
 # define YY_WXPARSER_WP_PARSER_TAB_H_INCLUDED
@@ -52,27 +53,33 @@
 extern int wxparserdebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef WXPARSERTOKENTYPE
 # define WXPARSERTOKENTYPE
   enum wxparsertokentype
   {
-    NODE = 258,
-    NUMBER = 259,
-    SYMBOL = 260,
-    F1 = 261,
-    F2 = 262,
-    EOL = 263,
-    POW = 264,
-    GEQ = 265,
-    LEQ = 266,
-    EQ = 267,
-    NEQ = 268,
-    AND = 269,
-    OR = 270,
-    NEG = 271,
-    UPLUS = 272
+    WXPARSEREMPTY = -2,
+    WXPARSEREOF = 0,               /* "end of file"  */
+    WXPARSERerror = 256,           /* error  */
+    WXPARSERUNDEF = 257,           /* "invalid token"  */
+    NODE = 258,                    /* NODE  */
+    NUMBER = 259,                  /* NUMBER  */
+    SYMBOL = 260,                  /* SYMBOL  */
+    F1 = 261,                      /* F1  */
+    F2 = 262,                      /* F2  */
+    F3 = 263,                      /* F3  */
+    EOL = 264,                     /* EOL  */
+    POW = 265,                     /* "**"  */
+    GEQ = 266,                     /* ">="  */
+    LEQ = 267,                     /* "<="  */
+    EQ = 268,                      /* "=="  */
+    NEQ = 269,                     /* "!="  */
+    AND = 270,                     /* "and"  */
+    OR = 271,                      /* "or"  */
+    NEG = 272,                     /* NEG  */
+    UPLUS = 273                    /* UPLUS  */
   };
+  typedef enum wxparsertokentype wxparsertoken_kind_t;
 #endif
 
 /* Value type.  */
@@ -85,6 +92,7 @@ union WXPARSERSTYPE
     struct wp_symbol* s;
     enum wp_f1_t f1;
     enum wp_f2_t f2;
+    enum wp_f3_t f3;
 
 
 };
