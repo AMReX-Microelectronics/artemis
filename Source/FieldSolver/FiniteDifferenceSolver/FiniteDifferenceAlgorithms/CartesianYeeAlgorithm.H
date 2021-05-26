@@ -170,6 +170,57 @@ struct CartesianYeeAlgorithm {
 #endif
     }
 
+#ifdef WARPX_MAG_LLG
+
+    /**
+     * Perform derivative along x on a nodal field, from a nodal field `F`*/
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real LaplacianDx (
+        amrex::Array4<amrex::Real> const& F,
+        amrex::Real const * const coefs_x,
+        int const i, int const j, int const k, int const ncomp=0 ) {
+
+        amrex::Real const inv_dx = coefs_x[0];
+        return inv_dx*inv_dx*( F(i+1,j,k,ncomp) - 2.0*F(i,j,k,ncomp) + F(i-1,j,k,ncomp));
+    }
+
+    /**
+     * Perform derivative along y on a nodal field, from a nodal field `F`*/
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real LaplacianDy (
+        amrex::Array4<amrex::Real> const& F,
+        amrex::Real const * const coefs_y,
+        int const i, int const j, int const k, int const ncomp=0 ) {
+
+        amrex::Real const inv_dy = coefs_y[0];
+        return inv_dy*inv_dy*( F(i,j+1,k,ncomp) - 2.0*F(i,j,k,ncomp) + F(i,j-1,k,ncomp));
+    }
+
+     /**
+     * Perform derivative along z on a nodal field, from a nodal field `F`*/
+   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real LaplacianDz (
+        amrex::Array4<amrex::Real> const& F,
+        amrex::Real const * const coefs_z,
+        int const i, int const j, int const k, int const ncomp=0 ) {
+
+        amrex::Real const inv_dz = coefs_z[0];
+        return inv_dz*inv_dz*( F(i,j,k+1,ncomp) - 2.0*F(i,j,k,ncomp) + F(i,j,k-1,ncomp));
+    }
+
+     /**
+     * Sum the derivatives from all directions on a nodal field, from a nodal field `F`*/
+   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real Laplacian (
+        amrex::Array4<amrex::Real> const& F,
+        amrex::Real const * const coefs_x, amrex::Real const * const coefs_y, amrex::Real const * const coefs_z,
+        int const i, int const j, int const k, int const ncomp=0 ) {
+
+        return LaplacianDx(F, coefs_x, i, j, k, ncomp) + LaplacianDy(F, coefs_y, i, j, k, ncomp) + LaplacianDz(F, coefs_z, i, j, k, ncomp);
+    }
+
+#endif
+
 };
 
 #endif // WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_

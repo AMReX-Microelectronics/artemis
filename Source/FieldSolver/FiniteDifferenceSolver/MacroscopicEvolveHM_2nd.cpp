@@ -125,6 +125,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Box const &tby = mfi.tilebox(Mfield[1]->ixType().toIntVect());
         Box const &tbz = mfi.tilebox(Mfield[2]->ixType().toIntVect());
 
+        // Extract stencil coefficients for calculating the exchange field H_{ex} and the anisotropy field H_{ani}
+        Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
+        Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
+        Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+
         // loop over cells and update fields
         amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
@@ -152,6 +157,31 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(1, 0, 0), Hy_old);
                         Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(1, 0, 0), Hz_old);
                     }
+
+                    int mag_exchange = 0;
+                    if (mag_exchange == 1){
+                        // H_exchange
+                        amrex::Real M_exchange_constant = 0.001;
+                        Hx_eff += 2.0 * M_exchange_constant / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += 2.0 * M_exchange_constant / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += 2.0 * M_exchange_constant / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+                    }                    
+
+
+                    int mag_anisotropy = 0;
+                    if (mag_anisotropy == 1){
+                        // H_anisotropy
+                        amrex::Real M_anistropy_constant = 0.001;
+                        amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
+                        amrex::Real M_dot_anisotropy_axis = 0.0;
+                        for (int comp=0; comp<3; ++comp) {
+                            M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
+                        }
+                        Hx_eff += - 2.0 * M_anistropy_constant / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[0];
+                        Hy_eff += - 2.0 * M_anistropy_constant / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[1];
+                        Hz_eff += - 2.0 * M_anistropy_constant / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[2];
+                    }                     
+
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
                     Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_xface(i, j, k, 0), 2._rt) + std::pow(M_xface(i, j, k, 1), 2._rt) + std::pow(M_xface(i, j, k, 2), 2._rt))
