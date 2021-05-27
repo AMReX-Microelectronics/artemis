@@ -15,7 +15,7 @@ using namespace amrex;
  */
 
 void
-WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype) 
+WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
         if (externalfieldtype == ExternalFieldType::AllExternal || externalfieldtype == ExternalFieldType::EfieldExternal) {
