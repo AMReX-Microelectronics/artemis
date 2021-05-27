@@ -417,11 +417,11 @@ WarpX::OneStep_nosub (Real cur_time)
             amrex::Abort(" Medium for EM is unknown \n");
         }
 
-            FillBoundaryE(guard_cells.ng_FieldSolver);
-            // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid("efieldexternal"); // apply E external excitation; soft source to be fixed
-
-            EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        FillBoundaryE(guard_cells.ng_FieldSolver);
+        // ApplyExternalFieldExcitation
+        ApplyExternalFieldExcitationOnGrid("efieldexternal"); // apply E external excitation; soft source to be fixed
+        EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
 #ifndef WARPX_MAG_LLG
         EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
 
