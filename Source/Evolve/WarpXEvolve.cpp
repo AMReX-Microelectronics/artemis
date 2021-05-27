@@ -347,7 +347,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
     if (cur_time == 0._rt) { // at the first time step, make sure to apply the hard source before fields get evolved
         // ApplyExternalFieldExcitation
-        ApplyExternalFieldExcitationOnGrid("all");
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::AllExternal);
     }
 
     if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
@@ -387,7 +387,7 @@ WarpX::OneStep_nosub (Real cur_time)
             if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
             FillBoundaryB(guard_cells.ng_FieldSolver);
             // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid("bfieldexternal"); // apply B external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // apply B external excitation; soft source to be fixed
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -402,7 +402,7 @@ WarpX::OneStep_nosub (Real cur_time)
                 FillBoundaryH(guard_cells.ng_FieldSolver);
                 FillBoundaryM(guard_cells.ng_FieldSolver);
                 // ApplyExternalFieldExcitation
-                ApplyExternalFieldExcitationOnGrid("hfieldexternal"); // apply H external excitation; soft source to be fixed
+                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation; soft source to be fixed
             } else {
                 amrex::Abort("unsupported em_solver_medium for M field");
             }
@@ -419,7 +419,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
             FillBoundaryE(guard_cells.ng_FieldSolver);
             // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid("efieldexternal"); // apply E external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternal); // apply E external excitation; soft source to be fixed
 
             EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
 #ifndef WARPX_MAG_LLG
@@ -447,7 +447,7 @@ WarpX::OneStep_nosub (Real cur_time)
             if (safe_guard_cells) {
                 FillBoundaryB(guard_cells.ng_alloc_EB);
                 // ApplyExternalFieldExcitation
-                ApplyExternalFieldExcitationOnGrid("bfieldexternal"); // redundant for hs; need to fix the way to increment ss
+                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // redundant for hs; need to fix the way to increment ss
             }
 #ifdef WARPX_MAG_LLG
             if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
@@ -468,7 +468,7 @@ WarpX::OneStep_nosub (Real cur_time)
                 FillBoundaryH(guard_cells.ng_alloc_EB);
                 FillBoundaryM(guard_cells.ng_alloc_EB);
                // ApplyExternalFieldExcitation
-               ApplyExternalFieldExcitationOnGrid("hfieldexternal"); // redundant for hs; need to fix the way to increment ss
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
             }
 #endif //
     } // !PSATD

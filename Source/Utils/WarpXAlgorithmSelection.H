@@ -122,7 +122,7 @@ struct ParticleBoundaryType {
  */
 struct ExternalFieldType {
     enum {
-        All = 0,
+        AllExternal = 0,
         EfieldExternal = 1,
         BfieldExternal = 2,
 #ifdef WARPX_MAG_LLG

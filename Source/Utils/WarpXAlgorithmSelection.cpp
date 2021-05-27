@@ -93,16 +93,6 @@ const std::map<std::string, int> ParticleBCType_algo_to_int = {
     {"default",    ParticleBoundaryType::Absorbing}
 };
 
-const std::map<std::string, int> ExternalFieldType_algo_to_int = {
-    {"all", ExternalFieldType::All},
-    {"efieldexternal", ExternalFieldType::EfieldExternal},
-    {"bfieldexternal", ExternalFieldType::BfieldExternal},
-#ifdef WARPX_MAG_LLG
-    {"hfieldexternal", ExternalFieldType::HfieldExternal},
-#endif
-    {"default", ExternalFieldType::All}
-};
-
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
 
