@@ -3,20 +3,23 @@
 #include "Utils/WarpXUtil.H"
 #include "Parser/WarpXParserWrapper.H"
 #include "Parser/GpuParser.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 using namespace amrex;
 
-// which_variable determines which field component the external excitation is applied on
-// which_variable = 0 : external field excitation applied to all three field components, E, B and H
-// which_variable = 1 : external field excitation applied to E field only
-// which_variable = 2 : external field excitation applied to B field only
-// which_variable = 3 : external field excitation applied to H field only; this option is only valid when USE_LLG == TRUE
+/**
+ * \brief which_variable determines which field component the external excitation is applied on
+ * which_variable = 0 : external field excitation applied to all three field components, E, B and H
+ * which_variable = 1 : external field excitation applied to E field only
+ * which_variable = 2 : external field excitation applied to B field only
+ * which_variable = 3 : external field excitation applied to H field only; this option is only valid when USE_LLG == TRUE
+ */
 
 void
-WarpX::ApplyExternalFieldExcitationOnGrid (int which_variable) 
+WarpX::ApplyExternalFieldExcitationOnGrid (std::string const& fieldtype) 
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
-        if (which_variable == 0 || which_variable == 1) {
+        if (fieldtype == "all" || fieldtype == "efieldexternal") {
             if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
                 ApplyExternalFieldExcitationOnGrid(Efield_fp[lev][0].get(),
                                                    Efield_fp[lev][1].get(),
@@ -30,7 +33,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int which_variable)
                                                    lev );
             }
         }
-        if (which_variable == 0 || which_variable == 2) {
+        if (fieldtype == "all" || fieldtype == "bfieldexternal") {
             if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
                 ApplyExternalFieldExcitationOnGrid(Bfield_fp[lev][0].get(),
                                                    Bfield_fp[lev][1].get(),
@@ -45,7 +48,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int which_variable)
             }
         }
 #ifdef WARPX_MAG_LLG
-        if (which_variable == 0 || which_variable == 3) {
+        if (fieldtype == "all" || fieldtype == "hfieldexternal") {
             if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
             ApplyExternalFieldExcitationOnGrid(Hfield_fp[lev][0].get(),
                                                Hfield_fp[lev][1].get(),
