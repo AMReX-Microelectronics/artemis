@@ -109,6 +109,7 @@ guardCellManager::Init (
     // Electromagnetic simulations: account for change in particle positions within half a time step
     // for current deposition and within one time step for charge deposition (since rho is needed
     // both at the beginning and at the end of the PIC iteration)
+#ifndef WARPX_MAG_LLG
     if (do_electrostatic == ElectrostaticSolverAlgo::None)
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
@@ -117,7 +118,7 @@ guardCellManager::Init (
             ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt / dx[i] * 0.5_rt));
         }
     }
-
+#endif
     // Number of guard cells for local deposition of J and rho
     ng_depos_J   = ng_alloc_J;
     ng_depos_rho = ng_alloc_Rho;
