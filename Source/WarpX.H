@@ -859,7 +859,7 @@ public:
      *   \param[in] zflag_parser  : Type zfield excitation (hard source=0/soft source=1)
      *   \param[in] lev           : level on which the excitation is applied.
      */
-    void ApplyExternalFieldExcitationOnGrid ();
+    void ApplyExternalFieldExcitationOnGrid (int const externalfieldtype);
     void ApplyExternalFieldExcitationOnGrid ( amrex::MultiFab *mfx,
          amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          HostDeviceParser<4> const& xfield_parser,

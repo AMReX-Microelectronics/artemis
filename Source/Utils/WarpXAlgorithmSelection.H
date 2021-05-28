@@ -118,6 +118,19 @@ struct ParticleBoundaryType {
     };
 };
 
+/** Field component type to apply the external field excitation on
+ */
+struct ExternalFieldType {
+    enum {
+        AllExternal = 0,
+        EfieldExternal = 1,
+        BfieldExternal = 2,
+#ifdef WARPX_MAG_LLG
+        HfieldExternal = 3
+#endif
+    };
+};
+
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
 
