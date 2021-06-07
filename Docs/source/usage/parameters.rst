@@ -351,6 +351,7 @@ q_e      elementary charge
 m_e      electron mass
 m_p      proton mass
 epsilon0 vacuum permittivity
+mu0      vacuum permeability
 clight   speed of light
 pi       math constant pi
 ======== ===================
@@ -1734,8 +1735,31 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
 
-* ``<diag_name>.openpmd_tspf`` (`bool`, optional, default ``true``) only read if ``<diag_name>.format = openpmd``.
-    Whether to write one file per timestep.
+* ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
+     openPMD file output encoding (file based will write one file per timestep).
+     `variable based` is not supported for back-transformed diagnostics.
+     Default: ``f`` (full diagnostics)
+
+* ``<diag_name>.adios2_operator.type`` (``zfp``, ``blosc``) optional,
+    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+* ``<diag_name>.adios2_operator.parameters.*`` optional,
+    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.13.3/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
+    ```
+        <diag_name>.adios2_operator.type = blosc
+        <diag_name>.adios2_operator.parameters.compressor = zstd
+        <diag_name>.adios2_operator.parameters.clevel = 1
+        <diag_name>.adios2_operator.parameters.doshuffle = BLOSC_BITSHUFFLE
+        <diag_name>.adios2_operator.parameters.threshold = 2048
+        <diag_name>.adios2_operator.parameters.nthreads = 6  # per MPI rank (and thus per GPU)
+    ```
+    or for the lossy ZFP compressor using very strong compression per scalar:
+    ```
+        <diag_name>.adios2_operator.type = zfp
+        <diag_name>.adios2_operator.parameters.precision = 3
+    ```
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
@@ -1969,6 +1993,9 @@ Reduced Diagnostics
         :math:`E` field energy,
         :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
 
+        Note that the fields are *not* averaged on the cell centers before their energy is
+        computed.
+
     * ``FieldMaximum``
         This type computes the maximum value of each component of the electric and magnetic fields
         and of the norm of the electric and magnetic field vectors.
@@ -2001,6 +2028,25 @@ Reduced Diagnostics
 
         Note that the charge densities are averaged on the cell centers before their maximum values
         are computed.
+
+    * ``FieldReduction``
+        This type computes an arbitrary reduction of the positions and the electromagnetic fields.
+
+        * ``<reduced_diags_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)`` (`string`)
+            An analytic function to be reduced must be provided, using the math parser.
+
+        * ``<reduced_diags_name>.reduction_type`` (`string`)
+            The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
+            ``Integral``.
+            ``Integral`` computes the spatial integral of the function defined in the parser by
+            summing its value on all grid points and multiplying the result by the volume of a
+            cell.
+            Please be also aware that measuring maximum quantities might be very noisy in PIC
+            simulations.
+
+        The only output column is the reduced value.
+
+        Note that the fields are averaged on the cell centers before the reduction is performed.
 
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the
@@ -2285,8 +2331,10 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
-    **Note: implementation of this feature is in progress.**
-    So far it requires ``warpx.do_nodal=1`` and does not support mesh refinement, cylindrical coordinates or single precision.
+    Schwinger process requires either ``warpx.do_nodal=1`` or
+    ``algo.field_gathering=momentum-conserving`` (so that different field components are computed
+    at the same location in the grid) and does not currently support mesh refinement, cylindrical
+    coordinates or single precision.
 
 * ``qed_schwinger.ele_product_species`` (`string`)
     If Schwinger process is activated, an electron product species must be specified
