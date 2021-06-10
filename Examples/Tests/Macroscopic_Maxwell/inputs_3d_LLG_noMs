@@ -9,10 +9,12 @@ amr.n_cell = 16 16 128
 amr.max_grid_size = 32
 amr.blocking_factor = 16
 geometry.coord_sys   = 0
-geometry.is_periodic = 1  1  0
 geometry.prob_lo     =  -16.e-6 -16.e-6 -128.e-6
 geometry.prob_hi     =   16.e-6  16.e-6  128.e-6
 amr.max_level = 0
+
+boundary.field_lo = periodic periodic pec
+boundary.field_lo = periodic periodic pec
 
 #################################
 ############ NUMERICS ###########
@@ -63,6 +65,6 @@ macroscopic.mag_gamma = 0.
 
 # Diagnostics
 diagnostics.diags_names = plt
-plt.period = 10
+plt.intervals = 10
 plt.fields_to_plot = Ex Ey Ez Hx Hy Hz Bx By Bz
 plt.diag_type = Full
