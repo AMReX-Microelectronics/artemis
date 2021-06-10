@@ -183,7 +183,7 @@ MacroscopicProperties::InitData ()
     }
 
 #ifdef WARPX_MAG_LLG
-    // mag_Ms - defined at node
+    // mag_Ms - defined at cell centers
     if (m_mag_Ms_s == "constant") {
         m_mag_Ms_mf->setVal(m_mag_Ms);
     }
@@ -200,7 +200,7 @@ MacroscopicProperties::InitData ()
         }
     }
 
-    // mag_alpha - defined at node
+    // mag_alpha - defined at cell centers
     if (m_mag_alpha_s == "constant") {
         m_mag_alpha_mf->setVal(m_mag_alpha);
     }
@@ -211,7 +211,7 @@ MacroscopicProperties::InitData ()
         amrex::Abort("alpha should be positive, but the user input has negative values");
     }
 
-    // mag_gamma - defined at node
+    // mag_gamma - defined at cell centers
     if (m_mag_gamma_s == "constant") {
         m_mag_gamma_mf->setVal(m_mag_gamma);
 
