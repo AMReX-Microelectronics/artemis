@@ -48,7 +48,7 @@ warpx.Ex_external_grid_function(x,y,z) = 0.
 warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-(z+64.e-6)**2/(L/4)**2)*cos(2*pi*(z+64.e-6)/wavelength)"
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z)= "-1.e5*exp(-(z+64.e-6)**2/(L/4)**2)*cos(2*pi*z/wavelength)/c"
+warpx.Bx_external_grid_function(x,y,z)= "-1.e5*exp(-(z+64.e-6)**2/(L/4)**2)*cos(2*pi*(z+64.e-6)/wavelength)/c"
 warpx.By_external_grid_function(x,y,z)= 0.
 warpx.Bz_external_grid_function(x,y,z) = 0.
 
