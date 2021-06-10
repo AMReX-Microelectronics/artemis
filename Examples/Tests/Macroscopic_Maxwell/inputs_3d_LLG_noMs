@@ -63,6 +63,6 @@ macroscopic.mag_gamma = 0.
 
 # Diagnostics
 diagnostics.diags_names = plt
-plt.period = 10
+plt.intervals = 10
 plt.fields_to_plot = Ex Ey Ez Hx Hy Hz Bx By Bz
 plt.diag_type = Full
