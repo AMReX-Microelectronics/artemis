@@ -1364,6 +1364,18 @@ Numerics and algorithms
     computational medium, respectively. The default values are the corresponding values
     in vacuum.
 
+* ``macroscopic.mag_Ms``, ``macroscopic.mag_alpha``, ``macroscopic.gamma`` (`double`)
+    To initialize a constant saturation magnetization, Gilbert damping constant, and gyromagnetic ratio of the
+    computational medium, respectively. The value of ``macroscopic.gamma`` for electron spins is -1.759e11 Coulomb/kg.
+    This requires `USE_LLG=TRUE` in the GNUMakefile.
+
+* ``macroscopic.mag_Ms_function(x,y,z)``, ``macroscopic.mag_alpha_function(x,y,z)``, ``macroscopic.gamma_function(x,y,z)`` (`string`)
+     To initialize spatially varying saturation magnetization, Gilbert damping constant, and gyromagnetic ratio, respectively,
+     using a mathematical function in the input. Constants required in the
+     mathematical expression can be set using ``my_constants``. These parameters are parsed
+     if ``algo.em_solver_medium=macroscopic``.
+     This requires `USE_LLG=TRUE` in the GNUMakefile.
+
 * ``macroscopic.mag_normalized_error`` (`double`; default: `0.1`)
     The maximum relative amount we let M deviate from Ms before aborting for the LLG equation for saturated cases, i.e., `mag_M_normalization>0`.
     For the unsaturated case, i.e., `mag_M_normalization=0`, this is the maximum relative amount we let M overshoot Ms and renormalize to Ms before aborting.
