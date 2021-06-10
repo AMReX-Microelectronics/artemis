@@ -78,7 +78,7 @@ warpx.M_external_grid = 10000. 0. 0.
 
 #Diagnostics
 diagnostics.diags_names = plt
-plt.period = 10
+plt.intervals = 10
 plt.diag_type = Full
 plt.fields_to_plot = Ex Ey Ez Bx By Bz Mx_xface My_xface Mz_xface Mx_yface My_yface Mz_yface Mx_zface My_zface Mz_zface
 plt.plot_raw_fields = 0
