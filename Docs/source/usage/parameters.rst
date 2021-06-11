@@ -1400,7 +1400,7 @@ Numerics and algorithms
 * ``warpx.mag_LLG_coupling`` (`0` or `1`; default: `1`)
     Turn on coupling of Maxwell solution to the LLG updates. `mag_LLG_coupling==1` enables, `mag_LLG_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
-* ``warpx.mag_LLG_exchange_coupling`` (`0` or `1`; default: `1`)
+* ``warpx.mag_LLG_exchange_coupling`` (`0` or `1`; default: `0`)
     Turn on the exchange coupling term H_exch in H_eff for the LLG updates. `mag_LLG_exchange_coupling==1` enables, `mag_LLG_exchange_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 * ``warpx.mag_LLG_anisotropy_coupling`` (`0` or `1`; default: `1`)
