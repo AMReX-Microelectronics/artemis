@@ -737,7 +737,7 @@ WarpX::ReadParameters ()
             amrex::Abort("Caution: mag_M_normalization must be a non-negative number !");
         }
         // turn on the exchange coupling term H_exchange for H_eff in the LLG equation
-        pp_warpx.query("mag_LLG_exchange_coupling",mag_LLG_exchange_coupling);    
+        pp_warpx.query("mag_LLG_exchange_coupling",mag_LLG_exchange_coupling);
         // turn on the anisotropy coupling term H_anisotropy for H_eff in the LLG equation
         pp_warpx.query("mag_LLG_anisotropy_coupling",mag_LLG_anisotropy_coupling);
 #endif

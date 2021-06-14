@@ -61,12 +61,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     auto &warpx = WarpX::GetInstance();
     int coupling = warpx.mag_LLG_coupling;
     int M_normalization = warpx.mag_M_normalization;
-    int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;    
+    int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
     int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
     if (mag_exchange_coupling == 1){
         // H_exchange
         amrex::Abort("No support for the exchange coupling term H_exchange in MacroscopicEvolveHM()");
-    }   
+    }
     if (mag_anisotropy_coupling == 1){
         // H_anisotropy
         amrex::Abort("No support for the anisotropy coupling term H_anisotropy in MacroscopicEvolveHM()");
