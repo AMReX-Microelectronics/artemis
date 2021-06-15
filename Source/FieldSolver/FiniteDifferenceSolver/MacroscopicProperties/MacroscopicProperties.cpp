@@ -253,7 +253,7 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_mag_exchange_mf.get(), getParser(m_mag_exchange_parser), lev);
     }
 
-    // mag_anisotropy - defined at node
+    // mag_anisotropy - defined at cell centers
     if (m_mag_anisotropy_s == "constant") {
         m_mag_anisotropy_mf->setVal(m_mag_anisotropy);
     }
