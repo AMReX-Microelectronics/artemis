@@ -245,7 +245,7 @@ MacroscopicProperties::InitData ()
         amrex::Abort("gamma should be negative, but the user input has positive values");
     }
 
-    // mag_exchange - defined at node
+    // mag_exchange - defined at cell centers
     if (m_mag_exchange_s == "constant") {
         m_mag_exchange_mf->setVal(m_mag_exchange);
     }
