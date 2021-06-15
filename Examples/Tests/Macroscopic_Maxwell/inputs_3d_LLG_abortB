@@ -11,7 +11,7 @@ amr.max_grid_size = 512 # maximum size of each AMReX box, used to decompose the 
 amr.blocking_factor = 8
 geometry.coord_sys   = 0
 boundary.field_lo = periodic periodic periodic
-boundary.field_hi = periodic periodic periodic 
+boundary.field_hi = periodic periodic periodic
 geometry.prob_lo     =  -1.5e-6 -1.5e-6 -1.5e-6
 geometry.prob_hi     =   1.5e-6  1.5e-6  1.5e-6
 amr.max_level = 0
@@ -77,7 +77,7 @@ warpx.M_external_grid = 140000. 0. 0.
 
 # Diagnostics
 diagnostics.diags_names = plt
-plt.period = 10
+plt.intervals = 10
 plt.diag_type = Full
 plt.fields_to_plot = Mx_xface My_xface Mz_xface Mx_yface My_yface Mz_yface Mx_zface My_zface Mz_zface
 plt.plot_raw_fields = 0
