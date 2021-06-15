@@ -213,6 +213,7 @@ MacroscopicProperties::InitData ()
             if (m_mu_s != "constant" && m_mu_s != "parse_mu_function"){
                 amrex::Abort("permeability must be specified since part of the simulation domain is non-magnetic !");
             }
+        }
 
         // mag_alpha - defined at cell centers
         if (m_mag_alpha_s == "constant") {
@@ -228,22 +229,29 @@ MacroscopicProperties::InitData ()
         // mag_gamma - defined at cell centers
         if (m_mag_gamma_s == "constant") {
             m_mag_gamma_mf->setVal(m_mag_gamma);
+        }
+        else if (m_mag_gamma_s == "parse_mag_gamma_function"){
+            InitializeMacroMultiFabUsingParser(m_mag_gamma_mf.get(), getParser(m_mag_gamma_parser), lev);
+        }
+        if (m_mag_gamma_mf->max(0,m_mag_gamma_mf->nGrow()) > 0._rt) {
+            amrex::Abort("gamma should be negative, but the user input has positive values");
+        }
 
-            // mag_exch - defined at node
-            if (m_mag_exch_s == "constant") {
-                m_mag_exch_mf->setVal(m_mag_exch);
-            }
-            else if (m_mag_exch_s == "parse_mag_exch_function"){
-                InitializeMacroMultiFabUsingParser(m_mag_exch_mf.get(), getParser(m_mag_exch_parser), lev);
-            }
+        // mag_exch - defined at node
+        if (m_mag_exch_s == "constant") {
+            m_mag_exch_mf->setVal(m_mag_exch);
+        }
+        else if (m_mag_exch_s == "parse_mag_exch_function"){
+            InitializeMacroMultiFabUsingParser(m_mag_exch_mf.get(), getParser(m_mag_exch_parser), lev);
+        }
 
-            // mag_ani - defined at node
-            if (m_mag_ani_s == "constant") {
-                m_mag_ani_mf->setVal(m_mag_ani);
-            }
-            else if (m_mag_ani_s == "parse_mag_ani_function"){
-                InitializeMacroMultiFabUsingParser(m_mag_ani_mf.get(), getParser(m_mag_ani_parser), lev);
-            }
+        // mag_ani - defined at node
+        if (m_mag_ani_s == "constant") {
+            m_mag_ani_mf->setVal(m_mag_ani);
+        }
+        else if (m_mag_ani_s == "parse_mag_ani_function"){
+            InitializeMacroMultiFabUsingParser(m_mag_ani_mf.get(), getParser(m_mag_ani_parser), lev);
+        }
 #endif
         IntVect sigma_stag = m_sigma_mf_fp[lev][0]->ixType().toIntVect();
         IntVect epsilon_stag = m_eps_mf_fp[lev][0]->ixType().toIntVect();
