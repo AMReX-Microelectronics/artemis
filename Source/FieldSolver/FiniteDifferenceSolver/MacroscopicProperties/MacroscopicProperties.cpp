@@ -221,46 +221,37 @@ MacroscopicProperties::InitData ()
 
         }
 
-    #ifdef WARPX_MAG_LLG
-        // mag_Ms - defined at node
-        if (m_mag_Ms_s == "constant") {
-            m_mag_Ms_mf->setVal(m_mag_Ms);
-        }
-        else if (m_mag_Ms_s == "parse_mag_Ms_function"){
-            InitializeMacroMultiFabUsingParser(m_mag_Ms_mf.get(), getParser(m_mag_Ms_parser), lev);
-        }
-        // if there are regions with Ms=0, the user must provide mur value there
-        if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) < 0._rt){
-            amrex::Abort("Ms must be non-negative values");
-        }
-        else if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) == 0._rt){
-            if (m_mu_s != "constant" && m_mu_s != "parse_mu_function"){
-                amrex::Abort("permeability must be specified since part of the simulation domain is non-magnetic !");
-            }
-        }
-
-        // mag_alpha - defined at node
-        if (m_mag_alpha_s == "constant") {
-            m_mag_alpha_mf->setVal(m_mag_alpha);
-        }
-        else if (m_mag_alpha_s == "parse_mag_alpha_function"){
-            InitializeMacroMultiFabUsingParser(m_mag_alpha_mf.get(), getParser(m_mag_alpha_parser), lev);
-        }
-        if (m_mag_alpha_mf->min(0,m_mag_alpha_mf->nGrow()) < 0._rt) {
-            amrex::Abort("alpha should be positive, but the user input has negative values");
+#ifdef WARPX_MAG_LLG
+    // mag_Ms - defined at cell centers
+    if (m_mag_Ms_s == "constant") {
+        m_mag_Ms_mf->setVal(m_mag_Ms);
+    }
+    else if (m_mag_Ms_s == "parse_mag_Ms_function"){
+        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf.get(), getParser(m_mag_Ms_parser), lev);
+    }
+    // if there are regions with Ms=0, the user must provide mur value there
+    if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) < 0._rt){
+        amrex::Abort("Ms must be non-negative values");
+    }
+    else if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) == 0._rt){
+        if (m_mu_s != "constant" && m_mu_s != "parse_mu_function"){
+            amrex::Abort("permeability must be specified since part of the simulation domain is non-magnetic !");
         }
 
-        // mag_gamma - defined at node
-        if (m_mag_gamma_s == "constant") {
-            m_mag_gamma_mf->setVal(m_mag_gamma);
+    // mag_alpha - defined at cell centers
+    if (m_mag_alpha_s == "constant") {
+        m_mag_alpha_mf->setVal(m_mag_alpha);
+    }
+    else if (m_mag_alpha_s == "parse_mag_alpha_function"){
+        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf.get(), getParser(m_mag_alpha_parser), lev);
+    }
+    if (m_mag_alpha_mf->min(0,m_mag_alpha_mf->nGrow()) < 0._rt) {
+        amrex::Abort("alpha should be positive, but the user input has negative values");
+    }
 
-        }
-        else if (m_mag_gamma_s == "parse_mag_gamma_function"){
-            InitializeMacroMultiFabUsingParser(m_mag_gamma_mf.get(), getParser(m_mag_gamma_parser), lev);
-        }
-        if (m_mag_gamma_mf->max(0,m_mag_gamma_mf->nGrow()) > 0._rt) {
-            amrex::Abort("gamma should be negative, but the user input has positive values");
-        }
+    // mag_gamma - defined at cell centers
+    if (m_mag_gamma_s == "constant") {
+        m_mag_gamma_mf->setVal(m_mag_gamma);
 
         // mag_exch - defined at node
         if (m_mag_exch_s == "constant") {

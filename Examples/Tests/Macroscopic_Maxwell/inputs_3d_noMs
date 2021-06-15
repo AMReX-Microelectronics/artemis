@@ -45,15 +45,15 @@ my_constants.wavelength = 64.e-6
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function
 warpx.Ez_external_grid_function(x,y,z) = 0.
 warpx.Ex_external_grid_function(x,y,z) = 0.
-warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)"
+warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-(z+64.e-6)**2/(L/4)**2)*cos(2*pi*(z+64.e-6)/wavelength)"
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z)= "-1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)/c"
+warpx.Bx_external_grid_function(x,y,z)= "-1.e5*exp(-(z+64.e-6)**2/(L/4)**2)*cos(2*pi*(z+64.e-6)/wavelength)/c"
 warpx.By_external_grid_function(x,y,z)= 0.
 warpx.Bz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = plt
-plt.period = 10
+plt.intervals = 10
 plt.fields_to_plot = Ex Ey Ez Bx By Bz
 plt.diag_type = Full
