@@ -151,173 +151,188 @@ MacroscopicProperties::InitData ()
 {
     amrex::Print() << "we are in init data of macro \n";
     auto & warpx = WarpX::GetInstance();
+    const int nlevs_max = warpx.maxLevel() + 1;
 
-    // Get BoxArray and DistributionMap of warpx instant.
-    int lev = 0;
-    BoxArray ba = warpx.boxArray(lev);
-    DistributionMapping dmap = warpx.DistributionMap(lev);
-    int ng = 3;
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
-    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    // epsilon is cell-centered MultiFab
-    m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    // mu is cell-centered MultiFab
-    m_mu_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_sigma_mf_fp.resize(nlevs_max);
+    // epsilon is cell-centered MultiFab    
+    m_eps_mf_fp.resize(nlevs_max);
+    // mu is cell-centered MultiFab   
+    m_mu_mf_fp.resize(nlevs_max);
 
-#ifdef WARPX_MAG_LLG
-    // all magnetic macroparameters are stored on cell centers
-    m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    m_mag_gamma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    m_mag_exch_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    m_mag_ani_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-#endif
+    for (int lev = 0; lev < nlevs_max; ++lev) {
+        BoxArray ba = warpx.boxArray(lev);
+        DistributionMapping dmap = warpx.DistributionMap(lev);
+        int ng = 3;
+        m_sigma_mf_fp[lev][0] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        m_eps_mf_fp[lev][0] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        m_mu_mf_fp[lev][0] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
 
-    // Initialize sigma
-    if (m_sigma_s == "constant") {
+        // // Get BoxArray and DistributionMap of warpx instant.
+        // int lev = 0;
+        // BoxArray ba = warpx.boxArray(lev);
+        // DistributionMapping dmap = warpx.DistributionMap(lev);
+        // int ng = 3;
+        // // Define material property multifabs using ba and dmap from WarpX instance
+        // // sigma is cell-centered MultiFab
+        // m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        // // epsilon is cell-centered MultiFab
+        // m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        // // mu is cell-centered MultiFab
+        // m_mu_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
 
-        m_sigma_mf->setVal(m_sigma);
+    #ifdef WARPX_MAG_LLG
+        // all magnetic macroparameters are stored on cell centers
+        m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        m_mag_gamma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        m_mag_exch_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        m_mag_ani_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    #endif
 
-    } else if (m_sigma_s == "parse_sigma_function") {
+        // Initialize sigma
+        if (m_sigma_s == "constant") {
 
-        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), getParser(m_sigma_parser), lev);
-    }
-    // Initialize epsilon
-    if (m_epsilon_s == "constant") {
+            m_sigma_mf_fp[lev][0]->setVal(m_sigma);
 
-        m_eps_mf->setVal(m_epsilon);
+        } else if (m_sigma_s == "parse_sigma_function") {
 
-    } else if (m_epsilon_s == "parse_epsilon_function") {
-
-        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), getParser(m_epsilon_parser), lev);
-
-    }
-    // Initialize mu
-    if (m_mu_s == "constant") {
-
-        m_mu_mf->setVal(m_mu);
-
-    } else if (m_mu_s == "parse_mu_function") {
-
-        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), getParser(m_mu_parser), lev);
-
-    }
-
-#ifdef WARPX_MAG_LLG
-    // mag_Ms - defined at node
-    if (m_mag_Ms_s == "constant") {
-        m_mag_Ms_mf->setVal(m_mag_Ms);
-    }
-    else if (m_mag_Ms_s == "parse_mag_Ms_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf.get(), getParser(m_mag_Ms_parser), lev);
-    }
-    // if there are regions with Ms=0, the user must provide mur value there
-    if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) < 0._rt){
-        amrex::Abort("Ms must be non-negative values");
-    }
-    else if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) == 0._rt){
-        if (m_mu_s != "constant" && m_mu_s != "parse_mu_function"){
-            amrex::Abort("permeability must be specified since part of the simulation domain is non-magnetic !");
+            InitializeMacroMultiFabUsingParser(m_sigma_mf_fp[lev][0].get(), getParser(m_sigma_parser), lev);
         }
-    }
+        // Initialize epsilon
+        if (m_epsilon_s == "constant") {
 
-    // mag_alpha - defined at node
-    if (m_mag_alpha_s == "constant") {
-        m_mag_alpha_mf->setVal(m_mag_alpha);
-    }
-    else if (m_mag_alpha_s == "parse_mag_alpha_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf.get(), getParser(m_mag_alpha_parser), lev);
-    }
-    if (m_mag_alpha_mf->min(0,m_mag_alpha_mf->nGrow()) < 0._rt) {
-        amrex::Abort("alpha should be positive, but the user input has negative values");
-    }
+            m_eps_mf_fp[lev][0]->setVal(m_epsilon);
 
-    // mag_gamma - defined at node
-    if (m_mag_gamma_s == "constant") {
-        m_mag_gamma_mf->setVal(m_mag_gamma);
+        } else if (m_epsilon_s == "parse_epsilon_function") {
 
-    }
-    else if (m_mag_gamma_s == "parse_mag_gamma_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_gamma_mf.get(), getParser(m_mag_gamma_parser), lev);
-    }
-    if (m_mag_gamma_mf->max(0,m_mag_gamma_mf->nGrow()) > 0._rt) {
-        amrex::Abort("gamma should be negative, but the user input has positive values");
-    }
+            InitializeMacroMultiFabUsingParser(m_eps_mf_fp[lev][0].get(), getParser(m_epsilon_parser), lev);
 
-    // mag_exch - defined at node
-    if (m_mag_exch_s == "constant") {
-        m_mag_exch_mf->setVal(m_mag_exch);
-    }
-    else if (m_mag_exch_s == "parse_mag_exch_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_exch_mf.get(), getParser(m_mag_exch_parser), lev);
-    }
+        }
+        // Initialize mu
+        if (m_mu_s == "constant") {
 
-    // mag_ani - defined at node
-    if (m_mag_ani_s == "constant") {
-        m_mag_ani_mf->setVal(m_mag_ani);
-    }
-    else if (m_mag_ani_s == "parse_mag_ani_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_ani_mf.get(), getParser(m_mag_ani_parser), lev);
-    }
-#endif
+            m_mu_mf_fp[lev][0]->setVal(m_mu);
 
-    IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
-    IntVect epsilon_stag = m_eps_mf->ixType().toIntVect();
-    IntVect mu_stag = m_mu_mf->ixType().toIntVect();
-    IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
-    IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
-    IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
-#ifdef WARPX_MAG_LLG
-    IntVect mag_Ms_stag = m_mag_Ms_mf->ixType().toIntVect(); //cell-centered
-    IntVect mag_alpha_stag = m_mag_alpha_mf->ixType().toIntVect();
-    IntVect mag_gamma_stag = m_mag_gamma_mf->ixType().toIntVect();
-    IntVect mag_exch_stag = m_mag_exch_mf->ixType().toIntVect();
-    IntVect mag_ani_stag = m_mag_ani_mf->ixType().toIntVect();
-    IntVect Mx_stag = warpx.getMfield_fp(0,0).ixType().toIntVect(); // face-centered
-    IntVect My_stag = warpx.getMfield_fp(0,1).ixType().toIntVect();
-    IntVect Mz_stag = warpx.getMfield_fp(0,2).ixType().toIntVect();
-#endif
-    for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        sigma_IndexType[idim]   = sigma_stag[idim];
-        epsilon_IndexType[idim] = epsilon_stag[idim];
-        mu_IndexType[idim]      = mu_stag[idim];
-        Ex_IndexType[idim]      = Ex_stag[idim];
-        Ey_IndexType[idim]      = Ey_stag[idim];
-        Ez_IndexType[idim]      = Ez_stag[idim];
-#ifdef WARPX_MAG_LLG
-        mag_Ms_IndexType[idim]    = mag_Ms_stag[idim];
-        mag_alpha_IndexType[idim] = mag_alpha_stag[idim];
-        mag_gamma_IndexType[idim] = mag_gamma_stag[idim];
-        mag_exch_IndexType[idim]  = mag_exch_stag[idim];
-        mag_ani_IndexType[idim]   = mag_ani_stag[idim];
-        Mx_IndexType[idim]        = Mx_stag[idim];
-        My_IndexType[idim]        = My_stag[idim];
-        Mz_IndexType[idim]        = Mz_stag[idim];
-#endif
-        macro_cr_ratio[idim]    = 1;
+        } else if (m_mu_s == "parse_mu_function") {
+
+            InitializeMacroMultiFabUsingParser(m_mu_mf_fp[lev][0].get(), getParser(m_mu_parser), lev);
+
+        }
+
+    #ifdef WARPX_MAG_LLG
+        // mag_Ms - defined at node
+        if (m_mag_Ms_s == "constant") {
+            m_mag_Ms_mf->setVal(m_mag_Ms);
+        }
+        else if (m_mag_Ms_s == "parse_mag_Ms_function"){
+            InitializeMacroMultiFabUsingParser(m_mag_Ms_mf.get(), getParser(m_mag_Ms_parser), lev);
+        }
+        // if there are regions with Ms=0, the user must provide mur value there
+        if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) < 0._rt){
+            amrex::Abort("Ms must be non-negative values");
+        }
+        else if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) == 0._rt){
+            if (m_mu_s != "constant" && m_mu_s != "parse_mu_function"){
+                amrex::Abort("permeability must be specified since part of the simulation domain is non-magnetic !");
+            }
+        }
+
+        // mag_alpha - defined at node
+        if (m_mag_alpha_s == "constant") {
+            m_mag_alpha_mf->setVal(m_mag_alpha);
+        }
+        else if (m_mag_alpha_s == "parse_mag_alpha_function"){
+            InitializeMacroMultiFabUsingParser(m_mag_alpha_mf.get(), getParser(m_mag_alpha_parser), lev);
+        }
+        if (m_mag_alpha_mf->min(0,m_mag_alpha_mf->nGrow()) < 0._rt) {
+            amrex::Abort("alpha should be positive, but the user input has negative values");
+        }
+
+        // mag_gamma - defined at node
+        if (m_mag_gamma_s == "constant") {
+            m_mag_gamma_mf->setVal(m_mag_gamma);
+
+        }
+        else if (m_mag_gamma_s == "parse_mag_gamma_function"){
+            InitializeMacroMultiFabUsingParser(m_mag_gamma_mf.get(), getParser(m_mag_gamma_parser), lev);
+        }
+        if (m_mag_gamma_mf->max(0,m_mag_gamma_mf->nGrow()) > 0._rt) {
+            amrex::Abort("gamma should be negative, but the user input has positive values");
+        }
+
+        // mag_exch - defined at node
+        if (m_mag_exch_s == "constant") {
+            m_mag_exch_mf->setVal(m_mag_exch);
+        }
+        else if (m_mag_exch_s == "parse_mag_exch_function"){
+            InitializeMacroMultiFabUsingParser(m_mag_exch_mf.get(), getParser(m_mag_exch_parser), lev);
+        }
+
+        // mag_ani - defined at node
+        if (m_mag_ani_s == "constant") {
+            m_mag_ani_mf->setVal(m_mag_ani);
+        }
+        else if (m_mag_ani_s == "parse_mag_ani_function"){
+            InitializeMacroMultiFabUsingParser(m_mag_ani_mf.get(), getParser(m_mag_ani_parser), lev);
+        }
+    #endif
+        IntVect sigma_stag = m_sigma_mf_fp[lev][0]->ixType().toIntVect();
+        IntVect epsilon_stag = m_eps_mf_fp[lev][0]->ixType().toIntVect();
+        IntVect mu_stag = m_mu_mf_fp[lev][0]->ixType().toIntVect();
+        IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
+        IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
+        IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
+    #ifdef WARPX_MAG_LLG
+        IntVect mag_Ms_stag = m_mag_Ms_mf->ixType().toIntVect(); //cell-centered
+        IntVect mag_alpha_stag = m_mag_alpha_mf->ixType().toIntVect();
+        IntVect mag_gamma_stag = m_mag_gamma_mf->ixType().toIntVect();
+        IntVect mag_exch_stag = m_mag_exch_mf->ixType().toIntVect();
+        IntVect mag_ani_stag = m_mag_ani_mf->ixType().toIntVect();
+        IntVect Mx_stag = warpx.getMfield_fp(0,0).ixType().toIntVect(); // face-centered
+        IntVect My_stag = warpx.getMfield_fp(0,1).ixType().toIntVect();
+        IntVect Mz_stag = warpx.getMfield_fp(0,2).ixType().toIntVect();
+    #endif
+        for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            sigma_IndexType[idim]   = sigma_stag[idim];
+            epsilon_IndexType[idim] = epsilon_stag[idim];
+            mu_IndexType[idim]      = mu_stag[idim];
+            Ex_IndexType[idim]      = Ex_stag[idim];
+            Ey_IndexType[idim]      = Ey_stag[idim];
+            Ez_IndexType[idim]      = Ez_stag[idim];
+    #ifdef WARPX_MAG_LLG
+            mag_Ms_IndexType[idim]    = mag_Ms_stag[idim];
+            mag_alpha_IndexType[idim] = mag_alpha_stag[idim];
+            mag_gamma_IndexType[idim] = mag_gamma_stag[idim];
+            mag_exch_IndexType[idim]  = mag_exch_stag[idim];
+            mag_ani_IndexType[idim]   = mag_ani_stag[idim];
+            Mx_IndexType[idim]        = Mx_stag[idim];
+            My_IndexType[idim]        = My_stag[idim];
+            Mz_IndexType[idim]        = Mz_stag[idim];
+    #endif
+            macro_cr_ratio[idim]    = 1;
+        }
+    #if (AMREX_SPACEDIM==2)
+            sigma_IndexType[2]   = 0;
+            epsilon_IndexType[2] = 0;
+            mu_IndexType[2]      = 0;
+            Ex_IndexType[2]      = 0;
+            Ey_IndexType[2]      = 0;
+            Ez_IndexType[2]      = 0;
+    #ifdef WARPX_MAG_LLG
+            mag_Ms_IndexType[2]    = 0;
+            mag_alpha_IndexType[2] = 0;
+            mag_gamma_IndexType[2] = 0;
+            mag_exch_IndexType[2]  = 0;
+            mag_ani_IndexType[2]  = 0;
+            Mx_IndexType[2]        = 0;
+            My_IndexType[2]        = 0;
+            Mz_IndexType[2]        = 0;
+    #endif
+            macro_cr_ratio[2]    = 1;
+    #endif
     }
-#if (AMREX_SPACEDIM==2)
-        sigma_IndexType[2]   = 0;
-        epsilon_IndexType[2] = 0;
-        mu_IndexType[2]      = 0;
-        Ex_IndexType[2]      = 0;
-        Ey_IndexType[2]      = 0;
-        Ez_IndexType[2]      = 0;
-#ifdef WARPX_MAG_LLG
-        mag_Ms_IndexType[2]    = 0;
-        mag_alpha_IndexType[2] = 0;
-        mag_gamma_IndexType[2] = 0;
-        mag_exch_IndexType[2]  = 0;
-        mag_ani_IndexType[2]  = 0;
-        Mx_IndexType[2]        = 0;
-        My_IndexType[2]        = 0;
-        Mz_IndexType[2]        = 0;
-#endif
-        macro_cr_ratio[2]    = 1;
-#endif
-
-
 }
 
 void
@@ -356,3 +371,24 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
     }
 }
+
+MacroscopicProperties::~MacroscopicProperties ()
+{
+    amrex::Print() << "we are in the destructor of the class MacroscopicProperties \n";
+    auto & warpx = WarpX::GetInstance();
+    const int nlevs_max = warpx.maxLevel() + 1;
+    for (int lev = 0; lev < nlevs_max; ++lev) {
+        ClearLevel(lev);
+    }
+}
+
+void
+MacroscopicProperties::ClearLevel (int lev)
+{
+    for (int i = 0; i < 1; ++i) {
+        m_sigma_mf_fp[lev][i].reset();  
+        m_eps_mf_fp[lev][i].reset();  
+        m_mu_mf_fp[lev][i].reset();
+    }
+}
+

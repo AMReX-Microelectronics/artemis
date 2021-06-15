@@ -6,8 +6,6 @@
 #include "Utils/WarpXConst.H"
 #include <AMReX_MultiFab.H>
 
-
-
 /**
  * \brief This class contains the macroscopic properties of the medium needed to
  * evaluate macroscopic Maxwell equation.
@@ -17,16 +15,29 @@ MacroscopicProperties
 {
 public:
      MacroscopicProperties (); // constructor
+     ~MacroscopicProperties (); // destructor
      /** Read user-defined macroscopic properties. Called in constructor. */
      void ReadParameters ();
      /** Initialize multifabs storing macroscopic multifabs */
      void InitData ();
-     /** return MultiFab, sigma (conductivity) of the medium. */
-     amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
-     /** return MultiFab, epsilon (permittivity) of the medium. */
-     amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
-     /** return MultiFab, mu (permeability) of the medium. */
-     amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
+
+     // /** return MultiFab, sigma (conductivity) of the medium. */
+     // amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
+     // /** return MultiFab, epsilon (permittivity) of the medium. */
+     // amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
+     // /** return MultiFab, mu (permeability) of the medium. */
+     // amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
+
+     amrex::MultiFab * get_pointer_m_sigma_mf_fp  (int lev, int direction) const { return m_sigma_mf_fp[lev][direction].get(); }
+     amrex::MultiFab * get_pointer_m_eps_mf_fp  (int lev, int direction) const { return m_eps_mf_fp[lev][direction].get(); }
+     amrex::MultiFab * get_pointer_m_mu_mf_fp  (int lev, int direction) const { return m_mu_mf_fp[lev][direction].get(); }
+
+     amrex::MultiFab& get_m_sigma_mf_fp  (int lev, int direction) {return *m_sigma_mf_fp[lev][direction];}
+     amrex::MultiFab& get_m_eps_mf_fp  (int lev, int direction) {return *m_eps_mf_fp[lev][direction];}
+     amrex::MultiFab& get_m_mu_mf_fp  (int lev, int direction) {return *m_mu_mf_fp[lev][direction];}
+
+     //! Delete level data. Qs: do I need to make the AmrCore::regrid call this function? I guess no need. 
+     void ClearLevel (int lev);
 
      /** Initializes the Multifabs storing macroscopic properties
       *  with user-defined functions(x,y,z).
@@ -240,11 +251,19 @@ private:
 #endif
 
      /** Multifab for m_sigma */
-     std::unique_ptr<amrex::MultiFab> m_sigma_mf;
-     /** Multifab for m_epsilon */
-     std::unique_ptr<amrex::MultiFab> m_eps_mf;
-     /** Multifab for m_mu */
-     std::unique_ptr<amrex::MultiFab> m_mu_mf;
+     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 1 > > m_sigma_mf_fp;
+     /** Multifab for m_epsilon */     
+     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 1 > > m_eps_mf_fp;
+     /** Multifab for m_mu */     
+     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 1 > > m_mu_mf_fp;
+
+
+     // /** Multifab for m_sigma */
+     // std::unique_ptr<amrex::MultiFab> m_sigma_mf;
+     // /** Multifab for m_epsilon */
+     // std::unique_ptr<amrex::MultiFab> m_eps_mf;
+     // /** Multifab for m_mu */
+     // std::unique_ptr<amrex::MultiFab> m_mu_mf;
 
 #ifdef WARPX_MAG_LLG
      /** Multifab storing spatially varying saturation magnetization */

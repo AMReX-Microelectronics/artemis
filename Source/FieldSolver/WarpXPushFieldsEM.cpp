@@ -414,9 +414,13 @@ void
 WarpX::MacroscopicEvolveE (int lev, amrex::Real a_dt) {
 
     WARPX_PROFILE("WarpX::MacroscopicEvolveE()");
+
+    amrex::Print() << "lev " << lev << std::endl;
+    amrex::Print() << std::endl;
+    
     MacroscopicEvolveE(lev, PatchType::fine, a_dt);
     if (lev > 0) {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev>0, yet.");
+        MacroscopicEvolveE(lev, PatchType::coarse, a_dt);
     }
 }
 
@@ -431,11 +435,18 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 #else
                                                    Hfield_fp[lev],
 #endif
-                                                   current_fp[lev], a_dt,
+                                                   current_fp[lev], lev, a_dt,
                                                    m_macroscopic_properties);
     }
     else {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
+        m_fdtd_solver_cp[lev]->MacroscopicEvolveE( Efield_cp[lev],
+#ifndef WARPX_MAG_LLG
+                                                   Bfield_cp[lev],
+#else
+                                                   Hfield_cp[lev],
+#endif
+                                                   current_cp[lev], lev, a_dt,
+                                                   m_macroscopic_properties);
     }
 
     // Evolve E field in PML cells
@@ -464,7 +475,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 pml[lev]->GetH_cp(),
 #endif
                 pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
-                pml[lev]->GetMultiSigmaBox_cp(),
+                pml[lev]->GetMultiSigmaBox_cp(), 
                 a_dt, pml_has_particles,
                 m_macroscopic_properties,
                 pml[lev]->Geteps_cp(),
