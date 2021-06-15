@@ -1401,7 +1401,7 @@ Numerics and algorithms
     Turn on coupling of Maxwell solution to the LLG updates. `mag_LLG_coupling==1` enables, `mag_LLG_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 * ``warpx.mag_LLG_exchange_coupling`` (`0` or `1`; default: `0`)
-    Turn on the exchange coupling term H_exchange in H_eff for the LLG updates. `mag_LLG_exchange_coupling==1` enables, `mag_LLG_exchange_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
+    Turn on the exchange coupling term H_exchange in H_eff for the LLG updates. `mag_LLG_exchange_coupling=1` enables, `mag_LLG_exchange_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 * ``warpx.mag_LLG_anisotropy_coupling`` (`0` or `1`; default: `0`)
     Turn on the anisotropy coupling term H_anisotropy in H_eff for the LLG updates. `mag_LLG_anisotropy_coupling==1` enables, `mag_LLG_anisotropy_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
