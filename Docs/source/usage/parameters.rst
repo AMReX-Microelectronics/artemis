@@ -1400,6 +1400,12 @@ Numerics and algorithms
 * ``warpx.mag_LLG_coupling`` (`0` or `1`; default: `1`)
     Turn on coupling of Maxwell solution to the LLG updates. `mag_LLG_coupling==1` enables, `mag_LLG_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
+* ``warpx.mag_LLG_exchange_coupling`` (`0` or `1`; default: `0`)
+    Turn on the exchange coupling term H_exchange in H_eff for the LLG updates. `mag_LLG_exchange_coupling=1` enables, `mag_LLG_exchange_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
+
+* ``warpx.mag_LLG_anisotropy_coupling`` (`0` or `1`; default: `0`)
+    Turn on the anisotropy coupling term H_anisotropy in H_eff for the LLG updates. `mag_LLG_anisotropy_coupling=1` enables, `mag_LLG_anisotropy_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
+
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
     Whether to use a Galerkin scheme when gathering fields to particles.
     When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
@@ -2500,6 +2506,32 @@ Solving magnetization using LLG equation
     be used to initialize the saturation magnetization on the grid. It
     requires additional parameters in the input file, namely,
     ``macroscopic.mag_Ms_function(x,y,z)`` to initialize the saturation magnetization.
+    If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
+    then this input property must be provided.
+
+* ``macroscopic.mag_exchange_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the coefficient of the exchange coupling term
+    of the material. The "default" style initializes the coefficient of the exchange coupling term mag_exchange to 0.0.
+    The string can be set to "constant" if a constant coefficient of the exchange coupling term is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``macroscopic.mag_exchange`` must be specified.
+    If set to ``parse_mag_exchange_function``, then a mathematical expression can
+    be used to initialize the coefficient of the exchange coupling term on the grid. It
+    requires additional parameters in the input file, namely,
+    ``macroscopic.mag_exchange_function(x,y,z)`` to initialize the coefficient of the exchange coupling term.
+    If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
+    then this input property must be provided.
+
+* ``macroscopic.mag_anisotropy_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the coefficient of the anisotropy coupling term
+    of the material. The "default" style initializes the coefficient of the anisotropy coupling term mag_anisotropy to 0.0.
+    The string can be set to "constant" if a constant coefficient of the anisotropy coupling term is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``macroscopic.mag_anisotropy`` must be specified.
+    If set to ``parse_mag_anisotropy_function``, then a mathematical expression can
+    be used to initialize the coefficient of the anisotropy coupling term on the grid. It
+    requires additional parameters in the input file, namely,
+    ``macroscopic.mag_anisotropy_function(x,y,z)`` to initialize the coefficient of the anisotropy coupling term.
     If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
     then this input property must be provided.
 

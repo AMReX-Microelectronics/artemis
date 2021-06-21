@@ -114,6 +114,26 @@ MacroscopicProperties::ReadParameters ()
                                   makeParser(m_str_mag_gamma_function,{"x","y","z"})));
     }
 
+    pp_macroscopic.get("mag_exchange_init_style", m_mag_exchange_s);
+    if (m_mag_exchange_s == "constant") pp_macroscopic.get("mag_exchange", m_mag_exchange);
+    // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
+    //initialization with parser
+    if (m_mag_exchange_s == "parse_mag_exchange_function") {
+        Store_parserString(pp_macroscopic, "mag_exchange_function(x,y,z)", m_str_mag_exchange_function);
+        m_mag_exchange_parser.reset(new ParserWrapper<3>(
+                                  makeParser(m_str_mag_exchange_function,{"x","y","z"})));
+    }
+
+    pp_macroscopic.get("mag_anisotropy_init_style", m_mag_anisotropy_s);
+    if (m_mag_anisotropy_s == "constant") pp_macroscopic.get("mag_anisotropy", m_mag_anisotropy);
+    // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
+    //initialization with parser
+    if (m_mag_anisotropy_s == "parse_mag_anisotropy_function") {
+        Store_parserString(pp_macroscopic, "mag_anisotropy_function(x,y,z)", m_str_mag_anisotropy_function);
+        m_mag_anisotropy_parser.reset(new ParserWrapper<3>(
+                                  makeParser(m_str_mag_anisotropy_function,{"x","y","z"})));
+    }
+
     m_mag_normalized_error = 0.1;
     pp_macroscopic.query("mag_normalized_error",m_mag_normalized_error);
 
@@ -150,6 +170,8 @@ MacroscopicProperties::InitData ()
     m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     m_mag_gamma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_mag_exchange_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_mag_anisotropy_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
 #endif
 
     // Initialize sigma
@@ -222,6 +244,22 @@ MacroscopicProperties::InitData ()
     if (m_mag_gamma_mf->max(0,m_mag_gamma_mf->nGrow()) > 0._rt) {
         amrex::Abort("gamma should be negative, but the user input has positive values");
     }
+
+    // mag_exchange - defined at cell centers
+    if (m_mag_exchange_s == "constant") {
+        m_mag_exchange_mf->setVal(m_mag_exchange);
+    }
+    else if (m_mag_exchange_s == "parse_mag_exchange_function"){
+        InitializeMacroMultiFabUsingParser(m_mag_exchange_mf.get(), getParser(m_mag_exchange_parser), lev);
+    }
+
+    // mag_anisotropy - defined at cell centers
+    if (m_mag_anisotropy_s == "constant") {
+        m_mag_anisotropy_mf->setVal(m_mag_anisotropy);
+    }
+    else if (m_mag_anisotropy_s == "parse_mag_anisotropy_function"){
+        InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf.get(), getParser(m_mag_anisotropy_parser), lev);
+    }
 #endif
 
     IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
@@ -234,6 +272,8 @@ MacroscopicProperties::InitData ()
     IntVect mag_Ms_stag = m_mag_Ms_mf->ixType().toIntVect(); //cell-centered
     IntVect mag_alpha_stag = m_mag_alpha_mf->ixType().toIntVect();
     IntVect mag_gamma_stag = m_mag_gamma_mf->ixType().toIntVect();
+    IntVect mag_exchange_stag = m_mag_exchange_mf->ixType().toIntVect();
+    IntVect mag_anisotropy_stag = m_mag_anisotropy_mf->ixType().toIntVect();
     IntVect Mx_stag = warpx.getMfield_fp(0,0).ixType().toIntVect(); // face-centered
     IntVect My_stag = warpx.getMfield_fp(0,1).ixType().toIntVect();
     IntVect Mz_stag = warpx.getMfield_fp(0,2).ixType().toIntVect();
@@ -249,6 +289,8 @@ MacroscopicProperties::InitData ()
         mag_Ms_IndexType[idim]    = mag_Ms_stag[idim];
         mag_alpha_IndexType[idim] = mag_alpha_stag[idim];
         mag_gamma_IndexType[idim] = mag_gamma_stag[idim];
+        mag_exchange_IndexType[idim]  = mag_exchange_stag[idim];
+        mag_anisotropy_IndexType[idim]   = mag_anisotropy_stag[idim];
         Mx_IndexType[idim]        = Mx_stag[idim];
         My_IndexType[idim]        = My_stag[idim];
         Mz_IndexType[idim]        = Mz_stag[idim];
@@ -266,6 +308,8 @@ MacroscopicProperties::InitData ()
         mag_Ms_IndexType[2]    = 0;
         mag_alpha_IndexType[2] = 0;
         mag_gamma_IndexType[2] = 0;
+        mag_exchange_IndexType[2]  = 0;
+        mag_anisotropy_IndexType[2]  = 0;
         Mx_IndexType[2]        = 0;
         My_IndexType[2]        = 0;
         Mz_IndexType[2]        = 0;
