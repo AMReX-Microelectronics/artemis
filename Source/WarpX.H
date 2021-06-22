@@ -250,6 +250,10 @@ public:
     int mag_M_normalization;
     // turn on LLG + Maxwell coupling
     int mag_LLG_coupling = 1;
+    // turn off the exchange coupling term H_exchange in H_eff for the LLG updates
+    int mag_LLG_exchange_coupling = 0;
+    // turn off the anisotropy coupling term H_anisotropy in H_eff for the LLG updates
+    int mag_LLG_anisotropy_coupling = 0;
 #endif
     // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     static bool do_current_centering;
