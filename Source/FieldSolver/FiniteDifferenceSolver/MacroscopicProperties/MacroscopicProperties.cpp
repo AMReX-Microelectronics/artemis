@@ -170,6 +170,7 @@ MacroscopicProperties::InitData ()
         m_mu_mf_fp[lev][0] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
 
 #ifdef WARPX_MAG_LLG
+        if (lev > 0) amrex::Abort("The code doesn't support the multilevel LLG at this time.")
         // all magnetic macroparameters are stored on cell centers
         m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
         m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
@@ -253,18 +254,11 @@ MacroscopicProperties::InitData ()
             InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf.get(), getParser(m_mag_anisotropy_parser), lev);
         }
 #endif
-
-        // mag_ani - defined at node
-        if (m_mag_ani_s == "constant") {
-            m_mag_ani_mf->setVal(m_mag_ani);
-        }
-        else if (m_mag_ani_s == "parse_mag_ani_function"){
-            InitializeMacroMultiFabUsingParser(m_mag_ani_mf.get(), getParser(m_mag_ani_parser), lev);
-        }
-#endif
-        IntVect sigma_stag = m_sigma_mf_fp[lev][0]->ixType().toIntVect();
-        IntVect epsilon_stag = m_eps_mf_fp[lev][0]->ixType().toIntVect();
-        IntVect mu_stag = m_mu_mf_fp[lev][0]->ixType().toIntVect();
+    }    
+        // Only set once for the these IntVects
+        IntVect sigma_stag = m_sigma_mf_fp[0][0]->ixType().toIntVect();
+        IntVect epsilon_stag = m_eps_mf_fp[0][0]->ixType().toIntVect();
+        IntVect mu_stag = m_mu_mf_fp[0][0]->ixType().toIntVect();
         IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
         IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
         IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
@@ -316,7 +310,6 @@ MacroscopicProperties::InitData ()
 #endif
             macro_cr_ratio[2]    = 1;
 #endif
-    }
 }
 
 void
