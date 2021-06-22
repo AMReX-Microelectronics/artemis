@@ -63,15 +63,9 @@ public:
      /** Gpu Vector with index type of the Mz multifab */
      amrex::GpuArray<int, 3> Mz_IndexType;
      /** Gpu Vector with index type of the coefficient of the exchange coupling term multifab */
-<<<<<<< HEAD
-     amrex::GpuArray<int, 3> mag_exch_IndexType;
-     /** Gpu Vector with index type of the coefficient of the anisotropy coupling term multifab */
-     amrex::GpuArray<int, 3> mag_ani_IndexType;    
-=======
      amrex::GpuArray<int, 3> mag_exchange_IndexType;
      /** Gpu Vector with index type of the coefficient of the anisotropy coupling term multifab */
      amrex::GpuArray<int, 3> mag_anisotropy_IndexType;
->>>>>>> 6fef4c1e57a43ef71debb6b326ec89a39ade93c6
 #endif
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;
@@ -80,13 +74,8 @@ public:
      amrex::MultiFab& getmag_Ms_mf () {return (*m_mag_Ms_mf);}
      amrex::MultiFab& getmag_alpha_mf () {return (*m_mag_alpha_mf);}
      amrex::MultiFab& getmag_gamma_mf () {return (*m_mag_gamma_mf);}
-<<<<<<< HEAD
-     amrex::MultiFab& getmag_exch_mf () {return (*m_mag_exch_mf);}
-     amrex::MultiFab& getmag_ani_mf () {return (*m_mag_ani_mf);}
-=======
      amrex::MultiFab& getmag_exchange_mf () {return (*m_mag_exchange_mf);}
      amrex::MultiFab& getmag_anisotropy_mf () {return (*m_mag_anisotropy_mf);}
->>>>>>> 6fef4c1e57a43ef71debb6b326ec89a39ade93c6
 
      amrex::Real getmag_normalized_error () {return m_mag_normalized_error;}
      int getmag_max_iter () {return m_mag_max_iter;}
