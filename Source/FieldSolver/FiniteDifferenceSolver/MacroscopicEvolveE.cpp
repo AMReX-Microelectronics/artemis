@@ -171,7 +171,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Box const& tez  = mfi.tilebox(Efield[2]->ixType().toIntVect());
         // starting component to interpolate macro properties to Ex, Ey, Ez locations
         const int scomp = 0;
-
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k){

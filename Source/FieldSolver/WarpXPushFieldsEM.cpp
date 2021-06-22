@@ -414,9 +414,6 @@ void
 WarpX::MacroscopicEvolveE (int lev, amrex::Real a_dt) {
 
     WARPX_PROFILE("WarpX::MacroscopicEvolveE()");
-
-    amrex::Print() << "lev " << lev << std::endl;
-    amrex::Print() << std::endl;
     
     MacroscopicEvolveE(lev, PatchType::fine, a_dt);
     if (lev > 0) {
@@ -475,7 +472,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 pml[lev]->GetH_cp(),
 #endif
                 pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
-                pml[lev]->GetMultiSigmaBox_cp(), 
+                pml[lev]->GetMultiSigmaBox_cp(),
                 a_dt, pml_has_particles,
                 m_macroscopic_properties,
                 pml[lev]->Geteps_cp(),
