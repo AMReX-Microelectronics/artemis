@@ -414,7 +414,7 @@ void
 WarpX::MacroscopicEvolveE (int lev, amrex::Real a_dt) {
 
     WARPX_PROFILE("WarpX::MacroscopicEvolveE()");
-    
+
     MacroscopicEvolveE(lev, PatchType::fine, a_dt);
     if (lev > 0) {
         MacroscopicEvolveE(lev, PatchType::coarse, a_dt);

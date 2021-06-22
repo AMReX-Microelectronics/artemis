@@ -29,7 +29,7 @@ public:
      amrex::MultiFab& get_m_eps_mf_fp  (int lev, int direction) {return *m_eps_mf_fp[lev][direction];}
      amrex::MultiFab& get_m_mu_mf_fp  (int lev, int direction) {return *m_mu_mf_fp[lev][direction];}
 
-     //! Delete level data. Question to Reva and Andy, do I need to make the AmrCore::regrid call this function? I guess no need. 
+     //! Delete level data. Question to Reva and Andy, do I need to make the AmrCore::regrid call this function? I guess no need.
      void ClearLevel (int lev);
 
      /** Initializes the Multifabs storing macroscopic properties
@@ -245,9 +245,9 @@ private:
 
      /** Multifab for m_sigma */
      amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 1 > > m_sigma_mf_fp;
-     /** Multifab for m_epsilon */     
+     /** Multifab for m_epsilon */
      amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 1 > > m_eps_mf_fp;
-     /** Multifab for m_mu */     
+     /** Multifab for m_mu */
      amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 1 > > m_mu_mf_fp;
 
 #ifdef WARPX_MAG_LLG

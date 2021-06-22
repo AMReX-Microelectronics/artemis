@@ -156,9 +156,9 @@ MacroscopicProperties::InitData ()
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
     m_sigma_mf_fp.resize(nlevs_max);
-    // epsilon is cell-centered MultiFab    
+    // epsilon is cell-centered MultiFab
     m_eps_mf_fp.resize(nlevs_max);
-    // mu is cell-centered MultiFab   
+    // mu is cell-centered MultiFab
     m_mu_mf_fp.resize(nlevs_max);
 
     for (int lev = 0; lev < nlevs_max; ++lev) {
@@ -370,8 +370,8 @@ void
 MacroscopicProperties::ClearLevel (int lev)
 {
     for (int i = 0; i < 1; ++i) {
-        m_sigma_mf_fp[lev][i].reset();  
-        m_eps_mf_fp[lev][i].reset();  
+        m_sigma_mf_fp[lev][i].reset();
+        m_eps_mf_fp[lev][i].reset();
         m_mu_mf_fp[lev][i].reset();
     }
 }
