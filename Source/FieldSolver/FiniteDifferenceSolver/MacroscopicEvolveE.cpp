@@ -109,9 +109,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     int lev, amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
 
-    auto& sigma_mf = macroscopic_properties->get_m_sigma_mf_fp(lev, 0);
-    auto& epsilon_mf = macroscopic_properties->get_m_eps_mf_fp(lev, 0);
-    auto& mu_mf = macroscopic_properties->get_m_mu_mf_fp(lev, 0);
+    auto& sigma_mf = macroscopic_properties->get_m_sigma_mf_fp(lev);
+    auto& epsilon_mf = macroscopic_properties->get_m_eps_mf_fp(lev);
+    auto& mu_mf = macroscopic_properties->get_m_mu_mf_fp(lev);
 
     // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
     // properties from their respective staggering to the Ex, Ey, Ez locations

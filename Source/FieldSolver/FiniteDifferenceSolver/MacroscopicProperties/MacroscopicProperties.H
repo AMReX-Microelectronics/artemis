@@ -21,13 +21,13 @@ public:
      /** Initialize multifabs storing macroscopic multifabs */
      void InitData ();
 
-     amrex::MultiFab * get_pointer_m_sigma_mf_fp  (int lev, int direction) const { return m_sigma_mf_fp[lev][direction].get(); }
-     amrex::MultiFab * get_pointer_m_eps_mf_fp  (int lev, int direction) const { return m_eps_mf_fp[lev][direction].get(); }
-     amrex::MultiFab * get_pointer_m_mu_mf_fp  (int lev, int direction) const { return m_mu_mf_fp[lev][direction].get(); }
+     amrex::MultiFab * get_pointer_m_sigma_mf_fp  (int lev) const { return m_sigma_mf_fp[lev].get(); }
+     amrex::MultiFab * get_pointer_m_eps_mf_fp  (int lev) const { return m_eps_mf_fp[lev].get(); }
+     amrex::MultiFab * get_pointer_m_mu_mf_fp  (int lev) const { return m_mu_mf_fp[lev].get(); }
 
-     amrex::MultiFab& get_m_sigma_mf_fp  (int lev, int direction) {return *m_sigma_mf_fp[lev][direction];}
-     amrex::MultiFab& get_m_eps_mf_fp  (int lev, int direction) {return *m_eps_mf_fp[lev][direction];}
-     amrex::MultiFab& get_m_mu_mf_fp  (int lev, int direction) {return *m_mu_mf_fp[lev][direction];}
+     amrex::MultiFab& get_m_sigma_mf_fp  (int lev) {return *m_sigma_mf_fp[lev];}
+     amrex::MultiFab& get_m_eps_mf_fp  (int lev) {return *m_eps_mf_fp[lev];}
+     amrex::MultiFab& get_m_mu_mf_fp  (int lev) {return *m_mu_mf_fp[lev];}
 
      //! Delete level data. Question to Reva and Andy, do I need to make the AmrCore::regrid call this function? I guess no need.
      void ClearLevel (int lev);
@@ -244,11 +244,11 @@ private:
 #endif
 
      /** Multifab for m_sigma */
-     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 1 > > m_sigma_mf_fp;
+     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_sigma_mf_fp;
      /** Multifab for m_epsilon */
-     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 1 > > m_eps_mf_fp;
+     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_eps_mf_fp;
      /** Multifab for m_mu */
-     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 1 > > m_mu_mf_fp;
+     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_mu_mf_fp;
 
 #ifdef WARPX_MAG_LLG
      /** Multifab storing spatially varying saturation magnetization */

@@ -165,12 +165,12 @@ MacroscopicProperties::InitData ()
         BoxArray ba = warpx.boxArray(lev);
         DistributionMapping dmap = warpx.DistributionMap(lev);
         int ng = 3;
-        m_sigma_mf_fp[lev][0] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-        m_eps_mf_fp[lev][0] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-        m_mu_mf_fp[lev][0] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        m_sigma_mf_fp[lev] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        m_eps_mf_fp[lev] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+        m_mu_mf_fp[lev] = std::make_unique<MultiFab>(ba, dmap, 1, ng);
 
 #ifdef WARPX_MAG_LLG
-        if (lev > 0) amrex::Abort("The code doesn't support the multilevel LLG at this time.")
+        if (lev > 0) amrex::Abort("The code doesn't support the multilevel LLG at this time.");
         // all magnetic macroparameters are stored on cell centers
         m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
         m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
@@ -181,21 +181,21 @@ MacroscopicProperties::InitData ()
 
         // Initialize sigma
         if (m_sigma_s == "constant") {
-            m_sigma_mf_fp[lev][0]->setVal(m_sigma);
+            m_sigma_mf_fp[lev]->setVal(m_sigma);
         } else if (m_sigma_s == "parse_sigma_function") {
-            InitializeMacroMultiFabUsingParser(m_sigma_mf_fp[lev][0].get(), getParser(m_sigma_parser), lev);
+            InitializeMacroMultiFabUsingParser(m_sigma_mf_fp[lev].get(), getParser(m_sigma_parser), lev);
         }
         // Initialize epsilon
         if (m_epsilon_s == "constant") {
-            m_eps_mf_fp[lev][0]->setVal(m_epsilon);
+            m_eps_mf_fp[lev]->setVal(m_epsilon);
         } else if (m_epsilon_s == "parse_epsilon_function") {
-            InitializeMacroMultiFabUsingParser(m_eps_mf_fp[lev][0].get(), getParser(m_epsilon_parser), lev);
+            InitializeMacroMultiFabUsingParser(m_eps_mf_fp[lev].get(), getParser(m_epsilon_parser), lev);
         }
         // Initialize mu
         if (m_mu_s == "constant") {
-            m_mu_mf_fp[lev][0]->setVal(m_mu);
+            m_mu_mf_fp[lev]->setVal(m_mu);
         } else if (m_mu_s == "parse_mu_function") {
-            InitializeMacroMultiFabUsingParser(m_mu_mf_fp[lev][0].get(), getParser(m_mu_parser), lev);
+            InitializeMacroMultiFabUsingParser(m_mu_mf_fp[lev].get(), getParser(m_mu_parser), lev);
         }
 
 #ifdef WARPX_MAG_LLG
@@ -256,9 +256,9 @@ MacroscopicProperties::InitData ()
 #endif
     }
         // Only set once for the these IntVects
-        IntVect sigma_stag = m_sigma_mf_fp[0][0]->ixType().toIntVect();
-        IntVect epsilon_stag = m_eps_mf_fp[0][0]->ixType().toIntVect();
-        IntVect mu_stag = m_mu_mf_fp[0][0]->ixType().toIntVect();
+        IntVect sigma_stag = m_sigma_mf_fp[0]->ixType().toIntVect();
+        IntVect epsilon_stag = m_eps_mf_fp[0]->ixType().toIntVect();
+        IntVect mu_stag = m_mu_mf_fp[0]->ixType().toIntVect();
         IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
         IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
         IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
@@ -362,10 +362,8 @@ MacroscopicProperties::~MacroscopicProperties ()
 void
 MacroscopicProperties::ClearLevel (int lev)
 {
-    for (int i = 0; i < 1; ++i) {
-        m_sigma_mf_fp[lev][i].reset();
-        m_eps_mf_fp[lev][i].reset();
-        m_mu_mf_fp[lev][i].reset();
-    }
+    m_sigma_mf_fp[lev].reset();
+    m_eps_mf_fp[lev].reset();
+    m_mu_mf_fp[lev].reset();
 }
 
