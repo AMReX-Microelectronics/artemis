@@ -31,13 +31,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM(
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
     std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
-    amrex::Real const dt,
+    int lev, amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const &macroscopic_properties)
 {
 
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee)
     {
-        MacroscopicEvolveHMCartesian<CartesianYeeAlgorithm>(Mfield, Hfield, Bfield, H_biasfield, Efield, dt, macroscopic_properties);
+        MacroscopicEvolveHMCartesian<CartesianYeeAlgorithm>(Mfield, Hfield, Bfield, H_biasfield, Efield, lev, dt, macroscopic_properties);
     }
     else
     {
@@ -54,7 +54,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
     std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
-    amrex::Real const dt,
+    int lev, amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const &macroscopic_properties)
 {
 

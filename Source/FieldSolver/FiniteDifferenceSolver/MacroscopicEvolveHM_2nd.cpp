@@ -27,11 +27,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
     std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
-    amrex::Real const dt,
+    int lev, amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const &macroscopic_properties) {
 
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-        MacroscopicEvolveHMCartesian_2nd<CartesianYeeAlgorithm>(Mfield, Hfield, Bfield, H_biasfield, Efield, dt, macroscopic_properties);
+        MacroscopicEvolveHMCartesian_2nd<CartesianYeeAlgorithm>(Mfield, Hfield, Bfield, H_biasfield, Efield, lev, dt, macroscopic_properties);
     } else {
         amrex::Abort("Only yee algorithm is compatible for M updates.");
     }
@@ -45,7 +45,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
     std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
-    amrex::Real const dt,
+    int lev, amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const &macroscopic_properties) {
 
     // obtain the maximum relative amount we let M deviate from Ms before aborting

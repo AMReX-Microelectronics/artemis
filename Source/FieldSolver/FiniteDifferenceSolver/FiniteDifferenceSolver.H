@@ -112,7 +112,7 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
-                       amrex::Real const dt,
+                       int lev, amrex::Real const dt,
                        std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 
         void MacroscopicEvolveHM_2nd ( std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
@@ -120,7 +120,7 @@ class FiniteDifferenceSolver
                        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
-                       amrex::Real const dt,
+                       int lev, amrex::Real const dt,
                        std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 
 #endif
@@ -270,7 +270,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
             std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
-            amrex::Real const dt,
+            int lev, amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 
         template< typename T_Algo >
@@ -280,7 +280,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
             std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
-            amrex::Real const dt,
+            int lev, amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 #endif
 
