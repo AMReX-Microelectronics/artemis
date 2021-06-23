@@ -812,7 +812,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             Array4<Real> const& mag_Ms_arr = mag_Ms_mf.array(mfi);
 
             // mu_mf will be imported but will only be called at grids where Ms == 0
-            auto& mu_mf = macroscopic_properties->getmu_mf();
+            auto& mu_mf = macroscopic_properties->get_m_mu_mf_fp(lev);
             Array4<Real> const& mu_arr = mu_mf.array(mfi);
 
             amrex::Real const mu0_inv = 1. / PhysConst::mu0;
@@ -1018,7 +1018,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Array4<Real> const& mag_Ms_arr = mag_Ms_mf.array(mfi);
 
         // mu_mf will be imported but will only be called at grids where Ms == 0
-        auto& mu_mf = macroscopic_properties->getmu_mf();
+        auto& mu_mf = macroscopic_properties->get_m_mu_mf_fp(lev);
         Array4<Real> const& mu_arr = mu_mf.array(mfi);
 
         // Loop over the cells and update the fields
