@@ -254,7 +254,7 @@ MacroscopicProperties::InitData ()
             InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf.get(), getParser(m_mag_anisotropy_parser), lev);
         }
 #endif
-    }    
+    }
         // Only set once for the these IntVects
         IntVect sigma_stag = m_sigma_mf_fp[0][0]->ixType().toIntVect();
         IntVect epsilon_stag = m_eps_mf_fp[0][0]->ixType().toIntVect();
