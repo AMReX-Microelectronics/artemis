@@ -22,6 +22,8 @@ MacroscopicProperties::ReadParameters ()
     // The vacuum values are used as default for the macroscopic parameters
     // with a warning message to the user to indicate that no value was specified.
 
+    auto &warpx = WarpX::GetInstance();
+    
     // Query input for material conductivity, sigma.
     bool sigma_specified = false;
     if (queryWithParser(pp_macroscopic, "sigma", m_sigma)) {
@@ -114,24 +116,28 @@ MacroscopicProperties::ReadParameters ()
                                   makeParser(m_str_mag_gamma_function,{"x","y","z"})));
     }
 
-    pp_macroscopic.get("mag_exchange_init_style", m_mag_exchange_s);
-    if (m_mag_exchange_s == "constant") pp_macroscopic.get("mag_exchange", m_mag_exchange);
-    // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
-    //initialization with parser
-    if (m_mag_exchange_s == "parse_mag_exchange_function") {
-        Store_parserString(pp_macroscopic, "mag_exchange_function(x,y,z)", m_str_mag_exchange_function);
-        m_mag_exchange_parser.reset(new ParserWrapper<3>(
-                                  makeParser(m_str_mag_exchange_function,{"x","y","z"})));
-    }
-
-    pp_macroscopic.get("mag_anisotropy_init_style", m_mag_anisotropy_s);
-    if (m_mag_anisotropy_s == "constant") pp_macroscopic.get("mag_anisotropy", m_mag_anisotropy);
-    // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
-    //initialization with parser
-    if (m_mag_anisotropy_s == "parse_mag_anisotropy_function") {
-        Store_parserString(pp_macroscopic, "mag_anisotropy_function(x,y,z)", m_str_mag_anisotropy_function);
-        m_mag_anisotropy_parser.reset(new ParserWrapper<3>(
-                                  makeParser(m_str_mag_anisotropy_function,{"x","y","z"})));
+    if (warpx.mag_LLG_exchange_coupling == 1) { // spin exchange coupling turned off by default
+        pp_macroscopic.get("mag_exchange_init_style", m_mag_exchange_s);
+        if (m_mag_exchange_s == "constant") pp_macroscopic.get("mag_exchange", m_mag_exchange);
+        // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
+        //initialization with parser
+        if (m_mag_exchange_s == "parse_mag_exchange_function") {
+            Store_parserString(pp_macroscopic, "mag_exchange_function(x,y,z)", m_str_mag_exchange_function);
+            m_mag_exchange_parser.reset(new ParserWrapper<3>(
+                                      makeParser(m_str_mag_exchange_function,{"x","y","z"})));
+        }
+    } 
+    
+    if (warpx.mag_LLG_anisotropy_coupling == 1) { // magnetic crystal is considered as isotropic by default 
+        pp_macroscopic.get("mag_anisotropy_init_style", m_mag_anisotropy_s);
+        if (m_mag_anisotropy_s == "constant") pp_macroscopic.get("mag_anisotropy", m_mag_anisotropy);
+        // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
+        //initialization with parser
+        if (m_mag_anisotropy_s == "parse_mag_anisotropy_function") {
+            Store_parserString(pp_macroscopic, "mag_anisotropy_function(x,y,z)", m_str_mag_anisotropy_function);
+            m_mag_anisotropy_parser.reset(new ParserWrapper<3>(
+                                      makeParser(m_str_mag_anisotropy_function,{"x","y","z"})));
+        }
     }
 
     m_mag_normalized_error = 0.1;
