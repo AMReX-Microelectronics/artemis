@@ -250,6 +250,10 @@ public:
     int mag_M_normalization;
     // turn on LLG + Maxwell coupling
     int mag_LLG_coupling = 1;
+    // turn off the exchange coupling term H_exchange in H_eff for the LLG updates
+    int mag_LLG_exchange_coupling = 0;
+    // turn off the anisotropy coupling term H_anisotropy in H_eff for the LLG updates
+    int mag_LLG_anisotropy_coupling = 0;
 #endif
     // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     static bool do_current_centering;
@@ -1223,7 +1227,7 @@ private:
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
 
     // PML
-    int do_pml = 1;
+    int do_pml = 0;
     int do_silver_mueller = 0;
     int pml_ncell = 10;
     int pml_delta = 10;
@@ -1232,8 +1236,8 @@ private:
     int do_pml_in_domain = 0;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
-    amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector();
-    amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector();
+    amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
+    amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
