@@ -23,7 +23,7 @@ MacroscopicProperties::ReadParameters ()
     // with a warning message to the user to indicate that no value was specified.
 
     auto &warpx = WarpX::GetInstance();
-    
+
     // Query input for material conductivity, sigma.
     bool sigma_specified = false;
     if (queryWithParser(pp_macroscopic, "sigma", m_sigma)) {
@@ -126,9 +126,9 @@ MacroscopicProperties::ReadParameters ()
             m_mag_exchange_parser.reset(new ParserWrapper<3>(
                                       makeParser(m_str_mag_exchange_function,{"x","y","z"})));
         }
-    } 
-    
-    if (warpx.mag_LLG_anisotropy_coupling == 1) { // magnetic crystal is considered as isotropic by default 
+    }
+
+    if (warpx.mag_LLG_anisotropy_coupling == 1) { // magnetic crystal is considered as isotropic by default
         pp_macroscopic.get("mag_anisotropy_init_style", m_mag_anisotropy_s);
         if (m_mag_anisotropy_s == "constant") pp_macroscopic.get("mag_anisotropy", m_mag_anisotropy);
         // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
