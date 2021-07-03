@@ -471,6 +471,11 @@ WarpX::OneStep_nosub (Real cur_time)
                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
             }
 #endif //
+
+#ifdef WARPX_MAG_LLG
+    // output the field variables on level 0
+    MacroscopicfieldOutput(Mfield_fp[0], Efield_fp[0], Bfield_fp[0], cur_time);
+#endif
     } // !PSATD
 
     if (warpx_py_afterEsolve) warpx_py_afterEsolve();

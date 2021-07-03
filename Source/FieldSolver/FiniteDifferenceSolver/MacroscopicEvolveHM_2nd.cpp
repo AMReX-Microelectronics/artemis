@@ -519,12 +519,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // temporary normalized magnitude of M_xface field at the fixed point
                         // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
                         amrex::Real M_magnitude_normalized = std::sqrt(std::pow(M_xface(i, j, k, 0), 2._rt) + std::pow(M_xface(i, j, k, 1), 2._rt) + std::pow(M_xface(i, j, k, 2), 2._rt)) / mag_Ms_arrx;
-
                         if (M_normalization == 1){
                             // saturated case; if |M| has drifted from M_s too much, abort.  Otherwise, normalize
                             // check the normalized error
                             if (amrex::Math::abs(1._rt - M_magnitude_normalized) > mag_normalized_error){
                                 printf("i = %d, j=%d, k=%d\n", i, j, k);
+                                // printf("M_xface(i, j, k, 0) = %f, M_xface(i, j, k, 1)=%f, M_xface(i, j, k, 2)=%f, mag_Ms_arrx=%f\n", M_xface(i, j, k, 0), M_xface(i, j, k, 1), M_xface(i, j, k, 2), mag_Ms_arrx);
                                 printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
                                 amrex::Abort("Exceed the normalized error of the M_xface field");
                             }
@@ -1000,64 +1000,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         }
 
     } // end the iteration
-
-    // output the field variables on level 0
-    for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) /* remember to FIX */
-    {
-        // extract field data
-        Array4<Real> const& M_xface = Mfield[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
-        Array4<Real> const& M_yface = Mfield[1]->array(mfi); // note M_yface include x,y,z components at |_y faces
-        Array4<Real> const& M_zface = Mfield[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
-        Array4<Real> const& M_xface_old = Mfield_old[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
-        Array4<Real> const& M_yface_old = Mfield_old[1]->array(mfi); // note M_yface include x,y,z components at |_y faces
-        Array4<Real> const& M_zface_old = Mfield_old[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
-        Array4<Real> const &M_error_xface = Mfield_error[0]->array(mfi);
-        Array4<Real> const &M_error_yface = Mfield_error[1]->array(mfi);
-        Array4<Real> const &M_error_zface = Mfield_error[2]->array(mfi);
-
-        // extract tileboxes for which to loop
-        Box const& tbx = mfi.tilebox(Mfield[0]->ixType().toIntVect()); /* just define which grid type */
-        Box const& tby = mfi.tilebox(Mfield[1]->ixType().toIntVect());
-        Box const& tbz = mfi.tilebox(Mfield[2]->ixType().toIntVect());
-
-        amrex::Real time = 0.0;
-
-        // loop over cells and output fields
-        amrex::ParallelFor(tbx, tby, tbz,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k){
-
-        // calculate M_error_xface
-        // x,y,z component on M-error on x-faces of grid
-        for (int icomp = 0; icomp < 3; ++icomp) {
-            M_error_xface(i, j, k, icomp) = amrex::Math::abs((M_xface(i, j, k, icomp) - M_xface_old(i, j, k, icomp)));
-        }
-
-        // if(i==2 && j==4 && k==4 && amrex::Math::abs( M_error_xface(i, j, k, 0) ) < M_tol ){
-        if(i==2 && j==4 && k==4){            
-        std::ofstream ofs1("./Mfield_xface_left.txt", std::ofstream::app);
-        amrex::Print(ofs1).SetPrecision(16) << time << " " << M_xface(i,j,k,0) << " " << M_xface(i,j,k,1) << " " << M_xface(i,j,k,2) << " "
-                                                                << M_yface_old(i,j,k,0) << " " << M_yface_old(i,j,k,1) << " " << M_yface_old(i,j,k,2) << std::endl;
-        ofs1.close();
-
-        } 
-
-        if(i==28 && j==4 && k==4){
-        std::ofstream ofs2("./Mfield_xface_right.txt", std::ofstream::app);
-        amrex::Print(ofs2).SetPrecision(16) << time << " " << M_xface(i,j,k,0) << " " << M_xface(i,j,k,1) << " " << M_xface(i,j,k,2) << " "
-                                                                << M_yface_old(i,j,k,0) << " " << M_yface_old(i,j,k,1) << " " << M_yface_old(i,j,k,2) << std::endl;
-        ofs2.close();
-
-        }
-            },
-
-        [=] AMREX_GPU_DEVICE (int i, int j, int k){
-
-            },
-
-        [=] AMREX_GPU_DEVICE (int i, int j, int k){
-
-            });
-    }
 
     // update B
     for (MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi){
