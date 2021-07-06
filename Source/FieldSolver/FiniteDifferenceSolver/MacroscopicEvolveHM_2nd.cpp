@@ -77,7 +77,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     amrex::GpuArray<int, 3> const& Mz_stag        = macroscopic_properties->Mz_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr       = macroscopic_properties->macro_cr_ratio;
     amrex::GpuArray<amrex::Real, 3> anisotropy_axis{0.0,0.0,0.0};
-    anisotropy_axis[1] = 1.0
+    anisotropy_axis[1] = 1.0;
 
     // Initialize Hfield_old (H^(old_time)), Mfield_old (M^(old_time)), Mfield_prev (M^[(new_time),r-1]), Mfield_error
     for (int i = 0; i < 3; i++){
@@ -216,8 +216,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // z component on x-faces of grid
                     b_temp_static_xface(i, j, k, 2) = M_xface(i, j, k, 2) + dt * b_temp_static_coeff * (M_xface(i, j, k, 0) * Hy_eff - M_xface(i, j, k, 1) * Hx_eff);
                 }
-            },
+            });
 
+        amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
@@ -292,8 +293,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // z component on y-faces of grid
                     b_temp_static_yface(i, j, k, 2) = M_yface(i, j, k, 2) + dt * b_temp_static_coeff * (M_yface(i, j, k, 0) * Hy_eff - M_yface(i, j, k, 1) * Hx_eff);
                 }
-            },
+            });
 
+        amrex::ParallelFor(tbx, tby, tbz, 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
