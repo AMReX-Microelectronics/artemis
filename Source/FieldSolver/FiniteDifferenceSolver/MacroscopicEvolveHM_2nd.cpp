@@ -76,7 +76,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     amrex::GpuArray<int, 3> const& My_stag        = macroscopic_properties->My_IndexType;
     amrex::GpuArray<int, 3> const& Mz_stag        = macroscopic_properties->Mz_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr       = macroscopic_properties->macro_cr_ratio;
-
+    amrex::GpuArray<amrex::Real, 3> anisotropy_axis{0.0,0.0,0.0};
+ 
     // Initialize Hfield_old (H^(old_time)), Mfield_old (M^(old_time)), Mfield_prev (M^[(new_time),r-1]), Mfield_error
     for (int i = 0; i < 3; i++){
         Hfield_old[i].reset(new MultiFab(Hfield[i]->boxArray(), Hfield[i]->DistributionMap(), 1, Hfield[i]->nGrow()));
@@ -179,7 +180,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (mag_anisotropy_coupling == 1){
                         // H_anisotropy
                         if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                        amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
                         anisotropy_axis[1] = 1.0; // y component
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
@@ -257,7 +257,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (mag_anisotropy_coupling == 1){
                         // H_anisotropy
                         if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                        amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
                         anisotropy_axis[1] = 1.0; // y component
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
@@ -335,7 +334,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (mag_anisotropy_coupling == 1){
                         // H_anisotropy
                         if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                        amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
                         anisotropy_axis[1] = 1.0; // y component
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
@@ -482,7 +480,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_anisotropy_coupling == 1){
                             // H_anisotropy
                             if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                            amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
                             anisotropy_axis[1] = 1.0; // y component
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
@@ -594,7 +591,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_anisotropy_coupling == 1){
                             // H_anisotropy
                             if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                            amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
                             anisotropy_axis[1] = 1.0; // y component
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
@@ -706,7 +702,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_anisotropy_coupling == 1){
                             // H_anisotropy
                             if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                            amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
                             anisotropy_axis[1] = 1.0; // y component
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
