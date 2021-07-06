@@ -56,6 +56,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     int M_normalization = warpx.mag_M_normalization;
     int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
     int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
+    amrex::Print() << "mag_anisotropy_coupling " << mag_anisotropy_coupling << std::endl;
 
     // build temporary vector<multifab,3> Mfield_prev, Mfield_error, a_temp, a_temp_static, b_temp_static
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Hfield_old;    // H^(old_time) before the current time step
@@ -180,7 +181,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // H_anisotropy
                         if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                         amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                        anisotropy_axis[1] = 1.0; // y component
+                        anisotropy_axis[1] = 0.0; // y component
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
                             M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
@@ -188,7 +189,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         Hx_eff += - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[0];
                         Hy_eff += - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz_eff += - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[2];
+
+                        if(i==2 && j==4 && k==4){
+                        std::ofstream ofs1("./Heff_xface_left.txt", std::ofstream::app);
+                        amrex::Print(ofs1).SetPrecision(16) << "ck1" << " " << - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[0]
+                                                                     << " " << - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[1]
+                                                                     << " " << - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[2] << std::endl; 
+                        amrex::Print(ofs1).SetPrecision(16) << "ck2" << " " << Hx_eff << " " << Hy_eff << " " << Hz_eff << std::endl;                                                                   
+                        ofs1.close();
+                        }
                     }
+
+
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
                     Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_xface(i, j, k, 0), 2._rt) + std::pow(M_xface(i, j, k, 1), 2._rt) + std::pow(M_xface(i, j, k, 2), 2._rt))
@@ -258,7 +270,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // H_anisotropy
                         if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                         amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                        anisotropy_axis[1] = 1.0; // y component
+                        anisotropy_axis[1] = 0.0; // y component
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
                             M_dot_anisotropy_axis += M_yface(i, j, k, comp) * anisotropy_axis[comp];
@@ -266,6 +278,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         Hx_eff += - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[0];
                         Hy_eff += - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz_eff += - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[2];
+
+                        if(i==2 && j==4 && k==4){
+                        std::ofstream ofs1("./Heff_yface_left.txt", std::ofstream::app);
+                        amrex::Print(ofs1).SetPrecision(16) << "ck1" << " " << - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[0]
+                                                                     << " " << - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[1]
+                                                                     << " " << - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[2] << std::endl; 
+                        amrex::Print(ofs1).SetPrecision(16) << "ck2" << " " << Hx_eff << " " << Hy_eff << " " << Hz_eff << std::endl;                                                                   
+                        ofs1.close();
+                        }
                     }
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
@@ -336,7 +357,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // H_anisotropy
                         if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                         amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                        anisotropy_axis[1] = 1.0; // y component
+                        anisotropy_axis[1] = 0.0; // y component
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
                             M_dot_anisotropy_axis += M_zface(i, j, k, comp) * anisotropy_axis[comp];
@@ -344,6 +365,16 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         Hx_eff += - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[0];
                         Hy_eff += - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz_eff += - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[2];
+
+                        if(i==2 && j==4 && k==4){
+                        std::ofstream ofs1("./Heff_zface_left.txt", std::ofstream::app);
+                        amrex::Print(ofs1).SetPrecision(16) << "ck1" << " " << - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[0]
+                                                                     << " " << - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[1]
+                                                                     << " " << - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[2] << std::endl; 
+                        amrex::Print(ofs1).SetPrecision(16) << "ck2" << " " << Hx_eff << " " << Hy_eff << " " << Hz_eff << std::endl;                                                                   
+                        ofs1.close();
+                        }
+
                     }
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
@@ -483,7 +514,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             // H_anisotropy
                             if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                             amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                            anisotropy_axis[1] = 1.0; // y component
+                            anisotropy_axis[1] = 0.0; // y component
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
                                 M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
@@ -491,6 +522,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             Hx_eff += - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[0];
                             Hy_eff += - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[1];
                             Hz_eff += - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[2];
+
+                            if(i==2 && j==4 && k==4){
+                            std::ofstream ofs1("./Heff_xface_left2.txt", std::ofstream::app);
+                            amrex::Print(ofs1).SetPrecision(16) << "ck1" << " " << - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[0]
+                                                                        << " " << - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[1]
+                                                                        << " " << - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[2] << std::endl; 
+                            amrex::Print(ofs1).SetPrecision(16) << "ck2" << " " << Hx_eff << " " << Hy_eff << " " << Hz_eff << std::endl;                                                                   
+                            ofs1.close();
+                            }
                         }
 
                         // calculate the a_temp_dynamic_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
@@ -595,7 +635,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             // H_anisotropy
                             if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                             amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                            anisotropy_axis[1] = 1.0; // y component
+                            anisotropy_axis[1] = 0.0; // y component
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
                                 M_dot_anisotropy_axis += M_yface(i, j, k, comp) * anisotropy_axis[comp];
@@ -603,6 +643,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             Hx_eff += - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[0];
                             Hy_eff += - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[1];
                             Hz_eff += - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[2];
+                            
+                            if(i==2 && j==4 && k==4){
+                            std::ofstream ofs1("./Heff_yface_left2.txt", std::ofstream::app);
+                            amrex::Print(ofs1).SetPrecision(16) << "ck1" << " " << - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[0]
+                                                                        << " " << - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[1]
+                                                                        << " " << - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[2] << std::endl; 
+                            amrex::Print(ofs1).SetPrecision(16) << "ck2" << " " << Hx_eff << " " << Hy_eff << " " << Hz_eff << std::endl;                                                                   
+                            ofs1.close();
+                            }
                         }
 
                         // calculate the a_temp_dynamic_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
@@ -707,7 +756,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             // H_anisotropy
                             if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                             amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                            anisotropy_axis[1] = 1.0; // y component
+                            anisotropy_axis[1] = 0.0; // y component
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
                                 M_dot_anisotropy_axis += M_zface(i, j, k, comp) * anisotropy_axis[comp];
@@ -715,6 +764,16 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             Hx_eff += - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[0];
                             Hy_eff += - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[1];
                             Hz_eff += - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[2];
+                            
+                            if(i==2 && j==4 && k==4){
+                            std::ofstream ofs1("./Heff_zface_left2.txt", std::ofstream::app);
+                            amrex::Print(ofs1).SetPrecision(16) << "ck1" << " " << - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[0]
+                                                                        << " " << - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[1]
+                                                                        << " " << - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[2] << std::endl; 
+                            amrex::Print(ofs1).SetPrecision(16) << "ck2" << " " << Hx_eff << " " << Hy_eff << " " << Hz_eff << std::endl;                                                                   
+                            ofs1.close();
+                            }
+
                         }
 
                         // calculate the a_temp_dynamic_coeff (it is divided by 2.0 because the derivation is based on an interger dt,

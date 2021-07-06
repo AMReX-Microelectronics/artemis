@@ -545,6 +545,7 @@ public:
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > & Mfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
             amrex::Real const time);
 #endif
 

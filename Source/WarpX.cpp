@@ -2436,6 +2436,7 @@ WarpX::PicsarVersion ()
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > & Mfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield, // H bias
         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,       
         amrex::Real const time)
     {
 
@@ -2451,6 +2452,9 @@ WarpX::PicsarVersion ()
             Array4<Real> const& Bx = Bfield[0]->array(mfi); // Bx is the x component at |_x faces
             Array4<Real> const& By = Bfield[1]->array(mfi); // By is the y component at |_y faces
             Array4<Real> const& Bz = Bfield[2]->array(mfi); // Bz is the z component at |_z faces
+            Array4<Real> const &Hx = Hfield[0]->array(mfi);
+            Array4<Real> const &Hy = Hfield[1]->array(mfi);
+            Array4<Real> const &Hz = Hfield[2]->array(mfi);
 
             // extract tileboxes for which to loop
             Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect()); /* just define which grid type */
@@ -2463,19 +2467,23 @@ WarpX::PicsarVersion ()
 
             if(i==2 && j==4 && k==4){
             std::ofstream ofs1("./Mfield_xface_left.txt", std::ofstream::app);
-            // amrex::Print(ofs1).SetPrecision(16) << time << " " << M_xface(i,j,k,0) << " " << M_xface(i,j,k,1) << " " << M_xface(i,j,k,2) << " "
-            //                                                        << M_yface(i,j,k,0) << " " << M_yface(i,j,k,1) << " " << M_yface(i,j,k,2) << " "
-            //                                                        << M_zface(i,j,k,0) << " " << M_zface(i,j,k,1) << " " << M_zface(i,j,k,2) << std::endl;
-            amrex::Print(ofs1).SetPrecision(16) << time << " " << M_xface(i,j,k,0) << " " << M_xface(i,j,k,1) << " " << M_xface(i,j,k,2) << std::endl;                                                                   
+            amrex::Print(ofs1).SetPrecision(16) << time << " " << M_xface(i,j,k,0) << " " << M_xface(i,j,k,1) << " " << M_xface(i,j,k,2) << " "
+                                                                   << M_yface(i,j,k,0) << " " << M_yface(i,j,k,1) << " " << M_yface(i,j,k,2) << " "
+                                                                   << M_zface(i,j,k,0) << " " << M_zface(i,j,k,1) << " " << M_zface(i,j,k,2) << std::endl;
+            // amrex::Print(ofs1).SetPrecision(16) << time << " " << M_xface(i,j,k,0) << " " << M_xface(i,j,k,1) << " " << M_xface(i,j,k,2) << std::endl;                                                                   
             ofs1.close();
 
-            // std::ofstream ofs1_2("./Bfield_xface_left.txt", std::ofstream::app);
-            // amrex::Print(ofs1_2).SetPrecision(16) << time << " " << Bx(i,j,k) << " " << By(i,j,k) << " " << Bz(i,j,k) << " " << std::endl;
-            // ofs1_2.close();
+            std::ofstream ofs1_2("./Bfield_xface_left.txt", std::ofstream::app);
+            amrex::Print(ofs1_2).SetPrecision(16) << time << " " << Bx(i,j,k) << " " << By(i,j,k) << " " << Bz(i,j,k) << " " << std::endl;
+            ofs1_2.close();
 
-            // std::ofstream ofs1_3("./Efield_xface_left.txt", std::ofstream::app);
-            // amrex::Print(ofs1_3).SetPrecision(16) << time << " " << Ex(i,j,k) << " " << Ey(i,j,k) << " " << Ez(i,j,k) << " " << std::endl;
-            // ofs1_3.close();
+            std::ofstream ofs1_3("./Efield_xface_left.txt", std::ofstream::app);
+            amrex::Print(ofs1_3).SetPrecision(16) << time << " " << Ex(i,j,k) << " " << Ey(i,j,k) << " " << Ez(i,j,k) << " " << std::endl;
+            ofs1_3.close();
+
+            std::ofstream ofs1_4("./Hfield_xface_left.txt", std::ofstream::app);
+            amrex::Print(ofs1_4).SetPrecision(16) << time << " " << Hx(i,j,k) << " " << Hy(i,j,k) << " " << Hz(i,j,k) << " " << std::endl;
+            ofs1_4.close();
 
             } 
 
