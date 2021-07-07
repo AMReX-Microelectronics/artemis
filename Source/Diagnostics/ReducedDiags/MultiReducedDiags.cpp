@@ -4,28 +4,32 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "LoadBalanceCosts.H"
-#include "LoadBalanceEfficiency.H"
-#include "ParticleHistogram.H"
-#include "BeamRelevant.H"
-#include "ParticleEnergy.H"
-#include "ParticleExtrema.H"
-#include "FieldEnergy.H"
-#include "FieldMaximum.H"
-#include "RhoMaximum.H"
-#include "ParticleNumber.H"
-#include "FieldReduction.H"
 #include "MultiReducedDiags.H"
 
-#include <AMReX_ParmParse.H>
-#include <AMReX_ParallelDescriptor.H>
+#include "BeamRelevant.H"
+#include "FieldEnergy.H"
+#include "FieldMaximum.H"
+#include "FieldMomentum.H"
+#include "FieldReduction.H"
+#include "LoadBalanceCosts.H"
+#include "LoadBalanceEfficiency.H"
+#include "ParticleEnergy.H"
+#include "ParticleExtrema.H"
+#include "ParticleHistogram.H"
+#include "ParticleMomentum.H"
+#include "ParticleNumber.H"
+#include "RhoMaximum.H"
+#include "Utils/IntervalsParser.H"
 
-#include <fstream>
-#include <map>
+#include <AMReX.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+
 #include <algorithm>
 #include <functional>
 #include <iterator>
+#include <map>
 
 using namespace amrex;
 
@@ -43,7 +47,9 @@ MultiReducedDiags::MultiReducedDiags ()
     const auto reduced_diags_dictionary =
         std::map<std::string, std::function<std::unique_ptr<ReducedDiags>(CS)>>{
             {"ParticleEnergy",        [](CS s){return std::make_unique<ParticleEnergy>(s);}},
+            {"ParticleMomentum",      [](CS s){return std::make_unique<ParticleMomentum>(s);}},
             {"FieldEnergy",           [](CS s){return std::make_unique<FieldEnergy>(s);}},
+            {"FieldMomentum",         [](CS s){return std::make_unique<FieldMomentum>(s);}},
             {"FieldMaximum",          [](CS s){return std::make_unique<FieldMaximum>(s);}},
             {"FieldReduction",        [](CS s){return std::make_unique<FieldReduction>(s);}},
             {"RhoMaximum",            [](CS s){return std::make_unique<RhoMaximum>(s);}},

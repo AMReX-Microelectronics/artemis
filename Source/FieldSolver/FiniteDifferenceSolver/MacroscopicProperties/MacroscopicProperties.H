@@ -1,12 +1,19 @@
 #ifndef WARPX_MACROSCOPICPROPERTIES_H_
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
+#include "MacroscopicProperties_fwd.H"
 
 #include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpXConst.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
 
-
+#include <memory>
+#include <string>
 
 /**
  * \brief This class contains the macroscopic properties of the medium needed to
@@ -58,6 +65,10 @@ public:
      amrex::GpuArray<int, 3> My_IndexType;
      /** Gpu Vector with index type of the Mz multifab */
      amrex::GpuArray<int, 3> Mz_IndexType;
+     /** Gpu Vector with index type of the coefficient of the exchange coupling term multifab */
+     amrex::GpuArray<int, 3> mag_exchange_IndexType;
+     /** Gpu Vector with index type of the coefficient of the anisotropy coupling term multifab */
+     amrex::GpuArray<int, 3> mag_anisotropy_IndexType;
 #endif
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;
@@ -66,6 +77,8 @@ public:
      amrex::MultiFab& getmag_Ms_mf () {return (*m_mag_Ms_mf);}
      amrex::MultiFab& getmag_alpha_mf () {return (*m_mag_alpha_mf);}
      amrex::MultiFab& getmag_gamma_mf () {return (*m_mag_gamma_mf);}
+     amrex::MultiFab& getmag_exchange_mf () {return (*m_mag_exchange_mf);}
+     amrex::MultiFab& getmag_anisotropy_mf () {return (*m_mag_anisotropy_mf);}
 
      amrex::Real getmag_normalized_error () {return m_mag_normalized_error;}
      int getmag_max_iter () {return m_mag_max_iter;}
@@ -216,6 +229,10 @@ private:
      amrex::Real m_mag_alpha;
      /** gyromagnetic ratio, should be a negative value, only applies for magnetic materials */
      amrex::Real m_mag_gamma;
+     /** The coefficient of the exchange coupling term, only applies for magnetic materials */
+     amrex::Real m_mag_exchange;
+     /** The coefficient of the anisotropy coupling term, only applies for magnetic materials */
+     amrex::Real m_mag_anisotropy;
 
      // If the magnitude of the magnetization deviates by more than this amount relative
      // to the user-defined Ms, abort.  Default 0.1.
@@ -243,6 +260,10 @@ private:
      std::unique_ptr<amrex::MultiFab> m_mag_alpha_mf;
      /** Multifab storing spatially varying gyromagnetic ratio */
      std::unique_ptr<amrex::MultiFab> m_mag_gamma_mf;
+     /** Multifab storing spatially varying coefficient of the exchange coupling term */
+     std::unique_ptr<amrex::MultiFab> m_mag_exchange_mf;
+     /** Multifab storing spatially varying coefficient of the anisotropy coupling term */
+     std::unique_ptr<amrex::MultiFab> m_mag_anisotropy_mf;
 #endif
 
 
@@ -250,6 +271,8 @@ private:
      std::string m_mag_Ms_s;
      std::string m_mag_alpha_s;
      std::string m_mag_gamma_s;
+     std::string m_mag_exchange_s;
+     std::string m_mag_anisotropy_s;
 #endif
 
      /** string for storing parser function */
@@ -260,6 +283,8 @@ private:
      std::string m_str_mag_Ms_function;
      std::string m_str_mag_alpha_function;
      std::string m_str_mag_gamma_function;
+     std::string m_str_mag_exchange_function;
+     std::string m_str_mag_anisotropy_function;
 #endif
 
      /** Parser Wrappers */
@@ -272,6 +297,8 @@ private:
      std::unique_ptr<ParserWrapper<3> > m_mag_Ms_parser;
      std::unique_ptr<ParserWrapper<3> > m_mag_alpha_parser;
      std::unique_ptr<ParserWrapper<3> > m_mag_gamma_parser;
+     std::unique_ptr<ParserWrapper<3> > m_mag_exchange_parser;
+     std::unique_ptr<ParserWrapper<3> > m_mag_anisotropy_parser;
 #endif
 };
 
