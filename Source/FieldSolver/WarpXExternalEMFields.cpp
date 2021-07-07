@@ -3,6 +3,7 @@
 #include "Utils/WarpXUtil.H"
 #include "Parser/WarpXParserWrapper.H"
 #include "Parser/GpuParser.H"
+#include <AMReX_MultiFab.H>
 
 using namespace amrex;
 
