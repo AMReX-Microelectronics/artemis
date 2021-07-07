@@ -16,6 +16,7 @@
 #endif
 #include "BoundaryConditions/PMLComponent.H"
 #include <AMReX_Gpu.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX.H>
 
 using namespace amrex;

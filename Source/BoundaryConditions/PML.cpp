@@ -13,6 +13,7 @@
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
