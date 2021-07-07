@@ -6,6 +6,7 @@ blank
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
 #include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include "Utils/WarpXConst.H"
 #include "Utils/CoarsenIO.H"
