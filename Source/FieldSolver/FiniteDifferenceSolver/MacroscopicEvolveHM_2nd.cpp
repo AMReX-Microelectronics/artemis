@@ -142,7 +142,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
 
         // loop over cells and update fields
-        amrex::ParallelFor(tbx, tby, tbz,
+        amrex::ParallelFor(tbx,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 Real mag_Ms_arrx    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
@@ -218,7 +218,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 }
             });
 
-        amrex::ParallelFor(tbx, tby, tbz,
+        amrex::ParallelFor(tby,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
@@ -295,7 +295,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 }
             });
 
-        amrex::ParallelFor(tbx, tby, tbz, 
+        amrex::ParallelFor(tbz,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
@@ -441,7 +441,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
 
             // loop over cells and update fields
-            amrex::ParallelFor(tbx, tby, tbz,
+            amrex::ParallelFor(tbx,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     Real mag_Ms_arrx    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
@@ -549,8 +549,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             M_error_xface(i, j, k, icomp) = amrex::Math::abs((M_xface(i, j, k, icomp) - M_prev_xface(i, j, k, icomp))) / mag_Ms_arrx;
                         }
                     }
-                },
+                });
 
+            amrex::ParallelFor(tby,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
@@ -659,8 +660,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             M_error_yface(i, j, k, icomp) = amrex::Math::abs((M_yface(i, j, k, icomp) - M_prev_yface(i, j, k, icomp))) / mag_Ms_arry;
                         }
                     }
-                },
+                });
 
+            amrex::ParallelFor(tbz,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
