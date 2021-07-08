@@ -1,22 +1,40 @@
 #include "FullDiagnostics.H"
-#include "WarpX.H"
-#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
+
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
-#include "ComputeDiagFunctors/PartPerCellFunctor.H"
-#include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
+#include "ComputeDiagFunctors/PartPerCellFunctor.H"
+#include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
+#include "Diagnostics/Diagnostics.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormat.H"
-#include "FlushFormats/FlushFormatPlotfile.H"
-#include "FlushFormats/FlushFormatCheckpoint.H"
-#include "FlushFormats/FlushFormatAscent.H"
-#ifdef WARPX_USE_OPENPMD
-#    include "FlushFormats/FlushFormatOpenPMD.H"
-#endif
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "WarpX.H"
+
 #include <AMReX.H>
-#include <AMReX_Vector.H>
+#include <AMReX_Array.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_CoordSys.H>
+#include <AMReX_DistributionMapping.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MakeType.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <cmath>
+#include <memory>
+#include <vector>
+
 using namespace amrex::literals;
 
 FullDiagnostics::FullDiagnostics (int i, std::string name)
@@ -36,7 +54,7 @@ FullDiagnostics::InitializeParticleBuffer ()
 
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If not specified, dump all species
-    if (m_output_species_names.size() == 0) m_output_species_names = mpc.GetSpeciesNames();
+    if (m_output_species_names.empty()) m_output_species_names = mpc.GetSpeciesNames();
     // Initialize one ParticleDiag per species requested
     for (auto const& species : m_output_species_names){
         const int idx = mpc.getSpeciesID(species);

@@ -10,6 +10,7 @@
 #include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #endif
 #include "Utils/WarpXConst.H"
 #include "Utils/CoarsenIO.H"
