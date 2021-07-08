@@ -77,6 +77,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     amrex::GpuArray<int, 3> const& My_stag        = macroscopic_properties->My_IndexType;
     amrex::GpuArray<int, 3> const& Mz_stag        = macroscopic_properties->Mz_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr       = macroscopic_properties->macro_cr_ratio;
+    amrex::GpuArray<amrex::Real, 3> anisotropy_axis{0.0,0.0,0.0};
+    anisotropy_axis[1] = 1.0;
 
     // Initialize Hfield_old (H^(old_time)), Mfield_old (M^(old_time)), Mfield_prev (M^[(new_time),r-1]), Mfield_error
     for (int i = 0; i < 3; i++){
@@ -141,7 +143,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
 
         // loop over cells and update fields
-        amrex::ParallelFor(tbx, tby, tbz,
+        amrex::ParallelFor(tbx,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 Real mag_Ms_arrx    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
@@ -180,8 +182,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (mag_anisotropy_coupling == 1){
                         // H_anisotropy
                         if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                        amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                        anisotropy_axis[1] = 0.0; // y component
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
                             M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
@@ -228,8 +228,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // z component on x-faces of grid
                     b_temp_static_xface(i, j, k, 2) = M_xface(i, j, k, 2) + dt * b_temp_static_coeff * (M_xface(i, j, k, 0) * Hy_eff - M_xface(i, j, k, 1) * Hx_eff);
                 }
-            },
+            });
 
+        amrex::ParallelFor(tby,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
@@ -269,8 +270,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (mag_anisotropy_coupling == 1){
                         // H_anisotropy
                         if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                        amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                        anisotropy_axis[1] = 0.0; // y component
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
                             M_dot_anisotropy_axis += M_yface(i, j, k, comp) * anisotropy_axis[comp];
@@ -315,8 +314,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // z component on y-faces of grid
                     b_temp_static_yface(i, j, k, 2) = M_yface(i, j, k, 2) + dt * b_temp_static_coeff * (M_yface(i, j, k, 0) * Hy_eff - M_yface(i, j, k, 1) * Hx_eff);
                 }
-            },
+            });
 
+        amrex::ParallelFor(tbz,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
@@ -356,8 +356,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (mag_anisotropy_coupling == 1){
                         // H_anisotropy
                         if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                        amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                        anisotropy_axis[1] = 0.0; // y component
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
                             M_dot_anisotropy_axis += M_zface(i, j, k, comp) * anisotropy_axis[comp];
@@ -474,7 +472,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
 
             // loop over cells and update fields
-            amrex::ParallelFor(tbx, tby, tbz,
+            amrex::ParallelFor(tbx,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     Real mag_Ms_arrx    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
@@ -513,8 +511,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_anisotropy_coupling == 1){
                             // H_anisotropy
                             if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                            amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                            anisotropy_axis[1] = 0.0; // y component
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
                                 M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
@@ -594,8 +590,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             M_error_xface(i, j, k, icomp) = amrex::Math::abs((M_xface(i, j, k, icomp) - M_prev_xface(i, j, k, icomp))) / mag_Ms_arrx;
                         }
                     }
-                },
+                });
 
+            amrex::ParallelFor(tby,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
@@ -634,8 +631,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_anisotropy_coupling == 1){
                             // H_anisotropy
                             if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                            amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                            anisotropy_axis[1] = 0.0; // y component
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
                                 M_dot_anisotropy_axis += M_yface(i, j, k, comp) * anisotropy_axis[comp];
@@ -715,8 +710,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             M_error_yface(i, j, k, icomp) = amrex::Math::abs((M_yface(i, j, k, icomp) - M_prev_yface(i, j, k, icomp))) / mag_Ms_arry;
                         }
                     }
-                },
+                });
 
+            amrex::ParallelFor(tbz,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
@@ -755,8 +751,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_anisotropy_coupling == 1){
                             // H_anisotropy
                             if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
-                            amrex::Vector<int> anisotropy_axis = amrex::Vector<int>(3,0);
-                            anisotropy_axis[1] = 0.0; // y component
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
                                 M_dot_anisotropy_axis += M_zface(i, j, k, comp) * anisotropy_axis[comp];
