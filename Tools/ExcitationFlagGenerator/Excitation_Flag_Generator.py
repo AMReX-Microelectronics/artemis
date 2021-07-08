@@ -14,17 +14,17 @@ def listToString(finalstring):
     for ele in finalstring:
         str1 += ele
     return str1
-    
+
 ##### open text file and read data #####
 print()
 with open('exampledata_Excitation_Flag_Generator.txt') as myfile:
-    
+
 ##### formatting text file for extracting data #####
-    
+
     data = [(line.strip()).split() for line in myfile]
-    
+
 ##### derivative data #####
-    
+
     d_lists = data[0:3]
     d_str = [val for sublist in d_lists for val in sublist]
     d_float = [float(i) for i in d_str]
@@ -34,9 +34,9 @@ with open('exampledata_Excitation_Flag_Generator.txt') as myfile:
     dx1 = dx/2
     dy1 = dy/2
     dz1 = dz/2
-    
+
 ##### coordinate data #####
-    
+
     coordinate_data = data[3:]
     ExString = []
     EyString = []
@@ -75,7 +75,7 @@ with open('exampledata_Excitation_Flag_Generator.txt') as myfile:
     x = listToString(ExString)[:-3]
     y = listToString(EyString)[:-3]
     z = listToString(EzString)[:-3]
-    
+
 ##### Prints datastring for normal in x, y, z #####
     print()
     print("warpx.Ex_excitation_flag_function(x,y,z) = " + '"' + x + '"')
