@@ -1,4 +1,4 @@
-EXCITATION FLAG FUNCTION GENERATOR
+EXCITATION FLAG FUNCTION GENERATOR PYTHON SCRIPT
 
 This python script allows the user to create an excitation flag function for an ARTEMIS inputs file using coordinate data from a text file
 
