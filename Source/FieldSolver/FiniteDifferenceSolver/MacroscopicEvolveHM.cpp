@@ -130,9 +130,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Box const &tbz = mfi.tilebox(Hfield[2]->ixType().toIntVect());
 
         // Extract stencil coefficients for calculating the exchange field H_exchange and the anisotropy field H_anisotropy
-        Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        amrex::Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
+        amrex::Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
+        amrex::Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
 
         // loop over cells and update fields
         amrex::ParallelFor(tbx,
