@@ -2524,3 +2524,4 @@ WarpX::PicsarVersion ()
     return std::string("Unknown");
 #endif
 }
+
