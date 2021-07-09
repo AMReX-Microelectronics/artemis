@@ -138,11 +138,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         amrex::ParallelFor(tbx,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                Real mag_Ms_arrx    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
-                Real mag_alpha_arrx = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mx_stag, macro_cr, i, j, k, 0);
-                Real mag_gamma_arrx = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
-                Real mag_exchange_arrx    = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, Mx_stag, macro_cr, i, j, k, 0);
-                Real mag_anisotropy_arrx    = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, Mx_stag, macro_cr, i, j, k, 0);
+                Real mag_Ms_arrx         = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mx_stag, macro_cr, i, j, k, 0);
+                Real mag_alpha_arrx      = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mx_stag, macro_cr, i, j, k, 0);
+                Real mag_gamma_arrx      = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
+                Real mag_exchange_arrx   = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, Mx_stag, macro_cr, i, j, k, 0);
+                Real mag_anisotropy_arrx = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, Mx_stag, macro_cr, i, j, k, 0);
 
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrx > 0._rt)
@@ -251,11 +251,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         amrex::ParallelFor(tby,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                Real mag_Ms_arry    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
-                Real mag_alpha_arry = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, My_stag, macro_cr, i, j, k, 0);
-                Real mag_gamma_arry = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
-                Real mag_exchange_arry    = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, My_stag, macro_cr, i, j, k, 0);
-                Real mag_anisotropy_arry    = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, My_stag, macro_cr, i, j, k, 0);
+                Real mag_Ms_arry         = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, My_stag, macro_cr, i, j, k, 0);
+                Real mag_alpha_arry      = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, My_stag, macro_cr, i, j, k, 0);
+                Real mag_gamma_arry      = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
+                Real mag_exchange_arry   = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, My_stag, macro_cr, i, j, k, 0);
+                Real mag_anisotropy_arry = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, My_stag, macro_cr, i, j, k, 0);
 
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arry > 0._rt)
@@ -363,11 +363,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         amrex::ParallelFor(tbz,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                Real mag_Ms_arrz    = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
-                Real mag_alpha_arrz = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mz_stag, macro_cr, i, j, k, 0);
-                Real mag_gamma_arrz = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
-                Real mag_exchange_arrz    = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, Mz_stag, macro_cr, i, j, k, 0);
-                Real mag_anisotropy_arrz    = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, Mz_stag, macro_cr, i, j, k, 0);
+                Real mag_Ms_arrz         = CoarsenIO::Interp( mag_Ms_arr, mag_Ms_stag, Mz_stag, macro_cr, i, j, k, 0);
+                Real mag_alpha_arrz      = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mz_stag, macro_cr, i, j, k, 0);
+                Real mag_gamma_arrz      = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
+                Real mag_exchange_arrz   = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, Mz_stag, macro_cr, i, j, k, 0);
+                Real mag_anisotropy_arrz = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, Mz_stag, macro_cr, i, j, k, 0);
 
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrz > 0._rt)
