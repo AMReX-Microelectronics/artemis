@@ -64,11 +64,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     int M_normalization = warpx.mag_M_normalization;
     int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
     int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
-    // if (mag_exchange_coupling == 1 || mag_anisotropy_coupling == 1){
-    //     // H_exchange or H_anisotropy
-    //     amrex::Abort("No support for the exchange coupling term H_exchange or H_anisotropy in MacroscopicEvolveHM()");
-    // }
-    amrex::Print() << "mag_anisotropy_coupling 1 " << mag_anisotropy_coupling << std::endl;
 
     // temporary Multifab storing M from previous timestep (old_time) before updating to M(new_time)
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Mfield_old; // Mfield_old is M(old_time)
@@ -187,15 +182,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                         Hx_eff += - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[0];
                         Hy_eff += - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz_eff += - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[2];
-
-                        if(i==2 && j==4 && k==4){
-                        std::ofstream ofs1("./Heff_xface_left2.txt", std::ofstream::app);
-                        amrex::Print(ofs1).SetPrecision(16) << "ck1" << " " << - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[0]
-                                                                     << " " << - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[1]
-                                                                     << " " << - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx * M_dot_anisotropy_axis * anisotropy_axis[2] << std::endl; 
-                        amrex::Print(ofs1).SetPrecision(16) << "ck2" << " " << Hx_eff << " " << Hy_eff << " " << Hz_eff << std::endl;                                                                   
-                        ofs1.close();
-                        }
                     }
 
                     // magnetic material properties mag_alpha and mag_Ms are defined at faces
@@ -309,15 +295,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                         Hx_eff += - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[0];
                         Hy_eff += - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz_eff += - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[2];
-                        
-                        if(i==2 && j==4 && k==4){
-                        std::ofstream ofs1("./Heff_yface_left2.txt", std::ofstream::app);
-                        amrex::Print(ofs1).SetPrecision(16) << "ck1" << " " << - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[0]
-                                                                    << " " << - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[1]
-                                                                    << " " << - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry * M_dot_anisotropy_axis * anisotropy_axis[2] << std::endl; 
-                        amrex::Print(ofs1).SetPrecision(16) << "ck2" << " " << Hx_eff << " " << Hy_eff << " " << Hz_eff << std::endl;                                                                   
-                        ofs1.close();
-                        }
                     }
 
                     // magnetic material properties mag_alpha and mag_Ms are defined at faces
@@ -431,16 +408,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                         Hx_eff += - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[0];
                         Hy_eff += - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz_eff += - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[2];
-                        
-                        if(i==2 && j==4 && k==4){
-                        std::ofstream ofs1("./Heff_zface_left2.txt", std::ofstream::app);
-                        amrex::Print(ofs1).SetPrecision(16) << "ck1" << " " << - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[0]
-                                                                    << " " << - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[1]
-                                                                    << " " << - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz * M_dot_anisotropy_axis * anisotropy_axis[2] << std::endl; 
-                        amrex::Print(ofs1).SetPrecision(16) << "ck2" << " " << Hx_eff << " " << Hy_eff << " " << Hz_eff << std::endl;                                                                   
-                        ofs1.close();
-                        }
-
                     }
 
                     // magnetic material properties mag_alpha and mag_Ms are defined at faces
