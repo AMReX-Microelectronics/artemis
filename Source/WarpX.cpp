@@ -811,6 +811,9 @@ WarpX::ReadParameters ()
         pp_warpx.query("mag_LLG_exchange_coupling",mag_LLG_exchange_coupling);
         // turn on the anisotropy coupling term H_anisotropy for H_eff in the LLG equation
         pp_warpx.query("mag_LLG_anisotropy_coupling",mag_LLG_anisotropy_coupling);
+        // The anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff
+        mag_LLG_anisotropy_axis.resize(AMREX_SPACEDIM,0.0);
+        pp_warpx.queryarr("mag_LLG_anisotropy_axis", mag_LLG_anisotropy_axis);
 #endif
 
 #ifdef WARPX_DIM_RZ

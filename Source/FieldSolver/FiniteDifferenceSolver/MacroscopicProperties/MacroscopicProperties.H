@@ -243,7 +243,6 @@ private:
 
      // the relative tolerance for the second-order time advancement scheme of M field, default 0.0001
      amrex::Real m_mag_tol;
-
 #endif
 
      /** Multifab for m_sigma */

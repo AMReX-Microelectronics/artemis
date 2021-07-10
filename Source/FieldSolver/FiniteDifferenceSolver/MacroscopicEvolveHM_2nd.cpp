@@ -57,6 +57,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     int M_normalization = warpx.mag_M_normalization;
     int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
     int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
+    amrex::Vector<amrex::Real> mag_anisotropy_axis = warpx.mag_LLG_anisotropy_axis;
 
     // build temporary vector<multifab,3> Mfield_prev, Mfield_error, a_temp, a_temp_static, b_temp_static
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Hfield_old;    // H^(old_time) before the current time step
@@ -78,7 +79,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     amrex::GpuArray<int, 3> const& Mz_stag        = macroscopic_properties->Mz_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr       = macroscopic_properties->macro_cr_ratio;
     amrex::GpuArray<amrex::Real, 3> anisotropy_axis{0.0,0.0,0.0};
-    anisotropy_axis[1] = 1.0;
+    for (int i = 0; i < 3; i++){
+        anisotropy_axis[i] = mag_anisotropy_axis[i];
+    }
 
     // Initialize Hfield_old (H^(old_time)), Mfield_old (M^(old_time)), Mfield_prev (M^[(new_time),r-1]), Mfield_error
     for (int i = 0; i < 3; i++){

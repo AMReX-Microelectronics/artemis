@@ -253,6 +253,8 @@ public:
     int mag_LLG_exchange_coupling = 0;
     // turn off the anisotropy coupling term H_anisotropy in H_eff for the LLG updates
     int mag_LLG_anisotropy_coupling = 0;
+    // The anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff
+    amrex::Vector<amrex::Real> mag_LLG_anisotropy_axis;
 #endif
     // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     static bool do_current_centering;
