@@ -1433,7 +1433,7 @@ Numerics and algorithms
     Turn on the anisotropy coupling term H_anisotropy in H_eff for the LLG updates. `mag_LLG_anisotropy_coupling=1` enables, `mag_LLG_anisotropy_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 * ``warpx.mag_LLG_anisotropy_axis`` (default: ``0.0`` in all directions)
-    Turn on the anisotropy axis of the term H_anisotropy in H_eff for the LLG updates. This requires `USE_LLG=TRUE` in the GNUMakefile.
+    The anisotropy axis of the term H_anisotropy in H_eff for the LLG updates. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
     Whether to use a Galerkin scheme when gathering fields to particles.
