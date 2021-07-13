@@ -1,4 +1,4 @@
-# Set-up to test the PEC Boundary condition for the fields
+# Set-up to test the hysterisis curve for Magnetization using anisotropy.
 
 # max step
 max_step = 20000
