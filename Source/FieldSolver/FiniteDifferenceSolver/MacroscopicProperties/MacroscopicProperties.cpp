@@ -289,7 +289,6 @@ MacroscopicProperties::InitData ()
     else if (m_mag_anisotropy_s == "parse_mag_anisotropy_function"){
         InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf.get(), getParser(m_mag_anisotropy_parser), lev);
     }
-
 #endif
 
     IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
@@ -346,7 +345,6 @@ MacroscopicProperties::InitData ()
 #endif
         macro_cr_ratio[2]    = 1;
 #endif
-
 
 
 }

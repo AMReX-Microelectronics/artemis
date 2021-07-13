@@ -90,7 +90,6 @@ my_constants.flag_ss = 2
 
 warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0.0"
-# warpx.Ey_excitation_grid_function(x,y,z,t) = "(cos( 2.0*pi*2.8e6* sqrt( abs(Hy_bias_oe_sweep) * ( abs(Hy_bias_oe_sweep) + Ms_ga ) ) * t)) * (z > -domain_size/2.0 + thickness - domain_size/grid_number/2.0) * (z <= -domain_size/2.0 + thickness + domain_size/grid_number/2.0)"
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0.0"
 warpx.Ez_excitation_grid_function(x,y,z,t) = "0.0"
 warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"

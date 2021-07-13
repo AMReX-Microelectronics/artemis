@@ -1413,6 +1413,9 @@ Numerics and algorithms
 * ``macroscopic.mag_tol`` (`double`; default: `0.0001`)
     The relative tolerance stopping criteria for 2nd-order iterative algorithm of the 2nd-order trapezoidal scheme for the LLG equation. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
+* ``macroscopic.mag_LLG_anisotropy_axis`` (default: ``0.0`` in all directions)
+    The anisotropy axis of the term H_anisotropy in H_eff for the LLG updates. This requires `USE_LLG=TRUE` in the GNUMakefile.
+
 * ``warpx.mag_time_scheme_order`` (`1` or `2`; default: `1`)
     The value of the time advancement scheme of M field. `mag_time_scheme_order==1` is the 1st-order Eulerian scheme and `mag_time_scheme_order==2` is the 2nd-order trapezoidal scheme for the LLG equation. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
@@ -1431,9 +1434,6 @@ Numerics and algorithms
 
 * ``warpx.mag_LLG_anisotropy_coupling`` (`0` or `1`; default: `0`)
     Turn on the anisotropy coupling term H_anisotropy in H_eff for the LLG updates. `mag_LLG_anisotropy_coupling=1` enables, `mag_LLG_anisotropy_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
-
-* ``warpx.mag_LLG_anisotropy_axis`` (default: ``0.0`` in all directions)
-    The anisotropy axis of the term H_anisotropy in H_eff for the LLG updates. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
     Whether to use a Galerkin scheme when gathering fields to particles.
