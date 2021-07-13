@@ -28,7 +28,6 @@ warpx.verbose = 1
 warpx.use_filter = 0
 warpx.cfl = 40000.0
 # warpx.cfl = 0.9
-# warpx.do_pml = 1
 warpx.mag_time_scheme_order = 2 # default 1
 warpx.mag_M_normalization = 1
 warpx.mag_LLG_coupling = 0
