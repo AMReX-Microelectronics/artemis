@@ -45,7 +45,7 @@ my_constants.epsilon_r = 13.0
 my_constants.pi = 3.14159265359
 my_constants.mu0 = 1.25663706212e-6
 my_constants.epsilon0 = 8.84e-12
-my_constants.Ms_ga = 1750. 
+my_constants.Ms_ga = 1750.
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
@@ -71,12 +71,12 @@ macroscopic.mag_exchange_init_style = "parse_mag_exchange_function" # parse or "
 macroscopic.mag_exchange_function(x,y,z) = "0.0"
 
 macroscopic.mag_anisotropy_init_style = "parse_mag_anisotropy_function" # parse or "constant"
-macroscopic.mag_anisotropy_function(x,y,z) = "0.0 * (z > -domain_size/2.0 + thickness) - 139.26 * (z <= -domain_size/2.0 + thickness)" # Ku = mu0 * Ms * H_anis / 2.0, all fields in SI units, H_anis = 20 Oe   
+macroscopic.mag_anisotropy_function(x,y,z) = "0.0 * (z > -domain_size/2.0 + thickness) - 139.26 * (z <= -domain_size/2.0 + thickness)" # Ku = mu0 * Ms * H_anis / 2.0, all fields in SI units, H_anis = 20 Oe
 
 macroscopic.mag_max_iter = 100 # maximum number of M iteration in each time step
 macroscopic.mag_tol = 1.e-6 # M magnitude relative error tolerance compared to previous iteration
 macroscopic.mag_normalized_error = 0.1 # if M magnitude relatively changes more than this value, raise a red flag
-macroscopic.mag_LLG_anisotropy_axis = 0.0 1.0 0.0 
+macroscopic.mag_LLG_anisotropy_axis = 0.0 1.0 0.0
 
 #################################
 ############ FIELDS #############
@@ -112,7 +112,7 @@ warpx.Mz_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness
 
 
 # Diagnostics
-diagnostics.diags_names = plt 
+diagnostics.diags_names = plt
 plt.intervals = 2000
 plt.diag_type = Full
 plt.fields_to_plot = Ex Ey Ez Bx By Bz Mx_xface Mx_yface Mx_zface My_xface My_yface My_zface Mz_xface Mz_yface Mz_zface Hx Hy Hz
