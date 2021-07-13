@@ -69,6 +69,8 @@ public:
      amrex::GpuArray<int, 3> mag_exchange_IndexType;
      /** Gpu Vector with index type of the coefficient of the anisotropy coupling term multifab */
      amrex::GpuArray<int, 3> mag_anisotropy_IndexType;
+     /** Gpu Vector of the anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff */
+     amrex::GpuArray<amrex::Real, 3> mag_LLG_anisotropy_axis;    
 #endif
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;

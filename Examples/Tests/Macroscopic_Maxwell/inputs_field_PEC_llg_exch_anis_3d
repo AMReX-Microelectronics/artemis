@@ -26,14 +26,12 @@ warpx.serialize_ics = 1
 # Verbosity
 warpx.verbose = 1
 warpx.use_filter = 0
-warpx.cfl = 40000.0
-# warpx.cfl = 0.9
+warpx.cfl = 40000.0 # We can use a large cfl number here because the Maxwell equations are not included.
 warpx.mag_time_scheme_order = 2 # default 1
 warpx.mag_M_normalization = 1
 warpx.mag_LLG_coupling = 0
 warpx.mag_LLG_exchange_coupling = 0
 warpx.mag_LLG_anisotropy_coupling = 1
-warpx.mag_LLG_anisotropy_axis = 0.0 1.0 0.0 
 particles.nspecies = 0
 
 # Algorithms
@@ -78,6 +76,7 @@ macroscopic.mag_anisotropy_function(x,y,z) = "0.0 * (z > -domain_size/2.0 + thic
 macroscopic.mag_max_iter = 100 # maximum number of M iteration in each time step
 macroscopic.mag_tol = 1.e-6 # M magnitude relative error tolerance compared to previous iteration
 macroscopic.mag_normalized_error = 0.1 # if M magnitude relatively changes more than this value, raise a red flag
+macroscopic.mag_LLG_anisotropy_axis = 0.0 1.0 0.0 
 
 #################################
 ############ FIELDS #############
