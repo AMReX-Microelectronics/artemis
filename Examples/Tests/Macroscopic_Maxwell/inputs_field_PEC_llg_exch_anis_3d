@@ -112,9 +112,6 @@ warpx.Mx_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness
 warpx.My_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) - 0.98 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
 warpx.Mz_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + 0.14 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
 
-# warpx.Mx_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + 0.14 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
-# warpx.My_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + 0.99 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
-# warpx.Mz_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + 0.0 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
 
 # Diagnostics
 diagnostics.diags_names = plt 
