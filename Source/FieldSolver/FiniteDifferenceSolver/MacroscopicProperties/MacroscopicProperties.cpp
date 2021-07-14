@@ -163,6 +163,15 @@ MacroscopicProperties::ReadParameters ()
     m_mag_tol = 0.0001;
     pp_macroscopic.query("mag_tol",m_mag_tol);
 
+    if (warpx.mag_LLG_anisotropy_coupling == 1) {
+        amrex::Vector<amrex::Real> mag_LLG_anisotropy_axis_parser(3,0.0);
+        // The anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff
+        pp_macroscopic.getarr("mag_LLG_anisotropy_axis", mag_LLG_anisotropy_axis_parser);
+        for (int i = 0; i < 3; i++) {
+            mag_LLG_anisotropy_axis[i] = mag_LLG_anisotropy_axis_parser[i];
+        }
+    }
+
 #endif
 }
 
