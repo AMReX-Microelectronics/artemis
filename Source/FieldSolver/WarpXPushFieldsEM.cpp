@@ -642,9 +642,10 @@ void
 WarpX::MacroscopicEvolveE (int lev, amrex::Real a_dt) {
 
     WARPX_PROFILE("WarpX::MacroscopicEvolveE()");
+
     MacroscopicEvolveE(lev, PatchType::fine, a_dt);
     if (lev > 0) {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev>0, yet.");
+        MacroscopicEvolveE(lev, PatchType::coarse, a_dt);
     }
 }
 
@@ -659,11 +660,18 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 #else
                                                    Hfield_fp[lev],
 #endif
-                                                   current_fp[lev], a_dt,
+                                                   current_fp[lev], lev, a_dt,
                                                    m_macroscopic_properties);
     }
     else {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
+        m_fdtd_solver_cp[lev]->MacroscopicEvolveE( Efield_cp[lev],
+#ifndef WARPX_MAG_LLG
+                                                   Bfield_cp[lev],
+#else
+                                                   Hfield_cp[lev],
+#endif
+                                                   current_cp[lev], lev, a_dt,
+                                                   m_macroscopic_properties);
     }
 
     // Evolve E field in PML cells
@@ -730,7 +738,7 @@ WarpX::MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real a_dt) {
     // Evolve H field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->MacroscopicEvolveHM( Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev], H_biasfield_fp[lev], Efield_fp[lev],
-                                             a_dt, m_macroscopic_properties);
+                                                    lev, a_dt, m_macroscopic_properties);
     }
     else {
         amrex::Abort("Macroscopic EvolveHM is not implemented for lev > 0 yet");
@@ -773,7 +781,7 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
     // Evolve H field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->MacroscopicEvolveHM_2nd( Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev], H_biasfield_fp[lev],  Efield_fp[lev],
-                                             a_dt, m_macroscopic_properties);
+                                                        lev, a_dt, m_macroscopic_properties);
     }
     else {
         amrex::Abort("Macroscopic EvolveHM_2nd is not implemented for lev > 0 yet");

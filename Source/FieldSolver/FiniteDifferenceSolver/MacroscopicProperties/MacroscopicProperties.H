@@ -24,16 +24,22 @@ MacroscopicProperties
 {
 public:
      MacroscopicProperties (); // constructor
+     ~MacroscopicProperties (); // destructor
      /** Read user-defined macroscopic properties. Called in constructor. */
      void ReadParameters ();
      /** Initialize multifabs storing macroscopic multifabs */
      void InitData ();
-     /** return MultiFab, sigma (conductivity) of the medium. */
-     amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
-     /** return MultiFab, epsilon (permittivity) of the medium. */
-     amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
-     /** return MultiFab, mu (permeability) of the medium. */
-     amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
+
+     amrex::MultiFab * get_pointer_m_sigma_mf_fp  (int lev) const { return m_sigma_mf_fp[lev].get(); }
+     amrex::MultiFab * get_pointer_m_eps_mf_fp  (int lev) const { return m_eps_mf_fp[lev].get(); }
+     amrex::MultiFab * get_pointer_m_mu_mf_fp  (int lev) const { return m_mu_mf_fp[lev].get(); }
+
+     amrex::MultiFab& get_m_sigma_mf_fp  (int lev) {return *m_sigma_mf_fp[lev];}
+     amrex::MultiFab& get_m_eps_mf_fp  (int lev) {return *m_eps_mf_fp[lev];}
+     amrex::MultiFab& get_m_mu_mf_fp  (int lev) {return *m_mu_mf_fp[lev];}
+
+     //! Delete level data. Question to Reva and Andy, do I need to make the AmrCore::regrid call this function? I guess no need.
+     void ClearLevel (int lev);
 
      /** Initializes the Multifabs storing macroscopic properties
       *  with user-defined functions(x,y,z).
@@ -249,11 +255,11 @@ private:
 #endif
 
      /** Multifab for m_sigma */
-     std::unique_ptr<amrex::MultiFab> m_sigma_mf;
+     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_sigma_mf_fp;
      /** Multifab for m_epsilon */
-     std::unique_ptr<amrex::MultiFab> m_eps_mf;
+     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_eps_mf_fp;
      /** Multifab for m_mu */
-     std::unique_ptr<amrex::MultiFab> m_mu_mf;
+     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_mu_mf_fp;
 
 #ifdef WARPX_MAG_LLG
      /** Multifab storing spatially varying saturation magnetization */

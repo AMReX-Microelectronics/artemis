@@ -40,7 +40,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
 #endif
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
+    int lev, amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
@@ -62,7 +62,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 #else
                          Hfield,
 #endif
-                         Jfield, dt, macroscopic_properties );
+                         Jfield, lev, dt, macroscopic_properties );
         }
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
@@ -73,7 +73,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 #else
                          Hfield,
 #endif
-                         Jfield, dt, macroscopic_properties );
+                         Jfield, lev, dt, macroscopic_properties );
 
         }
 
@@ -90,7 +90,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 #else
                          Hfield,
 #endif
-                         Jfield, dt, macroscopic_properties );
+                         Jfield, lev, dt, macroscopic_properties );
 
         } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
@@ -101,7 +101,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 #else
                          Hfield,
 #endif
-                         Jfield, dt, macroscopic_properties );
+                         Jfield, lev, dt, macroscopic_properties );
         }
 
     } else {
@@ -123,11 +123,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
 #endif
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
+    int lev, amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
 
-    auto& sigma_mf = macroscopic_properties->getsigma_mf();
-    auto& epsilon_mf = macroscopic_properties->getepsilon_mf();
-    auto& mu_mf = macroscopic_properties->getmu_mf();
+    auto& sigma_mf = macroscopic_properties->get_m_sigma_mf_fp(lev);
+    auto& epsilon_mf = macroscopic_properties->get_m_eps_mf_fp(lev);
+    auto& mu_mf = macroscopic_properties->get_m_mu_mf_fp(lev);
 
     // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
     // properties from their respective staggering to the Ex, Ey, Ez locations
@@ -137,7 +137,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
     amrex::GpuArray<int, 3> const& Ez_stag = macroscopic_properties->Ez_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr     = macroscopic_properties->macro_cr_ratio;
-
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
