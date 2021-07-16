@@ -3,6 +3,7 @@
 #include "Utils/WarpXUtil.H"
 #include "Parser/WarpXParserWrapper.H"
 #include "Parser/GpuParser.H"
+#include <AMReX_MultiFab.H>
 
 using namespace amrex;
 
@@ -134,7 +135,6 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 amrex::Real x, y, z;
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfz_stag,
                                                   problo, dx, x, y, z);
-                auto tmp_field_value = zfield_parser(x,y,z,t);
                 auto flag_type = zflag_parser(x,y,z);
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
                     amrex::Abort("flag type for excitation must be 0, or 1, or 2!");

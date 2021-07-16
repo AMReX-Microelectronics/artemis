@@ -1,0 +1,71 @@
+# This is a E+B (use USE_LLG=FALSE, ie., no M field) simulation of a
+# plane wave in a periodic domain
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 1
+amr.n_cell = 128 128 128
+amr.max_grid_size = 32
+amr.blocking_factor = 16
+geometry.coord_sys   = 0
+geometry.is_periodic = 1  1  1
+geometry.prob_lo     =  -16.e-6 -16.e-6 -16.e-6
+geometry.prob_hi     =   16.e-6  16.e-6  16.e-6
+amr.max_level = 0
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 0
+warpx.use_filter = 0
+warpx.cfl = 0.9
+warpx.do_pml = 1
+
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
+macroscopic.sigma_function(x,y,z) = "0.0"
+macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
+macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12"
+macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06"
+
+particles.nspecies = 0
+
+#################################
+############ FIELDS #############
+#################################
+
+my_constants.pi = 3.14159265359
+my_constants.L = 141.4213562373095e-6
+my_constants.c = 299792458.
+my_constants.wavelength = 64.e-6
+
+warpx.E_ext_grid_init_style = parse_E_ext_grid_function
+warpx.Ez_external_grid_function(x,y,z) = "1.0"
+warpx.Ex_external_grid_function(x,y,z) = "1.0"
+warpx.Ey_external_grid_function(x,y,z) = "1.0"
+
+warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.Bx_external_grid_function(x,y,z)= "1.0"
+warpx.By_external_grid_function(x,y,z)= "1.0"
+warpx.Bz_external_grid_function(x,y,z) = "1.0"
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "(x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= -0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= 0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
+
+warpx.Ey_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= -0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= 0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
+
+warpx.Ez_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+# Diagnostics
+diagnostics.diags_names = plt
+plt.intervals = 1
+plt.fields_to_plot = Ex Ey Ez Bx By Bz
+plt.diag_type = Full

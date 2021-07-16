@@ -10,31 +10,66 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "FieldSolver/WarpX_FDTD.H"
+
+#include "BoundaryConditions/PML.H"
+#include "Diagnostics/BackTransformedDiagnostic.H"
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #ifdef WARPX_USE_PSATD
-#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-#endif
+#   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#   ifdef WARPX_DIM_RZ
+#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#   else
+#       include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#   endif // RZ ifdef
+#endif // use PSATD ifdef
+#include "FieldSolver/WarpX_FDTD.H"
+#include "Filter/NCIGodfreyFilter.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Python/WarpXWrappers.h"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
 
-#include <AMReX_ParmParse.H>
-#include <AMReX_MultiFabUtil.H>
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
-
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_Dim3.H>
+#ifdef AMREX_USE_EB
+#   include <AMReX_EBFabFactory.H>
+#   include <AMReX_EBSupport.H>
 #endif
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_FabFactory.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IArrayBox.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MakeType.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Print.H>
+#include <AMReX_Random.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_iMultiFab.H>
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <limits>
-#include <numeric>
+#include <random>
 #include <string>
 #include <utility>
 
@@ -144,8 +179,8 @@ int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
-amrex::Vector<int> WarpX::particle_boundary_lo(AMREX_SPACEDIM,0);
-amrex::Vector<int> WarpX::particle_boundary_hi(AMREX_SPACEDIM,0);
+amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
+amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 
 bool WarpX::do_current_centering = false;
 
@@ -170,8 +205,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
-bool WarpX::use_filter        = false;
-bool WarpX::use_kspace_filter       = false;
+bool WarpX::use_filter = true;
+bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
 
 bool WarpX::serialize_ics     = false;
@@ -198,8 +233,12 @@ bool WarpX::do_dynamic_scheduling = true;
 int WarpX::do_electrostatic;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
 int WarpX::self_fields_max_iters = 200;
+int WarpX::self_fields_verbosity = 2;
 
 int WarpX::do_subcycling = 0;
+int WarpX::do_multi_J = 0;
+int WarpX::do_multi_J_n_depositions;
+int WarpX::J_linear_in_time = 0;
 bool WarpX::safe_guard_cells = 0;
 
 IntVect WarpX::filter_npass_each_dir(1);
@@ -498,6 +537,11 @@ WarpX::ReadParameters ()
         pp_warpx.query("verbose", verbose);
         pp_warpx.query("regrid_int", regrid_int);
         pp_warpx.query("do_subcycling", do_subcycling);
+        pp_warpx.query("do_multi_J", do_multi_J);
+        if (do_multi_J)
+        {
+            pp_warpx.get("do_multi_J_n_depositions", do_multi_J_n_depositions);
+        }
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
         std::vector<std::string> override_sync_intervals_string_vec = {"1"};
@@ -591,12 +635,19 @@ WarpX::ReadParameters ()
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
             queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
             pp_warpx.query("self_fields_max_iters", self_fields_max_iters);
+            pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
             // Note that with the relativistic version, these parameters would be
             // input for each species.
         }
 
         pp_warpx.query("n_buffer", n_buffer);
-        pp_warpx.query("const_dt", const_dt);
+        queryWithParser(pp_warpx, "const_dt", const_dt);
+
+        // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
+        // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
+#ifdef WARPX_DIM_RZ
+        if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) WarpX::use_filter = false;
+#endif
 
         // Read filter and fill IntVect filter_npass_each_dir with
         // proper size for AMREX_SPACEDIM
@@ -610,11 +661,25 @@ WarpX::ReadParameters ()
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
 
+        // TODO When k-space filtering will be implemented also for Cartesian geometries,
+        // this code block will have to be applied in all cases (remove #ifdef condition)
 #ifdef WARPX_DIM_RZ
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             // With RZ spectral, only use k-space filtering
             use_kspace_filter = use_filter;
             use_filter = false;
+        }
+        else // FDTD
+        {
+            // Filter currently not working with FDTD solver in RZ geometry
+            // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
+            if (use_filter)
+            {
+                amrex::Print() << "\nWARNING:"
+                               << "\nFilter currently not working with FDTD solver in RZ geometry:"
+                               << "\nwe recommend setting warpx.use_filter = 0 in the input file.\n"
+                               << std::endl;
+            }
         }
 #endif
 
@@ -668,12 +733,18 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
 
+        if (do_multi_J && do_pml)
+        {
+            amrex::Abort("Multi-J algorithm not implemented with PMLs");
+        }
+
         // div(E) cleaning not implemented for PSATD solver
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                do_dive_cleaning == 0,
-                "warpx.do_dive_cleaning = 1 not implemented for PSATD solver");
+            if (do_multi_J == 0 && do_dive_cleaning == 1)
+            {
+                amrex::Abort("warpx.do_dive_cleaning = 1 not implemented for PSATD solver");
+            }
         }
 
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
@@ -903,7 +974,7 @@ WarpX::ReadParameters ()
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
 
-        if (species_names.size() > 0 || lasers_names.size() > 0) {
+        if (!species_names.empty() || !lasers_names.empty()) {
             int particle_shape;
             if (pp_algo.query("particle_shape", particle_shape) == false)
             {
@@ -1027,6 +1098,7 @@ WarpX::ReadParameters ()
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("v_comoving", m_v_comoving);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
+        pp_psatd.query("J_linear_in_time", J_linear_in_time);
 
         if (!fft_periodic_single_box && current_correction)
             amrex::Abort(
@@ -1088,6 +1160,24 @@ WarpX::ReadParameters ()
         if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
                 "psatd.update_with_rho must be equal to 1 for comoving PSATD");
+        }
+
+        if (do_multi_J)
+        {
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
+            {
+                amrex::Abort("Multi-J algorithm not implemented with Galilean PSATD");
+            }
+        }
+
+        if (J_linear_in_time)
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
+                "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_dive_cleaning,
+                "warpx.do_dive_cleaning must be set to 1 when psatd.J_linear_in_time = 1");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_divb_cleaning,
+                "warpx.do_divb_cleaning must be set to 1 when psatd.J_linear_in_time = 1");
         }
 
         constexpr int zdir = AMREX_SPACEDIM - 1;
@@ -2005,6 +2095,9 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
     RealVect dx_vect(dx[0], dx[2]);
 #endif
 
+    amrex::Real solver_dt = dt[lev];
+    if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
+
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,
                                                 dm,
@@ -2015,11 +2108,12 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 m_v_galilean,
                                                 m_v_comoving,
                                                 dx_vect,
-                                                dt[lev],
+                                                solver_dt,
                                                 pml_flag,
                                                 fft_periodic_single_box,
                                                 update_with_rho,
-                                                fft_do_time_averaging);
+                                                fft_do_time_averaging,
+                                                J_linear_in_time);
     spectral_solver[lev] = std::move(pss);
 }
 #   endif

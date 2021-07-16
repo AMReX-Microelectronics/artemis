@@ -1,12 +1,19 @@
 #ifndef WARPX_MACROSCOPICPROPERTIES_H_
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
+#include "MacroscopicProperties_fwd.H"
 
 #include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpXConst.H"
+
+#include <AMReX_Array.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
 
-
+#include <memory>
+#include <string>
 
 /**
  * \brief This class contains the macroscopic properties of the medium needed to
@@ -62,6 +69,8 @@ public:
      amrex::GpuArray<int, 3> mag_exchange_IndexType;
      /** Gpu Vector with index type of the coefficient of the anisotropy coupling term multifab */
      amrex::GpuArray<int, 3> mag_anisotropy_IndexType;
+     /** Gpu Vector of the anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff */
+     amrex::GpuArray<amrex::Real, 3> mag_LLG_anisotropy_axis;
 #endif
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;
