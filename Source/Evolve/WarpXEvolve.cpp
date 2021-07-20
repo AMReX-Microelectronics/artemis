@@ -433,8 +433,6 @@ WarpX::OneStep_nosub (Real cur_time)
             EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
             if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
             FillBoundaryB(guard_cells.ng_FieldSolver);
-            // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // apply B external excitation; soft source to be fixed
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -448,8 +446,6 @@ WarpX::OneStep_nosub (Real cur_time)
                 }
                 FillBoundaryH(guard_cells.ng_FieldSolver);
                 FillBoundaryM(guard_cells.ng_FieldSolver);
-                // ApplyExternalFieldExcitation
-                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation; soft source to be fixed
             } else {
                 amrex::Abort("unsupported em_solver_medium for M field");
             }
@@ -465,9 +461,7 @@ WarpX::OneStep_nosub (Real cur_time)
         }
 
             FillBoundaryE(guard_cells.ng_FieldSolver);
-            // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternal); // apply E external excitation; soft source to be fixed
-
+            
             EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
 #ifndef WARPX_MAG_LLG
         EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
@@ -493,8 +487,6 @@ WarpX::OneStep_nosub (Real cur_time)
             // outdated.
             if (safe_guard_cells) {
                 FillBoundaryB(guard_cells.ng_alloc_EB);
-                // ApplyExternalFieldExcitation
-                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // redundant for hs; need to fix the way to increment ss
             }
 #ifdef WARPX_MAG_LLG
             if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
@@ -514,8 +506,6 @@ WarpX::OneStep_nosub (Real cur_time)
             if ( safe_guard_cells ){
                 FillBoundaryH(guard_cells.ng_alloc_EB);
                 FillBoundaryM(guard_cells.ng_alloc_EB);
-               // ApplyExternalFieldExcitation
-               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
             }
 #endif //
     } // !PSATD

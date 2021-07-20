@@ -449,6 +449,9 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
                                         m_face_areas[lev], lev, a_dt);
     }
 
+    // Apply external field excitation prior to applying boundary conditions such that excitation does not overwrite B.C. 
+    ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // apply B external excitation
+
     // Evolve B field in PML cells
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
@@ -503,6 +506,9 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                                        current_cp[lev], m_edge_lengths[lev],
                                        F_cp[lev], lev, a_dt );
     }
+
+    // Apply external field excitation prior to applying boundary conditions such that excitation does not overwrite B.C. 
+    ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternal); // apply E external excitation
 
     // Evolve E field in PML cells
     if (do_pml && pml[lev]->ok()) {
@@ -666,6 +672,9 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
     }
 
+    // Apply external field excitation prior to the boundary condition such that excitation does not overwrite B.C. 
+    ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternal); // apply E external excitation
+
     // Evolve E field in PML cells
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
@@ -736,6 +745,9 @@ WarpX::MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real a_dt) {
         amrex::Abort("Macroscopic EvolveHM is not implemented for lev > 0 yet");
     }
 
+    // Apply external field excitation prior to applying boundary conditions such that excitation does not overwrite B.C. 
+    ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation
+
     // Evolve H field in PML cells
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
@@ -779,6 +791,9 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
         amrex::Abort("Macroscopic EvolveHM_2nd is not implemented for lev > 0 yet");
     }
 
+    // Apply external field excitation prior to applying boundary conditions such that excitation does not overwrite B.C. 
+    ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation
+    
     // Evolve H field in PML cells
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
