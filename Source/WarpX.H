@@ -188,45 +188,45 @@ public:
     std::unique_ptr<amrex::Parser> Ezfield_parser;
 
 
-    // ParserWrapper for B_external excitation on the grid
-    std::unique_ptr<ParserWrapper<4> > Bxfield_xt_grid_parser;
-    std::unique_ptr<ParserWrapper<4> > Byfield_xt_grid_parser;
-    std::unique_ptr<ParserWrapper<4> > Bzfield_xt_grid_parser;
-    // ParserWrapper for E_external excitation on the grid
-    std::unique_ptr<ParserWrapper<4> > Exfield_xt_grid_parser;
-    std::unique_ptr<ParserWrapper<4> > Eyfield_xt_grid_parser;
-    std::unique_ptr<ParserWrapper<4> > Ezfield_xt_grid_parser;
+    // Parser for B_external excitation on the grid
+    std::unique_ptr<amrex::Parser> Bxfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Byfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Bzfield_xt_grid_parser;
+    // Parser for E_external excitation on the grid
+    std::unique_ptr<amrex::Parser> Exfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Eyfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Ezfield_xt_grid_parser;
 #ifdef WARPX_MAG_LLG
-    // ParserWrapper for H_external excitation on the grid
-    std::unique_ptr<ParserWrapper<4> > Hxfield_xt_grid_parser;
-    std::unique_ptr<ParserWrapper<4> > Hyfield_xt_grid_parser;
-    std::unique_ptr<ParserWrapper<4> > Hzfield_xt_grid_parser;
+    // Parser for H_external excitation on the grid
+    std::unique_ptr<amrex::Parser> Hxfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Hyfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Hzfield_xt_grid_parser;
 #endif
-    std::unique_ptr<ParserWrapper<3> > Exfield_flag_parser;
-    std::unique_ptr<ParserWrapper<3> > Eyfield_flag_parser;
-    std::unique_ptr<ParserWrapper<3> > Ezfield_flag_parser;
-    std::unique_ptr<ParserWrapper<3> > Bxfield_flag_parser;
-    std::unique_ptr<ParserWrapper<3> > Byfield_flag_parser;
-    std::unique_ptr<ParserWrapper<3> > Bzfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Exfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Eyfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Ezfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Bxfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Byfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Bzfield_flag_parser;
 #ifdef WARPX_MAG_LLG
-    std::unique_ptr<ParserWrapper<3> > Hxfield_flag_parser;
-    std::unique_ptr<ParserWrapper<3> > Hyfield_flag_parser;
-    std::unique_ptr<ParserWrapper<3> > Hzfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hxfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hyfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hzfield_flag_parser;
 #endif
 
 #ifdef WARPX_MAG_LLG
-    // ParserWrapper for H_external on the grid
-    std::unique_ptr<ParserWrapper<3> > Hxfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Hyfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Hzfield_parser;
-    // ParserWrapper for M_external on the grid
-    std::unique_ptr<ParserWrapper<3> > Mxfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Myfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Mzfield_parser;
-    // ParserWrapper for H_bias_external on the grid
-    std::unique_ptr<ParserWrapper<3> > Hx_biasfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Hy_biasfield_parser;
-    std::unique_ptr<ParserWrapper<3> > Hz_biasfield_parser;
+    // Parser for H_external on the grid
+    std::unique_ptr<amrex::Parser> Hxfield_parser;
+    std::unique_ptr<amrex::Parser> Hyfield_parser;
+    std::unique_ptr<amrex::Parser> Hzfield_parser;
+    // Parser for M_external on the grid
+    std::unique_ptr<amrex::Parser> Mxfield_parser;
+    std::unique_ptr<amrex::Parser> Myfield_parser;
+    std::unique_ptr<amrex::Parser> Mzfield_parser;
+    // Parser for H_bias_external on the grid
+    std::unique_ptr<amrex::Parser> Hx_biasfield_parser;
+    std::unique_ptr<amrex::Parser> Hy_biasfield_parser;
+    std::unique_ptr<amrex::Parser> Hz_biasfield_parser;
 #endif
 
     // Algorithms
@@ -894,12 +894,12 @@ public:
     void ApplyExternalFieldExcitationOnGrid (int const externalfieldtype);
     void ApplyExternalFieldExcitationOnGrid ( amrex::MultiFab *mfx,
          amrex::MultiFab *mfy, amrex::MultiFab *mfz,
-         HostDeviceParser<4> const& xfield_parser,
-         HostDeviceParser<4> const& yfield_parser,
-         HostDeviceParser<4> const& zfield_parser,
-         HostDeviceParser<3> const& xflag_parser,
-         HostDeviceParser<3> const& yflag_parser,
-         HostDeviceParser<3> const& zflag_parser, const int lev );
+         amrex::ParserExecutor<4> const& xfield_parser,
+         amrex::ParserExecutor<4> const& yfield_parser,
+         amrex::ParserExecutor<4> const& zfield_parser,
+         amrex::ParserExecutor<3> const& xflag_parser,
+         amrex::ParserExecutor<3> const& yflag_parser,
+         amrex::ParserExecutor<3> const& zflag_parser, const int lev );
 
 #ifdef WARPX_MAG_LLG
     void AverageParsedMtoFaces(amrex::MultiFab& Mx_cc,

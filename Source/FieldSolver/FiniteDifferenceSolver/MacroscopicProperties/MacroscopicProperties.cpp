@@ -106,8 +106,8 @@ MacroscopicProperties::ReadParameters ()
     //initialization with parser
     if (m_mag_Ms_s == "parse_mag_Ms_function") {
         Store_parserString(pp_macroscopic, "mag_Ms_function(x,y,z)", m_str_mag_Ms_function);
-        m_mag_Ms_parser.reset(new ParserWrapper<3>(
-                                  makeParser(m_str_mag_Ms_function,{"x","y","z"})));
+        m_mag_Ms_parser = std::make_unique<amrex::Parser>(
+                                  makeParser(m_str_mag_Ms_function,{"x","y","z"}));
     }
 
     pp_macroscopic.get("mag_alpha_init_style", m_mag_alpha_s);
@@ -116,8 +116,8 @@ MacroscopicProperties::ReadParameters ()
     //initialization with parser
     if (m_mag_alpha_s == "parse_mag_alpha_function") {
         Store_parserString(pp_macroscopic, "mag_alpha_function(x,y,z)", m_str_mag_alpha_function);
-        m_mag_alpha_parser.reset(new ParserWrapper<3>(
-                                  makeParser(m_str_mag_alpha_function,{"x","y","z"})));
+        m_mag_alpha_parser = std::make_unique<amrex::Parser>(
+                                  makeParser(m_str_mag_alpha_function,{"x","y","z"}));
     }
 
     pp_macroscopic.get("mag_gamma_init_style", m_mag_gamma_s);
@@ -126,8 +126,8 @@ MacroscopicProperties::ReadParameters ()
     //initialization with parser
     if (m_mag_gamma_s == "parse_mag_gamma_function") {
         Store_parserString(pp_macroscopic, "mag_gamma_function(x,y,z)", m_str_mag_gamma_function);
-        m_mag_gamma_parser.reset(new ParserWrapper<3>(
-                                  makeParser(m_str_mag_gamma_function,{"x","y","z"})));
+        m_mag_gamma_parser = std::make_unique<amrex::Parser>(
+                                  makeParser(m_str_mag_gamma_function,{"x","y","z"}));
     }
 
     if (warpx.mag_LLG_exchange_coupling == 1) { // spin exchange coupling turned off by default
@@ -137,8 +137,8 @@ MacroscopicProperties::ReadParameters ()
         //initialization with parser
         if (m_mag_exchange_s == "parse_mag_exchange_function") {
             Store_parserString(pp_macroscopic, "mag_exchange_function(x,y,z)", m_str_mag_exchange_function);
-            m_mag_exchange_parser.reset(new ParserWrapper<3>(
-                                      makeParser(m_str_mag_exchange_function,{"x","y","z"})));
+            m_mag_exchange_parser = std::make_unique<amrex::Parser>(
+                                      makeParser(m_str_mag_exchange_function,{"x","y","z"}));
         }
     }
 
@@ -149,8 +149,8 @@ MacroscopicProperties::ReadParameters ()
         //initialization with parser
         if (m_mag_anisotropy_s == "parse_mag_anisotropy_function") {
             Store_parserString(pp_macroscopic, "mag_anisotropy_function(x,y,z)", m_str_mag_anisotropy_function);
-            m_mag_anisotropy_parser.reset(new ParserWrapper<3>(
-                                      makeParser(m_str_mag_anisotropy_function,{"x","y","z"})));
+            m_mag_anisotropy_parser = std::make_unique<amrex::Parser>(
+                                      makeParser(m_str_mag_anisotropy_function,{"x","y","z"}));
         }
     }
 
@@ -239,7 +239,7 @@ MacroscopicProperties::InitData ()
         m_mag_Ms_mf->setVal(m_mag_Ms);
     }
     else if (m_mag_Ms_s == "parse_mag_Ms_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf.get(), getParser(m_mag_Ms_parser), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf.get(), m_mag_Ms_parser->compile<3>(), lev);
     }
     // if there are regions with Ms=0, the user must provide mur value there
     if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) < 0._rt){
@@ -256,7 +256,7 @@ MacroscopicProperties::InitData ()
         m_mag_alpha_mf->setVal(m_mag_alpha);
     }
     else if (m_mag_alpha_s == "parse_mag_alpha_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf.get(), getParser(m_mag_alpha_parser), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf.get(), m_mag_alpha_parser->compile<3>(), lev);
     }
     if (m_mag_alpha_mf->min(0,m_mag_alpha_mf->nGrow()) < 0._rt) {
         amrex::Abort("alpha should be positive, but the user input has negative values");
@@ -268,7 +268,7 @@ MacroscopicProperties::InitData ()
 
     }
     else if (m_mag_gamma_s == "parse_mag_gamma_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_gamma_mf.get(), getParser(m_mag_gamma_parser), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_gamma_mf.get(), m_mag_gamma_parser->compile<3>(), lev);
     }
     if (m_mag_gamma_mf->max(0,m_mag_gamma_mf->nGrow()) > 0._rt) {
         amrex::Abort("gamma should be negative, but the user input has positive values");
@@ -279,7 +279,7 @@ MacroscopicProperties::InitData ()
         m_mag_exchange_mf->setVal(m_mag_exchange);
     }
     else if (m_mag_exchange_s == "parse_mag_exchange_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_exchange_mf.get(), getParser(m_mag_exchange_parser), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_exchange_mf.get(), m_mag_exchange_parser->compile<3>(), lev);
     }
 
     // mag_anisotropy - defined at cell centers
@@ -287,7 +287,8 @@ MacroscopicProperties::InitData ()
         m_mag_anisotropy_mf->setVal(m_mag_anisotropy);
     }
     else if (m_mag_anisotropy_s == "parse_mag_anisotropy_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf.get(), getParser(m_mag_anisotropy_parser), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf.get(),
+                                           m_mag_anisotropy_parser->compile<3>(), lev);
     }
 #endif
 

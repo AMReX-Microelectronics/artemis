@@ -41,6 +41,7 @@
 #include <AMReX_RealVect.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_VisMF.H>
+#include <AMReX_Parser.H>
 
 #include <algorithm>
 #include <cmath>
@@ -568,7 +569,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             pml_sigma_fp->setVal(macroscopic_properties->m_sigma);
         } else if (macroscopic_properties->m_sigma_s == "parse_sigma_function") {
             macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_sigma_fp.get(),
-                getParser(macroscopic_properties->m_sigma_parser), lev);
+                macroscopic_properties->m_sigma_parser->compile<3>(), lev);
         }
 
         // Initialize epsilon, permittivity
@@ -576,7 +577,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             pml_eps_fp->setVal(macroscopic_properties->m_epsilon);
         } else if (macroscopic_properties->m_epsilon_s == "parse_epsilon_function") {
             macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_eps_fp.get(),
-                getParser(macroscopic_properties->m_epsilon_parser), lev);
+                macroscopic_properties->m_epsilon_parser->compile<3>(), lev);
         }
 
         // Initialize mu, permeability
@@ -584,7 +585,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             pml_mu_fp->setVal(macroscopic_properties->m_mu);
         } else if (macroscopic_properties->m_mu_s == "parse_mu_function") {
             macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_mu_fp.get(),
-                getParser(macroscopic_properties->m_mu_parser), lev);
+                macroscopic_properties->m_mu_parser->compile<3>(), lev);
         }
 
     }
@@ -729,7 +730,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
                 pml_sigma_cp->setVal(macroscopic_properties->m_sigma);
             } else if (macroscopic_properties->m_sigma_s == "parse_sigma_function") {
                 macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_sigma_cp.get(),
-                    getParser(macroscopic_properties->m_sigma_parser), lev);
+                    macroscopic_properties->m_sigma_parser->compile<3>(), lev);
             }
 
             // Initialize epsilon, permittivity
@@ -737,7 +738,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
                 pml_eps_cp->setVal(macroscopic_properties->m_epsilon);
             } else if (macroscopic_properties->m_epsilon_s == "parse_epsilon_function") {
                 macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_eps_cp.get(),
-                    getParser(macroscopic_properties->m_epsilon_parser), lev);
+                    macroscopic_properties->m_epsilon_parser->compile<3>(), lev);
             }
 
             // Initialize mu, permeability
@@ -745,7 +746,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
                 pml_mu_cp->setVal(macroscopic_properties->m_mu);
             } else if (macroscopic_properties->m_sigma_s == "parse_mu_function") {
                 macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_mu_cp.get(),
-                    getParser(macroscopic_properties->m_mu_parser), lev);
+                    macroscopic_properties->m_mu_parser->compile<3>(), lev);
             }
 
 

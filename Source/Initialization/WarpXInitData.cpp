@@ -493,12 +493,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                 str_Ey_excitation_flag_function);
         Store_parserString(pp_warpx, "Ez_excitation_flag_function(x,y,z)",
                                 str_Ez_excitation_flag_function);
-        Exfield_flag_parser.reset(new ParserWrapper<3>(
-                   makeParser(str_Ex_excitation_flag_function,{"x","y","z"})));
-        Eyfield_flag_parser.reset(new ParserWrapper<3>(
-                   makeParser(str_Ey_excitation_flag_function,{"x","y","z"})));
-        Ezfield_flag_parser.reset(new ParserWrapper<3>(
-                   makeParser(str_Ez_excitation_flag_function,{"x","y","z"})));
+        Exfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ex_excitation_flag_function,{"x","y","z"}));
+        Eyfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ey_excitation_flag_function,{"x","y","z"}));
+        Ezfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ez_excitation_flag_function,{"x","y","z"}));
     }
     if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
         // if B excitation type is set to parser then the corresponding
@@ -511,12 +511,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                 str_By_excitation_flag_function);
         Store_parserString(pp_warpx, "Bz_excitation_flag_function(x,y,z)",
                                 str_Bz_excitation_flag_function);
-        Bxfield_flag_parser.reset(new ParserWrapper<3>(
-                   makeParser(str_Bx_excitation_flag_function,{"x","y","z"})));
-        Byfield_flag_parser.reset(new ParserWrapper<3>(
-                   makeParser(str_By_excitation_flag_function,{"x","y","z"})));
-        Bzfield_flag_parser.reset(new ParserWrapper<3>(
-                   makeParser(str_Bz_excitation_flag_function,{"x","y","z"})));
+        Bxfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Bx_excitation_flag_function,{"x","y","z"}));
+        Byfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_By_excitation_flag_function,{"x","y","z"}));
+        Bzfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Bz_excitation_flag_function,{"x","y","z"}));
     }
 
 #ifdef WARPX_MAG_LLG
@@ -531,12 +531,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                 str_Hy_excitation_flag_function);
         Store_parserString(pp_warpx, "Hz_excitation_flag_function(x,y,z)",
                                 str_Hz_excitation_flag_function);
-        Hxfield_flag_parser.reset(new ParserWrapper<3>(
-                   makeParser(str_Hx_excitation_flag_function,{"x","y","z"})));
-        Hyfield_flag_parser.reset(new ParserWrapper<3>(
-                   makeParser(str_Hy_excitation_flag_function,{"x","y","z"})));
-        Hzfield_flag_parser.reset(new ParserWrapper<3>(
-                   makeParser(str_Hz_excitation_flag_function,{"x","y","z"})));
+        Hxfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hx_excitation_flag_function,{"x","y","z"}));
+        Hyfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hy_excitation_flag_function,{"x","y","z"}));
+        Hzfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hz_excitation_flag_function,{"x","y","z"}));
     }
 #endif
     // * Functions with the string "arr" in their names get an Array of
@@ -567,12 +567,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     str_By_excitation_grid_function);
        Store_parserString(pp_warpx, "Bz_excitation_grid_function(x,y,z,t)",
                                                     str_Bz_excitation_grid_function);
-       Bxfield_xt_grid_parser.reset(new ParserWrapper<4>(
-                   makeParser(str_Bx_excitation_grid_function,{"x","y","z","t"})));
-       Byfield_xt_grid_parser.reset(new ParserWrapper<4>(
-                   makeParser(str_By_excitation_grid_function,{"x","y","z","t"})));
-       Bzfield_xt_grid_parser.reset(new ParserWrapper<4>(
-                   makeParser(str_Bz_excitation_grid_function,{"x","y","z","t"})));
+       Bxfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Bx_excitation_grid_function,{"x","y","z","t"}));
+       Byfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_By_excitation_grid_function,{"x","y","z","t"}));
+       Bzfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Bz_excitation_grid_function,{"x","y","z","t"}));
     }
 
     // make parser for the external E-excitation in space-time
@@ -586,12 +586,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     str_Ey_excitation_grid_function);
        Store_parserString(pp_warpx, "Ez_excitation_grid_function(x,y,z,t)",
                                                     str_Ez_excitation_grid_function);
-       Exfield_xt_grid_parser.reset(new ParserWrapper<4>(
-                   makeParser(str_Ex_excitation_grid_function,{"x","y","z","t"})));
-       Eyfield_xt_grid_parser.reset(new ParserWrapper<4>(
-                   makeParser(str_Ey_excitation_grid_function,{"x","y","z","t"})));
-       Ezfield_xt_grid_parser.reset(new ParserWrapper<4>(
-                   makeParser(str_Ez_excitation_grid_function,{"x","y","z","t"})));
+       Exfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ex_excitation_grid_function,{"x","y","z","t"}));
+       Eyfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ey_excitation_grid_function,{"x","y","z","t"}));
+       Ezfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ez_excitation_grid_function,{"x","y","z","t"}));
     }
 
 #ifdef WARPX_MAG_LLG
@@ -606,24 +606,24 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     str_Hy_excitation_grid_function);
        Store_parserString(pp_warpx, "Hz_excitation_grid_function(x,y,z,t)",
                                                     str_Hz_excitation_grid_function);
-       Hxfield_xt_grid_parser.reset(new ParserWrapper<4>(
-                   makeParser(str_Hx_excitation_grid_function,{"x","y","z","t"})));
-       Hyfield_xt_grid_parser.reset(new ParserWrapper<4>(
-                   makeParser(str_Hy_excitation_grid_function,{"x","y","z","t"})));
-       Hzfield_xt_grid_parser.reset(new ParserWrapper<4>(
-                   makeParser(str_Hz_excitation_grid_function,{"x","y","z","t"})));
+       Hxfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hx_excitation_grid_function,{"x","y","z","t"}));
+       Hyfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hy_excitation_grid_function,{"x","y","z","t"}));
+       Hzfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hz_excitation_grid_function,{"x","y","z","t"}));
     }
 #endif
 
 #ifdef WARPX_MAG_LLG
     if (M_ext_grid_s == "constant")
-        pp_warpx.getarr("M_external_grid", M_external_grid);
+        getArrWithParser(pp_warpx, "M_external_grid", M_external_grid);
 
     if (H_ext_grid_s == "constant")
-        pp_warpx.getarr("H_external_grid", H_external_grid);
+        getArrWithParser(pp_warpx, "H_external_grid", H_external_grid);
 
     if (H_bias_ext_grid_s == "constant")
-        pp_warpx.getarr("H_bias_external_grid", H_bias_external_grid);
+        getArrWithParser(pp_warpx,"H_bias_external_grid", H_bias_external_grid);
 #endif
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
@@ -828,36 +828,36 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        Store_parserString(pp_warpx, "Hz_bias_external_grid_function(x,y,z)",
                                                     str_Hz_bias_ext_grid_function);
 
-       Hx_biasfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Hx_bias_ext_grid_function,{"x","y","z"})));
-       Hy_biasfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Hy_bias_ext_grid_function,{"x","y","z"})));
-       Hz_biasfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Hz_bias_ext_grid_function,{"x","y","z"})));
+       Hx_biasfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Hx_bias_ext_grid_function,{"x","y","z"}));
+       Hy_biasfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Hy_bias_ext_grid_function,{"x","y","z"}));
+       Hz_biasfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Hz_bias_ext_grid_function,{"x","y","z"}));
 
        // Initialize Efield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(H_biasfield_fp[lev][0].get(),
                                                  H_biasfield_fp[lev][1].get(),
                                                  H_biasfield_fp[lev][2].get(),
-                                                 getParser(Hx_biasfield_parser),
-                                                 getParser(Hy_biasfield_parser),
-                                                 getParser(Hz_biasfield_parser),
+                                                 Hx_biasfield_parser->compile<3>(),
+                                                 Hy_biasfield_parser->compile<3>(),
+                                                 Hz_biasfield_parser->compile<3>(),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(H_biasfield_aux[lev][0].get(),
                                                     H_biasfield_aux[lev][1].get(),
                                                     H_biasfield_aux[lev][2].get(),
-                                                    getParser(Hx_biasfield_parser),
-                                                    getParser(Hy_biasfield_parser),
-                                                    getParser(Hz_biasfield_parser),
+                                                    Hx_biasfield_parser->compile<3>(),
+                                                    Hy_biasfield_parser->compile<3>(),
+                                                    Hz_biasfield_parser->compile<3>(),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(H_biasfield_cp[lev][0].get(),
                                                     H_biasfield_cp[lev][1].get(),
                                                     H_biasfield_cp[lev][2].get(),
-                                                    getParser(Hx_biasfield_parser),
-                                                    getParser(Hy_biasfield_parser),
-                                                    getParser(Hz_biasfield_parser),
+                                                    Hx_biasfield_parser->compile<3>(),
+                                                    Hy_biasfield_parser->compile<3>(),
+                                                    Hz_biasfield_parser->compile<3>(),
                                                     lev);
        }
     }
@@ -874,36 +874,36 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        Store_parserString(pp_warpx, "Hz_external_grid_function(x,y,z)",
                                                     str_Hz_ext_grid_function);
 
-       Hxfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Hx_ext_grid_function,{"x","y","z"})));
-       Hyfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Hy_ext_grid_function,{"x","y","z"})));
-       Hzfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Hz_ext_grid_function,{"x","y","z"})));
+       Hxfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Hx_ext_grid_function,{"x","y","z"}));
+       Hyfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Hy_ext_grid_function,{"x","y","z"}));
+       Hzfield_parser = std::make_unique<amrex::Parser>(
+                                makeParser(str_Hz_ext_grid_function,{"x","y","z"}));
 
        // Initialize Hfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Hfield_fp[lev][0].get(),
                                                  Hfield_fp[lev][1].get(),
                                                  Hfield_fp[lev][2].get(),
-                                                 getParser(Hxfield_parser),
-                                                 getParser(Hyfield_parser),
-                                                 getParser(Hzfield_parser),
+                                                 Hxfield_parser->compile<3>(),
+                                                 Hyfield_parser->compile<3>(),
+                                                 Hzfield_parser->compile<3>(),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Hfield_aux[lev][0].get(),
                                                     Hfield_aux[lev][1].get(),
                                                     Hfield_aux[lev][2].get(),
-                                                    getParser(Hxfield_parser),
-                                                    getParser(Hyfield_parser),
-                                                    getParser(Hzfield_parser),
+                                                    Hxfield_parser->compile<3>(),
+                                                    Hyfield_parser->compile<3>(),
+                                                    Hzfield_parser->compile<3>(),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Hfield_cp[lev][0].get(),
                                                     Hfield_cp[lev][1].get(),
                                                     Hfield_cp[lev][2].get(),
-                                                    getParser(Hxfield_parser),
-                                                    getParser(Hyfield_parser),
-                                                    getParser(Hzfield_parser),
+                                                    Hxfield_parser->compile<3>(),
+                                                    Hyfield_parser->compile<3>(),
+                                                    Hzfield_parser->compile<3>(),
                                                     lev);
        }
     }
@@ -919,12 +919,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         Store_parserString(pp_warpx, "Mz_external_grid_function(x,y,z)",
                                                     str_Mz_ext_grid_function);
 
-        Mxfield_parser.reset(new ParserWrapper<3>(
-                                 makeParser(str_Mx_ext_grid_function,{"x","y","z"})));
-        Myfield_parser.reset(new ParserWrapper<3>(
-                                 makeParser(str_My_ext_grid_function,{"x","y","z"})));
-        Mzfield_parser.reset(new ParserWrapper<3>(
-                                 makeParser(str_Mz_ext_grid_function,{"x","y","z"})));
+        Mxfield_parser = std::make_unique<amrex::Parser>(
+                                 makeParser(str_Mx_ext_grid_function,{"x","y","z"}));
+        Myfield_parser = std::make_unique<amrex::Parser>(
+                                 makeParser(str_My_ext_grid_function,{"x","y","z"}));
+        Mzfield_parser = std::make_unique<amrex::Parser>(
+                                 makeParser(str_Mz_ext_grid_function,{"x","y","z"}));
 
         {   // use this brace so Mx, My, Mz go out of scope
             // we need 1 more ghost cell than Mfield_fp has because
@@ -938,9 +938,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             InitializeExternalFieldsOnGridUsingParser(&Mx,
                                                       &My,
                                                       &Mz,
-                                                      getParser(Mxfield_parser),
-                                                      getParser(Myfield_parser),
-                                                      getParser(Mzfield_parser),
+                                                      Mxfield_parser->compile<3>(),
+                                                      Myfield_parser->compile<3>(),
+                                                      Mzfield_parser->compile<3>(),
                                                       lev);
 
             AverageParsedMtoFaces(Mx,My,Mz,*Mfield_fp[lev][0],*Mfield_fp[lev][1],*Mfield_fp[lev][2]);
@@ -958,9 +958,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 InitializeExternalFieldsOnGridUsingParser(&Mx,
                                                           &My,
                                                           &Mz,
-                                                          getParser(Mxfield_parser),
-                                                          getParser(Myfield_parser),
-                                                          getParser(Mzfield_parser),
+                                                          Mxfield_parser->compile<3>(),
+                                                          Myfield_parser->compile<3>(),
+                                                          Mzfield_parser->compile<3>(),
                                                           lev);
 
                 AverageParsedMtoFaces(Mx,My,Mz,*Mfield_aux[lev][0],*Mfield_aux[lev][1],*Mfield_aux[lev][2]);
@@ -977,9 +977,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 InitializeExternalFieldsOnGridUsingParser(&Mx,
                                                           &My,
                                                           &Mz,
-                                                          getParser(Mxfield_parser),
-                                                          getParser(Myfield_parser),
-                                                          getParser(Mzfield_parser),
+                                                          Mxfield_parser->compile<3>(),
+                                                          Myfield_parser->compile<3>(),
+                                                          Mzfield_parser->compile<3>(),
                                                           lev);
 
                 AverageParsedMtoFaces(Mx,My,Mz,*Mfield_cp[lev][0],*Mfield_cp[lev][1],*Mfield_cp[lev][2]);
