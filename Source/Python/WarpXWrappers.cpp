@@ -142,12 +142,10 @@ extern "C"
         warpx_amrex_init(argc, argv);
     }
 
-#ifdef BL_USE_MPI
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm)
     {
         warpx_amrex_init(argc, argv, true, mpicomm);
     }
-#endif
 
     void amrex_finalize (int /*finalize_mpi*/)
     {
@@ -406,6 +404,29 @@ extern "C"
         const auto & mypc = WarpX::GetInstance().GetPartContainer();
         auto & myspc = mypc.GetParticleContainer(speciesnumber);
 
+        return warpx_getParticleArraysUsingPC(
+            myspc, comp, lev, num_tiles, particles_per_tile
+        );
+    }
+
+    amrex::ParticleReal** warpx_getParticleArraysFromCompName (
+            const char* char_species_name, const char* char_comp_name,
+            int lev, int* num_tiles, int** particles_per_tile ) {
+
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+
+        return warpx_getParticleArraysUsingPC(
+            myspc,
+            warpx_getParticleCompIndex(char_species_name, char_comp_name), lev,
+            num_tiles, particles_per_tile
+        );
+    }
+
+    amrex::ParticleReal** warpx_getParticleArraysUsingPC (
+            WarpXParticleContainer& myspc, int comp,
+            int lev, int* num_tiles, int** particles_per_tile ) {
         int i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
 
@@ -423,22 +444,49 @@ extern "C"
         return data;
     }
 
+    int warpx_getParticleCompIndex (
+         const char* char_species_name, const char* char_comp_name )
+    {
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
+
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+
+        const std::string comp_name(char_comp_name);
+        auto particle_comps = myspc.getParticleComps();
+
+        return particle_comps.at(comp_name);
+    }
+
+    void warpx_addRealComp(const char* char_species_name,
+        const char* char_comp_name, bool comm=true)
+    {
+        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+
+        const std::string comp_name(char_comp_name);
+        myspc.AddRealComp(comp_name, comm);
+
+        mypc.defineAllParticleTiles();
+    }
+
     void warpx_ComputeDt () {
         WarpX& warpx = WarpX::GetInstance();
         warpx.ComputeDt ();
     }
-    void warpx_MoveWindow () {
+    void warpx_MoveWindow (int step,bool move_j) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.MoveWindow (true);
+        warpx.MoveWindow (step, move_j);
     }
 
     void warpx_EvolveE (amrex::Real dt) {
         WarpX& warpx = WarpX::GetInstance();
         warpx.EvolveE (dt);
     }
-    void warpx_EvolveB (amrex::Real dt) {
+    void warpx_EvolveB (amrex::Real dt, DtType a_dt_type) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.EvolveB (dt);
+        warpx.EvolveB (dt, a_dt_type);
     }
     void warpx_FillBoundaryE () {
         WarpX& warpx = WarpX::GetInstance();
@@ -494,6 +542,14 @@ extern "C"
     int warpx_finestLevel () {
         WarpX& warpx = WarpX::GetInstance();
         return warpx.finestLevel ();
+    }
+
+    int warpx_getMyProc () {
+        return amrex::ParallelDescriptor::MyProc();
+    }
+
+    int warpx_getNProcs () {
+        return amrex::ParallelDescriptor::NProcs();
     }
 
     void mypc_Redistribute () {
