@@ -423,8 +423,8 @@ WarpX::PushPSATD ()
     {
         ApplyEfieldBoundary(lev, PatchType::fine);
         if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
-        ApplyBfieldBoundary(lev, PatchType::fine);
-        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse);
+        ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
+        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
 
         if (do_pml && pml[lev]->ok())
         {
@@ -476,7 +476,7 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     // Apply external field excitation prior to applying boundary conditions such that excitation does not overwrite B.C. 
     ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // apply B external excitation
 
-    ApplyBfieldBoundary(lev, patch_type);
+    ApplyBfieldBoundary(lev, patch_type, a_dt_type);
     
     // Evolve B field in PML cells
     if (do_pml && pml[lev]->ok()) {
