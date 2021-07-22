@@ -8,10 +8,12 @@
 #ifndef WARPX_WRAPPERS_H_
 #define WARPX_WRAPPERS_H_
 
+#include "Particles/WarpXParticleContainer.H"
+#include "Evolve/WarpXDtType.H"
 #include <AMReX_Config.H>
 #include <AMReX_REAL.H>
 
-#ifdef BL_USE_MPI
+#ifdef AMREX_USE_MPI
 #   include <mpi.h>
 #endif
 
@@ -34,7 +36,7 @@ extern "C" {
 
     void amrex_init (int argc, char* argv[]);
 
-#ifdef BL_USE_MPI
+#ifdef AMREX_USE_MPI
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm);
 #endif
 
@@ -91,11 +93,25 @@ extern "C" {
     amrex::ParticleReal** warpx_getParticleArrays(int speciesnumber, int comp, int lev,
                                                   int* num_tiles, int** particles_per_tile);
 
+    amrex::ParticleReal** warpx_getParticleArraysFromCompName(
+        const char* char_species_name, const char* char_comp_name, int lev,
+        int* num_tiles, int** particles_per_tile);
+
+    amrex::ParticleReal** warpx_getParticleArraysUsingPC(
+        WarpXParticleContainer& myspc, int comp,
+        int lev, int* num_tiles, int** particles_per_tile);
+
+    int warpx_getParticleCompIndex(
+        const char* char_species_name, const char* char_comp_name);
+
+    void warpx_addRealComp(
+        const char* char_species_name, const char* char_comp_name, bool comm);
+
   void warpx_ComputeDt ();
-  void warpx_MoveWindow ();
+  void warpx_MoveWindow (int step, bool move_j);
 
   void warpx_EvolveE (amrex::Real dt);
-  void warpx_EvolveB (amrex::Real dt);
+  void warpx_EvolveB (amrex::Real dt, DtType a_dt_type);
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
   void warpx_SyncCurrent ();
@@ -112,6 +128,10 @@ extern "C" {
   amrex::Real warpx_stopTime ();
 
   int warpx_finestLevel ();
+
+  int warpx_getMyProc ();
+  int warpx_getNProcs ();
+
 
   void mypc_Redistribute ();
 

@@ -41,6 +41,7 @@
 #include <AMReX_RealVect.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_VisMF.H>
+#include <AMReX_Parser.H>
 
 #include <algorithm>
 #include <cmath>
@@ -568,7 +569,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             pml_sigma_fp->setVal(macroscopic_properties->m_sigma);
         } else if (macroscopic_properties->m_sigma_s == "parse_sigma_function") {
             macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_sigma_fp.get(),
-                getParser(macroscopic_properties->m_sigma_parser), lev);
+                macroscopic_properties->m_sigma_parser->compile<3>(), lev);
         }
 
         // Initialize epsilon, permittivity
@@ -576,7 +577,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             pml_eps_fp->setVal(macroscopic_properties->m_epsilon);
         } else if (macroscopic_properties->m_epsilon_s == "parse_epsilon_function") {
             macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_eps_fp.get(),
-                getParser(macroscopic_properties->m_epsilon_parser), lev);
+                macroscopic_properties->m_epsilon_parser->compile<3>(), lev);
         }
 
         // Initialize mu, permeability
@@ -584,7 +585,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             pml_mu_fp->setVal(macroscopic_properties->m_mu);
         } else if (macroscopic_properties->m_mu_s == "parse_mu_function") {
             macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_mu_fp.get(),
-                getParser(macroscopic_properties->m_mu_parser), lev);
+                macroscopic_properties->m_mu_parser->compile<3>(), lev);
         }
 
     }
@@ -653,9 +654,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         Array<Real,3> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, dx, dt, in_pml,
-            periodic_single_box, update_with_rho, fft_do_time_averaging,
-            J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
+            nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+            v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
+            fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
     }
 
@@ -729,7 +730,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
                 pml_sigma_cp->setVal(macroscopic_properties->m_sigma);
             } else if (macroscopic_properties->m_sigma_s == "parse_sigma_function") {
                 macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_sigma_cp.get(),
-                    getParser(macroscopic_properties->m_sigma_parser), lev);
+                    macroscopic_properties->m_sigma_parser->compile<3>(), lev);
             }
 
             // Initialize epsilon, permittivity
@@ -737,7 +738,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
                 pml_eps_cp->setVal(macroscopic_properties->m_epsilon);
             } else if (macroscopic_properties->m_epsilon_s == "parse_epsilon_function") {
                 macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_eps_cp.get(),
-                    getParser(macroscopic_properties->m_epsilon_parser), lev);
+                    macroscopic_properties->m_epsilon_parser->compile<3>(), lev);
             }
 
             // Initialize mu, permeability
@@ -745,7 +746,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
                 pml_mu_cp->setVal(macroscopic_properties->m_mu);
             } else if (macroscopic_properties->m_sigma_s == "parse_mu_function") {
                 macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_mu_cp.get(),
-                    getParser(macroscopic_properties->m_mu_parser), lev);
+                    macroscopic_properties->m_mu_parser->compile<3>(), lev);
             }
 
 
@@ -812,9 +813,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             Array<Real,3> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, cdx, dt, in_pml,
-                periodic_single_box, update_with_rho, fft_do_time_averaging,
-                J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
+                nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+                v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
+                fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
         }
     }
@@ -1446,81 +1447,81 @@ PushPMLPSATDSinglePatch (
     std::unique_ptr<amrex::MultiFab>& pml_F,
     std::unique_ptr<amrex::MultiFab>& pml_G)
 {
-    using SpIdx = SpectralPMLIndex;
+    const SpectralFieldIndex& Idx = solver.m_spectral_index;
 
     // Perform forward Fourier transforms
-    solver.ForwardTransform(lev, *pml_E[0], SpIdx::Exy, PMLComp::xy);
-    solver.ForwardTransform(lev, *pml_E[0], SpIdx::Exz, PMLComp::xz);
-    solver.ForwardTransform(lev, *pml_E[1], SpIdx::Eyx, PMLComp::yx);
-    solver.ForwardTransform(lev, *pml_E[1], SpIdx::Eyz, PMLComp::yz);
-    solver.ForwardTransform(lev, *pml_E[2], SpIdx::Ezx, PMLComp::zx);
-    solver.ForwardTransform(lev, *pml_E[2], SpIdx::Ezy, PMLComp::zy);
-    solver.ForwardTransform(lev, *pml_B[0], SpIdx::Bxy, PMLComp::xy);
-    solver.ForwardTransform(lev, *pml_B[0], SpIdx::Bxz, PMLComp::xz);
-    solver.ForwardTransform(lev, *pml_B[1], SpIdx::Byx, PMLComp::yx);
-    solver.ForwardTransform(lev, *pml_B[1], SpIdx::Byz, PMLComp::yz);
-    solver.ForwardTransform(lev, *pml_B[2], SpIdx::Bzx, PMLComp::zx);
-    solver.ForwardTransform(lev, *pml_B[2], SpIdx::Bzy, PMLComp::zy);
+    solver.ForwardTransform(lev, *pml_E[0], Idx.Exy, PMLComp::xy);
+    solver.ForwardTransform(lev, *pml_E[0], Idx.Exz, PMLComp::xz);
+    solver.ForwardTransform(lev, *pml_E[1], Idx.Eyx, PMLComp::yx);
+    solver.ForwardTransform(lev, *pml_E[1], Idx.Eyz, PMLComp::yz);
+    solver.ForwardTransform(lev, *pml_E[2], Idx.Ezx, PMLComp::zx);
+    solver.ForwardTransform(lev, *pml_E[2], Idx.Ezy, PMLComp::zy);
+    solver.ForwardTransform(lev, *pml_B[0], Idx.Bxy, PMLComp::xy);
+    solver.ForwardTransform(lev, *pml_B[0], Idx.Bxz, PMLComp::xz);
+    solver.ForwardTransform(lev, *pml_B[1], Idx.Byx, PMLComp::yx);
+    solver.ForwardTransform(lev, *pml_B[1], Idx.Byz, PMLComp::yz);
+    solver.ForwardTransform(lev, *pml_B[2], Idx.Bzx, PMLComp::zx);
+    solver.ForwardTransform(lev, *pml_B[2], Idx.Bzy, PMLComp::zy);
 
     // WarpX::do_pml_dive_cleaning = true
     if (pml_F)
     {
-        solver.ForwardTransform(lev, *pml_E[0], SpIdx::Exx, PMLComp::xx);
-        solver.ForwardTransform(lev, *pml_E[1], SpIdx::Eyy, PMLComp::yy);
-        solver.ForwardTransform(lev, *pml_E[2], SpIdx::Ezz, PMLComp::zz);
-        solver.ForwardTransform(lev, *pml_F, SpIdx::Fx, PMLComp::x);
-        solver.ForwardTransform(lev, *pml_F, SpIdx::Fy, PMLComp::y);
-        solver.ForwardTransform(lev, *pml_F, SpIdx::Fz, PMLComp::z);
+        solver.ForwardTransform(lev, *pml_E[0], Idx.Exx, PMLComp::xx);
+        solver.ForwardTransform(lev, *pml_E[1], Idx.Eyy, PMLComp::yy);
+        solver.ForwardTransform(lev, *pml_E[2], Idx.Ezz, PMLComp::zz);
+        solver.ForwardTransform(lev, *pml_F, Idx.Fx, PMLComp::x);
+        solver.ForwardTransform(lev, *pml_F, Idx.Fy, PMLComp::y);
+        solver.ForwardTransform(lev, *pml_F, Idx.Fz, PMLComp::z);
     }
 
     // WarpX::do_pml_divb_cleaning = true
     if (pml_G)
     {
-        solver.ForwardTransform(lev, *pml_B[0], SpIdx::Bxx, PMLComp::xx);
-        solver.ForwardTransform(lev, *pml_B[1], SpIdx::Byy, PMLComp::yy);
-        solver.ForwardTransform(lev, *pml_B[2], SpIdx::Bzz, PMLComp::zz);
-        solver.ForwardTransform(lev, *pml_G, SpIdx::Gx, PMLComp::x);
-        solver.ForwardTransform(lev, *pml_G, SpIdx::Gy, PMLComp::y);
-        solver.ForwardTransform(lev, *pml_G, SpIdx::Gz, PMLComp::z);
+        solver.ForwardTransform(lev, *pml_B[0], Idx.Bxx, PMLComp::xx);
+        solver.ForwardTransform(lev, *pml_B[1], Idx.Byy, PMLComp::yy);
+        solver.ForwardTransform(lev, *pml_B[2], Idx.Bzz, PMLComp::zz);
+        solver.ForwardTransform(lev, *pml_G, Idx.Gx, PMLComp::x);
+        solver.ForwardTransform(lev, *pml_G, Idx.Gy, PMLComp::y);
+        solver.ForwardTransform(lev, *pml_G, Idx.Gz, PMLComp::z);
     }
 
     // Advance fields in spectral space
     solver.pushSpectralFields();
 
     // Perform backward Fourier transforms
-    solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exy, PMLComp::xy);
-    solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exz, PMLComp::xz);
-    solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyx, PMLComp::yx);
-    solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyz, PMLComp::yz);
-    solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezx, PMLComp::zx);
-    solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezy, PMLComp::zy);
-    solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxy, PMLComp::xy);
-    solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxz, PMLComp::xz);
-    solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byx, PMLComp::yx);
-    solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byz, PMLComp::yz);
-    solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzx, PMLComp::zx);
-    solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzy, PMLComp::zy);
+    solver.BackwardTransform(lev, *pml_E[0], Idx.Exy, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_E[0], Idx.Exz, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyx, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyz, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezx, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezy, PMLComp::zy);
+    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxy, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxz, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_B[1], Idx.Byx, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_B[1], Idx.Byz, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzx, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzy, PMLComp::zy);
 
     // WarpX::do_pml_dive_cleaning = true
     if (pml_F)
     {
-        solver.BackwardTransform(lev, *pml_E[0], SpIdx::Exx, PMLComp::xx);
-        solver.BackwardTransform(lev, *pml_E[1], SpIdx::Eyy, PMLComp::yy);
-        solver.BackwardTransform(lev, *pml_E[2], SpIdx::Ezz, PMLComp::zz);
-        solver.BackwardTransform(lev, *pml_F, SpIdx::Fx, PMLComp::x);
-        solver.BackwardTransform(lev, *pml_F, SpIdx::Fy, PMLComp::y);
-        solver.BackwardTransform(lev, *pml_F, SpIdx::Fz, PMLComp::z);
+        solver.BackwardTransform(lev, *pml_E[0], Idx.Exx, PMLComp::xx);
+        solver.BackwardTransform(lev, *pml_E[1], Idx.Eyy, PMLComp::yy);
+        solver.BackwardTransform(lev, *pml_E[2], Idx.Ezz, PMLComp::zz);
+        solver.BackwardTransform(lev, *pml_F, Idx.Fx, PMLComp::x);
+        solver.BackwardTransform(lev, *pml_F, Idx.Fy, PMLComp::y);
+        solver.BackwardTransform(lev, *pml_F, Idx.Fz, PMLComp::z);
     }
 
     // WarpX::do_pml_divb_cleaning = true
     if (pml_G)
     {
-        solver.BackwardTransform(lev, *pml_B[0], SpIdx::Bxx, PMLComp::xx);
-        solver.BackwardTransform(lev, *pml_B[1], SpIdx::Byy, PMLComp::yy);
-        solver.BackwardTransform(lev, *pml_B[2], SpIdx::Bzz, PMLComp::zz);
-        solver.BackwardTransform(lev, *pml_G, SpIdx::Gx, PMLComp::x);
-        solver.BackwardTransform(lev, *pml_G, SpIdx::Gy, PMLComp::y);
-        solver.BackwardTransform(lev, *pml_G, SpIdx::Gz, PMLComp::z);
+        solver.BackwardTransform(lev, *pml_B[0], Idx.Bxx, PMLComp::xx);
+        solver.BackwardTransform(lev, *pml_B[1], Idx.Byy, PMLComp::yy);
+        solver.BackwardTransform(lev, *pml_B[2], Idx.Bzz, PMLComp::zz);
+        solver.BackwardTransform(lev, *pml_G, Idx.Gx, PMLComp::x);
+        solver.BackwardTransform(lev, *pml_G, Idx.Gy, PMLComp::y);
+        solver.BackwardTransform(lev, *pml_G, Idx.Gz, PMLComp::z);
     }
 }
 #endif
