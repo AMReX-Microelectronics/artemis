@@ -33,6 +33,11 @@
 #include "SpeciesPhysicalProperties.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#ifdef AMREX_USE_EB
+#   include "EmbeddedBoundary/ParticleScraper.H"
+#   include "EmbeddedBoundary/ParticleBoundaryProcess.H"
+#endif
+
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -184,11 +189,11 @@ MultiParticleContainer::ReadParameters ()
                                       str_Bz_ext_particle_function);
 
            // Parser for B_external on the particle
-           m_Bx_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Bx_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Bx_ext_particle_function,{"x","y","z","t"}));
-           m_By_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_By_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_By_ext_particle_function,{"x","y","z","t"}));
-           m_Bz_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Bz_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Bz_ext_particle_function,{"x","y","z","t"}));
 
         }
@@ -209,13 +214,38 @@ MultiParticleContainer::ReadParameters ()
            Store_parserString(pp_particles, "Ez_external_particle_function(x,y,z,t)",
                                       str_Ez_ext_particle_function);
            // Parser for E_external on the particle
-           m_Ex_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ex_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ex_ext_particle_function,{"x","y","z","t"}));
-           m_Ey_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ey_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ey_ext_particle_function,{"x","y","z","t"}));
-           m_Ez_particle_parser = std::make_unique<ParserWrapper<4>>(
+           m_Ez_particle_parser = std::make_unique<amrex::Parser>(
                                     makeParser(str_Ez_ext_particle_function,{"x","y","z","t"}));
 
+        }
+
+        // if the input string for E_ext_particle_s is
+        // "repeated_plasma_lens" then the plasma lens properties
+        // must be provided in the input file.
+        if (m_E_ext_particle_s == "repeated_plasma_lens") {
+            queryWithParser(pp_particles, "repeated_plasma_lens_period", m_repeated_plasma_lens_period);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_starts", h_repeated_plasma_lens_starts);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_lengths", h_repeated_plasma_lens_lengths);
+            getArrWithParser(pp_particles, "repeated_plasma_lens_strengths", h_repeated_plasma_lens_strengths);
+
+            int n_lenses = static_cast<int>(h_repeated_plasma_lens_starts.size());
+            d_repeated_plasma_lens_starts.resize(n_lenses);
+            d_repeated_plasma_lens_lengths.resize(n_lenses);
+            d_repeated_plasma_lens_strengths.resize(n_lenses);
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_starts.begin(), h_repeated_plasma_lens_starts.end(),
+                       d_repeated_plasma_lens_starts.begin());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_lengths.begin(), h_repeated_plasma_lens_lengths.end(),
+                       d_repeated_plasma_lens_lengths.begin());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_strengths.begin(), h_repeated_plasma_lens_strengths.end(),
+                       d_repeated_plasma_lens_strengths.begin());
+            amrex::Gpu::synchronize();
         }
 
 
@@ -903,6 +933,17 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
                 "ERROR: ionization product cannot be the same species");
         }
     }
+}
+
+void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+{
+#ifdef AMREX_USE_EB
+    for (auto& pc : allcontainers) {
+        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
+    }
+#else
+    amrex::ignore_unused(distance_to_eb);
+#endif
 }
 
 #ifdef WARPX_QED

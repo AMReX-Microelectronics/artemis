@@ -27,7 +27,6 @@
 #endif // use PSATD ifdef
 #include "FieldSolver/WarpX_FDTD.H"
 #include "Filter/NCIGodfreyFilter.H"
-#include "Parser/WarpXParserWrapper.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Python/WarpXWrappers.h"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -155,10 +154,14 @@ std::string WarpX::str_Hz_bias_ext_grid_function;
 #endif
 
 int WarpX::do_moving_window = 0;
+int WarpX::start_moving_window_step = 0;
+int WarpX::end_moving_window_step = -1;
 int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
 bool WarpX::fft_do_time_averaging = false;
+
+amrex::IntVect WarpX::fill_guards = amrex::IntVect(0);
 
 Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1._rt;
@@ -346,6 +349,7 @@ WarpX::WarpX ()
 
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
+    m_distance_to_eb.resize(nlevs_max);
 
     current_store.resize(nlevs_max);
 
@@ -564,6 +568,8 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_moving_window", do_moving_window);
         if (do_moving_window)
         {
+            pp_warpx.query("start_moving_window_step", start_moving_window_step);
+            pp_warpx.query("end_moving_window_step", end_moving_window_step);
             std::string s;
             pp_warpx.get("moving_window_dir", s);
             if (s == "x" || s == "X") {
@@ -721,12 +727,26 @@ WarpX::ReadParameters ()
             quantum_xi_c2 = static_cast<amrex::Real>(quantum_xi * PhysConst::c * PhysConst::c);
         }
 
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if ( ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
+                   WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ) ||
+                 ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML &&
+                   WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller ) )
+            {
+                amrex::Abort("PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
+            }
+
+            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ||
+                WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller)
+            {
+                // SilverMueller is implemented for Yee
+                if (maxwell_solver_id != MaxwellSolverAlgo::Yee) {
+                    amrex::Abort("The Silver-Mueller boundary condition can only be used with the Yee solver.");
+                }
+            }
+        }
 
         pp_warpx.query("do_pml", do_pml);
-        pp_warpx.query("do_silver_mueller", do_silver_mueller);
-        if ( (do_pml==1)&&(do_silver_mueller==1) ) {
-            amrex::Abort("PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
-        }
         pp_warpx.query("pml_ncell", pml_ncell);
         pp_warpx.query("pml_delta", pml_delta);
         pp_warpx.query("pml_has_particles", pml_has_particles);
@@ -1188,6 +1208,18 @@ WarpX::ReadParameters ()
                 "field boundary in both lo and hi must be set to Damped for PSATD"
             );
         }
+
+        // Whether to fill the guard cells with inverse FFTs:
+        // WarpX::fill_guards = amrex::IntVect(0) by default,
+        // except for non-periodic directions with damping.
+        for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
+        {
+            if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
+                WarpX::field_boundary_hi[dir] == FieldBoundaryType::Damped)
+            {
+                WarpX::fill_guards[dir] = 1;
+            }
+        }
     }
 
     if (maxwell_solver_id != MaxwellSolverAlgo::PSATD ) {
@@ -1643,7 +1675,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE,tag("Efield_avg_fp[z]"));
 
 #ifdef AMREX_USE_EB
-    // EB info are needed only at the coarsest level
+    // EB info are needed only at the finest level
     if (lev == maxLevel())
     {
       m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngE, tag("m_edge_lengths[x]"));
@@ -1652,6 +1684,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
       m_face_areas[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[x]"));
       m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[y]"));
       m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngE, tag("m_face_areas[z]"));
+      constexpr int nc_ls = 1;
+      constexpr int ng_ls = 2;
+      m_distance_to_eb[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_distance_to_eb"));
     }
 #endif
 
@@ -2105,6 +2140,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 noy_fft,
                                                 noz_fft,
                                                 do_nodal,
+                                                WarpX::fill_guards,
                                                 m_v_galilean,
                                                 m_v_comoving,
                                                 dx_vect,
@@ -2113,7 +2149,9 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_periodic_single_box,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
-                                                J_linear_in_time);
+                                                J_linear_in_time,
+                                                do_dive_cleaning,
+                                                do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
 }
 #   endif
