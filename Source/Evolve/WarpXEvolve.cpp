@@ -435,21 +435,15 @@ WarpX::OneStep_nosub (Real cur_time)
         FillBoundaryG(guard_cells.ng_FieldSolverG);
 #ifndef WARPX_MAG_LLG
             EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
-            if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
             FillBoundaryB(guard_cells.ng_FieldSolver);
 #endif
 
 #ifdef WARPX_MAG_LLG
-            if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
-                if (mag_time_scheme_order==1){
-                    MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
-                } else if (mag_time_scheme_order==2){
-                    MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
-                } else {
-                    amrex::Abort("unsupported mag_time_scheme_order for M field");
-                }
-                FillBoundaryH(guard_cells.ng_FieldSolver);
-                FillBoundaryM(guard_cells.ng_FieldSolver);
+        if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
+            if (mag_time_scheme_order==1){
+                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+            } else if (mag_time_scheme_order==2){
+                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }
@@ -474,6 +468,7 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryE(guard_cells.ng_FieldSolver);
             
             EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+            EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
 #ifndef WARPX_MAG_LLG
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
