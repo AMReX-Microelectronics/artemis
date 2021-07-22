@@ -434,7 +434,7 @@ WarpX::OneStep_nosub (Real cur_time)
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         FillBoundaryG(guard_cells.ng_FieldSolverG);
 #ifndef WARPX_MAG_LLG
-            EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
+            EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
             if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
             FillBoundaryB(guard_cells.ng_FieldSolver);
 #endif
