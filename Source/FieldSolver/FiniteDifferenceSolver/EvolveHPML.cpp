@@ -65,7 +65,7 @@ void FiniteDifferenceSolver::EvolveHPMLCartesian (
     const bool dive_cleaning) {
 
     // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Hfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {

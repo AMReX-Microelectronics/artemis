@@ -141,7 +141,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
     amrex::GpuArray<int, 3> const& macro_cr     = macroscopic_properties->macro_cr_ratio;
 
     // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
