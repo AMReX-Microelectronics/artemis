@@ -41,7 +41,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
    // but we compile code for each algorithm, using templates)
     amrex::ignore_unused(Ffield);
 #ifdef WARPX_MAG_LLG
-    amrex::ignore_unused(mu_mf);
+    amrex::ignore_unused(mu_mf, eps_mf, sigma_mf, macroscopic_properties);
 #endif
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles);
