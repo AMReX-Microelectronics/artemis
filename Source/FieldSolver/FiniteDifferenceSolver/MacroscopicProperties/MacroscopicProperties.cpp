@@ -36,7 +36,6 @@ MacroscopicProperties::ReadParameters ()
     // The vacuum values are used as default for the macroscopic parameters
     // with a warning message to the user to indicate that no value was specified.
 
-    auto &warpx = WarpX::GetInstance();
 
     // Query input for material conductivity, sigma.
     bool sigma_specified = false;
@@ -100,6 +99,7 @@ MacroscopicProperties::ReadParameters ()
     }
 
 #ifdef WARPX_MAG_LLG
+    auto &warpx = WarpX::GetInstance();
     pp_macroscopic.get("mag_Ms_init_style", m_mag_Ms_s);
     if (m_mag_Ms_s == "constant") pp_macroscopic.get("mag_Ms", m_mag_Ms);
     // _mag_ such that it's clear the Ms variable is only meaningful for magnetic materials

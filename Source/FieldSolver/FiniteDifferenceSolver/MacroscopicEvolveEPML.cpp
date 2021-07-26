@@ -39,6 +39,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
+    amrex::ignore_unused(Ffield);
+#ifdef WARPX_MAG_LLG
+    amrex::ignore_unused(mu_mf);
+#endif
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
@@ -151,7 +155,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
         // material macroscopic properties
         Array4<Real> const& sigma_arr = sigma_mf->array(mfi);
         Array4<Real> const& eps_arr = eps_mf->array(mfi);
+#ifndef WARPX_MAG_LLG
         Array4<Real> const& mu_arr = mu_mf->array(mfi);
+#endif
 
 
         // Extract stencil coefficients
