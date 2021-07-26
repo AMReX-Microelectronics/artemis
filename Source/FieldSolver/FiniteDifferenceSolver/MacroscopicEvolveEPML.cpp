@@ -39,12 +39,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-    amrex::ignore_unused(Ffield);
-#ifdef WARPX_MAG_LLG
-    amrex::ignore_unused(mu_mf, eps_mf, sigma_mf, macroscopic_properties);
-#endif
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles);
+    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, mu_mf, ps_mf, sigma_mf, macroscopic_properties);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
