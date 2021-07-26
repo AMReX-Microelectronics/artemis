@@ -184,8 +184,13 @@ void getCellCoordinates (int i, int j, int k,
 {
     using namespace amrex::literals;
     x = domain_lo[0] + i*dx[0] + (1._rt - mf_type[0]) * dx[0]*0.5;
+#if (AMREX_SPACEDIM==2)
+    y = 0._rt;
+    z = domain_lo[1] + k*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
+#else
     y = domain_lo[1] + j*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
     z = domain_lo[2] + k*dx[2] + (1._rt - mf_type[2]) * dx[2]*0.5;
+#endif
 }
 
 
