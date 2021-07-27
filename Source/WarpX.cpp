@@ -1512,10 +1512,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 {
     // Declare nodal flags
     IntVect Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag;
-    IntVect Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag;
+#ifdef WARPX_MAG_LLG
     IntVect Mx_nodal_flag, My_nodal_flag, Mz_nodal_flag;
     IntVect Hx_nodal_flag, Hy_nodal_flag, Hz_nodal_flag;
     IntVect Hx_bias_nodal_flag, Hy_bias_nodal_flag, Hz_bias_nodal_flag;
+#else
+    IntVect Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag;
+#endif
     IntVect jx_nodal_flag, jy_nodal_flag, jz_nodal_flag;
     IntVect rho_nodal_flag;
     IntVect phi_nodal_flag;
