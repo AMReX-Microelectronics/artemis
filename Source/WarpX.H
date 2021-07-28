@@ -119,6 +119,7 @@ public:
     static std::string E_excitation_grid_s;
 #ifdef WARPX_MAG_LLG
     static std::string H_excitation_grid_s;
+    static std::string H_bias_excitation_grid_s;
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -149,6 +150,10 @@ public:
     static std::string str_Hx_excitation_grid_function;
     static std::string str_Hy_excitation_grid_function;
     static std::string str_Hz_excitation_grid_function;
+    // Function for H bias excitation (x,y,z,t) on the grid
+    static std::string str_Hx_bias_excitation_grid_function;
+    static std::string str_Hy_bias_excitation_grid_function;
+    static std::string str_Hz_bias_excitation_grid_function;
 #endif
     // Flag for type of excitation (hard/soft)
     static std::string str_Ex_excitation_flag_function;
@@ -161,6 +166,9 @@ public:
     static std::string str_Hx_excitation_flag_function;
     static std::string str_Hy_excitation_flag_function;
     static std::string str_Hz_excitation_flag_function;
+    static std::string str_Hx_bias_excitation_flag_function;
+    static std::string str_Hy_bias_excitation_flag_function;
+    static std::string str_Hz_bias_excitation_flag_function;
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -201,6 +209,10 @@ public:
     std::unique_ptr<amrex::Parser> Hxfield_xt_grid_parser;
     std::unique_ptr<amrex::Parser> Hyfield_xt_grid_parser;
     std::unique_ptr<amrex::Parser> Hzfield_xt_grid_parser;
+    // Parser for H_bias external excitation on the grid
+    std::unique_ptr<amrex::Parser> Hx_biasfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Hy_biasfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Hz_biasfield_xt_grid_parser;
 #endif
     std::unique_ptr<amrex::Parser> Exfield_flag_parser;
     std::unique_ptr<amrex::Parser> Eyfield_flag_parser;
@@ -212,6 +224,9 @@ public:
     std::unique_ptr<amrex::Parser> Hxfield_flag_parser;
     std::unique_ptr<amrex::Parser> Hyfield_flag_parser;
     std::unique_ptr<amrex::Parser> Hzfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hx_biasfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hy_biasfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hz_biasfield_flag_parser;
 #endif
 
 #ifdef WARPX_MAG_LLG

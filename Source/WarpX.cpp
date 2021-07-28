@@ -93,6 +93,7 @@ std::string WarpX::B_excitation_grid_s = "default";
 std::string WarpX::E_excitation_grid_s = "default";
 #ifdef WARPX_MAG_LLG
 std::string WarpX::H_excitation_grid_s = "default";
+std::string WarpX::H_bias_excitation_grid_s = "default";
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -124,6 +125,9 @@ std::string WarpX::str_Ez_excitation_grid_function;
 std::string WarpX::str_Hx_excitation_grid_function;
 std::string WarpX::str_Hy_excitation_grid_function;
 std::string WarpX::str_Hz_excitation_grid_function;
+std::string WarpX::str_Hx_bias_excitation_grid_function;
+std::string WarpX::str_Hy_bias_excitation_grid_function;
+std::string WarpX::str_Hz_bias_excitation_grid_function;
 #endif
 // Flag for type of excitation 0=none, 1=hard, 2=soft
 std::string WarpX::str_Ex_excitation_flag_function;
@@ -136,6 +140,9 @@ std::string WarpX::str_Bz_excitation_flag_function;
 std::string WarpX::str_Hx_excitation_flag_function;
 std::string WarpX::str_Hy_excitation_flag_function;
 std::string WarpX::str_Hz_excitation_flag_function;
+std::string WarpX::str_Hx_bias_excitation_flag_function;
+std::string WarpX::str_Hy_bias_excitation_flag_function;
+std::string WarpX::str_Hz_bias_excitation_flag_function;
 #endif
 
 #ifdef WARPX_MAG_LLG

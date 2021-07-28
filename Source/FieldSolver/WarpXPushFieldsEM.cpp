@@ -767,6 +767,7 @@ WarpX::MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real a_dt) {
 
     // Apply external field excitation prior to applying boundary conditions such that excitation does not overwrite B.C. 
     ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation
+    ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H bias external excitation
 
     // Evolve H field in PML cells
     if (do_pml && pml[lev]->ok()) {
@@ -813,6 +814,7 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
 
     // Apply external field excitation prior to applying boundary conditions such that excitation does not overwrite B.C. 
     ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation
+    ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H bias external excitation
     
     // Evolve H field in PML cells
     if (do_pml && pml[lev]->ok()) {
