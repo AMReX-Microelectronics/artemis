@@ -1079,7 +1079,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
         mfx->nComp() == mfy->nComp() and mfx->nComp() == mfz->nComp(),
         "The number of components for the three Multifabs must be equal");
     // Number of multifab components
+#ifdef WARPX_MAG_LLG
     int ncomp = mfx->nComp();
+#endif
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 

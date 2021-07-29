@@ -77,14 +77,14 @@ WarpX::DampPML (int lev, PatchType patch_type)
         const amrex::IntVect Ey_stag = pml_E[1]->ixType().toIntVect();
         const amrex::IntVect Ez_stag = pml_E[2]->ixType().toIntVect();
 
-        const amrex::IntVect Bx_stag = pml_B[0]->ixType().toIntVect();
-        const amrex::IntVect By_stag = pml_B[1]->ixType().toIntVect();
-        const amrex::IntVect Bz_stag = pml_B[2]->ixType().toIntVect();
-
 #if WARPX_MAG_LLG
         const amrex::IntVect Hx_stag = pml_H[0]->ixType().toIntVect();
         const amrex::IntVect Hy_stag = pml_H[1]->ixType().toIntVect();
         const amrex::IntVect Hz_stag = pml_H[2]->ixType().toIntVect();
+#else
+        const amrex::IntVect Bx_stag = pml_B[0]->ixType().toIntVect();
+        const amrex::IntVect By_stag = pml_B[1]->ixType().toIntVect();
+        const amrex::IntVect Bz_stag = pml_B[2]->ixType().toIntVect();
 #endif
         amrex::IntVect F_stag;
         if (pml_F) {
