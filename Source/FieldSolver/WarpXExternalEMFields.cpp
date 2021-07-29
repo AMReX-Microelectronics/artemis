@@ -106,7 +106,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
     amrex::Real t = gett_new(lev);
     const auto problo = Geom(lev).ProbLoArray();
     const auto dx = Geom(lev).CellSizeArray();
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)

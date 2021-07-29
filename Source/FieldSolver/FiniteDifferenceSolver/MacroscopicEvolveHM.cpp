@@ -90,7 +90,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     // obtain the maximum relative amount we let M deviate from Ms before aborting
     amrex::Real mag_normalized_error = macroscopic_properties->getmag_normalized_error();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
 
