@@ -4,7 +4,7 @@ Input Parameters
 ================
 
 .. note::
-   The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
+   :cpp:`amrex::Parser` (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
 
 .. _running-cpp-parameters-overall:
 
@@ -132,11 +132,6 @@ Setting up the field mesh
 
     Note: in development; currently allowed value: ``2 2 2``.
 
-* ``geometry.is_periodic`` (`2 integers in 2D`, `3 integers in 3D`)
-    Whether the boundary conditions are periodic, in each direction.
-
-    For each direction, use 1 for periodic conditions, 0 otherwise.
-
 * ``geometry.coord_sys`` (`integer`) optional (default `0`)
     Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
 
@@ -155,6 +150,12 @@ Setting up the field mesh
 * ``warpx.moving_window_v`` (`float`)
     The speed of moving window, in units of the speed of light
     (i.e. use ``1.0`` for a moving window that moves exactly at the speed of light)
+
+* ``warpx.start_moving_window_step`` (`integer`; 0 by default)
+    The timestep at which the moving window starts.
+
+* ``warpx.end_moving_window_step`` (`integer`; default is ``-1`` for false)
+    The timestep at which the moving window ends.
 
 * ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
@@ -209,14 +210,16 @@ Setting up the field mesh
 Domain Boundary Conditions
 --------------------------
 
-* ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+* ``boundary.field_lo`` and ``boundary.field_hi`` (`2 strings` for 2D, `3 strings` for 3D, `pml` by default)
     Boundary conditions applied to field at the lower and upper domain boundaries. Depending on the type of boundary condition, the value for ``geometry.is_periodic`` will be set, overriding the user-input for the input parameter, ``geometry.is_periodic``. If not set, the default value for the fields at the domain boundary will be set to pml.
     Options are:
 
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
 
-    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. It will override the user-defined value provided for ``warpx.do_pml``. See the :ref:`PML theory section <theory-bc>` for more details.
+    * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. See the :ref:`PML theory section <theory-bc>` for more details.
     Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
+
+    * ``absorbing_silver_mueller``: This option can be used to set the Silver-Mueller absorbing boundary conditions. These boundary conditions are simpler and less computationally expensive than the pml, but are also less effective at absorbing the field. They only work with the Yee Maxwell solver.
 
     * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
@@ -225,14 +228,67 @@ If an electrostatic field solve is used the boundary potentials can also be set 
 
     * ``none``: No boundary condition is applied to the fields. This option must be used for the RZ-solver at `r=0`.
 
-* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D)
+* ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
+    * ``Absorbing``: Particles leaving the boundary will be deleted.
+
     * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+
     * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain. When
     ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
 
-* ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
+    * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
+
+
+Additional PML parameters
+-------------------------
+
+* ``warpx.pml_ncell`` (`int`; default: 10)
+    The depth of the PML, in number of cells.
+
+* ``warpx.pml_delta`` (`int`; default: 10)
+    The characteristic depth, in number of cells, over which
+    the absorption coefficients of the PML increases.
+
+* ``warpx.do_pml_in_domain`` (`int`; default: 0)
+    Whether to create the PML inside the simulation area or outside. If inside,
+    it allows the user to propagate particles in PML and to use extended PML
+
+* ``warpx.pml_has_particles`` (`int`; default: 0)
+    Whether to propagate particles in PML or not. Can only be done if PML are in simulation domain,
+    i.e. if `warpx.do_pml_in_domain = 1`.
+
+* ``warpx.do_pml_j_damping`` (`int`; default: 0)
+    Whether to damp current in PML. Can only be used if particles are propagated in PML,
+    i.e. if `warpx.pml_has_particles = 1`.
+
+* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for E in the PML region.
+    The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the PSATD solver.
+
+* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+    Whether to use divergence cleaning for B in the PML region.
+    The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
+    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+
+.. _running-cpp-parameters-eb:
+
+Embedded Boundary Conditions
+----------------------------
+
+* ``warpx.eb_implicit_function`` (`string`)
+    A function of `x`, `y`, `z` that defines the surface of the embedded
+    boundary. That surface lies where the function value is 0 ;
+    the physics simulation area is where the function value is negative ;
+    the interior of the embeddded boundary is where the function value is positive.
+
+* ``warpx.eb_potential(t)`` (`string`)
+    Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
+    the electric potential at the surface of the embedded boundary,
+    as a function of time.
 
 .. _running-cpp-parameters-parallelization:
 
@@ -347,7 +403,7 @@ Distribution across MPI ranks and parallelization
 Math parser and user-defined constants
 --------------------------------------
 
-WarpX provides a math parser that reads expressions in the input file.
+WarpX uses AMReX's math parser that reads expressions in the input file.
 It can be used in all input parameters that consist of one or more floats.
 Note that when multiple floats are expected, the expressions are space delimited.
 
@@ -396,9 +452,6 @@ user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. T
 ``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
 define functions by intervals.
 Alternatively the expression above can be written as ``if(x>0, a0*x**2 * (1-y*1.e2), 0)``.
-The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`).
-Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
-A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group explicitly, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
 
 .. _running-cpp-parameters-particle:
 
@@ -444,7 +497,7 @@ Particle initialization
     When ``<species_name>.xmin`` and ``<species_name>.xmax`` are set, they delimit the region within which particles are injected.
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
-* ``<species_name>.injection_style`` (`string`)
+* ``<species_name>.injection_style`` (`string`; default: ``none``)
     Determines how the (macro-)particles will be injected in the simulation.
     The number of particles per cell is always given with respect to the coarsest level (level 0/mother grid), even if particles are immediately assigned to a refined patch.
 
@@ -503,11 +556,17 @@ Particle initialization
       ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
       ``<species_name>.num_particles_per_cell`` (`double`)
 
+    * ``none``: Do not inject macro-particles (for example, in a simulation that starts with neutral, ionizable atoms, one may want to create the electrons species -- where ionized electrons can be stored later on -- without injecting electron macro-particles).
+
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
     number of particles per theta is at least two times the number of azimuthal modes requested.
     (It is recommended to do a convergence scan of the number of particles per theta)
+
+* ``<species_name>.random_theta`` (`bool`) optional (default `1`)
+    When using RZ geometry, whether to randomize the azimuthal position of particles.
+    This is used when ``<species_name>.injection_style = NUniformPerCell``.
 
 * ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
     Split particles of the species when crossing the boundary from a lower
@@ -1145,8 +1204,16 @@ Laser initialization
     using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
     it is assumed that the first and second dimensions are `x` and `z`, respectively,
     and the value of the `Ey` component is set to zero.
-    The current implementation of the parser for B-field on particles
+    The current implementation of the parser for E-field on particles
     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
+    To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
+    option requires the following parameters,
+    ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
+    ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
+    ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
+    ``repeated_plasma_lens_strengths``, the focusing strength of each lens, an array of floats.
+    The applied field is uniform longitudinally (along z) with a hard edge,
+    where residence corrections are used for more accurate field calculation.
 
 * ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
     Two separate parameters which add an externally applied uniform E-field or
@@ -1238,20 +1305,31 @@ Collision initialization
 
 WarpX provides a relativistic elastic Monte Carlo binary collision model,
 following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+A non-relativistic Monte Carlo treatment for particles colliding
+with a neutral, uniform background gas is also available. The implementation follows the so-called
+null collision strategy discussed for example in `Birdsall (IEEE Transactions on
+Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
     This is then used in the rest of the input deck;
     in this documentation we use ``<collision_name>`` as a placeholder.
 
-* ``<collision_name>.species`` (`strings`, two species names separated by spaces)
-    The names of two species, between which the collision will be considered.
+* ``<collision_name>.type`` (`string`) optional
+    The type of collsion. The types implemented are ``pairwisecoulomb`` for pairwise Coulomb collisions and
+    ``background_mcc`` for collisions between particles and a neutral background. If not specified, it defaults to ``pairwisecoulomb``.
+
+* ``<collision_name>.species`` (`strings`)
+    If using ``pairwisecoulomb`` type this should be the names of two species,
+    between which the collision will be considered.
     The number of provided ``<collision_name>.species`` should match
     the number of collision names, i.e. ``collisions.collision_names``.
+    If using ``background_mcc`` type this should be the name of the species for
+    which collisions will be included. Only one species name should be given.
 
 * ``<collision_name>.CoulombLog`` (`float`) optional
-    A provided fixed Coulomb logarithm of the collision type
-    ``<collision_name>``.
+    Only for ``pairwisecoulomb``. A provided fixed Coulomb logarithm of the
+    collision type ``<collision_name>``.
     For example, a typical Coulomb logarithm has a form of
     :math:`\ln(\lambda_D/R)`,
     where :math:`\lambda_D` is the Debye length,
@@ -1262,8 +1340,43 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
 * ``<collision_name>.ndt`` (`int`) optional
-    Execute collision every # time steps.
-    The default value is 1.
+    Execute collision every # time steps. The default value is 1.
+
+* ``<collision_name>.background_density`` (`float`)
+    Only for ``background_mcc``. The density of the neutral background gas in :math:`m^{-3}`.
+
+* ``<collision_name>.background_temperature`` (`float`)
+    Only for ``background_mcc``. The temperature of the neutral background gas in Kelvin.
+
+* ``<collision_name>.background_mass`` (`float`) optional
+    Only for ``background_mcc``. The mass of the background gas in kg. If not
+    given the mass of the colliding species will be used unless ionization is
+    included in which case the mass of the product species will be used.
+
+* ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
+    Only for ``background_mcc``. The MCC scattering processes that should be
+    included. Available options are ``elastic``, ``back`` & ``charge_exchange``
+    for ions and ``elastic``, ``excitationX`` & ``ionization`` for electrons.
+    Multiple excitation events can be included for electrons corresponding to
+    excitation to different levels, the ``X`` above can be changed to a unique
+    identifier for each excitation process. For each scattering process specified
+    a path to a cross-section data file must  also be given. We use
+    ``<scattering_process>`` as a placeholder going forward.
+
+* ``<collision_name>.<scattering_process>_cross_section`` (`string`)
+    Only for ``background_mcc``. Path to the file containing cross-section data
+    for the given scattering processes. The cross-section file must have exactly
+    2 columns of data, the first containing equally spaced energies in eV and the
+    second the corresponding cross-section in :math:`m^2`.
+
+* ``<collision_name>.<scattering_process>_energy`` (`float`)
+    Only for ``background_mcc``. If the scattering process is either
+    ``excitationX`` or ``ionization`` the energy cost of that process must be given in eV.
+
+* ``<collision_name>.ionization_species`` (`float`)
+    Only for ``background_mcc``. If the scattering process is ``ionization`` the
+    produced species must also be given. For example if argon properties is used
+    for the background gas, a species of argon ions should be specified here.
 
 .. _running-cpp-parameters-numerics:
 
@@ -1664,59 +1777,6 @@ Numerics and algorithms
      If ``sort_intervals`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
-.. _running-cpp-parameters-boundary:
-
-Boundary conditions
--------------------
-
-* ``warpx.do_pml`` (`0` or `1`; default: 1)
-    Whether to add Perfectly Matched Layers (PML) around the simulation box,
-    and around the refinement patches.
-    See the :ref:`PML theory section <theory-bc>` for more details.
-
-* ``warpx.pml_ncell`` (`int`; default: 10)
-    The depth of the PML, in number of cells.
-
-* ``warpx.pml_delta`` (`int`; default: 10)
-    The characteristic depth, in number of cells, over which
-    the absorption coefficients of the PML increases.
-
-* ``warpx.do_pml_in_domain`` (`int`; default: 0)
-    Whether to create the PML inside the simulation area or outside. If inside,
-    it allows the user to propagate particles in PML and to use extended PML
-
-* ``warpx.pml_has_particles`` (`int`; default: 0)
-    Whether to propagate particles in PML or not. Can only be done if PML are in simulation domain,
-    i.e. if `warpx.do_pml_in_domain = 1`.
-
-* ``warpx.do_pml_j_damping`` (`int`; default: 0)
-    Whether to damp current in PML. Can only be used if particles are propagated in PML,
-    i.e. if `warpx.pml_has_particles = 1`.
-
-* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
-    Whether to use divergence cleaning for E in the PML region.
-    The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
-    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
-
-* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
-    Whether to use divergence cleaning for B in the PML region.
-    The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
-    This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
-
-* ``warpx.do_pml_Lo`` (`2 ints in 2D`, `3 ints in 3D`; default: `1 1 1`)
-    The directions along which one wants a pml boundary condition for lower boundaries on mother grid.
-
-* ``warpx.do_pml_Hi`` (`2 floats in 2D`, `3 floats in 3D`; default: `1 1 1`)
-    The directions along which one wants a pml boundary condition for upper boundaries on mother grid.
-
-* ``warpx.do_silver_mueller`` (`0` or `1`; default: 1)
-    Whether to use the Silver-Mueller absorbing boundary conditions. These
-    boundary conditions are simpler and less computationally expensive than
-    the PML, but are also less effective at absorbing the field. They only
-    work with the Yee Maxwell solver.
-
 .. _running-cpp-parameters-diagnostics:
 
 Diagnostics and output
@@ -1864,8 +1924,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     divisor of ``blocking_factor``. If ``warpx.numprocs`` is used instead, the total number of cells in a given
     dimension must be a multiple of the ``coarsening_ratio`` multiplied by ``numprocs`` in that dimension.
 
-* ``<diag_name>.file_prefix`` (`string`) optional (default `diags/plotfiles/plt`)
+* ``<diag_name>.file_prefix`` (`string`) optional (default `diags/<diag_name>`)
     Root for output file names. Supports sub-directories.
+
+* ``<diag_name>.file_min_digits`` (`int`) optional (default `5`)
+    The minimum number of digits used for the iteration number appended to the diagnostic file names.
 
 * ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
     Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``). Currently, when the ``diag_lo`` is different from ``warpx.dom_lo``, particle output is disabled.

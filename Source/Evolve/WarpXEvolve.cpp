@@ -172,6 +172,7 @@ WarpX::Evolve (int numsteps)
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
 
+        if (warpx_py_particleinjection) warpx_py_particleinjection();
         // Electrostatic case: only gather fields and push particles,
         // deposition and calculation of fields done further below
         if (do_electrostatic != ElectrostaticSolverAlgo::None)
@@ -260,7 +261,7 @@ WarpX::Evolve (int numsteps)
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
 
-        int num_moved = MoveWindow(move_j);
+        int num_moved = MoveWindow(step+1, move_j);
 
         mypc->ContinuousFluxInjection(dt[0]);
 
@@ -290,7 +291,11 @@ WarpX::Evolve (int numsteps)
             }
         }
 
-
+        // interact with particles with EB walls (if present)
+#ifdef AMREX_USE_EB
+        AMREX_ALWAYS_ASSERT(maxLevel() == 0);
+        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+#endif
         if (sort_intervals.contains(step+1)) {
             amrex::Print() << "re-sorting particles \n";
             mypc->SortParticlesByBin(sort_bin_size);
@@ -365,7 +370,6 @@ WarpX::OneStep_nosub (Real cur_time)
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
     // Deposit charge density rho^{n}
-    if (warpx_py_particleinjection) warpx_py_particleinjection();
     if (warpx_py_particlescraper) warpx_py_particlescraper();
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
     PushParticlesandDepose(cur_time);
@@ -430,29 +434,28 @@ WarpX::OneStep_nosub (Real cur_time)
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         FillBoundaryG(guard_cells.ng_FieldSolverG);
 #ifndef WARPX_MAG_LLG
-            EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
-            if (do_silver_mueller) ApplySilverMuellerBoundary( dt[0] );
-            FillBoundaryB(guard_cells.ng_FieldSolver);
-            // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // apply B external excitation; soft source to be fixed
+        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
+        FillBoundaryB(guard_cells.ng_FieldSolver);
+        // ApplyExternalFieldExcitation
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // apply B external excitation; soft source to be fixed
 #endif
 
 #ifdef WARPX_MAG_LLG
-            if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
-                if (mag_time_scheme_order==1){
-                    MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
-                } else if (mag_time_scheme_order==2){
-                    MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
-                } else {
-                    amrex::Abort("unsupported mag_time_scheme_order for M field");
-                }
-                FillBoundaryH(guard_cells.ng_FieldSolver);
-                FillBoundaryM(guard_cells.ng_FieldSolver);
-                // ApplyExternalFieldExcitation
-                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation; soft source to be fixed
+        if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
+            if (mag_time_scheme_order==1){
+                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+            } else if (mag_time_scheme_order==2){
+                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
             } else {
-                amrex::Abort("unsupported em_solver_medium for M field");
+                amrex::Abort("unsupported mag_time_scheme_order for M field");
             }
+            FillBoundaryH(guard_cells.ng_FieldSolver);
+            FillBoundaryM(guard_cells.ng_FieldSolver);
+            // ApplyExternalFieldExcitation
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation; soft source to be fixed
+        } else {
+            amrex::Abort("unsupported em_solver_medium for M field");
+        }
 #endif
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
             // vacuum medium
@@ -464,13 +467,14 @@ WarpX::OneStep_nosub (Real cur_time)
             amrex::Abort(" Medium for EM is unknown \n");
         }
 
-            FillBoundaryE(guard_cells.ng_FieldSolver);
-            // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternal); // apply E external excitation; soft source to be fixed
+        FillBoundaryE(guard_cells.ng_FieldSolver);
+        // ApplyExternalFieldExcitation
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternal); // apply E external excitation; soft source to be fixed
 
-            EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
 #ifndef WARPX_MAG_LLG
-        EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
+        EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
         // Synchronize E and B fields on nodal points
         NodalSyncE();
@@ -526,10 +530,6 @@ WarpX::OneStep_nosub (Real cur_time)
 void
 WarpX::OneStep_multiJ (const amrex::Real cur_time)
 {
-#ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(cur_time);
-    amrex::Abort("multi-J algorithm not implemented for RZ geometry");
-#else
 #ifdef WARPX_USE_PSATD
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
@@ -542,8 +542,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         // 1) Prepare E,B,F,G fields in spectral space
         PSATDForwardTransformEB();
-        PSATDForwardTransformF();
-        PSATDForwardTransformG();
+        if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
+        if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
 
         // 2) Set the averaged fields to zero
         if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
@@ -620,8 +620,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             if (i_depose == n_depose-1)
             {
                 PSATDBackwardTransformEB();
-                PSATDBackwardTransformF();
-                PSATDBackwardTransformG();
+                if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
+                if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
             }
         }
 
@@ -634,8 +634,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         }
         FillBoundaryE(guard_cells.ng_alloc_EB);
         FillBoundaryB(guard_cells.ng_alloc_EB);
-        FillBoundaryF(guard_cells.ng_alloc_F);
-        FillBoundaryG(guard_cells.ng_alloc_G);
+        if (WarpX::do_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
+        if (WarpX::do_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
     }
     else
     {
@@ -645,7 +645,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     amrex::ignore_unused(cur_time);
     amrex::Abort("multi-J algorithm not implemented for FDTD");
 #endif // WARPX_USE_PSATD
-#endif // not WARPX_DIM_RZ
 }
 
 /* /brief Perform one PIC iteration, with subcycling
@@ -686,7 +685,7 @@ WarpX::OneStep_sub1 (Real curtime)
     ApplyFilterandSumBoundaryRho(fine_lev, PatchType::fine, 0, 2*ncomps);
     NodalSyncRho(fine_lev, PatchType::fine, 0, 2);
 
-    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev]);
+    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_alloc_F);
@@ -694,7 +693,7 @@ WarpX::OneStep_sub1 (Real curtime)
     EvolveE(fine_lev, PatchType::fine, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldGather);
 
-    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev]);
+    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
 
     if (do_pml) {
@@ -713,7 +712,7 @@ WarpX::OneStep_sub1 (Real curtime)
     AddCurrentFromFineLevelandSumBoundary(coarse_lev);
     AddRhoFromFineLevelandSumBoundary(coarse_lev, 0, ncomps);
 
-    EvolveB(fine_lev, PatchType::coarse, dt[fine_lev]);
+    EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
     FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldGather);
     FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF);
@@ -721,7 +720,7 @@ WarpX::OneStep_sub1 (Real curtime)
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldGather);
 
-    EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
+    EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::FirstHalf);
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::FirstHalf);
     FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather);
     FillBoundaryF(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolverF);
@@ -744,7 +743,7 @@ WarpX::OneStep_sub1 (Real curtime)
     ApplyFilterandSumBoundaryRho(fine_lev, PatchType::fine, 0, ncomps);
     NodalSyncRho(fine_lev, PatchType::fine, 0, 2);
 
-    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev]);
+    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_FieldSolverF);
@@ -752,7 +751,7 @@ WarpX::OneStep_sub1 (Real curtime)
     EvolveE(fine_lev, PatchType::fine, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
-    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev]);
+    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
 
     if (do_pml) {
@@ -773,7 +772,7 @@ WarpX::OneStep_sub1 (Real curtime)
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver);
 
-    EvolveB(fine_lev, PatchType::coarse, dt[fine_lev]);
+    EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
 
     if (do_pml) {
@@ -790,11 +789,11 @@ WarpX::OneStep_sub1 (Real curtime)
     EvolveE(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
     FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
-    EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
+    EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
 
     if (do_pml) {
-        if (do_moving_window){
+        if (moving_window_active(istep[0]+1)){
             // Exchance guard cells of PMLs only (0 cells are exchanged for the
             // regular B field MultiFab). This is required as B and F have just been
             // evolved.

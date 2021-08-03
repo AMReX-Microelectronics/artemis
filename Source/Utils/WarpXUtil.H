@@ -8,10 +8,9 @@
 #ifndef WARPX_UTILS_H_
 #define WARPX_UTILS_H_
 
-#include "Parser/WarpXParser.H"
-
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
@@ -185,25 +184,41 @@ void getCellCoordinates (int i, int j, int k,
 {
     using namespace amrex::literals;
     x = domain_lo[0] + i*dx[0] + (1._rt - mf_type[0]) * dx[0]*0.5;
+#if (AMREX_SPACEDIM==2)
+    amrex::ignore_unused(j);
+    y = 0._rt;
+    z = domain_lo[1] + k*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
+#else
     y = domain_lo[1] + j*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
     z = domain_lo[2] + k*dx[2] + (1._rt - mf_type[2]) * dx[2]*0.5;
+#endif
 }
 
 
 }
 
 /**
-* \brief Initialize a WarpXParser object from a string containing a math expression
+* \brief Initialize an amrex::Parser object from a string containing a math expression
 *
 * \param parse_function String to read to initialize the parser.
 */
-WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames);
+amrex::Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames);
+
+template <int N>
+amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
+{
+    if (parser) {
+        return parser->compile<N>();
+    } else {
+        return amrex::ParserExecutor<N>{};
+    }
+}
 
 /**
  * \brief Similar to amrex::ParmParse::query, but also supports math expressions for the value.
  *
  * amrex::ParmParse::query reads a name and a value from the input file. This function does the
- * same, and applies the WarpXParser to the value, so the user has the choice to specify a value or
+ * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
  * a math expression (including user-defined constants).
  * Only works for amrex::Real numbers, one would need another version for integers etc.
  *
@@ -219,7 +234,7 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
  * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
  *
  * amrex::ParmParse::get reads a name and a value from the input file. This function does the
- * same, and applies the WarpXParser to the value, so the user has the choice to specify a value or
+ * same, and applies the Parser to the value, so the user has the choice to specify a value or
  * a math expression (including user-defined constants).
  * Only works for amrex::Real numbers, one would need another version for integers etc.
  *
