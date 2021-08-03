@@ -14,10 +14,10 @@ amr.n_cell = 1024 4 512 # number of cells spanning the domain in each coordinate
 amr.max_grid_size = 1024 # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 4 # only meaningful for AMR
 geometry.coord_sys = 0
-geometry.is_periodic = 0 0 0 
+geometry.is_periodic = 0 0 0
 
 # waveguide width 14.95mm, height is 11.43mm, and length is 280mm
-# 14.95mm to make the wave guide work on fundamental mode at 10.5GHz 
+# 14.95mm to make the wave guide work on fundamental mode at 10.5GHz
 # 11.43mm < 14.95mm so that the fundamental mode is TE10
 geometry.prob_lo = -7.475e-3 -5.715e-3 -250.0e-3 # must be consistent with my_constants.length and .diag_hi/lo
 geometry.prob_hi =  7.475e-3  5.715e-3  250.0e-3
@@ -31,7 +31,7 @@ my_constants.width = 14.95e-3 # waveguide width is 14.95mm
 my_constants.height = 11.43e-3 # waveguide height is 10.16mm
 my_constants.length = 500.0e-3 # waveguide length is 400mm
 my_constants.rjx = 1.0e-4 # the x dimension of current source cross-section
-my_constants.rjz = 10.0e-4 # the z dimension of current source cross-section; should be just larger than 2*dz 
+my_constants.rjz = 10.0e-4 # the z dimension of current source cross-section; should be just larger than 2*dz
 my_constants.wavelength = 0.0286 # frequency is 10.5 GHz
 my_constants.TP = 9.5238e-11 # Gaussian pulse width, 1 x time period of excitation
 my_constants.flag_none = 0 # no source flag
