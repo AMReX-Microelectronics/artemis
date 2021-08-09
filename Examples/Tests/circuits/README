@@ -1,0 +1,13 @@
+For all simulations we use
+
+amr.n_cell = 128 128 128
+geometry.prob_lo = -16.e-6 -16.e-6 -16.e-6
+geometry.prob_hi =  16.e-6  16.e-6  16.e-6
+
+(dx = 2.5e-7)
+
+The PEC tube walls have normal in the +/- x and z directions, so the direction of propagation is y
+
+inputs_1 - initialize a wave inside the PEC.  pml boundary conditions at all walls
+
+Upcoming: initialize a current source on the lo-y wall
