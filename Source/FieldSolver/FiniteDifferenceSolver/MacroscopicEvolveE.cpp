@@ -127,7 +127,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
     auto& sigma_mf = macroscopic_properties->getsigma_mf();
     auto& epsilon_mf = macroscopic_properties->getepsilon_mf();
+#ifndef WARPX_MAG_LLG
     auto& mu_mf = macroscopic_properties->getmu_mf();
+#endif
 
     // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
     // properties from their respective staggering to the Ex, Ey, Ez locations
@@ -162,7 +164,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         // material prop //
         Array4<Real> const& sigma_arr = sigma_mf.array(mfi);
         Array4<Real> const& eps_arr = epsilon_mf.array(mfi);
+#ifndef WARPX_MAG_LLG
         Array4<Real> const& mu_arr = mu_mf.array(mfi);
+#endif
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
