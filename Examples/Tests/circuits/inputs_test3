@@ -1,6 +1,3 @@
-# This is a E+B (use USE_LLG=FALSE, ie., no M field) simulation of a
-# plane wave in a periodic domain
-
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
@@ -9,7 +6,6 @@ amr.n_cell = 128 128 128
 amr.max_grid_size = 32
 amr.blocking_factor = 16
 geometry.coord_sys   = 0
-geometry.is_periodic = 0  0  0
 geometry.prob_lo     =  -16.e-6 -16.e-6 -16.e-6
 geometry.prob_hi     =   16.e-6  16.e-6  16.e-6
 amr.max_level = 0
@@ -33,7 +29,6 @@ macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
 macroscopic.epsilon_function(x,y,z) = "epsilon_0 * (y >= -0.000004) + epsilon_r_silicon * epsilon_0 * (y <= -0.000004)"
 macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
 macroscopic.mu_function(x,y,z) = "mu_0 * (y >= -0.000004) + mu_r_silicon * mu_0 * (y <= -0.000004)"
-particles.nspecies = 0
 
 #################################
 ############ FIELDS #############
