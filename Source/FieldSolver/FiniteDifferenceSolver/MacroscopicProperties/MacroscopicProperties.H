@@ -196,7 +196,7 @@ public:
          else{
              printf("n=%d\n", n);
              amrex::Abort("Wrong component n of the M_field");
-         };
+         }
          return M_field;
      }
 #endif //closes ifdef MAG_LLG
