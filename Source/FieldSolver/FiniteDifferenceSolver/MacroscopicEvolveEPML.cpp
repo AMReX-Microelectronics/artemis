@@ -44,7 +44,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
     amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, mu_mf, eps_mf, sigma_mf, macroscopic_properties);
 #    else
     amrex::ignore_unused(Efield, Hfield, Jfield, Ffield, sigba, dt, pml_has_particles, mu_mf, eps_mf, sigma_mf, macroscopic_properties);
-#endif
+#    endif
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
