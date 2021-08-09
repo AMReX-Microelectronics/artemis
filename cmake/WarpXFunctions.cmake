@@ -195,7 +195,7 @@ function(set_warpx_binary_name)
         endif()
 
         if(WarpX_MAG_LLG)
-            set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".LLG")
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".LLG")
         endif()
 
         if(WarpX_EB)
