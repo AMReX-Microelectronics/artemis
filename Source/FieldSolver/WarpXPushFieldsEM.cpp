@@ -456,13 +456,6 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
-#ifdef WARPX_MAG_LLG
-        if (mag_time_scheme_order==2){
-            for (int i = 0; i < 3; i++){
-                MultiFab::Copy(*Bfield_fp_old[lev][i],*Bfield_fp[lev][i],0,0,1,Bfield_fp[lev][i]->nGrow());
-            }
-        }
-#endif
         m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev], G_fp[lev],
                                         m_face_areas[lev], lev, a_dt);
     } else {
