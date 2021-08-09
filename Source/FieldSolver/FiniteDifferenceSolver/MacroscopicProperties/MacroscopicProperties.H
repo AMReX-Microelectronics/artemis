@@ -103,7 +103,7 @@ public:
                              + macro_mag_prop(i-iv[0]+1,j-iv[1]+1,k        )
                              + macro_mag_prop(i-iv[0]+1,j-iv[1]+1,k-iv[2]+1)
          ));
-     };
+     }
 
      /** \brief
          * This GPU kernel averages a face-centered field onto a (possibly different nodality) face.
@@ -136,7 +136,7 @@ public:
                              + Fieldcomp(i                   , j+iv_in[1]-iv_out[1], k+iv_in[2]-iv_out[2], n)
                              + Fieldcomp(i+iv_in[0]-iv_out[0], j+iv_in[1]-iv_out[1], k+iv_in[2]-iv_out[2], n)
                              ));
-     };
+     }
 
      /** \brief
      * Calculate local H_maxwell = B / mu_o - M
@@ -160,7 +160,7 @@ public:
          amrex::Real H_Maxwell = face_avg_to_face(i, j, k, 0, iv_in, iv_out, Bcomp)/PhysConst::mu0
                                  - Mcomp(i, j, k, n); //magnetic constitutive relation
          return H_Maxwell;
-     };
+     }
 
      /**
      update local M_field in the second-order time scheme
@@ -175,29 +175,30 @@ public:
          amrex::Real a_dot_b =  a(i, j, k, 0) * b(i, j, k, 0) +
                                 a(i, j, k, 1) * b(i, j, k, 1) +
                                 a(i, j, k, 2) * b(i, j, k, 2);
-         amrex::Real M_field;
+         // Initialize to 0.
+         amrex::Real M_field = 0._rt;
 
-     if(n==0){
-         amrex::Real a_cross_b_x = a(i, j, k, 1) * b(i, j, k, 2) -
-                                   a(i, j, k, 2) * b(i, j, k, 1);
-         M_field = ( b(i, j, k, 0) + a_dot_b * a(i, j, k, 0) - a_cross_b_x ) / ( 1.0 + a_square);
-     }
-     else if(n==1){
-         amrex::Real a_cross_b_y = a(i, j, k, 2) * b(i, j, k, 0) -
-                                   a(i, j, k, 0) * b(i, j, k, 2);
-         M_field = ( b(i, j, k, 1) + a_dot_b * a(i, j, k, 1) - a_cross_b_y ) / ( 1.0 + a_square);
-     }
-     else if(n==2){
-         amrex::Real a_cross_b_z = a(i, j, k, 0) * b(i, j, k, 1) -
-                                   a(i, j, k, 1) * b(i, j, k, 0);
-         M_field = ( b(i, j, k, 2) + a_dot_b * a(i, j, k, 2) - a_cross_b_z ) / ( 1.0 + a_square);
-     }
-     else{
-         printf("n=%d\n", n);
-         amrex::Abort("Wrong component n of the M_field");
-     };
+         if(n==0){
+             amrex::Real a_cross_b_x = a(i, j, k, 1) * b(i, j, k, 2) -
+                                       a(i, j, k, 2) * b(i, j, k, 1);
+             M_field = ( b(i, j, k, 0) + a_dot_b * a(i, j, k, 0) - a_cross_b_x ) / ( 1.0 + a_square);
+         }
+         else if(n==1){
+             amrex::Real a_cross_b_y = a(i, j, k, 2) * b(i, j, k, 0) -
+                                       a(i, j, k, 0) * b(i, j, k, 2);
+             M_field = ( b(i, j, k, 1) + a_dot_b * a(i, j, k, 1) - a_cross_b_y ) / ( 1.0 + a_square);
+         }
+         else if(n==2){
+             amrex::Real a_cross_b_z = a(i, j, k, 0) * b(i, j, k, 1) -
+                                       a(i, j, k, 1) * b(i, j, k, 0);
+             M_field = ( b(i, j, k, 2) + a_dot_b * a(i, j, k, 2) - a_cross_b_z ) / ( 1.0 + a_square);
+         }
+         else{
+             printf("n=%d\n", n);
+             amrex::Abort("Wrong component n of the M_field");
+         };
          return M_field;
-     };
+     }
 #endif //closes ifdef MAG_LLG
 
      /** Conductivity, sigma, of the medium */
