@@ -1,8 +1,8 @@
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
-#include "Parser/WarpXParserWrapper.H"
-#include "Parser/GpuParser.H"
+#include <AMReX_MultiFab.H>
+#include <AMReX_Parser.H>
 
 using namespace amrex;
 
@@ -23,12 +23,12 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype)
                 ApplyExternalFieldExcitationOnGrid(Efield_fp[lev][0].get(),
                                                    Efield_fp[lev][1].get(),
                                                    Efield_fp[lev][2].get(),
-                                                   getParser(Exfield_xt_grid_parser),
-                                                   getParser(Eyfield_xt_grid_parser),
-                                                   getParser(Ezfield_xt_grid_parser),
-                                                   getParser(Exfield_flag_parser),
-                                                   getParser(Eyfield_flag_parser),
-                                                   getParser(Ezfield_flag_parser),
+                                                   Exfield_xt_grid_parser->compile<4>(),
+                                                   Eyfield_xt_grid_parser->compile<4>(),
+                                                   Ezfield_xt_grid_parser->compile<4>(),
+                                                   Exfield_flag_parser->compile<3>(),
+                                                   Eyfield_flag_parser->compile<3>(),
+                                                   Ezfield_flag_parser->compile<3>(),
                                                    lev );
             }
         }
@@ -37,12 +37,12 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype)
                 ApplyExternalFieldExcitationOnGrid(Bfield_fp[lev][0].get(),
                                                    Bfield_fp[lev][1].get(),
                                                    Bfield_fp[lev][2].get(),
-                                                   getParser(Bxfield_xt_grid_parser),
-                                                   getParser(Byfield_xt_grid_parser),
-                                                   getParser(Bzfield_xt_grid_parser),
-                                                   getParser(Bxfield_flag_parser),
-                                                   getParser(Byfield_flag_parser),
-                                                   getParser(Bzfield_flag_parser),
+                                                   Bxfield_xt_grid_parser->compile<4>(),
+                                                   Byfield_xt_grid_parser->compile<4>(),
+                                                   Bzfield_xt_grid_parser->compile<4>(),
+                                                   Bxfield_flag_parser->compile<3>(),
+                                                   Byfield_flag_parser->compile<3>(),
+                                                   Bzfield_flag_parser->compile<3>(),
                                                    lev );
             }
         }
@@ -52,12 +52,12 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype)
             ApplyExternalFieldExcitationOnGrid(Hfield_fp[lev][0].get(),
                                                Hfield_fp[lev][1].get(),
                                                Hfield_fp[lev][2].get(),
-                                               getParser(Hxfield_xt_grid_parser),
-                                               getParser(Hyfield_xt_grid_parser),
-                                               getParser(Hzfield_xt_grid_parser),
-                                               getParser(Hxfield_flag_parser),
-                                               getParser(Hyfield_flag_parser),
-                                               getParser(Hzfield_flag_parser),
+                                               Hxfield_xt_grid_parser->compile<4>(),
+                                               Hyfield_xt_grid_parser->compile<4>(),
+                                               Hzfield_xt_grid_parser->compile<4>(),
+                                               Hxfield_flag_parser->compile<3>(),
+                                               Hyfield_flag_parser->compile<3>(),
+                                               Hzfield_flag_parser->compile<3>(),
                                                lev );
             }
         }
@@ -68,12 +68,12 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype)
 void
 WarpX::ApplyExternalFieldExcitationOnGrid (
        amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
-       HostDeviceParser<4> const& xfield_parser,
-       HostDeviceParser<4> const& yfield_parser,
-       HostDeviceParser<4> const& zfield_parser,
-       HostDeviceParser<3> const& xflag_parser,
-       HostDeviceParser<3> const& yflag_parser,
-       HostDeviceParser<3> const& zflag_parser, const int lev )
+       ParserExecutor<4> const& xfield_parser,
+       ParserExecutor<4> const& yfield_parser,
+       ParserExecutor<4> const& zfield_parser,
+       ParserExecutor<3> const& xflag_parser,
+       ParserExecutor<3> const& yflag_parser,
+       ParserExecutor<3> const& zflag_parser, const int lev )
 {
     // This function adds the contribution from an external excitation to the fields.
     // A flag is used to determine the type of excitation.
@@ -92,7 +92,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
     amrex::Real t = gett_new(lev);
     const auto problo = Geom(lev).ProbLoArray();
     const auto dx = Geom(lev).CellSizeArray();
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -134,7 +134,6 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 amrex::Real x, y, z;
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfz_stag,
                                                   problo, dx, x, y, z);
-                auto tmp_field_value = zfield_parser(x,y,z,t);
                 auto flag_type = zflag_parser(x,y,z);
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
                     amrex::Abort("flag type for excitation must be 0, or 1, or 2!");

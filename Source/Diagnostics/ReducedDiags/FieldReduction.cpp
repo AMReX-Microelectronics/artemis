@@ -6,8 +6,20 @@
  */
 
 #include "FieldReduction.H"
-#include "WarpX.H"
+
+#include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
+
+#include <AMReX_Algorithm.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <ostream>
+
+#include <regex>
 
 // constructor
 FieldReduction::FieldReduction (std::string rd_name)
@@ -38,8 +50,12 @@ FieldReduction::FieldReduction (std::string rd_name)
     std::string parser_string = "";
     Store_parserString(pp_rd_name,"reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)",
                        parser_string);
-    m_parser = std::make_unique<ParserWrapper<m_nvars>>(
+    m_parser = std::make_unique<amrex::Parser>(
         makeParser(parser_string,{"x","y","z","Ex","Ey","Ez","Bx","By","Bz"}));
+
+    // Replace all newlines and possible following whitespaces with a single whitespace. This
+    // should avoid weird formatting when the string is written in the header of the output file.
+    parser_string = std::regex_replace(parser_string, std::regex("\n\\s*"), " ");
 
     // read reduction type
     std::string reduction_type_string;

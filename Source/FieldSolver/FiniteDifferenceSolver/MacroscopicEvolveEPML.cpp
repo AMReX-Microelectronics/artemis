@@ -1,5 +1,6 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #ifdef WARPX_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
@@ -39,7 +40,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles);
+    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, mu_mf, eps_mf, sigma_mf, macroscopic_properties);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
@@ -122,6 +123,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
     amrex::MultiFab* const mu_mf,
     amrex::MultiFab* const sigma_mf ) {
 
+    amrex::ignore_unused(Ffield);
+#ifndef WARPX_MAG_LLG
+    amrex::ignore_unused(mu_mf);
+#endif
     // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
     // properties from their respective staggering to the Ex, Ey, Ez locations
     amrex::GpuArray<int, 3> const& sigma_stag = macroscopic_properties->sigma_IndexType;
@@ -132,7 +137,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
     amrex::GpuArray<int, 3> const& macro_cr     = macroscopic_properties->macro_cr_ratio;
 
     // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
@@ -150,7 +155,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
         // material macroscopic properties
         Array4<Real> const& sigma_arr = sigma_mf->array(mfi);
         Array4<Real> const& eps_arr = eps_mf->array(mfi);
+#ifndef WARPX_MAG_LLG
         Array4<Real> const& mu_arr = mu_mf->array(mfi);
+#endif
 
 
         // Extract stencil coefficients

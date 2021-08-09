@@ -1,10 +1,16 @@
 #include "FlushFormatOpenPMD.H"
+
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
+#include <AMReX_BLassert.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 
 using namespace amrex;
@@ -28,6 +34,8 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 #else
       encoding = openPMD::IterationEncoding::groupBased;
 #endif
+    else if ( 0 == openpmd_encoding.compare("g") )
+      encoding = openPMD::IterationEncoding::groupBased;
     else if ( 0 == openpmd_encoding.compare("f") )
       encoding = openPMD::IterationEncoding::fileBased;
 
@@ -87,7 +95,7 @@ FlushFormatOpenPMD::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int /*nlev*/,
-    const std::string prefix, bool plot_raw_fields,
+    const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
     bool isBTD, int snapshotID, const amrex::Geometry& full_BTD_snapshot,
     bool isLastBTDFlush) const
@@ -106,7 +114,7 @@ FlushFormatOpenPMD::WriteToFile (
         output_iteration = snapshotID;
 
     // Set step and output directory name.
-    m_OpenPMDPlotWriter->SetStep(output_iteration, prefix, isBTD);
+    m_OpenPMDPlotWriter->SetStep(output_iteration, prefix, file_min_digits, isBTD);
 
     // fields: only dumped for coarse level
     m_OpenPMDPlotWriter->WriteOpenPMDFieldsAll(

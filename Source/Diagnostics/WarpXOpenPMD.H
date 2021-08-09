@@ -9,25 +9,30 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/MultiParticleContainer.H" // PIdx
-#include "Particles/PhysicalParticleContainer.H"
 
-#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
 #include <AMReX_AmrParticles.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuAllocators.H>
+#include <AMReX_ParIter.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif
 
+#include <cstdint>
+#include <map>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
-
 
 //
 // helper class
@@ -113,7 +118,7 @@ public:
    * @note If an iteration has been written, then it will give a warning
    *
    */
-  void SetStep (int ts, const std::string& dirPrefix,
+  void SetStep (int ts, const std::string& dirPrefix, int file_min_digits,
                 bool isBTD=false);
 
   /** Close the step
@@ -257,6 +262,10 @@ private:
    * be appended by the GetFileName function.
    */
   std::string m_dirPrefix;
+
+  /** This is the minimum number of digits in the step number that is used as the
+   * suffix for file names when doing file based encoding */
+  int m_file_min_digits;
 
   int m_MPIRank = 0;
   int m_MPISize = 1;

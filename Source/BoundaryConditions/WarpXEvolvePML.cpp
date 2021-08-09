@@ -6,18 +6,33 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX_PML_kernels.H"
 
+#include "BoundaryConditions/PML.H"
 #include "PML_current.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX_PML_kernels.H"
 
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
-#include <cmath>
-#include <limits>
+#include <AMReX_BaseFwd.H>
 
+#include <array>
+#include <memory>
 
 using namespace amrex;
 
@@ -62,14 +77,14 @@ WarpX::DampPML (int lev, PatchType patch_type)
         const amrex::IntVect Ey_stag = pml_E[1]->ixType().toIntVect();
         const amrex::IntVect Ez_stag = pml_E[2]->ixType().toIntVect();
 
-        const amrex::IntVect Bx_stag = pml_B[0]->ixType().toIntVect();
-        const amrex::IntVect By_stag = pml_B[1]->ixType().toIntVect();
-        const amrex::IntVect Bz_stag = pml_B[2]->ixType().toIntVect();
-
 #if WARPX_MAG_LLG
         const amrex::IntVect Hx_stag = pml_H[0]->ixType().toIntVect();
         const amrex::IntVect Hy_stag = pml_H[1]->ixType().toIntVect();
         const amrex::IntVect Hz_stag = pml_H[2]->ixType().toIntVect();
+#else
+        const amrex::IntVect Bx_stag = pml_B[0]->ixType().toIntVect();
+        const amrex::IntVect By_stag = pml_B[1]->ixType().toIntVect();
+        const amrex::IntVect Bz_stag = pml_B[2]->ixType().toIntVect();
 #endif
         amrex::IntVect F_stag;
         if (pml_F) {
