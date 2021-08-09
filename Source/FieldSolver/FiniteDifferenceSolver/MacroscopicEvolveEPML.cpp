@@ -124,7 +124,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
     amrex::MultiFab* const sigma_mf ) {
 
     amrex::ignore_unused(Ffield);
-#ifndef WARPX_MAG_LLG
+#ifdef WARPX_MAG_LLG
     amrex::ignore_unused(mu_mf);
 #endif
     // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
