@@ -22,6 +22,7 @@ using namespace amrex;
  * \brief Update H and M fields without iterative correction, over one timestep
  */
 
+#ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
 
 void FiniteDifferenceSolver::MacroscopicEvolveHM(
@@ -625,4 +626,5 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             });
     }
 }
-#endif
+#endif // ifdef WARPX_MAG_LLG
+#endif // ifndef WARPX_DIM_RZ
