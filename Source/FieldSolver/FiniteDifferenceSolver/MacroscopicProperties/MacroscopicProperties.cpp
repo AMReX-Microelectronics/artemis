@@ -36,7 +36,6 @@ MacroscopicProperties::ReadParameters ()
     // The vacuum values are used as default for the macroscopic parameters
     // with a warning message to the user to indicate that no value was specified.
 
-    auto &warpx = WarpX::GetInstance();
 
     // Query input for material conductivity, sigma.
     bool sigma_specified = false;
@@ -100,6 +99,7 @@ MacroscopicProperties::ReadParameters ()
     }
 
 #ifdef WARPX_MAG_LLG
+    auto &warpx = WarpX::GetInstance();
     pp_macroscopic.get("mag_Ms_init_style", m_mag_Ms_s);
     if (m_mag_Ms_s == "constant") pp_macroscopic.get("mag_Ms", m_mag_Ms);
     // _mag_ such that it's clear the Ms variable is only meaningful for magnetic materials
@@ -185,7 +185,7 @@ MacroscopicProperties::InitData ()
     int lev = 0;
     BoxArray ba = warpx.boxArray(lev);
     DistributionMapping dmap = warpx.DistributionMap(lev);
-    int ng = 3;
+    const amrex::IntVect ng = warpx.getngE();
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
     m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
@@ -359,11 +359,9 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     const auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
     IntVect iv = macro_mf->ixType().toIntVect();
-    IntVect grown_iv = macro_mf->nGrowVect();
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
-
-        const Box& tb = mfi.growntilebox(grown_iv);
+        const Box& tb = mfi.tilebox(iv, macro_mf->nGrowVect());
         auto const& macro_fab =  macro_mf->array(mfi);
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {

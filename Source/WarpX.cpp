@@ -339,7 +339,6 @@ WarpX::WarpX ()
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
 #ifdef WARPX_MAG_LLG
-    Bfield_fp_old.resize(nlevs_max);
     Mfield_fp.resize(nlevs_max);
     Hfield_fp.resize(nlevs_max);
     H_biasfield_fp.resize(nlevs_max);
@@ -465,6 +464,12 @@ WarpX::WarpX ()
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         AMREX_ALWAYS_ASSERT(use_fdtd_nci_corr == 0);
         AMREX_ALWAYS_ASSERT(do_subcycling == 0);
+    }
+
+    if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Esirkepov) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            use_fdtd_nci_corr == 0,
+            "The NCI corrector should only be used with Esirkepov deposition");
     }
 }
 
@@ -646,7 +651,6 @@ WarpX::ReadParameters ()
             // input for each species.
         }
 
-        pp_warpx.query("n_buffer", n_buffer);
         queryWithParser(pp_warpx, "const_dt", const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
@@ -1194,10 +1198,6 @@ WarpX::ReadParameters ()
         {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
                 "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_dive_cleaning,
-                "warpx.do_dive_cleaning must be set to 1 when psatd.J_linear_in_time = 1");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_divb_cleaning,
-                "warpx.do_divb_cleaning must be set to 1 when psatd.J_linear_in_time = 1");
         }
 
         constexpr int zdir = AMREX_SPACEDIM - 1;
@@ -1393,7 +1393,6 @@ WarpX::ClearLevel (int lev)
         Efield_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
 #ifdef WARPX_MAG_LLG
-        Bfield_fp_old [lev][i].reset();
         Mfield_fp [lev][i].reset();
         Hfield_fp [lev][i].reset();
         H_biasfield_fp [lev][i].reset();
@@ -1512,15 +1511,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // Declare nodal flags
     IntVect Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag;
     IntVect Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag;
+#ifdef WARPX_MAG_LLG
     IntVect Mx_nodal_flag, My_nodal_flag, Mz_nodal_flag;
     IntVect Hx_nodal_flag, Hy_nodal_flag, Hz_nodal_flag;
     IntVect Hx_bias_nodal_flag, Hy_bias_nodal_flag, Hz_bias_nodal_flag;
+#endif
     IntVect jx_nodal_flag, jy_nodal_flag, jz_nodal_flag;
     IntVect rho_nodal_flag;
     IntVect phi_nodal_flag;
+    amrex::IntVect F_nodal_flag, G_nodal_flag;
 
     // Set nodal flags
-#if   (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 2)
     // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
     Ex_nodal_flag = IntVect(0,1);
     Ey_nodal_flag = IntVect(1,1);
@@ -1566,6 +1568,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
     rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
     phi_nodal_flag = IntVect::TheNodeVector();
+    F_nodal_flag = amrex::IntVect::TheNodeVector();
+    G_nodal_flag = amrex::IntVect::TheCellVector();
 
     // Overwrite nodal flags if necessary
     if (do_nodal) {
@@ -1592,6 +1596,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheNodeVector();
         jz_nodal_flag  = IntVect::TheNodeVector();
         rho_nodal_flag = IntVect::TheNodeVector();
+        G_nodal_flag = amrex::IntVect::TheNodeVector();
     }
 #ifdef WARPX_DIM_RZ
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
@@ -1607,6 +1612,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheCellVector();
         jz_nodal_flag  = IntVect::TheCellVector();
         rho_nodal_flag = IntVect::TheCellVector();
+        F_nodal_flag = IntVect::TheCellVector();
+        G_nodal_flag = IntVect::TheCellVector();
     }
 
     // With RZ multimode, there is a real and imaginary component
@@ -1633,9 +1640,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Bfield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE,tag("Bfield_fp[z]"));
 
 #ifdef WARPX_MAG_LLG
-    Bfield_fp_old[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE);
-    Bfield_fp_old[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE);
-    Bfield_fp_old[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE);
     // each Mfield[] is three components
     Mfield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Mx_nodal_flag),dm,3     ,ngE);
     Mfield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,My_nodal_flag),dm,3     ,ngE);
@@ -1716,21 +1720,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning)
     {
-        F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max(),tag("F_fp"));
+        F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, F_nodal_flag), dm, ncomps, ngF.max(), tag("F_fp"));
     }
 
     if (do_divb_cleaning)
     {
-        if (do_nodal)
-        {
-            G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheUnitVector()),
-                                                   dm, ncomps, ngG.max(), tag("G_fp"));
-        }
-        else // do_nodal = 0
-        {
-            G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheZeroVector()),
-                                                   dm, ncomps, ngG.max(), tag("G_fp"));
-        }
+        G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, ncomps, ngG.max(), tag("G_fp"));
     }
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
@@ -2088,6 +2083,9 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
     RealVect dx_vect(dx[0], dx[2]);
 #endif
 
+    amrex::Real solver_dt = dt[lev];
+    if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
+
     auto pss = std::make_unique<SpectralSolverRZ>(lev,
                                                   realspace_ba,
                                                   dm,
@@ -2096,8 +2094,12 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   do_nodal,
                                                   m_v_galilean,
                                                   dx_vect,
-                                                  dt[lev],
-                                                  update_with_rho);
+                                                  solver_dt,
+                                                  update_with_rho,
+                                                  fft_do_time_averaging,
+                                                  J_linear_in_time,
+                                                  do_dive_cleaning,
+                                                  do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
 
     if (use_kspace_filter) {

@@ -22,7 +22,7 @@ amr.max_level = 0
 warpx.verbose = 0
 warpx.use_filter = 0
 warpx.cfl = 1
-warpx.do_pml = 0
+warpx.sort_intervals = -1
 warpx.mag_time_scheme_order = 2 # default 1
 warpx.mag_M_normalization = 1 # 1 is saturated
 warpx.mag_LLG_coupling = 1
@@ -45,7 +45,6 @@ macroscopic.mag_alpha_function(x,y,z) = "5e-01"
 # gyromagnetic ratio is NEGATIVE constant for electrons in all materials
 macroscopic.mag_gamma_init_style = "parse_mag_gamma_function"
 macroscopic.mag_gamma_function(x,y,z) = "-1.759e11"
-particles.nspecies = 0
 
 #################################
 ############ FIELDS #############
