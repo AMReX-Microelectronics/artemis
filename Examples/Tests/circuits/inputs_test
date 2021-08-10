@@ -18,7 +18,6 @@ warpx.boundary_hi = pml pml pec
 warpx.verbose = 0
 warpx.use_filter = 0
 warpx.cfl = 0.9
-warpx.do_pml = 1
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 

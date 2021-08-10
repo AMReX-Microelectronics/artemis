@@ -12,14 +12,12 @@ amr.max_level = 0
 warpx.boundary_lo = pml pml pec
 warpx.boundary_hi = pml pml pec
 
-
 #################################
 ############ NUMERICS ###########
 #################################
 warpx.verbose = 0
 warpx.use_filter = 0
 warpx.cfl = 0.9
-warpx.do_pml = 1
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
