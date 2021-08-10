@@ -15,7 +15,7 @@ warpx.boundary_hi = pml pml pec
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 0
+warpx.verbose = 1
 warpx.use_filter = 0
 warpx.cfl = 0.9
 
