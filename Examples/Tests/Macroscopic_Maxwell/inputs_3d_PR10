@@ -14,10 +14,11 @@ amr.n_cell = 64 64 64 # number of cells spanning the domain in each coordinate d
 amr.max_grid_size = 32 # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 16
 geometry.coord_sys = 0
-geometry.is_periodic = 1 1 1
 
 geometry.prob_lo = -15e-3 -15e-3 -15.0e-3
 geometry.prob_hi =  15e-3  15e-3  15.0e-3
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 amr.max_level = 0
 
@@ -36,8 +37,7 @@ my_constants.flag_ss = 2
 warpx.verbose = 0
 warpx.use_filter = 0
 warpx.cfl = 0.9
-warpx.do_pml = 0
-particles.nspecies = 0
+warpx.sort_intervals = -1
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
