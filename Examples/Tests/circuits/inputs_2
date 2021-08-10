@@ -51,8 +51,8 @@ my_constants.mu_r_silicon = 1.0
 my_constants.TP = 2.5e-14
 
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-#warpx.Ex_external_grid_function(x,y,z) = "0."
-warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength) * (x < 0.000004) * (x > -0.000004) * (z < 0.000004) * (z > -0.000004)"
+warpx.Ex_external_grid_function(x,y,z) = "0."
+#warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength) * (x < 0.000004) * (x > -0.000004) * (z < 0.000004) * (z > -0.000004)"
 #warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)"
 warpx.Ey_external_grid_function(x,y,z) = "0."
 warpx.Ez_external_grid_function(x,y,z) = "0."
@@ -60,8 +60,8 @@ warpx.Ez_external_grid_function(x,y,z) = "0."
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 warpx.Bx_external_grid_function(x,y,z) = "0."
 warpx.By_external_grid_function(x,y,z) = "0."
-#warpx.Bz_external_grid_function(x,y,z) = "0."
-warpx.Bz_external_grid_function(x,y,z) = "(-1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)/c) * (z < 0.000004) * (z > -0.000004) * (x < 0.000004) * (x > -0.000004)"
+warpx.Bz_external_grid_function(x,y,z) = "0."
+#warpx.Bz_external_grid_function(x,y,z) = "(-1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)/c) * (z < 0.000004) * (z > -0.000004) * (x < 0.000004) * (x > -0.000004)"
 #warpx.Bz_external_grid_function(x,y,z) = "(-1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)/c)"
 
 warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
@@ -84,13 +84,13 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = ".0"
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "0."
-#warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000004) * (x < 0.000004) * (z > -0.000004) * (z <= 0.000004) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6 - 1.25e-7)"
+#warpx.Bx_excitation_flag_function(x,y,z) = "0."
+warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000004) * (x < 0.000004) * (z > -0.000004) * (z <= 0.000004) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6 - 1.25e-7)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "0."
-#warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((2*pi*x)/0.000016) * exp(-(t-3*TP)**2/(2*TP**2)) * cos(2*pi*c/wavelength*t)"
+#warpx.Bx_excitation_grid_function(x,y,z,t) = "0."
+warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((2*pi*x)/0.000016) * exp(-(t-3*TP)**2/(2*TP**2)) * cos(2*pi*c/wavelength*t)"
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
