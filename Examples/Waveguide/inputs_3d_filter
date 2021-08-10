@@ -14,7 +14,8 @@ amr.n_cell = 1024 4 512 # number of cells spanning the domain in each coordinate
 amr.max_grid_size = 1024 # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 4 # only meaningful for AMR
 geometry.coord_sys = 0
-geometry.is_periodic = 0 0 0
+boundary.field_lo = pec pec pml  # PEC on side walls; PML at -z end
+boundary.field_hi = pec pec pec  # PEC on side walls; PEC at +z end
 
 # waveguide width 14.95mm, height is 11.43mm, and length is 280mm
 # 14.95mm to make the wave guide work on fundamental mode at 10.5GHz
@@ -42,15 +43,12 @@ my_constants.epr = 13 # relative permittivity of ferrite slab
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 0
+warpx.verbose = 1
 warpx.use_filter = 0
 warpx.cfl = 0.8
-warpx.do_pml_Lo = 0 0 1 # PEC on side walls; PML at -z end
-warpx.do_pml_Hi = 0 0 0 # PEC on side walls; PEC at +z end
 warpx.mag_time_scheme_order = 2 # default 1
 warpx.mag_M_normalization = 1 # 1 is saturated
 warpx.mag_LLG_coupling = 1
-particles.nspecies = 0
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
@@ -108,7 +106,7 @@ warpx.Mz_external_grid_function(x,y,z) = "0."
 #Diagnostics
 diagnostics.diags_names = zline_BernadoFilter0111_
 
-zline_BernadoFilter0111_.period = 2
+zline_BernadoFilter0111_.intervals = 2
 zline_BernadoFilter0111_.diag_lo = 0.0 0.0 -250.e-3
 zline_BernadoFilter0111_.diag_hi = 0.0 0.0  250.e-3
 zline_BernadoFilter0111_.diag_type = Full
