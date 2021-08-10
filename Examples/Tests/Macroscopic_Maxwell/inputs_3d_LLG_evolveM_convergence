@@ -27,10 +27,11 @@ warpx.cfl = 0.9
 
 amr.blocking_factor = 16
 geometry.coord_sys = 0
-geometry.is_periodic = 1 1 1
 
 geometry.prob_lo = -0.1 -0.1 -0.1
 geometry.prob_hi =  0.1  0.1  0.1
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 amr.max_level = 0
 
@@ -43,11 +44,10 @@ my_constants.wavelength = 0.1
 #################################
 warpx.verbose = 0
 warpx.use_filter = 0
-warpx.do_pml = 0
 warpx.mag_time_scheme_order = 2 # default 1
 warpx.mag_M_normalization = 1 # 1 is saturated
 warpx.mag_LLG_coupling = 1
-particles.nspecies = 0
+warpx.sort_intervals = -1
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
