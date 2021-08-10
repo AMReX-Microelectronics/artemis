@@ -9,8 +9,8 @@ geometry.coord_sys   = 0
 geometry.prob_lo     =  -16.e-6 -16.e-6 -16.e-6
 geometry.prob_hi     =   16.e-6  16.e-6  16.e-6
 amr.max_level = 0
-warpx.boundary_lo = pml pml pec
-warpx.boundary_hi = pml pml pec
+boundary.field_lo = pml pml pec
+boundary.field_hi = pml pml pec
 
 #################################
 ############ NUMERICS ###########
@@ -21,11 +21,11 @@ warpx.cfl = 0.9
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
-macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
+
 macroscopic.sigma_function(x,y,z) = "sigma_0 * (y >= -0.000004) + sigma_silicon * (y <= -0.000004)"
-macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
+
 macroscopic.epsilon_function(x,y,z) = "epsilon_0 * (y >= -0.000004) + epsilon_r_silicon * epsilon_0 * (y <= -0.000004)"
-macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
+
 macroscopic.mu_function(x,y,z) = "mu_0 * (y >= -0.000004) + mu_r_silicon * mu_0 * (y <= -0.000004)"
 
 #################################
