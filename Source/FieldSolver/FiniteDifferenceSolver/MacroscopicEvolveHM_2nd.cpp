@@ -137,9 +137,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Array4<Real> const &b_temp_static_zface = b_temp_static[2]->array(mfi);
 
         // extract tileboxes for which to loop
-        Box const &tbx = mfi.tilebox(Mfield[0]->ixType().toIntVect()); /* just define which grid type */
-        Box const &tby = mfi.tilebox(Mfield[1]->ixType().toIntVect());
-        Box const &tbz = mfi.tilebox(Mfield[2]->ixType().toIntVect());
+        amrex::IntVect Mxface_stag = Mfield[0]->ixType().toIntVect();
+        amrex::IntVect Myface_stag = Mfield[1]->ixType().toIntVect();
+        amrex::IntVect Mzface_stag = Mfield[2]->ixType().toIntVect();
+        Box const &tbx = mfi.tilebox(Mxface_stag); /* just define which grid type */
+        Box const &tby = mfi.tilebox(Myface_stag);
+        Box const &tbz = mfi.tilebox(Mzface_stag);
 
         // Extract stencil coefficients for calculating the exchange field H_exchange and the anisotropy field H_anisotropy
         amrex::Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
@@ -163,16 +166,16 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // Hy and Hz can be acquired by interpolation
 
                     // H_bias
-                    amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(1, 0, 0), Hx_bias);
-                    amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(1, 0, 0), Hy_bias);
-                    amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(1, 0, 0), Hz_bias);
+                    amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mxface_stag, Hx_bias);
+                    amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mxface_stag, Hy_bias);
+                    amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mxface_stag, Hz_bias);
 
                     if (coupling == 1){
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
                         // H_maxwell
-                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(1, 0, 0), Hx_old);
-                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(1, 0, 0), Hy_old);
-                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(1, 0, 0), Hz_old);
+                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mxface_stag, Hx_old);
+                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mxface_stag, Hy_old);
+                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mxface_stag, Hz_old);
                     }
 
                     if (mag_exchange_coupling == 1){
@@ -241,17 +244,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // Hy and Hz can be acquired by interpolation
 
                     // H_bias
-                    amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(0, 1, 0), Hx_bias);
-                    amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(0, 1, 0), Hy_bias);
-                    amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(0, 1, 0), Hz_bias);
+                    amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Myface_stag, Hx_bias);
+                    amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Myface_stag, Hy_bias);
+                    amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Myface_stag, Hz_bias);
 
                     if (coupling == 1){
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
                         // H_maxwell
-                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(0, 1, 0), Hx_old);
-                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(0, 1, 0), Hy_old);
-                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(0, 1, 0), Hz_old);
+                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Myface_stag, Hx_old);
+                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Myface_stag, Hy_old);
+                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Myface_stag, Hz_old);
                     }
 
                     if (mag_exchange_coupling == 1){
@@ -320,17 +323,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // Hy and Hz can be acquired by interpolation
 
                     // H_bias
-                    amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(0, 0, 1), Hx_bias);
-                    amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(0, 0, 1), Hy_bias);
-                    amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(0, 0, 1), Hz_bias);
+                    amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mzface_stag, Hx_bias);
+                    amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mzface_stag, Hy_bias);
+                    amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mzface_stag, Hz_bias);
 
                     if (coupling == 1){
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
                         // H_maxwell
-                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(0, 0, 1), Hx_old);
-                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(0, 0, 1), Hy_old);
-                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(0, 0, 1), Hz_old);
+                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mzface_stag, Hx_old);
+                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mzface_stag, Hy_old);
+                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mzface_stag, Hz_old);
                     }
 
                     if (mag_exchange_coupling == 1){
@@ -442,9 +445,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             Array4<Real> const &b_temp_static_zface = b_temp_static[2]->array(mfi);
 
             // extract tileboxes for which to loop
-            Box const &tbx = mfi.tilebox(Hfield[0]->ixType().toIntVect()); /* just define which grid type */
-            Box const &tby = mfi.tilebox(Hfield[1]->ixType().toIntVect());
-            Box const &tbz = mfi.tilebox(Hfield[2]->ixType().toIntVect());
+            amrex::IntVect Hxnodal = Hfield[0]->ixType().toIntVect();
+            amrex::IntVect Hynodal = Hfield[1]->ixType().toIntVect();
+            amrex::IntVect Hznodal = Hfield[2]->ixType().toIntVect();
+            Box const &tbx = mfi.tilebox(Hxnodal); /* just define which grid type */
+            Box const &tby = mfi.tilebox(Hynodal);
+            Box const &tbz = mfi.tilebox(Hznodal);
 
             // Extract stencil coefficients for calculating the exchange field H_exchange and the anisotropy field H_anisotropy
             amrex::Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
@@ -467,17 +473,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // Hy and Hz can be acquired by interpolation
 
                         // H_bias
-                        amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(1, 0, 0), Hx_bias);
-                        amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(1, 0, 0), Hy_bias);
-                        amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(1, 0, 0), Hz_bias);
+                        amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hxnodal, Hxnodal, Hx_bias);
+                        amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hynodal, Hxnodal, Hy_bias);
+                        amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hznodal, Hxnodal, Hz_bias);
 
                         if (coupling == 1){
                             // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
                             // H_maxwell
-                            Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(1, 0, 0), Hx);
-                            Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(1, 0, 0), Hy);
-                            Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(1, 0, 0), Hz);
+                            Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hxnodal, Hxnodal, Hx);
+                            Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hynodal, Hxnodal, Hy);
+                            Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hznodal, Hxnodal, Hz);
                         }
 
                         if (mag_exchange_coupling == 1){
@@ -579,17 +585,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // Hy and Hz can be acquired by interpolation
 
                         // H_bias
-                        amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(0, 1, 0), Hx_bias);
-                        amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(0, 1, 0), Hy_bias);
-                        amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(0, 1, 0), Hz_bias);
+                        amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hxnodal, Hynodal, Hx_bias);
+                        amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hynodal, Hynodal, Hy_bias);
+                        amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hznodal, Hynodal, Hz_bias);
 
                         if (coupling == 1){
                             // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
                             // H_maxwell
-                            Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(0, 1, 0), Hx);
-                            Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(0, 1, 0), Hy);
-                            Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(0, 1, 0), Hz);
+                            Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hxnodal, Hynodal, Hx);
+                            Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hynodal, Hynodal, Hy);
+                            Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hznodal, Hynodal, Hz);
                         }
 
                         if (mag_exchange_coupling == 1){
@@ -692,17 +698,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // Hy and Hz can be acquired by interpolation
 
                         // H_bias
-                        amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(0, 0, 1), Hx_bias);
-                        amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(0, 0, 1), Hy_bias);
-                        amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(0, 0, 1), Hz_bias);
+                        amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hxnodal, Hznodal, Hx_bias);
+                        amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hynodal, Hznodal, Hy_bias);
+                        amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hznodal, Hznodal, Hz_bias);
 
                         if (coupling == 1){
                             // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
                             // H_maxwell
-                            Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(1, 0, 0), amrex::IntVect(0, 0, 1), Hx);
-                            Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 1, 0), amrex::IntVect(0, 0, 1), Hy);
-                            Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, amrex::IntVect(0, 0, 1), amrex::IntVect(0, 0, 1), Hz);
+                            Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hxnodal, Hznodal, Hx);
+                            Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hynodal, Hznodal, Hy);
+                            Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hznodal, Hznodal, Hz);
                         }
 
                         if (mag_exchange_coupling == 1){
@@ -819,9 +825,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             int const n_coefs_z = m_stencil_coefs_z.size();
 
             // Extract tileboxes for which to loop
-            Box const &tbx = mfi.tilebox(Hfield[0]->ixType().toIntVect());
-            Box const &tby = mfi.tilebox(Hfield[1]->ixType().toIntVect());
-            Box const &tbz = mfi.tilebox(Hfield[2]->ixType().toIntVect());
+            amrex::IntVect Hxnodal = Hfield[0]->ixType().toIntVect();
+            amrex::IntVect Hynodal = Hfield[1]->ixType().toIntVect();
+            amrex::IntVect Hznodal = Hfield[2]->ixType().toIntVect();
+            Box const &tbx = mfi.tilebox(Hxnodal);
+            Box const &tby = mfi.tilebox(Hynodal);
+            Box const &tbz = mfi.tilebox(Hznodal);
 
             // read in Ms to decide if the grid is magnetic or not
             auto& mag_Ms_mf = macroscopic_properties->getmag_Ms_mf();
@@ -913,15 +922,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     Array4<Real> const &M_zface = Mfield[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
 
                     // extract tileboxes for which to loop
-                    Box const &tbx = mfi.tilebox(Hfield[0]->ixType().toIntVect()); /* just define which grid type */
-                    Box const &tby = mfi.tilebox(Hfield[1]->ixType().toIntVect());
-                    Box const &tbz = mfi.tilebox(Hfield[2]->ixType().toIntVect());
+                    amrex::IntVect Mxface_stag = Mfield[0]->ixType().toIntVect();
+                    amrex::IntVect Myface_stag = Mfield[1]->ixType().toIntVect();
+                    amrex::IntVect Mzface_stag = Mfield[2]->ixType().toIntVect();
+                    Box const &tbx = mfi.tilebox(Mxface_stag); /* just define which grid type */
+                    Box const &tby = mfi.tilebox(Myface_stag);
+                    Box const &tbz = mfi.tilebox(Mzface_stag);
 
                     // loop over cells and update fields
                     amrex::ParallelFor(tbx, tby, tbz,
                         [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                            Real mag_Ms_arrx = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(1,0,0),mag_Ms_arr);
+                            Real mag_Ms_arrx = MacroscopicProperties::macro_avg_to_face(i,j,k,Mxface_stag,mag_Ms_arr);
 
                             if (mag_Ms_arrx > 0._rt){
                                 // temporary normalized magnitude of M_xface field at the fixed point
@@ -945,7 +957,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                            Real mag_Ms_arry = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,1,0),mag_Ms_arr);
+                            Real mag_Ms_arry = MacroscopicProperties::macro_avg_to_face(i,j,k,Myface_stag,mag_Ms_arr);
 
                             if (mag_Ms_arry > 0._rt){
                                 // temporary normalized magnitude of M_yface field at the fixed point
@@ -969,7 +981,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
-                            Real mag_Ms_arrz = MacroscopicProperties::macro_avg_to_face(i,j,k,amrex::IntVect(0,0,1),mag_Ms_arr);
+                            Real mag_Ms_arrz = MacroscopicProperties::macro_avg_to_face(i,j,k,Mzface_stag,mag_Ms_arr);
 
                             if (mag_Ms_arrz > 0._rt){
                                 // temporary normalized magnitude of M_zface field at the fixed point
@@ -1025,9 +1037,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Array4<Real> const &M_zface = Mfield[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
 
         // Extract tileboxes for which to loop
-        Box const &tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect());
-        Box const &tby = mfi.tilebox(Bfield[1]->ixType().toIntVect());
-        Box const &tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect());
+        amrex::IntVect Bxnodal = Bfield[0]->ixType().toIntVect();
+        amrex::IntVect Bynodal = Bfield[1]->ixType().toIntVect();
+        amrex::IntVect Bznodal = Bfield[2]->ixType().toIntVect();
+        Box const &tbx = mfi.tilebox(Bxnodal);
+        Box const &tby = mfi.tilebox(Bynodal);
+        Box const &tbz = mfi.tilebox(Bznodal);
 
         // read in Ms to decide if the grid is magnetic or not
         auto& mag_Ms_mf = macroscopic_properties->getmag_Ms_mf();
@@ -1041,9 +1056,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         amrex::ParallelFor(tbx, tby, tbz,
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                Real mag_Ms_arrx = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(1,0,0), mag_Ms_arr);
+                Real mag_Ms_arrx = MacroscopicProperties::macro_avg_to_face(i, j, k, Bxnodal, mag_Ms_arr);
                 if (mag_Ms_arrx == 0._rt){ // nonmagnetic region
-                    Real mu_arrx = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(1,0,0), mu_arr);
+                    Real mu_arrx = MacroscopicProperties::macro_avg_to_face(i, j, k, Bxnodal, mu_arr);
                     Bx(i, j, k) = mu_arrx * Hx(i, j, k);
                 } else if (mag_Ms_arrx > 0){
                     Bx(i, j, k) = PhysConst::mu0 * (M_xface(i, j, k, 0) + Hx(i, j, k));
@@ -1051,9 +1066,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                Real mag_Ms_arry = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(0,1,0), mag_Ms_arr);
+                Real mag_Ms_arry = MacroscopicProperties::macro_avg_to_face(i, j, k, Bynodal, mag_Ms_arr);
                 if (mag_Ms_arry == 0._rt){ // nonmagnetic region
-                    Real mu_arry = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(0,1,0), mu_arr);
+                    Real mu_arry = MacroscopicProperties::macro_avg_to_face(i, j, k, Bynodal, mu_arr);
                     By(i, j, k) =  mu_arry * Hy(i, j, k);
                 } else if (mag_Ms_arry > 0){
                     By(i, j, k) = PhysConst::mu0 * (M_yface(i, j, k, 1) + Hy(i, j, k));
@@ -1061,9 +1076,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                Real mag_Ms_arrz = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(0,0,1), mag_Ms_arr);
+                Real mag_Ms_arrz = MacroscopicProperties::macro_avg_to_face(i, j, k, Bznodal, mag_Ms_arr);
                 if (mag_Ms_arrz == 0._rt){ // nonmagnetic region
-                    Real mu_arrz = MacroscopicProperties::macro_avg_to_face(i, j, k, amrex::IntVect(0,0,1), mu_arr);
+                    Real mu_arrz = MacroscopicProperties::macro_avg_to_face(i, j, k, Bznodal, mu_arr);
                     Bz(i, j, k) = mu_arrz * Hz(i, j, k);
                 } else if (mag_Ms_arrz > 0){
                     Bz(i, j, k) = PhysConst::mu0 * (M_zface(i, j, k, 2) + Hz(i, j, k));
