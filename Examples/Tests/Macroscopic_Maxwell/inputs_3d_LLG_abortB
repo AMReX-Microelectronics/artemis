@@ -45,7 +45,6 @@ macroscopic.mag_alpha_function(x,y,z) = "5e-01"
 # gyromagnetic ratio is NEGATIVE constant for electrons in all materials
 macroscopic.mag_gamma_init_style = "parse_mag_gamma_function"
 macroscopic.mag_gamma_function(x,y,z) = "-1.759e11"
-particles.nspecies = 0
 
 #################################
 ############ FIELDS #############
