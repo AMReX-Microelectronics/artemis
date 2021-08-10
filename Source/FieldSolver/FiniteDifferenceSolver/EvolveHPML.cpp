@@ -33,7 +33,7 @@ void FiniteDifferenceSolver::EvolveHPML (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Hfield, Efield, dt);
+    amrex::ignore_unused(Hfield, Efield, dt, dive_cleaning);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
