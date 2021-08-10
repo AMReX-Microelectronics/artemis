@@ -5,7 +5,11 @@ blank
 #include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
+#ifdef WARPX_DIM_RZ
+#include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#else
 #include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#endif
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include "Utils/WarpXConst.H"
