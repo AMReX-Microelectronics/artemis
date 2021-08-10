@@ -11,3 +11,5 @@ The PEC tube walls have normal in the +/- x and z directions, so the direction o
 inputs_1 - initialize a wave inside the PEC.  pml boundary conditions at all walls
 
 inputs_2 - provide a current source at the lo-y boundary
+
+inputs_3 - same as inputs_2 but with the wall with -z normal replaced with silicon
