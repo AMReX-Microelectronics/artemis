@@ -20,7 +20,6 @@ geometry.prob_hi     =   4.e-6  4.e-6  4.e-6
 # Boundary condition
 boundary.field_lo = periodic periodic pec
 boundary.field_hi = periodic periodic pml
-warpx.sort_intervals = -1
 warpx.serialize_ics = 1
 
 # Verbosity
@@ -47,13 +46,10 @@ my_constants.epsilon0 = 8.84e-12
 my_constants.Ms_ga = 1750.
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
-macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
 macroscopic.sigma_function(x,y,z) = "0.0"
 
-macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
 macroscopic.epsilon_function(x,y,z) = "epsilon0 * (z > -domain_size/2.0 + thickness) + epsilon0 * epsilon_r * (z <= -domain_size/2.0 + thickness)"
 
-macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
 macroscopic.mu_function(x,y,z) = "mu0"
 
 #unit conversion: 1 Gauss = (1000/4pi) A/m

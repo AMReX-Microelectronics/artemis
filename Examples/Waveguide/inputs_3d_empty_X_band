@@ -39,11 +39,9 @@ my_constants.flag_ss = 2 # soft source flag
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 0
+warpx.verbose = 1
 warpx.use_filter = 0
 warpx.cfl = 0.8
-particles.nspecies = 0
-warpx.sort_intervals = -1
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
@@ -74,7 +72,7 @@ warpx.Bz_excitation_flag_function(x,y,z) = "flag_none"
 #Diagnostics
 diagnostics.diags_names = zline_BernadoFilter0126_
 
-zline_BernadoFilter0126_.interval = 40
+zline_BernadoFilter0126_.intervals = 40
 zline_BernadoFilter0126_.diag_lo = 0.0 0.0 -250.e-3
 zline_BernadoFilter0126_.diag_hi = 0.0 0.0  250.e-3
 zline_BernadoFilter0126_.diag_type = Full
