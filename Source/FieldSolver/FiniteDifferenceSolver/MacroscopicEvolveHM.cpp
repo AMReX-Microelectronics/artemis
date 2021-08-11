@@ -393,9 +393,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy ... (only the first two terms are considered here)
 
                         // H_maxwell
-                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_Stag, Mzface_stag, Hx);
-                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_Stag, Mzface_stag, Hy);
-                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_Stag, Mzface_stag, Hz);
+                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mzface_stag, Hx);
+                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mzface_stag, Hy);
+                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mzface_stag, Hz);
                     }
 
                     if (mag_exchange_coupling == 1){
