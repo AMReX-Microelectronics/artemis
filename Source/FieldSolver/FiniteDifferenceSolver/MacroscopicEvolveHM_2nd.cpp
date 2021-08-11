@@ -538,8 +538,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             // saturated case; if |M| has drifted from M_s too much, abort.  Otherwise, normalize
                             // check the normalized error
                             if (amrex::Math::abs(1._rt - M_magnitude_normalized) > mag_normalized_error){
-                                printf("i = %d, j=%d, k=%d\n", i, j, k);
-                                printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
                                 amrex::Abort("Exceed the normalized error of the M_xface field");
                             }
                             // normalize the M_xface field
@@ -550,8 +548,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         else if (M_normalization == 0){
                             // check the normalized error
                             if (M_magnitude_normalized > (1._rt + mag_normalized_error)){
-                                printf("i = %d, j=%d, k=%d\n", i, j, k);
-                                printf("M_magnitude_normalized = %f, Ms = %f\n", M_magnitude_normalized, mag_Ms_arrx);
                                 amrex::Abort("Caution: Unsaturated material has M_xface exceeding the saturation magnetization");
                             }
                             else if (M_magnitude_normalized > 1._rt && M_magnitude_normalized <= 1._rt + mag_normalized_error){
@@ -651,8 +647,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             // saturated case; if |M| has drifted from M_s too much, abort.  Otherwise, normalize
                             // check the normalized error
                             if (amrex::Math::abs(1._rt - M_magnitude_normalized) > mag_normalized_error){
-                                printf("i = %d, j=%d, k=%d\n", i, j, k);
-                                printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
                                 amrex::Abort("Exceed the normalized error of the M_yface field");
                             }
                             // normalize the M_yface field
@@ -663,8 +657,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         else if (M_normalization == 0){
                             // check the normalized error
                             if (M_magnitude_normalized > 1._rt + mag_normalized_error){
-                                printf("i = %d, j=%d, k=%d\n", i, j, k);
-                                printf("M_magnitude_normalized = %f, Ms = %f\n", M_magnitude_normalized, mag_Ms_arry);
                                 amrex::Abort("Caution: Unsaturated material has M_yface exceeding the saturation magnetization");
                             }
                             else if (M_magnitude_normalized > 1._rt && M_magnitude_normalized <= 1._rt + mag_normalized_error){
@@ -764,8 +756,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             // saturated case; if |M| has drifted from M_s too much, abort.  Otherwise, normalize
                             // check the normalized error
                             if (amrex::Math::abs(1. - M_magnitude_normalized) > mag_normalized_error){
-                                printf("i = %d, j=%d, k=%d\n", i, j, k);
-                                printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
                                 amrex::Abort("Exceed the normalized error of the M_zface field");
                             }
                             // normalize the M_zface field
@@ -776,8 +766,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         else if (M_normalization == 0){
                             // check the normalized error
                             if (M_magnitude_normalized > 1._rt + mag_normalized_error){
-                                printf("i = %d, j=%d, k=%d\n", i, j, k);
-                                printf("M_magnitude_normalized = %f, Ms = %f\n", M_magnitude_normalized, mag_Ms_arrz);
                                 amrex::Abort("Caution: Unsaturated material has M_zface exceeding the saturation magnetization");
                             }
                             else if (M_magnitude_normalized > 1._rt && M_magnitude_normalized <= 1._rt + mag_normalized_error){
@@ -944,8 +932,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                                 // check the normalized error
                                 if (amrex::Math::abs(1._rt - M_magnitude_normalized) > mag_normalized_error){
-                                    printf("i = %d, j=%d, k=%d\n", i, j, k);
-                                    printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
                                     amrex::Abort("Exceed the normalized error of the M_xface field");
                                 }
                                 // normalize the M_xface field
@@ -968,8 +954,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                                 // check the normalized error
                                 if (amrex::Math::abs(1._rt - M_magnitude_normalized) > mag_normalized_error){
-                                    printf("i = %d, j=%d, k=%d\n", i, j, k);
-                                    printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
                                     amrex::Abort("Exceed the normalized error of the M_yface field");
                                 }
                                 // normalize the M_yface field
@@ -992,8 +976,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                                 // check the normalized error
                                 if (amrex::Math::abs(1. - M_magnitude_normalized) > mag_normalized_error){
-                                    printf("i = %d, j=%d, k=%d\n", i, j, k);
-                                    printf("M_magnitude_normalized = %f, mag_normalized_error=%f\n", M_magnitude_normalized, mag_normalized_error);
                                     amrex::Abort("Exceed the normalized error of the M_zface field");
                                 }
                                 // normalize the M_zface field
