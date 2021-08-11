@@ -194,7 +194,6 @@ public:
              M_field = ( b(i, j, k, 2) + a_dot_b * a(i, j, k, 2) - a_cross_b_z ) / ( 1.0 + a_square);
          }
          else{
-             printf("n=%d\n", n);
              amrex::Abort("Wrong component n of the M_field");
          }
          return M_field;
