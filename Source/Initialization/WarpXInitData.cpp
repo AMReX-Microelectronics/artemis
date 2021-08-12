@@ -1072,10 +1072,12 @@ void WarpX::AverageParsedMtoFaces(MultiFab& Mx_cc,
 {
     // average Mx, My, Mz to faces
     for (MFIter mfi(Mx_face, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-
-        const amrex::Box& tbx = mfi.tilebox( IntVect(1,0,0), Mx_face.nGrowVect() );
-        const amrex::Box& tby = mfi.tilebox( IntVect(0,1,0), My_face.nGrowVect() );
-        const amrex::Box& tbz = mfi.tilebox( IntVect(0,0,1), Mz_face.nGrowVect() );
+        amrex::IntVect x_nodal_flag = Mx_face.ixType().toIntVect();
+        amrex::IntVect y_nodal_flag = My_face.ixType().toIntVect();
+        amrex::IntVect z_nodal_flag = Mz_face.ixType().toIntVect();
+        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, Mx_face.nGrowVect() );
+        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, My_face.nGrowVect() );
+        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, Mz_face.nGrowVect() );
 
         auto const& mx_cc = Mx_cc.array(mfi);
         auto const& my_cc = My_cc.array(mfi);

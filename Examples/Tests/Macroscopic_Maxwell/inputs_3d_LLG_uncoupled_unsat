@@ -6,35 +6,31 @@ amr.n_cell = 8 8 8 # number of cells spanning the domain in each coordinate dire
 amr.max_grid_size = 512 # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 8
 geometry.coord_sys = 0
-geometry.is_periodic = 1 1 1
 
 geometry.prob_lo = -1.5e-6 -1.5e-6 -1.5e-6
 geometry.prob_hi =  1.5e-6  1.5e-6  1.5e-6
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 amr.max_level = 0
 
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 0
+warpx.verbose = 1
 warpx.use_filter = 0
 warpx.cfl = 4000
-warpx.do_pml = 0
 warpx.mag_time_scheme_order = 2 # default 1
 warpx.mag_M_normalization = 0
 warpx.mag_LLG_coupling = 0
-particles.nspecies = 0
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
-macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
 macroscopic.sigma_function(x,y,z) = "0.0"
 
-macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
 macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12"
 
-macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
 macroscopic.mu_function(x,y,z) = "1.25663706212e-06"
 
 #unit conversion: 1 Gauss = (1000/4pi) A/m

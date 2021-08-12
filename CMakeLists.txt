@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 21.07)
+project(WarpX VERSION 21.08)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -58,7 +58,7 @@ option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
 option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
 option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
-option(WarpX_MAG_LLG       "LLG for magnetization modeling"             OFF)
+option(WarpX_MAG_LLG       "LLG for magnetization modeling"             ON)
 # TODO: sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
