@@ -11,11 +11,11 @@ The PEC tube walls have normal in the +/- x and z directions, so the direction o
 The tube geometry was generated using Excitation_Flag_Generator.py with inputs_exampledata_Excitation_Flag_Generator
 as an input (renname it "exampledata_Excitation_Flag_Generator.txt" to re-run it).
 
-inputs_1 - initialize a wave inside the PEC tube.  pml boundary conditions at all walls
+inputs_wave - initialize a wave inside the PEC tube.  pml boundary conditions at all walls
 
-inputs_2 - provide a current source at the lo-y boundary inside the tube
+inputs_current - provide a current source at the lo-y boundary inside the tube
 
-inputs_2a - provide a current source at the lo-y boundary in a region larger than the tube
-            (and zero the current source inside the tube)
+inputs_current_large - provide a current source at the lo-y boundary in a region larger than the tube
+                       (and zero the current source inside the tube)
 
-inputs_3 - same as inputs_2 but with the tube wall with -z normal replaced with silicon
+inputs_silicon - same as inputs_2 but with the tube wall with -z normal replaced with silicon
