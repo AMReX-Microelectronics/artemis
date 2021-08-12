@@ -6,10 +6,16 @@ geometry.prob_hi =  16.e-6  16.e-6  16.e-6
 
 (dx = 2.5e-7)
 
-The PEC tube walls have normal in the +/- x and z directions, so the direction of propagation is y
+The PEC tube walls have normal in the +/- x and z directions, so the direction of propagation is y.
 
-inputs_1 - initialize a wave inside the PEC.  pml boundary conditions at all walls
+The tube geometry was generated using Excitation_Flag_Generator.py with inputs_exampledata_Excitation_Flag_Generator
+as an input (renname it "exampledata_Excitation_Flag_Generator.txt" to re-run it).
 
-inputs_2 - provide a current source at the lo-y boundary
+inputs_1 - initialize a wave inside the PEC tube.  pml boundary conditions at all walls
 
-inputs_3 - same as inputs_2 but with the wall with -z normal replaced with silicon
+inputs_2 - provide a current source at the lo-y boundary inside the tube
+
+inputs_2a - provide a current source at the lo-y boundary in a region larger than the tube
+            (and zero the current source inside the tube)
+
+inputs_3 - same as inputs_2 but with the tube wall with -z normal replaced with silicon
