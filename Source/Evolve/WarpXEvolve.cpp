@@ -439,6 +439,7 @@ WarpX::OneStep_nosub (Real cur_time)
 #endif
 
 #ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
             if (mag_time_scheme_order==1){
                 MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
@@ -454,6 +455,7 @@ WarpX::OneStep_nosub (Real cur_time)
         } else {
             amrex::Abort("unsupported em_solver_medium for M field");
         }
+#endif // ifndef WARPX_DIM_RZ
 #endif
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
             // vacuum medium
@@ -495,6 +497,7 @@ WarpX::OneStep_nosub (Real cur_time)
                 FillBoundaryB(guard_cells.ng_alloc_EB);
             }
 #ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
             if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
                 if (mag_time_scheme_order==1){
                     MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
@@ -507,6 +510,7 @@ WarpX::OneStep_nosub (Real cur_time)
             else {
                     amrex::Abort("unsupported em_solver_medium for M field");
             }
+#endif // ifndef WARPX_DIM_RZ
             // H and M are up-to-date in the domain, but all guard cells are
             // outdated.
             if ( safe_guard_cells ){
