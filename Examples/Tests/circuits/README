@@ -1,4 +1,6 @@
-For all simulations we use
+These are pure EM simulations (USE_LLG=FALSE) demonstrating some basic circuit setups.
+
+For all simulations we use:
 
 amr.n_cell = 128 128 128
 geometry.prob_lo = -16.e-6 -16.e-6 -16.e-6
