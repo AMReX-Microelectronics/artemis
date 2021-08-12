@@ -465,7 +465,7 @@ WarpX::OneStep_nosub (Real cur_time)
             amrex::Abort(" Medium for EM is unknown \n");
         }
 
-            FillBoundaryE(guard_cells.ng_FieldSolver);
+        FillBoundaryE(guard_cells.ng_FieldSolver);
 
             EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
             EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
