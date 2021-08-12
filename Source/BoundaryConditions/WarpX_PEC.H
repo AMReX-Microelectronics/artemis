@@ -149,7 +149,7 @@ using namespace amrex;
             // if ijk_vec is on a PEC boundary in any direction, set Etangential to 0.
             Efield(ijk_vec,n) = 0._rt;
         } else if (GuardCell == true) {
-            //Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
+            Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
         }
     }
 
@@ -265,7 +265,7 @@ using namespace amrex;
         } else if (GuardCell == true) {
             // Bnormal and Btangential is set opposite and equal to the value
             // in the mirror location, respectively.
-            // Bfield(ijk_vec,n) = sign * Bfield(ijk_mirror,n);
+            Bfield(ijk_vec,n) = sign * Bfield(ijk_mirror,n);
         }
     }
 
