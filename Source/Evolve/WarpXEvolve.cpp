@@ -436,9 +436,12 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifndef WARPX_MAG_LLG
         EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver);
+        // ApplyExternalFieldExcitation
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // apply B external excitation; soft source to be fixed
 #endif
 
 #ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
             if (mag_time_scheme_order==1){
                 MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
@@ -454,6 +457,7 @@ WarpX::OneStep_nosub (Real cur_time)
         } else {
             amrex::Abort("unsupported em_solver_medium for M field");
         }
+#endif // ifndef WARPX_DIM_RZ
 #endif
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
             // vacuum medium
@@ -465,10 +469,12 @@ WarpX::OneStep_nosub (Real cur_time)
             amrex::Abort(" Medium for EM is unknown \n");
         }
 
-            FillBoundaryE(guard_cells.ng_FieldSolver);
+        FillBoundaryE(guard_cells.ng_FieldSolver);
+        // ApplyExternalFieldExcitation
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternal); // apply E external excitation; soft source to be fixed
 
-            EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
-            EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
 #ifndef WARPX_MAG_LLG
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
@@ -493,8 +499,11 @@ WarpX::OneStep_nosub (Real cur_time)
             // outdated.
             if (safe_guard_cells) {
                 FillBoundaryB(guard_cells.ng_alloc_EB);
+                // ApplyExternalFieldExcitation
+                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // redundant for hs; need to fix the way to increment ss
             }
 #ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
             if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
                 if (mag_time_scheme_order==1){
                     MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
@@ -507,11 +516,14 @@ WarpX::OneStep_nosub (Real cur_time)
             else {
                     amrex::Abort("unsupported em_solver_medium for M field");
             }
+#endif // ifndef WARPX_DIM_RZ
             // H and M are up-to-date in the domain, but all guard cells are
             // outdated.
             if ( safe_guard_cells ){
                 FillBoundaryH(guard_cells.ng_alloc_EB);
                 FillBoundaryM(guard_cells.ng_alloc_EB);
+               // ApplyExternalFieldExcitation
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
             }
 #endif //
     } // !PSATD
