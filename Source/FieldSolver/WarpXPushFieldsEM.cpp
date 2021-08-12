@@ -419,15 +419,14 @@ WarpX::PushPSATD ()
     // Evolve the fields in the PML boxes
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        ApplyEfieldBoundary(lev, PatchType::fine);
-        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
-        ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
-        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
-
         if (do_pml && pml[lev]->ok())
         {
             pml[lev]->PushPSATD(lev);
         }
+        ApplyEfieldBoundary(lev, PatchType::fine);
+        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
+        ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
+        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
     }
 #endif
 }
