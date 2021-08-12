@@ -20,6 +20,7 @@
 #include <AMReX.H>
 
 using namespace amrex;
+#ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
 /**
  * \brief Update the H field, over one timestep
@@ -33,7 +34,7 @@ void FiniteDifferenceSolver::EvolveHPML (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Hfield, Efield, dt);
+    amrex::ignore_unused(Hfield, Efield, dt, dive_cleaning);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
@@ -54,8 +55,6 @@ void FiniteDifferenceSolver::EvolveHPML (
 #endif
 }
 
-
-#ifndef WARPX_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveHPMLCartesian (
@@ -165,6 +164,5 @@ void FiniteDifferenceSolver::EvolveHPMLCartesian (
 
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
-
 #endif // corresponds to ifdef WARPX_MAG_LLG
+#endif // corresponds to ifndef WARPX_DIM_RZ
