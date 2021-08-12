@@ -108,6 +108,7 @@ struct CartesianYeeAlgorithm {
 #else
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
+        return 0._rt;
 #endif
     }
 
@@ -132,6 +133,7 @@ struct CartesianYeeAlgorithm {
 #else
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
+        return 0._rt;
 #endif
     }
 
