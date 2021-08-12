@@ -12,6 +12,8 @@ The PEC tube walls have normal in the +/- x and z directions, so the direction o
 
 The tube geometry was generated using Excitation_Flag_Generator.py with inputs_exampledata_Excitation_Flag_Generator
 as an input (renname it "exampledata_Excitation_Flag_Generator.txt" to re-run it).
+We have removed the y-dependence to make the lines shorter to parse, since the walls extend the entire
+domain in y.
 
 inputs_wave - initialize a wave inside the PEC tube.  pml boundary conditions at all walls
 
