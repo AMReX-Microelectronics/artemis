@@ -467,8 +467,8 @@ WarpX::OneStep_nosub (Real cur_time)
 
         FillBoundaryE(guard_cells.ng_FieldSolver);
 
-            EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
-            EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
+        EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
 #ifndef WARPX_MAG_LLG
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
