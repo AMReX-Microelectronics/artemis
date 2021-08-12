@@ -712,6 +712,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     ApplyEfieldBoundary(lev, patch_type);
 }
 
+#ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
 // define WarpX::MacroscopicEvolveHM
 void
@@ -800,6 +801,7 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
 }
 
 #endif
+#endif // ifndef WARPX_DIM_RZ
 
 void
 WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
