@@ -66,8 +66,6 @@ warpx.Ey_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <=
 
 warpx.Ez_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
 
-# turns off PEC walls
-
 warpx.Ex_excitation_grid_function(x,y,z,t) = ".0"
 warpx.Ey_excitation_grid_function(x,y,z,t) = ".0"
 warpx.Ez_excitation_grid_function(x,y,z,t) = ".0"
