@@ -25,13 +25,10 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
 macroscopic.sigma_function(x,y,z) = "sigma_0"
-#macroscopic.sigma_function(x,y,z) = "sigma_0 * (z >= -0.000004) + sigma_silicon * (z < -0.000004)"
 
 macroscopic.epsilon_function(x,y,z) = "epsilon_0"
-#macroscopic.epsilon_function(x,y,z) = "epsilon_0 * (z >= -0.000004) + epsilon_r_silicon * epsilon_0 * (z < -0.000004)"
 
 macroscopic.mu_function(x,y,z) = "mu_0 "
-#macroscopic.mu_function(x,y,z) = "mu_0 * (z >= -0.000004) + mu_r_silicon * mu_0 * (z < -0.000004)"
 
 #################################
 ############ FIELDS #############
@@ -53,8 +50,6 @@ my_constants.TP = 2.5e-14
 
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function
 warpx.Ex_external_grid_function(x,y,z) = "0."
-#warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength) * (x < 0.000004) * (x > -0.000004) * (z < 0.000004) * (z > -0.000004)"
-#warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)"
 warpx.Ey_external_grid_function(x,y,z) = "0."
 warpx.Ez_external_grid_function(x,y,z) = "0."
 
@@ -62,8 +57,6 @@ warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 warpx.Bx_external_grid_function(x,y,z) = "0."
 warpx.By_external_grid_function(x,y,z) = "0."
 warpx.Bz_external_grid_function(x,y,z) = "0."
-#warpx.Bz_external_grid_function(x,y,z) = "(-1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)/c) * (z < 0.000004) * (z > -0.000004) * (x < 0.000004) * (x > -0.000004)"
-#warpx.Bz_external_grid_function(x,y,z) = "(-1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)/c)"
 
 warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
@@ -74,9 +67,6 @@ warpx.Ey_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <=
 warpx.Ez_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
 
 # turns off PEC walls
-#warpx.Ex_excitation_flag_function(x,y,z) = "0."
-#warpx.Ey_excitation_flag_function(x,y,z) = "0."
-#warpx.Ez_excitation_flag_function(x,y,z) = "0."
 
 warpx.Ex_excitation_grid_function(x,y,z,t) = ".0"
 warpx.Ey_excitation_grid_function(x,y,z,t) = ".0"
@@ -84,13 +74,11 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = ".0"
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-#warpx.Bx_excitation_flag_function(x,y,z) = "0."
 # subtract off tube area
 warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000008) * (x < 0.000008) * (z > -0.000008) * (z < 0.000008) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6 - 1.25e-7) - (x >= -0.000004) * (x <= 0.000004) * (z >= -0.000004) * (z <= 0.000004) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6 - 1.25e-7)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
-#warpx.Bx_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((2*pi*x)/0.000032) * exp(-(t-3*TP)**2/(2*TP**2)) * cos(2*pi*c/wavelength*t)"
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
