@@ -25,12 +25,10 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
 macroscopic.sigma_function(x,y,z) = "sigma_0"
-#macroscopic.sigma_function(x,y,z) = "sigma_0 * (z >= -0.000004) + sigma_silicon * (z < -0.000004)"
 
 macroscopic.epsilon_function(x,y,z) = "epsilon_0"
 
 macroscopic.mu_function(x,y,z) = "mu_0 "
-#macroscopic.mu_function(x,y,z) = "mu_0 * (z >= -0.000004) + mu_r_silicon * mu_0 * (z < -0.000004)"
 
 #################################
 ############ FIELDS #############
@@ -80,7 +78,6 @@ warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000004) * (x < 0.000004) * (
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
-#warpx.Bx_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((2*pi*x)/0.000016) * exp(-(t-3*TP)**2/(2*TP**2)) * cos(2*pi*c/wavelength*t)"
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
