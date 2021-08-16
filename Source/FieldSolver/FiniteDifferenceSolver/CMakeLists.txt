@@ -19,8 +19,6 @@ if(WarpX_MAG_LLG)
       PRIVATE
         MacroscopicEvolveHM_2nd.cpp
         MacroscopicEvolveHM.cpp
-        MacroscopicEvolveM_2nd.cpp
-        MacroscopicEvolveM.cpp
         EvolveHPML.cpp
     )
 endif()

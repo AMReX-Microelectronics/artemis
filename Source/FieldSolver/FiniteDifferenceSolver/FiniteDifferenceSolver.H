@@ -99,6 +99,7 @@ class FiniteDifferenceSolver
                             amrex::Real const dt,
                             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
+#ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
         /**
           * \brief Macroscopic M-update, H-update and B=mu_o(H+M) computation for non-vacuum medium using finite-difference algorithm
@@ -133,6 +134,7 @@ class FiniteDifferenceSolver
                        std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 
 #endif
+#endif // ifndef WARPX_DIM_RZ
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
@@ -165,13 +167,14 @@ class FiniteDifferenceSolver
                       amrex::MultiFab* const mu_mf,
                       amrex::MultiFab* const sigma_mf);
 
-
+#ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
         void EvolveHPML ( std::array< amrex::MultiFab*, 3 > Hfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt,
                       const bool dive_cleaning);
 #endif
+#endif // ifndef WARPX_DIM_RZ
 
     private:
 

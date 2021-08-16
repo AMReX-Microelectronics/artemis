@@ -126,6 +126,8 @@ guardCellManager::Init (
             ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt / dx[i] * 0.5_rt));
         }
     }
+#else
+    amrex::ignore_unused(do_electrostatic, dt, dx);
 #endif
     // Number of guard cells for local deposition of J and rho
     ng_depos_J   = ng_alloc_J;
