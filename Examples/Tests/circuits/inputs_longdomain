@@ -38,10 +38,9 @@ my_constants.pi = 3.14159265359
 my_constants.c = 299792458.
 my_constants.wavelength = 1.6e-2
 
+my_constants.sigma_0 = 0.
 my_constants.epsilon_0 = 8.8541878128e-12
 my_constants.mu_0 = 1.25663706212e-06
-
-my_constants.TP = 2.5e-14
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
