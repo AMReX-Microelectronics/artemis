@@ -1302,6 +1302,35 @@ Laser initialization
     This function is currently supported only for 3D simulations.
     This requires `USE_LLG=TRUE` in the GNUMakefile.
 
+* ``H_bias_excitation_on_grid_style`` (string) optional (default is "default")
+    This parameter is used to set the type of external magnetic bias field 
+    varying in space (x,y,z) and time (t). It should be noted that the time dependence of 
+    H-bias-excitation should only be used to turn on/off the H-bias_field. 
+    Therefore, at a given time (t), H_bias-field is still DC.
+    The excitation is added to the magnetic bias field
+    on the grid at every timestep. To add an external H-bias-excitation as a function
+    of (x,y,z,t), use the option ``parse_h_bias_excitation_grid_function``. This option requires
+    additional parameters in the input file to set the parser function, namely,
+    ``warpx.Hx_bias_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Hy_bias_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Hz_bias_excitation_grid_function(x,y,z,t)`` to apply the external H-bias-field on the grid.
+    Additionally, the option also requires a flag function to set the type of excitation,
+    ``warpx.Hx_bias_excitation_flag_function(x,y,z)``,
+    ``warpx.Hy_bias_excitation_flag_function(x,y,z)``,
+    ``warpx.Hz_bias_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    set to have three values, namely 0, 1, or 2.
+    If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
+    field component at that location.
+    If the flag is set to 1 at a given `(x,y,z)`, then the excitation is treated as a hard
+    source and the field component at that location is set exactly equal to the value
+    from the `excitation_grid_function` of the corresponding field component.
+    If the flag is set to 2, then the excittaion is treated as a soft source and the
+    field component is updated with the contribution from the `excitation_grid_function`
+    of the corresponding field component.
+    Constants required in the mathematical expression can be set using ``my_constants``.
+    This function is currently supported only for 3D simulations.
+    This requires `USE_LLG=TRUE` in the GNUMakefile.
+
 .. _running-cpp-parameters-collision:
 
 Collision initialization
