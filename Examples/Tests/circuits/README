@@ -1,0 +1,27 @@
+These are pure EM simulations (USE_LLG=FALSE) demonstrating some basic circuit setups.
+
+For all simulations we use:
+
+amr.n_cell = 128 128 128
+geometry.prob_lo = -16.e-6 -16.e-6 -16.e-6
+geometry.prob_hi =  16.e-6  16.e-6  16.e-6
+
+(dx = 2.5e-7)
+
+The PEC tube walls have normal in the +/- x and z directions, so the direction of propagation is y.
+
+The tube geometry was generated using Excitation_Flag_Generator.py with inputs_exampledata_Excitation_Flag_Generator
+as an input (renname it "exampledata_Excitation_Flag_Generator.txt" to re-run it).
+We have removed the y-dependence to make the lines shorter to parse, since the walls extend the entire
+domain in y.
+
+inputs_wave - initialize a wave inside the PEC tube.  pml boundary conditions at all walls
+
+inputs_current - provide a current source at the lo-y boundary inside the tube
+
+inputs_current_large - provide a current source at the lo-y boundary in a region larger than the tube
+                       (and zero the current source inside the tube)
+
+inputs_silicon - same as inputs_2 but with the tube wall with -z normal replaced with silicon
+
+inputs_longdomain - This is a 4um x 1.6cm x 4um domain with a current source with wavelength 1.6cm
