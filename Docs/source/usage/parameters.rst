@@ -1303,9 +1303,9 @@ Laser initialization
     This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 * ``H_bias_excitation_on_grid_style`` (string) optional (default is "default")
-    This parameter is used to set the type of external magnetic bias field 
-    varying in space (x,y,z) and time (t). It should be noted that the time dependence of 
-    H-bias-excitation should only be used to turn on/off the H-bias_field. 
+    This parameter is used to set the type of external magnetic bias field
+    varying in space (x,y,z) and time (t). It should be noted that the time dependence of
+    H-bias-excitation should only be used to turn on/off the H-bias_field.
     Therefore, at a given time (t), H_bias-field is still DC.
     The excitation is added to the magnetic bias field
     on the grid at every timestep. To add an external H-bias-excitation as a function
