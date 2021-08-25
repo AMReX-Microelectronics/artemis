@@ -1304,9 +1304,10 @@ Laser initialization
 
 * ``H_bias_excitation_on_grid_style`` (string) optional (default is "default")
     This parameter is used to set the type of external magnetic bias field
-    varying in space (x,y,z) and time (t). It should be noted that the time dependence of
-    H-bias-excitation should only be used to turn on/off the H-bias_field.
-    Therefore, at a given time (t), H_bias-field is still DC.
+    varying in space (x,y,z) and time (t). It should be noted that the time-varying 
+    part of H-bias-excitation field is attributed to the one-way coupling from electrodynamic 
+    H-field, which makes the time-dependent H-bias-excitation a combination of DC H-bias and AC H-field
+    The time dependence of the DC part, if any, should only be used to turn on/off the H-bias_field.
     The excitation is added to the magnetic bias field
     on the grid at every timestep. To add an external H-bias-excitation as a function
     of (x,y,z,t), use the option ``parse_h_bias_excitation_grid_function``. This option requires
