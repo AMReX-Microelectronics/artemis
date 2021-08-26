@@ -23,6 +23,7 @@
 #endif
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -265,7 +266,15 @@ WarpX::Evolve (int numsteps)
 
         mypc->ContinuousFluxInjection(dt[0]);
 
+        m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
+
         mypc->ApplyBoundaryConditions();
+
+        // interact with particles with EB walls (if present)
+#ifdef AMREX_USE_EB
+        AMREX_ALWAYS_ASSERT(maxLevel() == 0);
+        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
+#endif
 
         // Electrostatic solver: particles can move by an arbitrary number of cells
         if( do_electrostatic != ElectrostaticSolverAlgo::None )
@@ -291,13 +300,10 @@ WarpX::Evolve (int numsteps)
             }
         }
 
-        // interact with particles with EB walls (if present)
-#ifdef AMREX_USE_EB
-        AMREX_ALWAYS_ASSERT(maxLevel() == 0);
-        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
-#endif
         if (sort_intervals.contains(step+1)) {
-            amrex::Print() << "re-sorting particles \n";
+            if (verbose) {
+                amrex::Print() << "re-sorting particles \n";
+            }
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
@@ -312,6 +318,15 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
         }
 
+        // sync up time
+        for (int i = 0; i <= max_level; ++i) {
+            t_new[i] = cur_time;
+        }
+
+        // warpx_py_afterstep runs with the updated global time. It is included
+        // in the evolve timing.
+        if (warpx_py_afterstep) warpx_py_afterstep();
+
         Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
@@ -322,10 +337,6 @@ WarpX::Evolve (int numsteps)
                       << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
                       << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
         }
-        // sync up time
-        for (int i = 0; i <= max_level; ++i) {
-            t_new[i] = cur_time;
-        }
 
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
@@ -335,17 +346,15 @@ WarpX::Evolve (int numsteps)
         }
         multi_diags->FilterComputePackFlush( step );
 
-        if (cur_time >= stop_time - 1.e-3*dt[0]) {
-            break;
-        }
-
-        if (warpx_py_afterstep) warpx_py_afterstep();
-
         // inputs: unused parameters (e.g. typos) check after step 1 has finished
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
             early_params_checked = true;
+        }
+
+        if (cur_time >= stop_time - 1.e-3*dt[0]) {
+            break;
         }
 
         // End loop on time steps
@@ -441,6 +450,7 @@ WarpX::OneStep_nosub (Real cur_time)
 #endif
 
 #ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
             if (mag_time_scheme_order==1){
                 MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
@@ -453,9 +463,12 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryM(guard_cells.ng_FieldSolver);
             // ApplyExternalFieldExcitation
             ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
+
         } else {
             amrex::Abort("unsupported em_solver_medium for M field");
         }
+#endif // ifndef WARPX_DIM_RZ
 #endif
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
             // vacuum medium
@@ -501,6 +514,7 @@ WarpX::OneStep_nosub (Real cur_time)
                 ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // redundant for hs; need to fix the way to increment ss
             }
 #ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
             if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
                 if (mag_time_scheme_order==1){
                     MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
@@ -513,6 +527,7 @@ WarpX::OneStep_nosub (Real cur_time)
             else {
                     amrex::Abort("unsupported em_solver_medium for M field");
             }
+#endif // ifndef WARPX_DIM_RZ
             // H and M are up-to-date in the domain, but all guard cells are
             // outdated.
             if ( safe_guard_cells ){
@@ -520,6 +535,8 @@ WarpX::OneStep_nosub (Real cur_time)
                 FillBoundaryM(guard_cells.ng_alloc_EB);
                // ApplyExternalFieldExcitation
                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
+
             }
 #endif //
     } // !PSATD
@@ -551,13 +568,13 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // 3) Deposit rho (in rho_new, since it will be moved during the loop)
         if (WarpX::update_with_rho)
         {
-            // Deposit rho at relative time -dt in component 1 (rho_new)
+            // Deposit rho at relative time -dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCharge(rho_fp, -dt[0], 1);
+            mypc->DepositCharge(rho_fp, -dt[0]);
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
             // Forward FFT of rho_new
-            PSATDForwardTransformRho(1);
+            PSATDForwardTransformRho(0, 1);
         }
 
         // 4) Deposit J if needed
@@ -565,7 +582,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         {
             // Deposit J at relative time -dt with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCurrent(current_fp, dt[0], -dt[0]);
+            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+            mypc->DepositCurrent(current, dt[0], -dt[0]);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J
@@ -595,7 +613,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
             // Deposit new J at relative time t_depose with time step dt
             // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCurrent(current_fp, dt[0], t_depose);
+            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+            mypc->DepositCurrent(current, dt[0], t_depose);
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J
@@ -604,12 +623,12 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Deposit new rho
             if (WarpX::update_with_rho)
             {
-                // Deposit rho at relative time (i_depose-n_depose+1)*sub_dt in component 1 (rho_new)
-                mypc->DepositCharge(rho_fp, (i_depose-n_depose+1)*sub_dt, 1);
+                // Deposit rho at relative time (i_depose-n_depose+1)*sub_dt
+                mypc->DepositCharge(rho_fp, (i_depose-n_depose+1)*sub_dt);
                 // Filter, exchange boundary, and interpolate across levels
                 SyncRho();
                 // Forward FFT of rho_new
-                PSATDForwardTransformRho(1);
+                PSATDForwardTransformRho(0, 1);
             }
 
             // Advance E,B,F,G fields in time and update the average fields

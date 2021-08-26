@@ -195,7 +195,7 @@ function(set_warpx_binary_name)
         endif()
 
         if(WarpX_MAG_LLG)
-            set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".LLG")
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".LLG")
         endif()
 
         if(WarpX_EB)
@@ -208,6 +208,10 @@ function(set_warpx_binary_name)
 
         if(WarpX_QED_TABLE_GEN)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".GENQEDTABLES")
+        endif()
+
+        if(WarpX_SENSEI)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".SENSEI")
         endif()
 
 
@@ -354,5 +358,6 @@ function(warpx_print_summary)
     message("    QED: ${WarpX_QED}")
     message("    LLG: ${WarpX_MAG_LLG}")
     message("    QED table generation: ${WarpX_QED_TABLE_GEN}")
+    message("    SENSEI: ${WarpX_SENSEI}")
     message("")
 endfunction()

@@ -2,6 +2,10 @@ name: 🐧 OpenMP
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.head_ref }}-ubuntu
+  cancel-in-progress: true
+
 jobs:
   build_cxxminimal:
     name: GCC Minimal w/o MPI
@@ -19,6 +23,12 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
         cmake --build build_3D -j 2
+        cmake -S . -B build_3D_EM      \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_MPI=OFF              \
+          -DWarpX_QED=OFF              \
+          -DWarpX_MAG_LLG=OFF
+        cmake --build build_3D_EM -j 2
         cmake -S . -B build_RZ         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_DIMS=RZ              \
@@ -45,8 +55,3 @@ jobs:
         export CXX=$(which clang++)
         export CXXFLAGS="-Werror -Wno-error=pass-failed"
         python3 -m pip install -v .
-
-    - name: run pywarpx
-      run: |
-        export OMP_NUM_THREADS=1
-        mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py
