@@ -61,6 +61,20 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype)
                                                lev );
             }
         }
+        if (externalfieldtype == ExternalFieldType::AllExternal || externalfieldtype == ExternalFieldType::HbiasfieldExternal) {
+            if (H_bias_excitation_grid_s == "parse_h_bias_excitation_grid_function") {
+            ApplyExternalFieldExcitationOnGrid(H_biasfield_fp[lev][0].get(),
+                                               H_biasfield_fp[lev][1].get(),
+                                               H_biasfield_fp[lev][2].get(),
+                                               Hx_biasfield_xt_grid_parser->compile<4>(),
+                                               Hy_biasfield_xt_grid_parser->compile<4>(),
+                                               Hz_biasfield_xt_grid_parser->compile<4>(),
+                                               Hx_biasfield_flag_parser->compile<3>(),
+                                               Hy_biasfield_flag_parser->compile<3>(),
+                                               Hz_biasfield_flag_parser->compile<3>(),
+                                               lev );
+            }
+        }
 #endif
     } // for loop over level
 }
