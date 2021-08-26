@@ -54,6 +54,18 @@ public:
      /** Gpu Vector with index type of the Ez multifab */
      amrex::GpuArray<int, 3> Ez_IndexType;
 #ifdef WARPX_MAG_LLG
+     /** Gpu Vector with index type of the Hx multifab */
+     amrex::GpuArray<int, 3> Hx_IndexType;
+     /** Gpu Vector with index type of the Hy multifab */
+     amrex::GpuArray<int, 3> Hy_IndexType;
+     /** Gpu Vector with index type of the Hz multifab */
+     amrex::GpuArray<int, 3> Hz_IndexType;
+     /** Gpu Vector with index type of the Bx multifab */
+     amrex::GpuArray<int, 3> Bx_IndexType;
+     /** Gpu Vector with index type of the By multifab */
+     amrex::GpuArray<int, 3> By_IndexType;
+     /** Gpu Vector with index type of the Bz multifab */
+     amrex::GpuArray<int, 3> Bz_IndexType;
      /** Gpu Vector with index type of the saturation magnetization multifab */
      amrex::GpuArray<int, 3> mag_Ms_IndexType;
      /** Gpu Vector with index type of the Gilbert damping factor multifab */
@@ -223,6 +235,10 @@ public:
      std::unique_ptr<amrex::Parser> m_sigma_parser;
      std::unique_ptr<amrex::Parser> m_epsilon_parser;
      std::unique_ptr<amrex::Parser> m_mu_parser;
+#ifdef WARPX_MAG_LLG
+     std::unique_ptr<amrex::Parser> m_mag_Ms_parser;
+#endif
+
 private:
 
 #ifdef WARPX_MAG_LLG // preferred to use this tag multiple times for different variable types to keep formatting consistent
@@ -291,7 +307,7 @@ private:
 #endif
 
 #ifdef WARPX_MAG_LLG
-     std::unique_ptr<amrex::Parser> m_mag_Ms_parser;
+     //std::unique_ptr<amrex::Parser> m_mag_Ms_parser;
      std::unique_ptr<amrex::Parser> m_mag_alpha_parser;
      std::unique_ptr<amrex::Parser> m_mag_gamma_parser;
      std::unique_ptr<amrex::Parser> m_mag_exchange_parser;
