@@ -1,7 +1,7 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 250
+max_step = 500
 amr.n_cell = 128 128 128
 amr.max_grid_size = 128
 amr.blocking_factor = 16
@@ -10,7 +10,7 @@ geometry.prob_lo     =  -16.e-6 -16.e-6 -16.e-6
 geometry.prob_hi     =   16.e-6  16.e-6  16.e-6
 amr.max_level = 0
 # use pec instead of pml overlaying current source so you don't get a reflection
-boundary.field_lo = periodic pec periodic
+boundary.field_lo = periodic pml periodic
 boundary.field_hi = periodic pml periodic
 
 #################################
@@ -42,7 +42,7 @@ my_constants.c = 83147467.6397237
 my_constants.wavelength = 4.e-6
 
 my_constants.sigma_0 = 0.0
-my_constants.sigma_pd = 9.5e6
+my_constants.sigma_pd = 9.5e4
 my_constants.sigma_pd = 0.0
 
 my_constants.epsilon_0 = 8.8541878128e-12
@@ -53,7 +53,7 @@ my_constants.mu_r_pd = 1.0
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000004) * (x < 0.000004) * (z > -0.000004) * (z < 0.000004) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6 - 1.25e-7)"
+warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000004) * (x < 0.000004) * (z > -0.000004) * (z < 0.000004) * (y <= -8.e-6 + 1.25e-7) * (y >= -8.e-6 - 1.25e-7)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
@@ -63,6 +63,6 @@ warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
 # Diagnostics
 diagnostics.diags_names = plt
-plt.intervals = 1
+plt.intervals = 5
 plt.fields_to_plot = Ex Ey Ez Bx By Bz
 plt.diag_type = Full
