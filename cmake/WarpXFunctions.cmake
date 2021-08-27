@@ -210,6 +210,10 @@ function(set_warpx_binary_name)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".GENQEDTABLES")
         endif()
 
+        if(WarpX_SENSEI)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".SENSEI")
+        endif()
+
 
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
@@ -354,5 +358,6 @@ function(warpx_print_summary)
     message("    QED: ${WarpX_QED}")
     message("    LLG: ${WarpX_MAG_LLG}")
     message("    QED table generation: ${WarpX_QED_TABLE_GEN}")
+    message("    SENSEI: ${WarpX_SENSEI}")
     message("")
 endfunction()

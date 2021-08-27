@@ -126,7 +126,8 @@ struct ExternalFieldType {
         EfieldExternal = 1,
         BfieldExternal = 2,
 #ifdef WARPX_MAG_LLG
-        HfieldExternal = 3
+        HfieldExternal = 3,
+        HbiasfieldExternal = 4
 #endif
     };
 };
