@@ -23,3 +23,5 @@ inputs_current_large - provide a current source at the lo-y boundary in a region
                        (and zero the current source inside the tube)
 
 inputs_silicon - same as inputs_2 but with the tube wall with -z normal replaced with silicon
+
+inputs_longdomain - This is a 4um x 1.6cm x 4um domain with a current source with wavelength 1.6cm
