@@ -10,8 +10,8 @@ geometry.prob_lo     =  -16.e-6 -16.e-6 -16.e-6
 geometry.prob_hi     =   16.e-6  16.e-6  16.e-6
 amr.max_level = 0
 # use pec instead of pml overlaying current source so you don't get a reflection
-boundary.field_lo = periodic pml periodic
-boundary.field_hi = periodic pml periodic
+boundary.field_lo = periodic pml pml
+boundary.field_hi = periodic pml pec
 
 #################################
 ############ NUMERICS ###########
@@ -24,11 +24,11 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_pd - sigma_0) * (x > -0.000004) * (x < 0.000004) * (z > -0.000004) * (z < 0.000004)"
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_pd - sigma_0) * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (z < 0.000001)"
 
-macroscopic.epsilon_function(x,y,z) = "epsilon_0 + (epsilon_r_pd - 1.) * epsilon_0 * (x > -0.000004) * (x < 0.000004) * (z > -0.000004) * (z < 0.000004)"
+macroscopic.epsilon_function(x,y,z) = "epsilon_0 + (epsilon_r_pd - 1.) * epsilon_0 * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (z < 0.000001)"
 
-macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -0.000004) * (x < 0.000004) * (z > -0.000004) * (z < 0.000004)"
+macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (z < 0.000001)"
 
 #################################
 ############ FIELDS #############
@@ -42,8 +42,7 @@ my_constants.c = 83147467.6397237
 my_constants.wavelength = 4.e-6
 
 my_constants.sigma_0 = 0.0
-my_constants.sigma_pd = 9.5e4
-my_constants.sigma_pd = 0.0
+my_constants.sigma_pd = 1.e7
 
 my_constants.epsilon_0 = 8.8541878128e-12
 my_constants.epsilon_r_pd = 13.
@@ -53,7 +52,7 @@ my_constants.mu_r_pd = 1.0
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000004) * (x < 0.000004) * (z > -0.000004) * (z < 0.000004) * (y <= -8.e-6 + 1.25e-7) * (y >= -8.e-6 - 1.25e-7)"
+warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000008) * (x < 0.000008) * (z > -0.000016) * (z < 0.000012) * (y <= -8.e-6 + 1.25e-7) * (y >= -8.e-6 - 1.25e-7)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
