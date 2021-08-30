@@ -24,11 +24,11 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_pd - sigma_0) * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (z < 0.000001)"
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_pd - sigma_0) * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (z < 0.000001) + (sigma_si - sigma_0) * (z < -0.000001)"
 
-macroscopic.epsilon_function(x,y,z) = "epsilon_0 + (epsilon_r_pd - 1.) * epsilon_0 * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (z < 0.000001)"
+macroscopic.epsilon_function(x,y,z) = "epsilon_0 + (epsilon_r_pd - 1.) * epsilon_0 * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (z < 0.000001) + (epsilon_r_si - 1.) * epsilon_0 * (z < -0.000001)"
 
-macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (z < 0.000001)"
+macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (z < 0.000001) + (mu_r_si - 1.) * mu_0 * (z < -0.000001)"
 
 #################################
 ############ FIELDS #############
@@ -43,12 +43,15 @@ my_constants.wavelength = 4.e-6
 
 my_constants.sigma_0 = 0.0
 my_constants.sigma_pd = 1.e7
+my_constants.sigma_si = 1.e2
 
 my_constants.epsilon_0 = 8.8541878128e-12
 my_constants.epsilon_r_pd = 13.
+my_constants.epsilon_r_si = 12.
 
 my_constants.mu_0 = 1.25663706212e-06
 my_constants.mu_r_pd = 1.0
+my_constants.mu_r_si = 1.0
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
