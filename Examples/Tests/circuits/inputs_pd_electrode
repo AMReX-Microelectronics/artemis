@@ -56,7 +56,7 @@ warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000008) * (x < 0.000008) * (
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((2*pi*x)/0.000016) * cos(2*pi*c/wavelength*t)"
+warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((2*pi*x)/0.000032) * cos(2*pi*c/wavelength*t)"
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
