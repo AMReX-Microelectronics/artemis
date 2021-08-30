@@ -19,6 +19,7 @@
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "Particles/ParticleBoundaryBuffer_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -59,6 +60,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
+static_assert(false, "Embedded boundaries are not supported in RZ mode.");
+#endif
 
 enum struct PatchType : int
 {
@@ -119,6 +124,7 @@ public:
     static std::string E_excitation_grid_s;
 #ifdef WARPX_MAG_LLG
     static std::string H_excitation_grid_s;
+    static std::string H_bias_excitation_grid_s;
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -149,6 +155,10 @@ public:
     static std::string str_Hx_excitation_grid_function;
     static std::string str_Hy_excitation_grid_function;
     static std::string str_Hz_excitation_grid_function;
+    // Function for H bias excitation (x,y,z,t) on the grid
+    static std::string str_Hx_bias_excitation_grid_function;
+    static std::string str_Hy_bias_excitation_grid_function;
+    static std::string str_Hz_bias_excitation_grid_function;
 #endif
     // Flag for type of excitation (hard/soft)
     static std::string str_Ex_excitation_flag_function;
@@ -161,6 +171,9 @@ public:
     static std::string str_Hx_excitation_flag_function;
     static std::string str_Hy_excitation_flag_function;
     static std::string str_Hz_excitation_flag_function;
+    static std::string str_Hx_bias_excitation_flag_function;
+    static std::string str_Hy_bias_excitation_flag_function;
+    static std::string str_Hz_bias_excitation_flag_function;
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -201,6 +214,10 @@ public:
     std::unique_ptr<amrex::Parser> Hxfield_xt_grid_parser;
     std::unique_ptr<amrex::Parser> Hyfield_xt_grid_parser;
     std::unique_ptr<amrex::Parser> Hzfield_xt_grid_parser;
+    // Parser for H_bias external excitation on the grid
+    std::unique_ptr<amrex::Parser> Hx_biasfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Hy_biasfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Hz_biasfield_xt_grid_parser;
 #endif
     std::unique_ptr<amrex::Parser> Exfield_flag_parser;
     std::unique_ptr<amrex::Parser> Eyfield_flag_parser;
@@ -212,6 +229,9 @@ public:
     std::unique_ptr<amrex::Parser> Hxfield_flag_parser;
     std::unique_ptr<amrex::Parser> Hyfield_flag_parser;
     std::unique_ptr<amrex::Parser> Hzfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hx_biasfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hy_biasfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hz_biasfield_flag_parser;
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -612,6 +632,7 @@ public:
     void DampJPML (int lev, PatchType patch_type);
 
     void CopyJPML ();
+    bool isAnyBoundaryPML();
 
     /**
      * \brief Synchronize the nodal points of the PML MultiFabs
@@ -710,7 +731,6 @@ public:
     amrex::Real getmoving_window_x() const {return moving_window_x;}
     amrex::Real getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
-    void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;}
 
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
@@ -1343,8 +1363,6 @@ private:
 
     std::string restart_chkfile;
 
-    bool plot_rho = false;
-
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 
@@ -1378,11 +1396,14 @@ private:
     int noy_fft = 16;
     int noz_fft = 16;
 
-    // Domain decomposition on Level 0
+    //! Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
+    //! particle buffer for scraped particles on the boundaries
+    std::unique_ptr<ParticleBoundaryBuffer> m_particle_boundary_buffer;
+
     //
-    // Embeded Boundary
+    // Embedded Boundary
     //
 
     // Factory for field data
@@ -1440,8 +1461,9 @@ private:
      *        with k-space filtering (if needed)
      *
      * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
+     * \param[in] dcomp index of spectral component (0 for rho_old, 1 for rho_new)
      */
-    void PSATDForwardTransformRho (const int icomp);
+    void PSATDForwardTransformRho (const int icomp, const int dcomp);
 
     /**
      * \brief Copy rho_new to rho_old in spectral space
