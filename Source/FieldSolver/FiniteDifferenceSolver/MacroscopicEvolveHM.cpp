@@ -696,8 +696,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
 #endif // ifndef WARPX_DIM_RZ
 
 //void FiniteDifferenceSolver::getMsUsingParser (
-//	MultiFab *mf,
-//	amrex::Real &x_pos,
+//    MultiFab *mf,
+//    amrex::Real &x_pos,
 //        amrex::Real &y_pos,
 //        amrex::Real &z_pos,
 //        ParserExecuter<3> const& macro_parser,

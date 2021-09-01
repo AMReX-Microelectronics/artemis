@@ -961,7 +961,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         Mzfield_parser = std::make_unique<amrex::Parser>(
                                  makeParser(str_Mz_ext_grid_function,{"x","y","z"}));
 
-	/*
+    /*
         {   // use this brace so Mx, My, Mz go out of scope
             // we need 1 more ghost cell than Mfield_fp has because
             // we are averaging to faces, including the ghost faces
@@ -1021,7 +1021,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 AverageParsedMtoFaces(Mx,My,Mz,*Mfield_cp[lev][0],*Mfield_cp[lev][1],*Mfield_cp[lev][2]);
             }
         }
-	*/
+    */
        // Initialize Mfield_fp with external function directly on the faces
        InitializeExternalFieldsOnGridUsingParser(Mfield_fp[lev][0].get(),
                                                  Mfield_fp[lev][1].get(),
