@@ -119,7 +119,7 @@ class FiniteDifferenceSolver
           * \param[in] macroscopic_properties   contains user-defined properties of the medium.
           */
 
-        void MacroscopicEvolveHM ( int lev, 
+        void MacroscopicEvolveHM ( int lev,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
                        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
@@ -128,7 +128,7 @@ class FiniteDifferenceSolver
                        amrex::Real const dt,
                        std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 
-        void MacroscopicEvolveHM_2nd ( int lev, 
+        void MacroscopicEvolveHM_2nd ( int lev,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
                        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
