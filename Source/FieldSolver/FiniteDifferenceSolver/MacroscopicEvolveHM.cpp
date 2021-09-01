@@ -150,7 +150,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         int lev = 0;
         const auto dx = warpx.Geom(lev).CellSizeArray();
         const auto problo = warpx.Geom(lev).ProbLoArray();
-        const auto macro_parser = macroscopic_properties->m_mag_Ms_parser->compile<3>(); 
+        const auto macro_parser = macroscopic_properties->m_mag_Ms_parser->compile<3>();
 
         // loop over cells and update fields
         amrex::ParallelFor(tbx,
@@ -533,7 +533,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         int lev = 0;
         const auto dx = warpx.Geom(lev).CellSizeArray();
         const auto problo = warpx.Geom(lev).ProbLoArray();
-        const auto macro_parser = macroscopic_properties->m_mag_Ms_parser->compile<3>(); 
+        const auto macro_parser = macroscopic_properties->m_mag_Ms_parser->compile<3>();
 
 
         // read in Ms to decide if the grid is magnetic or not
@@ -640,7 +640,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         int lev = 0;
         const auto dx = warpx.Geom(lev).CellSizeArray();
         const auto problo = warpx.Geom(lev).ProbLoArray();
-        const auto macro_parser = macroscopic_properties->m_mag_Ms_parser->compile<3>(); 
+        const auto macro_parser = macroscopic_properties->m_mag_Ms_parser->compile<3>();
 
 
         // Loop over the cells and update the fields
