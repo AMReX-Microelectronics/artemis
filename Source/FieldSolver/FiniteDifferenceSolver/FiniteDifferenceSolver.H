@@ -119,7 +119,8 @@ class FiniteDifferenceSolver
           * \param[in] macroscopic_properties   contains user-defined properties of the medium.
           */
 
-        void MacroscopicEvolveHM ( std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
+        void MacroscopicEvolveHM ( int lev, 
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
                        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
@@ -127,7 +128,8 @@ class FiniteDifferenceSolver
                        amrex::Real const dt,
                        std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 
-        void MacroscopicEvolveHM_2nd ( std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
+        void MacroscopicEvolveHM_2nd ( int lev, 
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
                        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
@@ -285,6 +287,7 @@ class FiniteDifferenceSolver
 #ifdef WARPX_MAG_LLG
         template< typename T_Algo >
         void MacroscopicEvolveHMCartesian(
+            int lev,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
@@ -295,6 +298,7 @@ class FiniteDifferenceSolver
 
         template< typename T_Algo >
         void MacroscopicEvolveHMCartesian_2nd(
+            int lev,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
