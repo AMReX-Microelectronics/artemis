@@ -307,7 +307,6 @@ private:
 #endif
 
 #ifdef WARPX_MAG_LLG
-     //std::unique_ptr<amrex::Parser> m_mag_Ms_parser;
      std::unique_ptr<amrex::Parser> m_mag_alpha_parser;
      std::unique_ptr<amrex::Parser> m_mag_gamma_parser;
      std::unique_ptr<amrex::Parser> m_mag_exchange_parser;
