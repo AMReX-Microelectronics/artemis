@@ -79,13 +79,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     amrex::GpuArray<int, 3> const& mag_gamma_stag = macroscopic_properties->mag_gamma_IndexType;
     amrex::GpuArray<int, 3> const& mag_exchange_stag  = macroscopic_properties->mag_exchange_IndexType;
     amrex::GpuArray<int, 3> const& mag_anisotropy_stag   = macroscopic_properties->mag_anisotropy_IndexType;
-    amrex::GpuArray<int, 3> const& mu_stag        = macroscopic_properties->mu_IndexType;
     amrex::GpuArray<int, 3> const& Mx_stag        = macroscopic_properties->Mx_IndexType;
     amrex::GpuArray<int, 3> const& My_stag        = macroscopic_properties->My_IndexType;
     amrex::GpuArray<int, 3> const& Mz_stag        = macroscopic_properties->Mz_IndexType;
     amrex::GpuArray<int, 3> const& Bx_stag        = macroscopic_properties->Bx_IndexType;
     amrex::GpuArray<int, 3> const& By_stag        = macroscopic_properties->By_IndexType;
     amrex::GpuArray<int, 3> const& Bz_stag        = macroscopic_properties->Bz_IndexType;
+    amrex::GpuArray<int, 3> const& Hx_stag        = macroscopic_properties->Hx_IndexType;
+    amrex::GpuArray<int, 3> const& Hy_stag        = macroscopic_properties->Hy_IndexType;
+    amrex::GpuArray<int, 3> const& Hz_stag        = macroscopic_properties->Hz_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr       = macroscopic_properties->macro_cr_ratio;
     amrex::GpuArray<amrex::Real, 3> const& anisotropy_axis = macroscopic_properties->mag_LLG_anisotropy_axis;
 
@@ -857,10 +859,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     amrex::Real x, y, z;
-                    WarpXUtilAlgo::getCellCoordinates(i, j, k, Mx_stag, problo, dx, x, y, z);
+                    WarpXUtilAlgo::getCellCoordinates(i, j, k, Hx_stag, problo, dx, x, y, z);
                     amrex::Real mag_Ms_arrx = macro_parser(x,y,z);
                     if (mag_Ms_arrx == 0._rt){ // nonmagnetic region
-                        Real mu_arrx    = CoarsenIO::Interp( mu_arr, mu_stag, Mx_stag, macro_cr, i, j, k, 0);
+                        Real mu_arrx    = MacroscopicProperties::macro_avg_to_face(i, j, k, Hxnodal, mu_arr);
                         Hx(i, j, k) = Hx_old(i, j, k) + 1. / mu_arrx * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
                                                                            - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
                     } else if (mag_Ms_arrx > 0){ // magnetic region
@@ -875,10 +877,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     amrex::Real x, y, z;
-                    WarpXUtilAlgo::getCellCoordinates(i, j, k, My_stag, problo, dx, x, y, z);
+                    WarpXUtilAlgo::getCellCoordinates(i, j, k, Hy_stag, problo, dx, x, y, z);
                     amrex::Real mag_Ms_arry = macro_parser(x,y,z);
                     if (mag_Ms_arry == 0._rt){ // nonmagnetic region
-                        Real mu_arry    = CoarsenIO::Interp( mu_arr, mu_stag, My_stag, macro_cr, i, j, k, 0);
+                        Real mu_arry    = MacroscopicProperties::macro_avg_to_face(i, j, k, Hynodal, mu_arr);
                         Hy(i, j, k) = Hy_old(i, j, k) + 1. / mu_arry * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
                                                                            - T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k));
                     } else if (mag_Ms_arry > 0){ // magnetic region
@@ -893,10 +895,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     amrex::Real x, y, z;
-                    WarpXUtilAlgo::getCellCoordinates(i, j, k, Mz_stag, problo, dx, x, y, z);
+                    WarpXUtilAlgo::getCellCoordinates(i, j, k, Hz_stag, problo, dx, x, y, z);
                     amrex::Real mag_Ms_arrz = macro_parser(x,y,z);
                     if (mag_Ms_arrz == 0._rt){ // nonmagnetic region
-                        Real mu_arrz    = CoarsenIO::Interp( mu_arr, mu_stag, Mz_stag, macro_cr, i, j, k, 0);
+                        Real mu_arrz    = MacroscopicProperties::macro_avg_to_face(i, j, k, Hznodal, mu_arr);
                         Hz(i, j, k) = Hz_old(i, j, k) + 1. / mu_arrz * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
                                                                            - T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k));
                     } else if (mag_Ms_arrz > 0){ // magnetic region
