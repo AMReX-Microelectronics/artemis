@@ -43,7 +43,7 @@ my_constants.wavelength = 4.e-6
 
 my_constants.sigma_0 = 0.0
 my_constants.sigma_pd = 1.e7
-my_constants.sigma_si = 1.e2
+my_constants.sigma_si = 1.e1
 
 my_constants.epsilon_0 = 8.8541878128e-12
 my_constants.epsilon_r_pd = 13.
@@ -55,7 +55,7 @@ my_constants.mu_r_si = 1.0
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000008) * (x < 0.000008) * (z > -0.000016) * (z < 0.000012) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6 - 1.25e-7)"
+warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000008) * (x < 0.000008) * (z > -0.000016) * (z < -0.000001) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6 - 1.25e-7)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
