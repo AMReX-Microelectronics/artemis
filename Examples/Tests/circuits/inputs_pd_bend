@@ -24,11 +24,11 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_pd - sigma_0) * (x > -0.000001) * (x < 0.000001) * (y > -16.e-6) * (y < 0) * (z > -0.000001) * (z < 0.000001) + (sigma_si - sigma_0) * (z < -0.000001)"
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_pd - sigma_0) * (x > -0.000001) * (x < 0.000001) * (y > -16.e-6) * (y < 0.000001) * (z > -0.000001) * (z < 0.000001) + (sigma_pd - sigma_0) * (y > -0.000001) * (y < 0.000001) * (x > -16.e-6) * (x < -0.000001) * (z > -0.000001) * (z < 0.000001) + (sigma_si - sigma_0) * (z < -0.000001)"
 
-macroscopic.epsilon_function(x,y,z) = "epsilon_0 + (epsilon_r_pd - 1.) * epsilon_0 * (x > -0.000001) * (x < 0.000001) * (y > -16.e-6) * (y < 0) * (z > -0.000001) * (z < 0.000001) + (epsilon_r_si - 1.) * epsilon_0 * (z < -0.000001)"
+macroscopic.epsilon_function(x,y,z) = "epsilon_0 + (epsilon_r_pd - 1.) * epsilon_0 * (x > -0.000001) * (x < 0.000001) * (y > -16.e-6) * (y < 0.000001) * (z > -0.000001) * (z < 0.000001) + (epsilon_r_pd - 1.) * epsilon_0 * (y > -0.000001) * (y < 0.000001) * (x > -16.e-6) * (x < -0.000001) * (z > -0.000001) * (z < 0.000001) + (epsilon_r_si - 1.) * epsilon_0 * (z < -0.000001)"
 
-macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -0.000001) * (x < 0.000001) * (z > -0.000001) * (y > -16.e-6) * (y < 0) * (z < 0.000001) + (mu_r_si - 1.) * mu_0 * (z < -0.000001)"
+macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -0.000001) * (x < 0.000001) * (y > -16.e-6) * (y < 0.000001) * (z > -0.000001) * (z < 0.000001) + (mu_r_pd - 1.) * mu_0 * (y > -0.000001) * (y < 0.000001) * (x > -16.e-6) * (x < -0.000001) * (z > -0.000001) * (z < 0.000001) + (mu_r_si - 1.) * mu_0 * (z < -0.000001)"
 
 #################################
 ############ FIELDS #############
