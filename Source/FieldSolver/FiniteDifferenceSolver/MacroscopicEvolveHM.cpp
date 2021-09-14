@@ -579,8 +579,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         amrex::IntVect Bynodal = Bfield[1]->ixType().toIntVect();
         amrex::IntVect Bznodal = Bfield[2]->ixType().toIntVect();
         Box const &tbx = mfi.tilebox(Bxnodal);
-        Box const &tby = mfi.tilebox(Bxnodal);
-        Box const &tbz = mfi.tilebox(Bxnodal);
+        Box const &tby = mfi.tilebox(Bynodal);
+        Box const &tbz = mfi.tilebox(Bznodal);
 
         // read in Ms to decide if the grid is magnetic or not
         auto& mag_Ms_mf = macroscopic_properties->getmag_Ms_mf();
