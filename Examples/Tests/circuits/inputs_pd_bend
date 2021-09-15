@@ -24,11 +24,11 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_pd - sigma_0) * (x > -0.000001) * (x < 0.000001) * (y > -16.e-6) * (y < 0.000001) * (z > -0.000001) * (z < 0.000001) + (sigma_pd - sigma_0) * (y > -0.000001) * (y < 0.000001) * (x > -16.e-6) * (x < -0.000001) * (z > -0.000001) * (z < 0.000001) + (sigma_si - sigma_0) * (z < -0.000001)"
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_pd - sigma_0) * (x > -1.e-6) * (x < 1.e-6) * (y > -16.e-6) * (y < 1.e-6) * (z > -1.e-6) * (z < 1.e-6) + (sigma_pd - sigma_0) * (y > -1.e-6) * (y < 1.e-6) * (x > -16.e-6) * (x < -1.e-6) * (z > -1.e-6) * (z < 1.e-6) + (sigma_si - sigma_0) * (z < -1.e-6)"
 
-macroscopic.epsilon_function(x,y,z) = "epsilon_0 + (epsilon_r_pd - 1.) * epsilon_0 * (x > -0.000001) * (x < 0.000001) * (y > -16.e-6) * (y < 0.000001) * (z > -0.000001) * (z < 0.000001) + (epsilon_r_pd - 1.) * epsilon_0 * (y > -0.000001) * (y < 0.000001) * (x > -16.e-6) * (x < -0.000001) * (z > -0.000001) * (z < 0.000001) + (epsilon_r_si - 1.) * epsilon_0 * (z < -0.000001)"
+macroscopic.epsilon_function(x,y,z) = "epsilon_0 + (epsilon_r_pd - 1.) * epsilon_0 * (x > -1.e-6) * (x < 1.e-6) * (y > -16.e-6) * (y < 1.e-6) * (z > -1.e-6) * (z < 1.e-6) + (epsilon_r_pd - 1.) * epsilon_0 * (y > -1.e-6) * (y < 1.e-6) * (x > -16.e-6) * (x < -1.e-6) * (z > -1.e-6) * (z < 1.e-6) + (epsilon_r_si - 1.) * epsilon_0 * (z < -1.e-6)"
 
-macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -0.000001) * (x < 0.000001) * (y > -16.e-6) * (y < 0.000001) * (z > -0.000001) * (z < 0.000001) + (mu_r_pd - 1.) * mu_0 * (y > -0.000001) * (y < 0.000001) * (x > -16.e-6) * (x < -0.000001) * (z > -0.000001) * (z < 0.000001) + (mu_r_si - 1.) * mu_0 * (z < -0.000001)"
+macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -1.e-6) * (x < 1.e-6) * (y > -16.e-6) * (y < 1.e-6) * (z > -1.e-6) * (z < 1.e-6) + (mu_r_pd - 1.) * mu_0 * (y > -1.e-6) * (y < 1.e-6) * (x > -16.e-6) * (x < -1.e-6) * (z > -1.e-6) * (z < 1.e-6) + (mu_r_si - 1.) * mu_0 * (z < -1.e-6)"
 
 #################################
 ############ FIELDS #############
@@ -55,11 +55,11 @@ my_constants.mu_r_si = 1.0
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "(x > -0.000008) * (x < 0.000008) * (z > -0.000016) * (z < -0.000001) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6 - 1.25e-7)"
+warpx.Bx_excitation_flag_function(x,y,z) = "(x > -8.e-6) * (x < 8.e-6) * (z > -16.e-6) * (z < -1.e-6) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6 - 1.25e-7)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((2*pi*x)/0.000032) * cos(2*pi*c/wavelength*t)"
+warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((2*pi*x)/32.e-6) * cos(2*pi*c/wavelength*t)"
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
