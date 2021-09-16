@@ -1,9 +1,9 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 4000
+max_step = 3000
 amr.n_cell = 256 384 32
-amr.max_grid_size = 32
+amr.max_grid_size = 384
 amr.blocking_factor = 32
 geometry.coord_sys   = 0
 geometry.prob_lo     =  -16.e-6 -16.e-6 -2.e-6
@@ -55,7 +55,7 @@ my_constants.mu_r_si = 1.0
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "(x > -8.e-6) * (x < 8.e-6) * (z > -2.e-6) * (z < -1.e-6) * (y <= -16.e-6 + 6.25e-8) * (y >= -16.e-6 - 6.25e-8)"
+warpx.Bx_excitation_flag_function(x,y,z) = "(x > -8.e-6) * (x < 8.e-6) * (z > -2.e-6) * (z < -1.e-6) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
