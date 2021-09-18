@@ -66,8 +66,6 @@ public:
      amrex::GpuArray<int, 3> By_IndexType;
      /** Gpu Vector with index type of the Bz multifab */
      amrex::GpuArray<int, 3> Bz_IndexType;
-     /** Gpu Vector with index type of the saturation magnetization multifab */
-     amrex::GpuArray<int, 3> mag_Ms_IndexType;
      /** Gpu Vector with index type of the Gilbert damping factor multifab */
      amrex::GpuArray<int, 3> mag_alpha_IndexType;
      /** Gpu Vector with index type of the gyromagnetic ratio multifab */
@@ -89,7 +87,6 @@ public:
      amrex::GpuArray<int, 3> macro_cr_ratio;
 
 #ifdef WARPX_MAG_LLG
-     amrex::MultiFab& getmag_Ms_mf () {return (*m_mag_Ms_mf);}
      amrex::MultiFab& getmag_alpha_mf () {return (*m_mag_alpha_mf);}
      amrex::MultiFab& getmag_gamma_mf () {return (*m_mag_gamma_mf);}
      amrex::MultiFab& getmag_exchange_mf () {return (*m_mag_exchange_mf);}
