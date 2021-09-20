@@ -955,7 +955,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                             amrex::Real x, y, z;
-                            WarpXUtilAlgo::getCellCoordinatesIntVect(i, j, k, Mxface_stag, problo, dx, x, y, z);
+                            WarpXUtilAlgo::getCellCoordinates(i, j, k, Mx_stag, problo, dx, x, y, z);
                             amrex::Real mag_Ms_arrx = mag_parser(x,y,z);
                             if (mag_Ms_arrx > 0._rt){
                                 // temporary normalized magnitude of M_xface field at the fixed point
@@ -978,7 +978,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                             amrex::Real x, y, z;
-                            WarpXUtilAlgo::getCellCoordinatesIntVect(i, j, k, Myface_stag, problo, dx, x, y, z);
+                            WarpXUtilAlgo::getCellCoordinates(i, j, k, My_stag, problo, dx, x, y, z);
                             amrex::Real mag_Ms_arry = mag_parser(x,y,z);
                             if (mag_Ms_arry > 0._rt){
                                 // temporary normalized magnitude of M_yface field at the fixed point
@@ -1001,7 +1001,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                             amrex::Real x, y, z;
-                            WarpXUtilAlgo::getCellCoordinatesIntVect(i, j, k, Mzface_stag, problo, dx, x, y, z);
+                            WarpXUtilAlgo::getCellCoordinates(i, j, k, Mz_stag, problo, dx, x, y, z);
                             amrex::Real mag_Ms_arrz = mag_parser(x,y,z);
                             if (mag_Ms_arrz > 0._rt){
                                 // temporary normalized magnitude of M_zface field at the fixed point
