@@ -961,65 +961,31 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         Mzfield_parser = std::make_unique<amrex::Parser>(
                                  makeParser(str_Mz_ext_grid_function,{"x","y","z"}));
 
-        {   // use this brace so Mx, My, Mz go out of scope
-            // we need 1 more ghost cell than Mfield_fp has because
-            // we are averaging to faces, including the ghost faces
-            BoxArray bx = Mfield_fp[lev][0]->boxArray();
-            amrex::MultiFab Mx(bx.enclosedCells(), Mfield_fp[lev][0]->DistributionMap(), 1, Mfield_fp[lev][0]->nGrow()+1);
-            amrex::MultiFab My(bx.enclosedCells(), Mfield_fp[lev][1]->DistributionMap(), 1, Mfield_fp[lev][1]->nGrow()+1);
-            amrex::MultiFab Mz(bx.enclosedCells(), Mfield_fp[lev][2]->DistributionMap(), 1, Mfield_fp[lev][2]->nGrow()+1);
+       // Initialize Mfield_fp with external function directly on the faces
+       InitializeExternalFieldsOnGridUsingParser(Mfield_fp[lev][0].get(),
+                                                 Mfield_fp[lev][1].get(),
+                                                 Mfield_fp[lev][2].get(),
+                                                 Mxfield_parser->compile<3>(),
+                                                 Myfield_parser->compile<3>(),
+                                                 Mzfield_parser->compile<3>(),
+                                                 lev);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Mfield_aux[lev][0].get(),
+                                                    Mfield_aux[lev][1].get(),
+                                                    Mfield_aux[lev][2].get(),
+                                                    Mxfield_parser->compile<3>(),
+                                                    Myfield_parser->compile<3>(),
+                                                    Mzfield_parser->compile<3>(),
+                                                    lev);
 
-            // Initialize Mfield_fp with external function
-            InitializeExternalFieldsOnGridUsingParser(&Mx,
-                                                      &My,
-                                                      &Mz,
-                                                      Mxfield_parser->compile<3>(),
-                                                      Myfield_parser->compile<3>(),
-                                                      Mzfield_parser->compile<3>(),
-                                                      lev);
-
-            AverageParsedMtoFaces(Mx,My,Mz,*Mfield_fp[lev][0],*Mfield_fp[lev][1],*Mfield_fp[lev][2]);
-        }
-
-        if (lev > 0) {
-            {   // use this brace so Mx, My, Mz go out of scope
-                // we need 1 more ghost cell than Mfield_fp has because
-                // we are averaging to faces, including the ghost faces
-                BoxArray bx = Mfield_aux[lev][0]->boxArray();
-                amrex::MultiFab Mx(bx.enclosedCells(), Mfield_aux[lev][0]->DistributionMap(), 1, Mfield_aux[lev][0]->nGrow()+1);
-                amrex::MultiFab My(bx.enclosedCells(), Mfield_aux[lev][1]->DistributionMap(), 1, Mfield_aux[lev][1]->nGrow()+1);
-                amrex::MultiFab Mz(bx.enclosedCells(), Mfield_aux[lev][2]->DistributionMap(), 1, Mfield_aux[lev][2]->nGrow()+1);
-
-                InitializeExternalFieldsOnGridUsingParser(&Mx,
-                                                          &My,
-                                                          &Mz,
-                                                          Mxfield_parser->compile<3>(),
-                                                          Myfield_parser->compile<3>(),
-                                                          Mzfield_parser->compile<3>(),
-                                                          lev);
-
-                AverageParsedMtoFaces(Mx,My,Mz,*Mfield_aux[lev][0],*Mfield_aux[lev][1],*Mfield_aux[lev][2]);
-            }
-
-            {   // use this brace so Mx, My, Mz go out of scope
-                // we need 1 more ghost cell than Mfield_fp has because
-                // we are averaging to faces, including the ghost faces
-                BoxArray bx = Mfield_cp[lev][0]->boxArray();
-                amrex::MultiFab Mx(bx.enclosedCells(), Mfield_cp[lev][0]->DistributionMap(), 1, Mfield_cp[lev][0]->nGrow()+1);
-                amrex::MultiFab My(bx.enclosedCells(), Mfield_cp[lev][1]->DistributionMap(), 1, Mfield_cp[lev][1]->nGrow()+1);
-                amrex::MultiFab Mz(bx.enclosedCells(), Mfield_cp[lev][2]->DistributionMap(), 1, Mfield_cp[lev][2]->nGrow()+1);
-
-                InitializeExternalFieldsOnGridUsingParser(&Mx,
-                                                          &My,
-                                                          &Mz,
-                                                          Mxfield_parser->compile<3>(),
-                                                          Myfield_parser->compile<3>(),
-                                                          Mzfield_parser->compile<3>(),
-                                                          lev);
-
-                AverageParsedMtoFaces(Mx,My,Mz,*Mfield_cp[lev][0],*Mfield_cp[lev][1],*Mfield_cp[lev][2]);
-            }
-        }
+          InitializeExternalFieldsOnGridUsingParser(Mfield_cp[lev][0].get(),
+                                                    Mfield_cp[lev][1].get(),
+                                                    Mfield_cp[lev][2].get(),
+                                                    Mxfield_parser->compile<3>(),
+                                                    Myfield_parser->compile<3>(),
+                                                    Mzfield_parser->compile<3>(),
+                                                    lev);
+       }
     }
 
 #endif //closes #ifdef WARPX_MAG_LLG
