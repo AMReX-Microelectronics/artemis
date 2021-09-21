@@ -223,6 +223,78 @@ struct CartesianYeeAlgorithm {
 
 #endif
 
+#ifdef WARPX_MAG_LLG
+
+    /**
+     * Perform divergence of gradient along x on M field when exchange coupling is on */
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real LaplacianDx_Mag (
+        amrex::Array4<amrex::Real> const& F,
+        amrex::Real const * const coefs_x,
+        int const i, int const j, int const k, int const ncomp=0 ) {
+
+        amrex::Real const inv_dx = coefs_x[0];
+        if ( F(i+1,j,k) == 0.)
+        {
+           return 0.;
+        }
+        else
+        {
+           return inv_dx*(UpwardDx(F, coefs_x, i, j, k, ncomp) - DownwardDx(F, coefs_x, i, j, k, ncomp));
+        }
+    }
+
+    /**
+     * Perform divergence of gradient along y on M field when exchange coupling is on*/
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real LaplacianDy_Mag (
+        amrex::Array4<amrex::Real> const& F,
+        amrex::Real const * const coefs_y,
+        int const i, int const j, int const k, int const ncomp=0 ) {
+
+        amrex::Real const inv_dy = coefs_y[0];
+        if ( F(i,j+1,k) == 0.)
+        {
+           return 0.;
+        }
+        else
+        {
+           return inv_dy*(UpwardDy(F, coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, i, j, k, ncomp));
+        }
+    }
+
+     /**
+     * Perform divergence of gradient along z on M field when exchange coupling is on*/
+   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real LaplacianDz_Mag (
+        amrex::Array4<amrex::Real> const& F,
+        amrex::Real const * const coefs_z,
+        int const i, int const j, int const k, int const ncomp=0 ) {
+
+        amrex::Real const inv_dz = coefs_z[0];
+        if ( F(i,j,k+1) == 0.)
+        {
+           return 0.;
+        }
+        else
+        {
+           return inv_dz*(UpwardDz(F, coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, i, j, k, ncomp));
+        }
+    }
+
+     /**
+     * Compute the sum to get Laplacian of M field when exchange coupling is on*/
+   AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real Laplacian_Mag (
+        amrex::Array4<amrex::Real> const& F,
+        amrex::Real const * const coefs_x, amrex::Real const * const coefs_y, amrex::Real const * const coefs_z,
+        int const i, int const j, int const k, int const ncomp=0 ) {
+
+        return LaplacianDx_Mag(F, coefs_x, i, j, k, ncomp) + LaplacianDy_Mag(F, coefs_y, i, j, k, ncomp) + LaplacianDz_Mag(F, coefs_z, i, j, k, ncomp);
+    }
+
+#endif
+
 };
 
 #endif // WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_
