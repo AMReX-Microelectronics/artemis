@@ -299,7 +299,6 @@ MacroscopicProperties::InitData ()
     IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
     IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
 #ifdef WARPX_MAG_LLG
-    IntVect mag_Ms_stag = m_mag_Ms_mf->ixType().toIntVect(); //cell-centered
     IntVect mag_alpha_stag = m_mag_alpha_mf->ixType().toIntVect();
     IntVect mag_gamma_stag = m_mag_gamma_mf->ixType().toIntVect();
     IntVect mag_exchange_stag = m_mag_exchange_mf->ixType().toIntVect();
@@ -316,7 +315,6 @@ MacroscopicProperties::InitData ()
         Ey_IndexType[idim]      = Ey_stag[idim];
         Ez_IndexType[idim]      = Ez_stag[idim];
 #ifdef WARPX_MAG_LLG
-        mag_Ms_IndexType[idim]    = mag_Ms_stag[idim];
         mag_alpha_IndexType[idim] = mag_alpha_stag[idim];
         mag_gamma_IndexType[idim] = mag_gamma_stag[idim];
         mag_exchange_IndexType[idim]  = mag_exchange_stag[idim];
@@ -335,7 +333,6 @@ MacroscopicProperties::InitData ()
         Ey_IndexType[2]      = 0;
         Ez_IndexType[2]      = 0;
 #ifdef WARPX_MAG_LLG
-        mag_Ms_IndexType[2]    = 0;
         mag_alpha_IndexType[2] = 0;
         mag_gamma_IndexType[2] = 0;
         mag_exchange_IndexType[2]  = 0;
