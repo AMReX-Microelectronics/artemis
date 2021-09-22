@@ -234,9 +234,35 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
-        if ( F(i+1,j,k) == 0.)
+        if ( F(i+1,j,k) == 0.) //non-magnetic on right
         {
-           return 0.;
+           if (F(i,j+1,k) == 0. || F(i,j,k+1) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           {
+              return inv_dx*inv_dx*(2.*F(i,j,k) - 5.*F(i-1,j,k) + 4.*F(i-2,j,k) - F(i-3,j,k));
+           }
+           else if (F(i,j-1,k) == 0. || F(i,j,k-1) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           {
+              return inv_dx*inv_dx*(2.*F(i,j,k) - 5.*F(i+1,j,k) + 4.*F(i+2,j,k) - F(i+3,j,k));
+           }
+           else
+           {
+           return inv_dx*(0. - DownwardDx(F, coefs_x, i, j, k, ncomp));
+           }
+        }
+        else if (F(i-1,j,k) == 0.) //non-magnetic on left
+        {
+           if (F(i,j+1,k) == 0. || F(i,j,k+1) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           {
+              return inv_dx*inv_dx*(2.*F(i,j,k) - 5.*F(i-1,j,k) + 4.*F(i-2,j,k) - F(i-3,j,k));
+           }
+           else if (F(i,j-1,k) == 0. || F(i,j,k-1) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           {
+              return inv_dx*inv_dx*(2.*F(i,j,k) - 5.*F(i+1,j,k) + 4.*F(i+2,j,k) - F(i+3,j,k));
+           }
+           else
+           {
+              return inv_dx*(UpwardDx(F, coefs_x, i, j, k, ncomp) - 0.);
+           }
         }
         else
         {
@@ -253,9 +279,35 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dy = coefs_y[0];
-        if ( F(i,j+1,k) == 0.)
+        if ( F(i,j+1,k) == 0.) //non-magnetic on right
         {
-           return 0.;
+           if (F(i+1,j,k) == 0. || F(i,j,k+1) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           {
+              return inv_dy*inv_dy*(2.*F(i,j,k) - 5.*F(i,j-1,k) + 4.*F(i,j-2,k) - F(i,j-3,k));
+           }
+           else if (F(i-1,j,k) == 0. || F(i,j,k-1) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           {
+              return inv_dy*inv_dy*(2.*F(i,j,k) - 5.*F(i,j+1,k) + 4.*F(i,j+2,k) - F(i,j+3,k));
+           }
+           else
+           {
+           return inv_dy*(0. - DownwardDy(F, coefs_y, i, j, k, ncomp));
+           }
+        }
+        else if (F(i,j-1,k) == 0.) //non-magnetic on left
+        {
+           if (F(i+1,j,k) == 0. || F(i,j,k+1) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           {
+              return inv_dy*inv_dy*(2.*F(i,j,k) - 5.*F(i,j-1,k) + 4.*F(i,j-2,k) - F(i,j-3,k));
+           }
+           else if (F(i-1,j,k) == 0. || F(i,j,k-1) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           {
+              return inv_dy*inv_dy*(2.*F(i,j,k) - 5.*F(i,j+1,k) + 4.*F(i,j+2,k) - F(i,j+3,k));
+           }
+           else
+           {
+              return inv_dy*(UpwardDy(F, coefs_y, i, j, k, ncomp) - 0.);
+           }
         }
         else
         {
@@ -272,9 +324,35 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dz = coefs_z[0];
-        if ( F(i,j,k+1) == 0.)
+        if ( F(i,j,k+1) == 0.) //non-magnetic on right
         {
-           return 0.;
+           if (F(i+1,j,k) == 0. || F(i,j+1,k) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           {
+              return inv_dz*inv_dz*(2.*F(i,j,k) - 5.*F(i,j,k-1) + 4.*F(i,j,k-2) - F(i,j,k-3));
+           }
+           else if (F(i-1,j,k) == 0. || F(i,j-1,k) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           {
+              return inv_dz*inv_dz*(2.*F(i,j,k) - 5.*F(i,j,k+1) + 4.*F(i,j,k+2) - F(i,j,k+3));
+           }
+           else
+           {
+           return inv_dz*(0. - DownwardDz(F, coefs_z, i, j, k, ncomp));
+           }
+        }
+        else if (F(i,j,k-1) == 0.) //non-magnetic on left
+        {
+           if (F(i+1,j,k) == 0. || F(i,j+1,k) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           {
+              return inv_dz*inv_dz*(2.*F(i,j,k) - 5.*F(i,j,k-1) + 4.*F(i,j,k-2) - F(i,j,k-3));
+           }
+           else if (F(i-1,j,k) == 0. || F(i,j-1,k) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           {
+              return inv_dz*inv_dz*(2.*F(i,j,k) - 5.*F(i,j,k+1) + 4.*F(i,j,k+2) - F(i,j,k+3));
+           }
+           else
+           {
+              return inv_dz*(UpwardDz(F, coefs_z, i, j, k, ncomp) - 0.);
+           }
         }
         else
         {
