@@ -231,33 +231,33 @@ struct CartesianYeeAlgorithm {
     static amrex::Real LaplacianDx_Mag (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_x,
-        int const i, int const j, int const k, int const ncomp=0 ) {
+        int const i, int const j, int const k, int const ncomp=0, int const nodality=0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
-        if ( F(i+1,j,k) == 0.) //non-magnetic on right
+        if ( F(i+1,j,k,ncomp) == 0.) //non-magnetic on right
         {
-           if (F(i,j+1,k) == 0. || F(i,j,k+1) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           if ((ncomp != nodality) && (F(i,j+1,k,ncomp) == 0. || F(i,j,k+1,ncomp) == 0.)) //Top corner is non-magnetic -- left sided 2nd order derivative
            {
-              return inv_dx*inv_dx*(2.*F(i,j,k) - 5.*F(i-1,j,k) + 4.*F(i-2,j,k) - F(i-3,j,k));
+              return inv_dx*inv_dx*(2.*F(i,j,k,ncomp) - 5.*F(i-1,j,k,ncomp) + 4.*F(i-2,j,k,ncomp) - F(i-3,j,k,ncomp));
            }
-           else if (F(i,j-1,k) == 0. || F(i,j,k-1) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           else if ((ncomp != nodality) && (F(i,j-1,k) == 0. || F(i,j,k-1) == 0.)) //Bottom corner is non-magnetic -- right sided 2nd order derivative
            {
-              return inv_dx*inv_dx*(2.*F(i,j,k) - 5.*F(i+1,j,k) + 4.*F(i+2,j,k) - F(i+3,j,k));
+              return inv_dx*inv_dx*(2.*F(i,j,k,ncomp) - 5.*F(i+1,j,k,ncomp) + 4.*F(i+2,j,k,ncomp) - F(i+3,j,k,ncomp));
            }
            else
            {
            return inv_dx*(0. - DownwardDx(F, coefs_x, i, j, k, ncomp));
            }
         }
-        else if (F(i-1,j,k) == 0.) //non-magnetic on left
+        else if (F(i-1,j,k,ncomp) == 0.) //non-magnetic on left
         {
-           if (F(i,j+1,k) == 0. || F(i,j,k+1) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           if ((ncomp != nodality) && (F(i,j+1,k,ncomp) == 0. || F(i,j,k+1,ncomp) == 0.)) //Top corner is non-magnetic -- left sided 2nd order derivative
            {
-              return inv_dx*inv_dx*(2.*F(i,j,k) - 5.*F(i-1,j,k) + 4.*F(i-2,j,k) - F(i-3,j,k));
+              return inv_dx*inv_dx*(2.*F(i,j,k,ncomp) - 5.*F(i-1,j,k,ncomp) + 4.*F(i-2,j,k,ncomp) - F(i-3,j,k,ncomp));
            }
-           else if (F(i,j-1,k) == 0. || F(i,j,k-1) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           else if ((ncomp != nodality) && (F(i,j-1,k,ncomp) == 0. || F(i,j,k-1,ncomp) == 0.)) //Bottom corner is non-magnetic -- right sided 2nd order derivative
            {
-              return inv_dx*inv_dx*(2.*F(i,j,k) - 5.*F(i+1,j,k) + 4.*F(i+2,j,k) - F(i+3,j,k));
+              return inv_dx*inv_dx*(2.*F(i,j,k,ncomp) - 5.*F(i+1,j,k,ncomp) + 4.*F(i+2,j,k,ncomp) - F(i+3,j,k,ncomp));
            }
            else
            {
@@ -276,33 +276,33 @@ struct CartesianYeeAlgorithm {
     static amrex::Real LaplacianDy_Mag (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_y,
-        int const i, int const j, int const k, int const ncomp=0 ) {
+        int const i, int const j, int const k, int const ncomp=0, int const nodality=0 ) {
 
         amrex::Real const inv_dy = coefs_y[0];
-        if ( F(i,j+1,k) == 0.) //non-magnetic on right
+        if ( F(i,j+1,k,ncomp) == 0.) //non-magnetic on right
         {
-           if (F(i+1,j,k) == 0. || F(i,j,k+1) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           if ((ncomp != nodality) && (F(i+1,j,k,ncomp) == 0. || F(i,j,k+1,ncomp) == 0.)) //Top corner is non-magnetic -- left sided 2nd order derivative
            {
-              return inv_dy*inv_dy*(2.*F(i,j,k) - 5.*F(i,j-1,k) + 4.*F(i,j-2,k) - F(i,j-3,k));
+              return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j-1,k,ncomp) + 4.*F(i,j-2,k,ncomp) - F(i,j-3,k,ncomp));
            }
-           else if (F(i-1,j,k) == 0. || F(i,j,k-1) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           else if ((ncomp != nodality) && (F(i-1,j,k,ncomp) == 0. || F(i,j,k-1,ncomp) == 0.)) //Bottom corner is non-magnetic -- right sided 2nd order derivative
            {
-              return inv_dy*inv_dy*(2.*F(i,j,k) - 5.*F(i,j+1,k) + 4.*F(i,j+2,k) - F(i,j+3,k));
+              return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j+1,k,ncomp) + 4.*F(i,j+2,k,ncomp) - F(i,j+3,k,ncomp));
            }
            else
            {
            return inv_dy*(0. - DownwardDy(F, coefs_y, i, j, k, ncomp));
            }
         }
-        else if (F(i,j-1,k) == 0.) //non-magnetic on left
+        else if (F(i,j-1,k,ncomp) == 0.) //non-magnetic on left
         {
-           if (F(i+1,j,k) == 0. || F(i,j,k+1) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           if ((ncomp != nodality) && (F(i+1,j,k,ncomp) == 0. || F(i,j,k+1,ncomp) == 0.)) //Top corner is non-magnetic -- left sided 2nd order derivative
            {
-              return inv_dy*inv_dy*(2.*F(i,j,k) - 5.*F(i,j-1,k) + 4.*F(i,j-2,k) - F(i,j-3,k));
+              return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j-1,k,ncomp) + 4.*F(i,j-2,k,ncomp) - F(i,j-3,k,ncomp));
            }
-           else if (F(i-1,j,k) == 0. || F(i,j,k-1) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           else if ((ncomp != nodality) && (F(i-1,j,k,ncomp) == 0. || F(i,j,k-1,ncomp) == 0.)) //Bottom corner is non-magnetic -- right sided 2nd order derivative
            {
-              return inv_dy*inv_dy*(2.*F(i,j,k) - 5.*F(i,j+1,k) + 4.*F(i,j+2,k) - F(i,j+3,k));
+              return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j+1,k,ncomp) + 4.*F(i,j+2,k,ncomp) - F(i,j+3,k,ncomp));
            }
            else
            {
@@ -321,33 +321,33 @@ struct CartesianYeeAlgorithm {
     static amrex::Real LaplacianDz_Mag (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_z,
-        int const i, int const j, int const k, int const ncomp=0 ) {
+        int const i, int const j, int const k, int const ncomp=0, int const nodality=0 ) {
 
         amrex::Real const inv_dz = coefs_z[0];
-        if ( F(i,j,k+1) == 0.) //non-magnetic on right
+        if ( F(i,j,k+1,ncomp) == 0.) //non-magnetic on right
         {
-           if (F(i+1,j,k) == 0. || F(i,j+1,k) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           if ((ncomp != nodality) && (F(i+1,j,k,ncomp) == 0. || F(i,j+1,k,ncomp) == 0.)) //Top corner is non-magnetic -- left sided 2nd order derivative
            {
-              return inv_dz*inv_dz*(2.*F(i,j,k) - 5.*F(i,j,k-1) + 4.*F(i,j,k-2) - F(i,j,k-3));
+              return inv_dz*inv_dz*(2.*F(i,j,k,ncomp) - 5.*F(i,j,k-1,ncomp) + 4.*F(i,j,k-2,ncomp) - F(i,j,k-3,ncomp));
            }
-           else if (F(i-1,j,k) == 0. || F(i,j-1,k) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           else if ((ncomp != nodality) && (F(i-1,j,k,ncomp) == 0. || F(i,j-1,k,ncomp) == 0.)) //Bottom corner is non-magnetic -- right sided 2nd order derivative
            {
-              return inv_dz*inv_dz*(2.*F(i,j,k) - 5.*F(i,j,k+1) + 4.*F(i,j,k+2) - F(i,j,k+3));
+              return inv_dz*inv_dz*(2.*F(i,j,k,ncomp) - 5.*F(i,j,k+1,ncomp) + 4.*F(i,j,k+2,ncomp) - F(i,j,k+3,ncomp));
            }
            else
            {
            return inv_dz*(0. - DownwardDz(F, coefs_z, i, j, k, ncomp));
            }
         }
-        else if (F(i,j,k-1) == 0.) //non-magnetic on left
+        else if (F(i,j,k-1,ncomp) == 0.) //non-magnetic on left
         {
-           if (F(i+1,j,k) == 0. || F(i,j+1,k) == 0.) //Top corner is non-magnetic -- left sided 2nd order derivative
+           if ((ncomp != nodality) && (F(i+1,j,k,ncomp) == 0. || F(i,j+1,k,ncomp) == 0.)) //Top corner is non-magnetic -- left sided 2nd order derivative
            {
-              return inv_dz*inv_dz*(2.*F(i,j,k) - 5.*F(i,j,k-1) + 4.*F(i,j,k-2) - F(i,j,k-3));
+              return inv_dz*inv_dz*(2.*F(i,j,k,ncomp) - 5.*F(i,j,k-1,ncomp) + 4.*F(i,j,k-2,ncomp) - F(i,j,k-3,ncomp));
            }
-           else if (F(i-1,j,k) == 0. || F(i,j-1,k) == 0.) //Bottom corner is non-magnetic -- right sided 2nd order derivative
+           else if ((ncomp != nodality) && (F(i-1,j,k,ncomp) == 0. || F(i,j-1,k,ncomp) == 0.)) //Bottom corner is non-magnetic -- right sided 2nd order derivative
            {
-              return inv_dz*inv_dz*(2.*F(i,j,k) - 5.*F(i,j,k+1) + 4.*F(i,j,k+2) - F(i,j,k+3));
+              return inv_dz*inv_dz*(2.*F(i,j,k,ncomp) - 5.*F(i,j,k+1,ncomp) + 4.*F(i,j,k+2,ncomp) - F(i,j,k+3,ncomp));
            }
            else
            {
@@ -366,9 +366,9 @@ struct CartesianYeeAlgorithm {
     static amrex::Real Laplacian_Mag (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_x, amrex::Real const * const coefs_y, amrex::Real const * const coefs_z,
-        int const i, int const j, int const k, int const ncomp=0 ) {
+        int const i, int const j, int const k, int const ncomp=0, int const nodality=0 ) {
 
-        return LaplacianDx_Mag(F, coefs_x, i, j, k, ncomp) + LaplacianDy_Mag(F, coefs_y, i, j, k, ncomp) + LaplacianDz_Mag(F, coefs_z, i, j, k, ncomp);
+        return LaplacianDx_Mag(F, coefs_x, i, j, k, ncomp, nodality) + LaplacianDy_Mag(F, coefs_y, i, j, k, ncomp, nodality) + LaplacianDz_Mag(F, coefs_z, i, j, k, ncomp, nodality);
     }
 
 #endif
