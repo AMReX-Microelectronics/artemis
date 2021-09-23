@@ -1,6 +1,3 @@
-
-
-
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
@@ -12,6 +9,7 @@ geometry.coord_sys   = 0
 geometry.prob_lo     = prob_lo_x prob_lo_y prob_lo_z
 geometry.prob_hi     = prob_hi_x prob_hi_y prob_hi_z
 amr.max_level = 0
+
 # use pec instead of pml overlaying current source so you don't get a reflection
 boundary.field_lo = pml pec pec
 boundary.field_hi = pml pml pml
@@ -24,9 +22,12 @@ warpx.use_filter = 0
 warpx.cfl = 0.9
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
-
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
+###############
+# geometry - do not modify
+# each line represents a different part of the circuit
+###############
 # vacuum
 # silicon substrate
 # straight wire from inlet in +y direction
@@ -44,7 +45,6 @@ macroscopic.epsilon_function(x,y,z) = "epsilon_0
 + epsilon_0 * (epsilon_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) 
 + epsilon_0 * (epsilon_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
 + epsilon_0 * (epsilon_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
-
 
 macroscopic.mu_function(x,y,z) = "mu_0
 + mu_0 * (mu_r_si - 1.) * (z <= h_si) 
@@ -98,16 +98,16 @@ my_constants.h_pd = 1.e-6
 ###############
 
 # straight tube
-my_constants.r_pd = 0.   # note this is irrelevant if l_pd is larger than L_y
-my_constants.l_pd = 1.e9
+#my_constants.r_pd = 0.   # note this is irrelevant if l_pd is larger than L_y
+#my_constants.l_pd = 1.e9
 
 # 90 degree angle
 #my_constants.r_pd = 0.
 #my_constants.l_pd = 32.e-6
 
 # rounded
-#my_constants.r_pd = 16.e-6
-#my_constants.l_pd = 16.e-6
+my_constants.r_pd = 16.e-6
+my_constants.l_pd = 16.e-6
 
 ###############
 # waveguide port parameters
