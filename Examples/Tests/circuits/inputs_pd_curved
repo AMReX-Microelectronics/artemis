@@ -35,20 +35,20 @@ algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 # straight wire in -x direction
 
 macroscopic.sigma_function(x,y,z) = "sigma_0
-+ (sigma_si - sigma_0) * (z <= h_si) 
-+ (sigma_pd - sigma_0) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) 
++ (sigma_si - sigma_0) * (z <= h_si)
++ (sigma_pd - sigma_0) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd)
 + (sigma_pd - sigma_0) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
 + (sigma_pd - sigma_0) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
 
 macroscopic.epsilon_function(x,y,z) = "epsilon_0
-+ epsilon_0 * (epsilon_r_si - 1.) * (z <= h_si) 
-+ epsilon_0 * (epsilon_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) 
++ epsilon_0 * (epsilon_r_si - 1.) * (z <= h_si)
++ epsilon_0 * (epsilon_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd)
 + epsilon_0 * (epsilon_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
 + epsilon_0 * (epsilon_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
 
 macroscopic.mu_function(x,y,z) = "mu_0
-+ mu_0 * (mu_r_si - 1.) * (z <= h_si) 
-+ mu_0 * (mu_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) 
++ mu_0 * (mu_r_si - 1.) * (z <= h_si)
++ mu_0 * (mu_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd)
 + mu_0 * (mu_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
 + mu_0 * (mu_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
 
