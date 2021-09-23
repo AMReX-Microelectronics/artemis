@@ -123,7 +123,7 @@ my_constants.wavelength = 4.e-6
 my_constants.pi = 3.14159265358979
 
 # c is 1/sqrt(epsilon*mu) using palladium material properties
-my_constants.c = 1./sqrt(epsilon_0*epsilon_r_pd*mu_0*mu_r_pd)
+my_constants.c = 1./sqrt(epsilon_0*epsilon_r_si*mu_0*mu_r_si)
 
 # grid spacing
 my_constants.dx = (prob_hi_x - prob_lo_x) / n_cellx
