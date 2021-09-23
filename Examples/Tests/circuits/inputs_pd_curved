@@ -1,3 +1,6 @@
+
+
+
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
@@ -6,8 +9,8 @@ amr.n_cell = 256 384 32
 amr.max_grid_size = 384
 amr.blocking_factor = 32
 geometry.coord_sys   = 0
-geometry.prob_lo     =  -16.e-6 -16.e-6 -2.e-6
-geometry.prob_hi     =   16.e-6  32.e-6  2.e-6
+geometry.prob_lo     = prob_lo_x prob_lo_y prob_lo_z
+geometry.prob_hi     = prob_hi_x prob_hi_y prob_hi_z
 amr.max_level = 0
 # use pec instead of pml overlaying current source so you don't get a reflection
 boundary.field_lo = pml pec pec
@@ -34,13 +37,28 @@ macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -1.e-6) * 
 ############ FIELDS #############
 #################################
 
-my_constants.pi = 3.14159265359
+###############
+# fundamental constants
+my_constants.pi = 3.14159265358979
+###############
 
-my_constants.c = 299792458.
-my_constants.c = 83147467.6397237
+###############
+# domain size
+###############
+my_constants.n_cellx = 256
+my_constants.n_celly = 384
+my_constants.n_cellz = 32
 
-my_constants.wavelength = 4.e-6
+my_constants.prob_lo_x = -16.e-6
+my_constants.prob_hi_x = 16.e-6
+my_constants.prob_lo_y = 0.
+my_constants.prob_hi_y = 48.e-6
+my_constants.prob_lo_z = 0.
+my_constants.prob_hi_z = 4.e-6
 
+###############
+# material properties
+###############
 my_constants.sigma_0 = 0.0
 my_constants.sigma_pd = 1.e7
 my_constants.sigma_si = 1.e1
@@ -53,13 +71,54 @@ my_constants.mu_0 = 1.25663706212e-06
 my_constants.mu_r_pd = 1.0
 my_constants.mu_r_si = 1.0
 
+###############
+# silicon and palladium cross section
+###############
+my_constants.h_si = 1.e-6
+my_constants.w_pd = 2.e-6
+my_constants.h_pd = 1.e-6
+
+###############
+# curved geometry parameters
+###############
+
+# straight tube
+r_pd = 0.
+l_pd = 1.e9
+
+# 90 degree angle
+#r_pd = 0.
+#l_pd = 32.e-6
+
+# rounded
+#r_pd = 16.e-6
+#l_pd = 16.e-6
+
+###############
+# waveguide port parameters
+###############
+my_constants.h_port = 1.e-6
+my_constants.w_port = 16.e-6
+my_constants.wavelength = 4.e-6
+
+###############
+# derived quantities - don't touch these
+###############
+# c is 1/sqrt(epsilon*mu) using palladium material properties
+my_constants.c = 1./sqrt(epsilon_0*epsilon_r_pd*mu_0*mu_r_pd)
+
+# grid spacing
+my_constants.dx = (prob_hi_x - prob_lo_x) / n_cellx
+my_constants.dy = (prob_hi_y - prob_lo_y) / n_celly
+my_constants.dz = (prob_hi_z - prob_lo_z) / n_cellz
+
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "(x > -8.e-6) * (x < 8.e-6) * (z > -2.e-6) * (z < -1.e-6) * (y <= -16.e-6 + 1.25e-7) * (y >= -16.e-6)"
+warpx.Bx_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > prob_lo_z) * (z < prob_lo_z + h_si) * (y >= prob_lo_y) * (y <= prob_lo_y + dy)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((2*pi*x)/32.e-6) * cos(2*pi*c/wavelength*t)"
+warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * cos(2*pi*c*t/wavelength)"
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
