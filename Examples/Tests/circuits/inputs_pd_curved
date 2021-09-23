@@ -27,20 +27,35 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_si - sigma_0) * (z <= h_si) + (sigma_pd - sigma_0) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) + (sigma_pd - sigma_0) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)"
+# vacuum
+# silicon substrate
+# straight wire from inlet in +y direction
+# curved wire
+# straight wire in -x direction
 
-macroscopic.epsilon_function(x,y,z) = "epsilon_0 + epsilon_0 * (epsilon_r_si - 1.) * (z <= h_si) + epsilon_0 * (epsilon_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) + epsilon_0 * (epsilon_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)"
+macroscopic.sigma_function(x,y,z) = "sigma_0
++ (sigma_si - sigma_0) * (z <= h_si) 
++ (sigma_pd - sigma_0) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) 
++ (sigma_pd - sigma_0) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
++ (sigma_pd - sigma_0) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
 
-macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si) + mu_0 * (mu_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) + mu_0 * (mu_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)"
+macroscopic.epsilon_function(x,y,z) = "epsilon_0
++ epsilon_0 * (epsilon_r_si - 1.) * (z <= h_si) 
++ epsilon_0 * (epsilon_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) 
++ epsilon_0 * (epsilon_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
++ epsilon_0 * (epsilon_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
+
+
+macroscopic.mu_function(x,y,z) = "mu_0
++ mu_0 * (mu_r_si - 1.) * (z <= h_si) 
++ mu_0 * (mu_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) 
++ mu_0 * (mu_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
++ mu_0 * (mu_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
+
 
 #################################
 ############ FIELDS #############
 #################################
-
-###############
-# fundamental constants
-my_constants.pi = 3.14159265358979
-###############
 
 ###############
 # domain size
@@ -83,16 +98,16 @@ my_constants.h_pd = 1.e-6
 ###############
 
 # straight tube
-r_pd = 0.
-l_pd = 1.e9
+my_constants.r_pd = 0.   # note this is irrelevant if l_pd is larger than L_y
+my_constants.l_pd = 1.e9
 
 # 90 degree angle
-#r_pd = 0.
-#l_pd = 32.e-6
+#my_constants.r_pd = 0.
+#my_constants.l_pd = 32.e-6
 
 # rounded
-#r_pd = 16.e-6
-#l_pd = 16.e-6
+#my_constants.r_pd = 16.e-6
+#my_constants.l_pd = 16.e-6
 
 ###############
 # waveguide port parameters
@@ -102,8 +117,11 @@ my_constants.w_port = 16.e-6
 my_constants.wavelength = 4.e-6
 
 ###############
-# derived quantities - don't touch these
+# derived quantities and fundamental constants - don't touch these
 ###############
+
+my_constants.pi = 3.14159265358979
+
 # c is 1/sqrt(epsilon*mu) using palladium material properties
 my_constants.c = 1./sqrt(epsilon_0*epsilon_r_pd*mu_0*mu_r_pd)
 
@@ -112,9 +130,13 @@ my_constants.dx = (prob_hi_x - prob_lo_x) / n_cellx
 my_constants.dy = (prob_hi_y - prob_lo_y) / n_celly
 my_constants.dz = (prob_hi_z - prob_lo_z) / n_cellz
 
+###############
+# excitation
+###############
+
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > prob_lo_z) * (z < prob_lo_z + h_si) * (y >= prob_lo_y) * (y <= prob_lo_y + dy)"
+warpx.Bx_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > prob_lo_z) * (z < prob_lo_z + h_port) * (y >= prob_lo_y) * (y <= prob_lo_y + dy)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
@@ -122,7 +144,10 @@ warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * cos(2*pi*c*t/
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
-# Diagnostics
+###############
+# diagnostics
+###############
+
 diagnostics.diags_names = plt
 plt.intervals = 10
 plt.fields_to_plot = Ex Ey Ez Bx By Bz
