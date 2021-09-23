@@ -5,7 +5,7 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 3000
-amr.n_cell = 256 384 32
+amr.n_cell = n_cellx n_celly n_cellz
 amr.max_grid_size = 384
 amr.blocking_factor = 32
 geometry.coord_sys   = 0
@@ -27,11 +27,11 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_pd - sigma_0) * (x > -1.e-6) * (x < 1.e-6) * (y < 0.) * (z > -1.e-6) * (z < 1.e-6) + (sigma_pd - sigma_0) * ( (x+16.e-6)^2 + (y)^2 > (15.e-6)^2 ) * ( (x+16.e-6)^2 + y^2 < (17.e-6)^2 ) * (y > 0.) * (z > -1.e-6) * (z < 1.e-6) + (sigma_si - sigma_0) * (z < -1.e-6)"
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_si - sigma_0) * (z <= h_si) + (sigma_pd - sigma_0) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) + (sigma_pd - sigma_0) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)"
 
-macroscopic.epsilon_function(x,y,z) = "epsilon_0 + (epsilon_r_pd - 1.) * epsilon_0 * (x > -1.e-6) * (x < 1.e-6) * (y < 0.) * (z > -1.e-6) * (z < 1.e-6) + (epsilon_r_pd - 1.) * epsilon_0 * ( (x+16.e-6)^2 + y^2 > (15.e-6)^2 ) * ( (x+16.e-6)^2 + y^2 < (17.e-6)^2 ) * (y > 0.) * (z > -1.e-6) * (z < 1.e-6) + (epsilon_r_si - 1.) * epsilon_0 * (z < -1.e-6)"
+macroscopic.epsilon_function(x,y,z) = "epsilon_0 + epsilon_0 * (epsilon_r_si - 1.) * (z <= h_si) + epsilon_0 * (epsilon_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) + epsilon_0 * (epsilon_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)"
 
-macroscopic.mu_function(x,y,z) = "mu_0 + (mu_r_pd - 1.) * mu_0 * (x > -1.e-6) * (x < 1.e-6) * (y < 0.) * (z > -1.e-6) * (z < 1.e-6) + (mu_r_pd - 1.) * mu_0 * ( (x+16.e-6)^2 + y^2 > (15.e-6)^2 ) * ( (x+16.e-6)^2 + y^2 < (17.e-6)^2 ) * (y > 0.) * (z > -1.e-6) * (z < 1.e-6) + (mu_r_si - 1.) * mu_0 * (z < -1.e-6)"
+macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si) + mu_0 * (mu_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd) + mu_0 * (mu_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)"
 
 #################################
 ############ FIELDS #############
