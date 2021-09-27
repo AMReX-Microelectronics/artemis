@@ -5,7 +5,6 @@ max_step = 3000
 amr.n_cell = n_cellx n_celly n_cellz
 amr.max_grid_size = 384
 amr.blocking_factor = 32
-geometry.coord_sys   = 0
 geometry.prob_lo     = prob_lo_x prob_lo_y prob_lo_z
 geometry.prob_hi     = prob_hi_x prob_hi_y prob_hi_z
 amr.max_level = 0
@@ -18,21 +17,24 @@ boundary.field_hi = pml pml pml
 ############ NUMERICS ###########
 #################################
 warpx.verbose = 1
-warpx.use_filter = 0
+
 warpx.cfl = 0.9
 
-algo.em_solver_medium = macroscopic # vacuum/macroscopic
-algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+# vacuum or macroscopic
+algo.em_solver_medium = macroscopic
+
+# laxwendroff or backwardeuler
+algo.macroscopic_sigma_method = laxwendroff
 
 ###############
-# geometry - do not modify
-# each line represents a different part of the circuit
+# geometry
+# each row represents a different part of the circuit
+# 1. vacuum everywhere, then add in si and pd sections
+# 2. si substrate
+# 3. straight pd wire from inlet in +y direction
+# 4. curved pd wire
+# 5. straight pd wire in -x direction
 ###############
-# vacuum
-# silicon substrate
-# straight wire from inlet in +y direction
-# curved wire
-# straight wire in -x direction
 
 macroscopic.sigma_function(x,y,z) = "sigma_0
 + (sigma_si - sigma_0) * (z <= h_si)
@@ -51,7 +53,6 @@ macroscopic.mu_function(x,y,z) = "mu_0
 + mu_0 * (mu_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd)
 + mu_0 * (mu_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
 + mu_0 * (mu_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
-
 
 #################################
 ############ FIELDS #############
@@ -134,15 +135,15 @@ my_constants.dz = (prob_hi_z - prob_lo_z) / n_cellz
 # excitation
 ###############
 
-warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > prob_lo_z) * (z < prob_lo_z + h_port) * (y >= prob_lo_y) * (y <= prob_lo_y + dy)"
-warpx.By_excitation_flag_function(x,y,z) = "0."
-warpx.Bz_excitation_flag_function(x,y,z) = "0."
+warpx.Ex_excitation_flag_function(x,y,z) = "0."
+warpx.Ey_excitation_flag_function(x,y,z) = "0."
+warpx.Ez_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > prob_lo_z) * (z < prob_lo_z + h_port) * (y >= prob_lo_y - dy/2.) * (y <= prob_lo_y + dy/2.)"
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * cos(2*pi*c*t/wavelength)"
-warpx.By_excitation_grid_function(x,y,z,t) = "0."
-warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * cos(2*pi*c*t/wavelength)"
 
 ###############
 # diagnostics
