@@ -3,8 +3,8 @@
 #################################
 max_step = 3000
 amr.n_cell = n_cellx n_celly n_cellz
-amr.max_grid_size = 384
-amr.blocking_factor = 32
+amr.max_grid_size = max_grid_size
+amr.blocking_factor = blocking_factor
 geometry.prob_lo     = prob_lo_x prob_lo_y prob_lo_z
 geometry.prob_hi     = prob_hi_x prob_hi_y prob_hi_z
 amr.max_level = 0
@@ -60,10 +60,13 @@ macroscopic.mu_function(x,y,z) = "mu_0
 
 ###############
 # domain size
+# n_cellx/y/z and prob_lo/hi are needed to calculate dx/dy/dz
 ###############
 my_constants.n_cellx = 256
 my_constants.n_celly = 384
 my_constants.n_cellz = 32
+my_constants.max_grid_size = 384
+my_constants.blocking_factor = 32
 
 my_constants.prob_lo_x = -16.e-6
 my_constants.prob_hi_x = 16.e-6
