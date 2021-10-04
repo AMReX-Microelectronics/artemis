@@ -6,12 +6,15 @@
  */
 #include "WarpX.H"
 
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Python/WarpX_py.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -55,8 +58,10 @@ using namespace amrex;
 void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
+    WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
     if (reset_fields) {
         // Reset all E and B fields to 0, before calculating space-charge fields
+        WARPX_PROFILE("WarpX::ComputeSpaceChargeField::reset_fields");
         for (int lev = 0; lev <= max_level; lev++) {
             for (int comp=0; comp<3; comp++) {
                 Efield_fp[lev][comp]->setVal(0);
@@ -88,6 +93,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
 void
 WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
+    WARPX_PROFILE("WarpX::AddSpaceChargeField");
 
 #ifdef WARPX_DIM_RZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
@@ -131,25 +137,28 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 void
 WarpX::AddSpaceChargeFieldLabFrame ()
 {
+    WARPX_PROFILE("WarpX::AddSpaceChargeFieldLabFrame");
 
 #ifdef WARPX_DIM_RZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
-    // Zero out the charge density
+    // reset rho_fp before depositing charge density for this step
     for (int lev = 0; lev <= max_level; lev++) {
         rho_fp[lev]->setVal(0.);
     }
 
     // Deposit particle charge density (source of Poisson solver)
+    bool const local = true;
+    bool const interpolate_across_levels = false;
+    bool const reset = false;
+    bool const do_rz_volume_scaling = false;
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        bool const local = true;
-        bool const interpolate_across_levels = false;
-        bool const reset = false;
-        bool const do_rz_volume_scaling = false;
-        species.DepositCharge(rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels);
+        species.DepositCharge(
+            rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels
+        );
     }
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
@@ -163,12 +172,20 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho_fp, phi_fp, beta, self_fields_required_precision, self_fields_max_iters, self_fields_verbosity );
+    if (warpx_py_poissonsolver) warpx_py_poissonsolver();
+    else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
+                     self_fields_max_iters, self_fields_verbosity );
 
-    // Compute the corresponding electric and magnetic field, from the potential phi
+    // Compute the electric field. Note that if an EB is used the electric
+    // field will be calculated in the computePhi call.
+#ifndef AMREX_USE_EB
     computeE( Efield_fp, phi_fp, beta );
-    computeB( Bfield_fp, phi_fp, beta );
+#else
+    if (warpx_py_poissonsolver) computeE( Efield_fp, phi_fp, beta );
+#endif
 
+    // Compute the magnetic field
+    computeB( Bfield_fp, phi_fp, beta );
 }
 
 /* Compute the potential `phi` by solving the Poisson equation with `rho` as
@@ -425,12 +442,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     linop.setSigma({AMREX_D_DECL(
         1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
 
-    // get the EB potential at the current time
-    std::string potential_eb_str = "0";
-    ParmParse pp_embedded_boundary("warpx");
-    pp_embedded_boundary.query("eb_potential(t)", potential_eb_str);
-    auto parser_eb = makeParser(potential_eb_str, {"t"});
-    linop.setEBDirichlet( parser_eb.compile<1>()(gett_new(0)) );
+    linop.setEBDirichlet( field_boundary_value_handler.getPhiEB(gett_new(0)) );
 #endif
 
     // Solve the Poisson equation
@@ -444,10 +456,37 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
+
+#ifdef AMREX_USE_EB
+    // use amrex to directly calculate the electric field since with EB's the
+    // simple finite difference scheme in WarpX::computeE sometimes fails
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    {
+        for (int lev = 0; lev <= max_level; ++lev) {
+#if (AMREX_SPACEDIM==2)
+            mlmg.getGradSolution(
+                {amrex::Array<amrex::MultiFab*,2>{
+                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 2)
+                    }}
+            );
+#elif (AMREX_SPACEDIM==3)
+            mlmg.getGradSolution(
+                {amrex::Array<amrex::MultiFab*,3>{
+                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 1),
+                    get_pointer_Efield_fp(lev, 2)
+                    }}
+            );
+            get_pointer_Efield_fp(lev, 1)->mult(-1._rt);
+#endif
+            get_pointer_Efield_fp(lev, 0)->mult(-1._rt);
+            get_pointer_Efield_fp(lev, 2)->mult(-1._rt);
+        }
+    }
+#endif
 }
 #endif
 
-/* \bried Set Dirichlet boundary conditions for the electrostatic solver.
+/* \brief Set Dirichlet boundary conditions for the electrostatic solver.
 
     The given potential's values are fixed on the boundaries of the given
     dimension according to the desired values from the simulation input file,
@@ -515,7 +554,7 @@ WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
     }} // lev & MFIter
 }
 
-/* \bried Utility function to parse input file for boundary potentials.
+/* \brief Utility function to parse input file for boundary potentials.
 
     The input values are parsed to allow math expressions for the potentials
     that specify time dependence.
@@ -576,7 +615,7 @@ WarpX::getPhiBC( const int idim, amrex::Real &pot_lo, amrex::Real &pot_hi ) cons
     pot_hi = parser_hi_exe(gett_new(0));
 }
 
-/* \bried Compute the electric field that corresponds to `phi`, and
+/* \brief Compute the electric field that corresponds to `phi`, and
           add it to the set of MultiFab `E`.
 
    The electric field is calculated by assuming that the source that
@@ -679,7 +718,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 }
 
 
-/* \bried Compute the magnetic field that corresponds to `phi`, and
+/* \brief Compute the magnetic field that corresponds to `phi`, and
           add it to the set of MultiFab `B`.
 
    The magnetic field is calculated by assuming that the source that
