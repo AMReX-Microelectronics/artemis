@@ -135,6 +135,8 @@ my_constants.dx = (prob_hi_x - prob_lo_x) / n_cellx
 my_constants.dy = (prob_hi_y - prob_lo_y) / n_celly
 my_constants.dz = (prob_hi_z - prob_lo_z) / n_cellz
 
+my_constants.tiny = 1.e-12
+
 ###############
 # excitation
 ###############
@@ -162,35 +164,31 @@ plt.fields_to_plot = Ez
 plt.diag_type = Full
 
 ###############
-# straight
-
+# input
 input.intervals = 1
 input.fields_to_plot = Ez
-input.diag_lo =  -dx  prob_lo_y        prob_lo_z
-input.diag_hi =   dx  prob_lo_y+2.*dy  prob_lo_z+h_si
+input.diag_lo = -tiny  prob_lo_y+tiny        prob_lo_z+tiny
+input.diag_hi =  tiny  prob_lo_y+2.*dy-tiny  prob_lo_z+h_si-tiny
 input.diag_type = Full
+
+###############
+# output: straight
 
 output.intervals = 1
 output.fields_to_plot = Ez
-output.diag_lo = -dx  prob_hi_y-2.*dy  prob_lo_z
-output.diag_hi =  dx  prob_hi_y        prob_lo_z+h_si
+output.diag_lo = -tiny  prob_hi_y-2.*dy+tiny  prob_lo_z+tiny
+output.diag_hi =  tiny  prob_hi_y-tiny        prob_lo_z+h_si-tiny
 output.diag_type = Full
 
 ###############
 
 ###############
-# 90 degree angle or rounded
-
-#input.intervals = 1
-#input.fields_to_plot = Ez
-#input.diag_lo = -dx  prob_lo_y        prob_lo_z
-#input.diag_hi =  dx  prob_lo_y+2.*dy  prob_lo_z+h_si
-#input.diag_type = Full
+# output: 90 degree angle or rounded
 
 #output.intervals = 1
 #output.fields_to_plot = Ez
-#output.diag_lo = prob_lo_x        prob_lo_y+l_pd+r_pd-dy  prob_lo_z
-#output.diag_hi = prob_lo_x+2.*dx  prob_lo_y+l_pd+r_pd+dy  prob_lo_z+h_si
+#output.diag_lo = prob_lo_x+tiny        prob_lo_y+l_pd+r_pd-tiny  prob_lo_z+tiny
+#output.diag_hi = prob_lo_x+2.*dx-tiny  prob_lo_y+l_pd+r_pd+tiny  prob_lo_z+h_si-tiny
 #output.diag_type = Full
 
 ###############
