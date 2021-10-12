@@ -149,7 +149,7 @@ warpx.Ez_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) *
 
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * cos(2*pi*c*t/wavelength)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*c*t/wavelength)"
 
 ###############
 # diagnostics
