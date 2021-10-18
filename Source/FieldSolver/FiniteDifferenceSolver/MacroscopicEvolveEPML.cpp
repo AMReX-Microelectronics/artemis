@@ -129,13 +129,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
     amrex::GpuArray<int, 3> const& Ex_stag = macroscopic_properties->Ex_IndexType;
     amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
     amrex::GpuArray<int, 3> const& Ez_stag = macroscopic_properties->Ez_IndexType;
+#ifndef WARPX_MAG_LLG
     amrex::GpuArray<int, 3> const& Bx_stag = macroscopic_properties->Bx_IndexType;
     amrex::GpuArray<int, 3> const& By_stag = macroscopic_properties->By_IndexType;
     amrex::GpuArray<int, 3> const& Bz_stag = macroscopic_properties->Bz_IndexType;
+#endif
 
     const auto getSigma = GetSigmaMacroparameter();
     const auto getEpsilon = GetEpsilonMacroparameter();
+#ifndef WARPX_MAG_LLG
     const auto getMu = GetMuMacroparameter();
+#endif
     auto &warpx = WarpX::GetInstance();
     const auto problo = warpx.Geom(lev).ProbLoArray();
     const auto dx = warpx.Geom(lev).CellSizeArray();
