@@ -136,7 +136,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
     const auto getSigma = GetSigmaMacroparameter();
     const auto getEpsilon = GetEpsilonMacroparameter();
+#ifndef WARPX_MAG_LLG
     const auto getMu = GetMuMacroparameter();
+#endif
     auto &warpx = WarpX::GetInstance();
     const auto problo = warpx.Geom(lev).ProbLoArray();
     const auto dx = warpx.Geom(lev).CellSizeArray();
