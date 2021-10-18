@@ -50,6 +50,9 @@ guardCellManager::Init (
     const int do_multi_J,
     const bool fft_do_time_averaging)
 {
+#ifndef WARPX_MAG_LLG
+    amrex::ignore_unused(do_multi_J, fft_do_time_averaging);
+#endif
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
     // (the particles may move by 2*c*dt)
