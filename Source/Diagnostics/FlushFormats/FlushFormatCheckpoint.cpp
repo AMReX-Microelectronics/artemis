@@ -159,8 +159,63 @@ FlushFormatCheckpoint::CheckpointParticles (
     const amrex::Vector<ParticleDiag>& particle_diags) const
 {
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
-        particle_diags[i].getParticleContainer()->Checkpoint(
-            dir, particle_diags[i].getSpeciesName());
+        WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+
+        Vector<std::string> real_names;
+        Vector<std::string> int_names;
+        Vector<int> int_flags;
+        Vector<int> real_flags;
+
+        real_names.push_back("weight");
+
+        real_names.push_back("momentum_x");
+        real_names.push_back("momentum_y");
+        real_names.push_back("momentum_z");
+
+#ifdef WARPX_DIM_RZ
+        real_names.push_back("theta");
+#endif
+
+        // get the names of the real comps
+        real_names.resize(pc->NumRealComps());
+        auto runtime_rnames = pc->getParticleRuntimeComps();
+        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
+
+        // and the int comps
+        int_names.resize(pc->NumIntComps());
+        auto runtime_inames = pc->getParticleRuntimeiComps();
+        for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
+
+        pc->Checkpoint(dir, particle_diags[i].getSpeciesName(), true,
+                       real_names, int_names);
+    }
+}
+
+void
+FlushFormatCheckpoint::WriteDMaps (const std::string& dir, int nlev) const
+{
+    if (ParallelDescriptor::IOProcessor()) {
+        auto & warpx = WarpX::GetInstance();
+        for (int lev = 0; lev < nlev; ++lev) {
+            std::string DMFileName = dir;
+            if (!DMFileName.empty() && DMFileName[DMFileName.size()-1] != '/') {DMFileName += '/';}
+            DMFileName = amrex::Concatenate(DMFileName + "Level_", lev, 1);
+            DMFileName += "/DM";
+
+            std::ofstream DMFile;
+            DMFile.open(DMFileName.c_str(), std::ios::out|std::ios::trunc);
+
+            if (!DMFile.good()) { amrex::FileOpenFailed(DMFileName); }
+
+            DMFile << ParallelDescriptor::NProcs() << "\n";
+            warpx.DistributionMap(lev).writeOn(DMFile);
+
+            DMFile.flush();
+            DMFile.close();
+            if (!DMFile.good()) {
+                amrex::Abort("FlushFormatCheckpoint::WriteDMaps: problem writing DMFile");
+            }
+        }
     }
 }
 

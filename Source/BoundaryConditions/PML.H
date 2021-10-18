@@ -182,6 +182,8 @@ public:
     void ExchangeH (PatchType patch_type,
                     const std::array<amrex::MultiFab*,3>& Hp, int do_pml_in_domain);
 #endif
+    void ExchangeG (amrex::MultiFab* G_fp, amrex::MultiFab* G_cp, int do_pml_in_domain);
+    void ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_domain);
 
     void FillBoundary ();
     void FillBoundaryE ();

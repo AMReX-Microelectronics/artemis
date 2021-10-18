@@ -676,7 +676,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                                                    Hfield_fp[lev],
 #endif
                                                    current_fp[lev], a_dt,
-                                                   m_macroscopic_properties);
+                                                   m_macroscopic_properties, lev);
     }
     else {
         amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
