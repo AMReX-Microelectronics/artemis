@@ -109,6 +109,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         b_temp_static[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
     }
 
+    const auto getMu = GetMuMacroparameter();
+
     // calculate the b_temp_static, a_temp_static
     for (MFIter mfi(*a_temp_static[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) {
         auto& mag_alpha_mf = macroscopic_properties->getmag_alpha_mf();
@@ -808,7 +810,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 });
         }
 
-        const auto getMu = GetMuMacroparameter();
         // update H
         for (MFIter mfi(*Hfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi){
             // Extract field data for this grid/tile

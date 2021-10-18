@@ -76,7 +76,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     amrex::GpuArray<int, 3> const& mag_gamma_stag      = macroscopic_properties->mag_gamma_IndexType;
     amrex::GpuArray<int, 3> const& mag_exchange_stag   = macroscopic_properties->mag_exchange_IndexType;
     amrex::GpuArray<int, 3> const& mag_anisotropy_stag = macroscopic_properties->mag_anisotropy_IndexType;
-    amrex::GpuArray<int, 3> const& mu_stag             = macroscopic_properties->mu_IndexType;
     amrex::GpuArray<int, 3> const& Mx_stag             = macroscopic_properties->Mx_IndexType;
     amrex::GpuArray<int, 3> const& My_stag             = macroscopic_properties->My_IndexType;
     amrex::GpuArray<int, 3> const& Mz_stag             = macroscopic_properties->Mz_IndexType;
