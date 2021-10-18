@@ -535,7 +535,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
 
                 amrex::Real x, y, z;
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, Hx_stag, problo, dx, x, y, z);
-                Real mag_Ms_arrx = mag_parser(x,y,z);         
+                Real mag_Ms_arrx = mag_parser(x,y,z);
                 if (mag_Ms_arrx == 0._rt){ // nonmagnetic region
                     amrex::Real mu = getMu(x,y,z);
                     Hx(i, j, k) += 1. / mu * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
