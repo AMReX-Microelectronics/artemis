@@ -388,5 +388,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
         });
 
     }
+#else
+    amrex::ignore_unused(macro_mf, macro_parser, lev);
 #endif
 }
