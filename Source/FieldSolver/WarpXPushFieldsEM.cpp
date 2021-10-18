@@ -695,10 +695,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
                 pml[lev]->GetMultiSigmaBox_fp(),
                 a_dt, pml_has_particles,
-                m_macroscopic_properties,
-                pml[lev]->Geteps_fp(),
-                pml[lev]->Getmu_fp(),
-                pml[lev]->Getsigma_fp() );
+                m_macroscopic_properties, lev);
         } else {
             m_fdtd_solver_cp[lev]->MacroscopicEvolveEPML(
                 pml[lev]->GetE_cp(),
@@ -710,10 +707,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
                 pml[lev]->GetMultiSigmaBox_cp(),
                 a_dt, pml_has_particles,
-                m_macroscopic_properties,
-                pml[lev]->Geteps_cp(),
-                pml[lev]->Getmu_cp(),
-                pml[lev]->Getsigma_cp() );
+                m_macroscopic_properties, lev);
         }
     }
 
