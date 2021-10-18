@@ -26,7 +26,7 @@ jobs:
         cmake -S . -B build     \
           -DWarpX_SENSEI=ON     \
           -DWarpX_COMPUTE=NOACC \
-          -DWarpX_MAG_LLG=OFF
+          -DWarpX_MAG_LLG=OFF   \
           -DCMAKE_CXX_STANDARD=14
     - name: Build
       run: |
