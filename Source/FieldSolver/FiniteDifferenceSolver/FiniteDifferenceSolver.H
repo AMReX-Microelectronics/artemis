@@ -107,7 +107,8 @@ class FiniteDifferenceSolver
 #endif
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                             amrex::Real const dt,
-                            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
+                            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+                            int const lev);
 
 #ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
@@ -175,9 +176,7 @@ class FiniteDifferenceSolver
                       MultiSigmaBox const& sigba,
                       amrex::Real const dt, bool pml_has_particles,
                       std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
-                      amrex::MultiFab* const eps_mf,
-                      amrex::MultiFab* const mu_mf,
-                      amrex::MultiFab* const sigma_mf);
+                      const int lev);
 
 #ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
@@ -307,7 +306,8 @@ class FiniteDifferenceSolver
 #endif
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
             amrex::Real const dt,
-            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
+            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+            int const lev);
 
 #ifdef WARPX_MAG_LLG
         template< typename T_Algo >
@@ -367,9 +367,7 @@ class FiniteDifferenceSolver
             MultiSigmaBox const& sigba,
             amrex::Real const dt, bool pml_has_particles,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
-            amrex::MultiFab* const eps_mf,
-            amrex::MultiFab* const mu_mf,
-            amrex::MultiFab* const sigma_mf );
+            const int lev);
 
 
 #ifdef WARPX_MAG_LLG
