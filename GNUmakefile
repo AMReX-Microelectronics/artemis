@@ -2,8 +2,8 @@ AMREX_HOME  ?= ../amrex
 PICSAR_HOME ?= ../picsar
 OPENBC_HOME ?= ../openbc_poisson
 
-DEBUG = FALSE
-#DEBUG	= TRUE
+#DEBUG = FALSE
+DEBUG	= TRUE
 
 WARN_ALL = TRUE
 #WARN_ERROR=TRUE
