@@ -7,8 +7,8 @@ amr.max_grid_size = 32 # maximum size of each AMReX box, used to decompose the d
 amr.blocking_factor = 16
 geometry.coord_sys = 0
 
-geometry.prob_lo = -15e-3 -15e-3 -15.0e-3
-geometry.prob_hi =  15e-3  15e-3  15.0e-3
+geometry.prob_lo = -10e-3 -10e-3 -10.0e-3
+geometry.prob_hi =  10e-3  10e-3  10.0e-3
 boundary.field_lo = periodic periodic periodic
 boundary.field_hi = periodic periodic periodic
 amr.max_level = 0
@@ -37,13 +37,13 @@ macroscopic.mag_Ms_function(x,y,z) = "1.4e5 * (x >= -5e-3) * (x <= 5e-3) * (y >=
 #macroscopic.mag_Ms_function(x,y,z) = "1.4e5 * (x > -5e-3) * (x < 5e-3) * (y > -5e-3) * (y < 0.) * (z > -5e-3) * (z < 5e-3) + 0.7e5 * (x > -5e-3) * (x < 5e-3) * (y >= 0.) * (y < 5e-3) * (z > -5e-3) * (z < 5e-3)"
 
 macroscopic.mag_alpha_init_style = "parse_mag_alpha_function" # parse or "constant"
-macroscopic.mag_alpha_function(x,y,z) = "0.058 * (x > -5e-3) * (x < 5e-3) * (y > -5e-3) * (y < 5e-3) * (z > -5e-3) * (z < 5e-3)"  # alpha is unitless, calculated from linewidth Delta_H = 40 Oersted
+macroscopic.mag_alpha_function(x,y,z) = "0.058 * (x >= -5e-3) * (x <= 5e-3) * (y >= -5e-3) * (y <= 5e-3) * (z >= -5e-3) * (z <= 5e-3)"  # alpha is unitless, calculated from linewidth Delta_H = 40 Oersted
 
 macroscopic.mag_gamma_init_style = "parse_mag_gamma_function" # parse or "constant"
-macroscopic.mag_gamma_function(x,y,z) = "-1.759e11 * (x > -5e-3) * (x < 5e-3) * (y > -5e-3) * (y < 5e-3) * (z > -5e-3) * (z < 5e-3)" # gyromagnetic ratio is constant for electrons in all materials
+macroscopic.mag_gamma_function(x,y,z) = "-1.759e11 * (x >= -5e-3) * (x <= 5e-3) * (y >= -5e-3) * (y <= 5e-3) * (z >= -5e-3) * (z <= 5e-3)" # gyromagnetic ratio is constant for electrons in all materials
 
 macroscopic.mag_exchange_init_style = "parse_mag_exchange_function" # parse or "constant"
-macroscopic.mag_exchange_function(x,y,z) = "3.76e-12 * (x > -5e-3) * (x < 5e-3) * (y > -5e-3) * (y < 5e-3) * (z > -5e-3) * (z < 5e-3)" # exchange coupling constanit; Must be non-zero when exchange coupling is ON
+macroscopic.mag_exchange_function(x,y,z) = "3.76e-12 * (x >= -5e-3) * (x <= 5e-3) * (y >= -5e-3) * (y <= 5e-3) * (z >= -5e-3) * (z <= 5e-3)" # exchange coupling constanit; Must be non-zero when exchange coupling is ON
 
 macroscopic.mag_max_iter = 100 # maximum number of M iteration in each time step
 macroscopic.mag_tol = 1.e-6 # M magnitude relative error tolerance compared to previous iteration
@@ -70,10 +70,9 @@ warpx.Hy_bias_external_grid_function(x,y,z)= "3.7e4" # * (x > -5e-3) * (x < 5e-3
 warpx.Hz_bias_external_grid_function(x,y,z)= 0.
 
 warpx.M_ext_grid_init_style = parse_M_ext_grid_function
-warpx.Mx_external_grid_function(x,y,z)= "1.4e5 * (x > -5e-3) * (x < 5e-3) * (y > -5e-3) * (y < 5e-3) * (z > -5e-3) * (z < 5e-3)"
+warpx.Mx_external_grid_function(x,y,z)= "1.4e5 * (x >= -5e-3) * (x <= 5e-3) * (y >= -5e-3) * (y < 0.) * (z >= -5e-3) * (z <= 5e-3)"
 warpx.My_external_grid_function(x,y,z) = 0.
-#warpx.Mz_external_grid_function(x,y,z) = 0.
-warpx.Mz_external_grid_function(x,y,z) = "1.4e5 * (x > -5e-3) * (x < 5e-3) * (y >= 0.) * (y < 5e-3) * (z > -5e-3) * (z < 5e-3)"
+warpx.Mz_external_grid_function(x,y,z) = "1.4e5 * (x >= -5e-3) * (x <= 5e-3) * (y >= 0.) * (y <= 5e-3) * (z >= -5e-3) * (z <= 5e-3)"
 
 #Diagnostics
 diagnostics.diags_names = plt
