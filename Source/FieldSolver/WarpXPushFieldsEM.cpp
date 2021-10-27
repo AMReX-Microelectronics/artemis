@@ -461,10 +461,12 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev], G_fp[lev],
-                                        m_face_areas[lev], lev, a_dt);
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     } else {
         m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev], G_cp[lev],
-                                        m_face_areas[lev], lev, a_dt);
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
     }
 
     // Evolve B field in PML cells
@@ -509,10 +511,12 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE(Efield_fp[lev], Bfield_fp[lev],
                                        current_fp[lev], m_edge_lengths[lev],
+                                       m_face_areas[lev], ECTRhofield[lev],
                                        F_fp[lev], lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE(Efield_cp[lev], Bfield_cp[lev],
                                        current_cp[lev], m_edge_lengths[lev],
+                                       m_face_areas[lev], ECTRhofield[lev],
                                        F_cp[lev], lev, a_dt );
     }
 
@@ -672,7 +676,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                                                    Hfield_fp[lev],
 #endif
                                                    current_fp[lev], a_dt,
-                                                   m_macroscopic_properties);
+                                                   m_macroscopic_properties, lev);
     }
     else {
         amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
@@ -691,10 +695,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
                 pml[lev]->GetMultiSigmaBox_fp(),
                 a_dt, pml_has_particles,
-                m_macroscopic_properties,
-                pml[lev]->Geteps_fp(),
-                pml[lev]->Getmu_fp(),
-                pml[lev]->Getsigma_fp() );
+                m_macroscopic_properties, lev);
         } else {
             m_fdtd_solver_cp[lev]->MacroscopicEvolveEPML(
                 pml[lev]->GetE_cp(),
@@ -706,10 +707,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
                 pml[lev]->GetMultiSigmaBox_cp(),
                 a_dt, pml_has_particles,
-                m_macroscopic_properties,
-                pml[lev]->Geteps_cp(),
-                pml[lev]->Getmu_cp(),
-                pml[lev]->Getsigma_cp() );
+                m_macroscopic_properties, lev);
         }
     }
 

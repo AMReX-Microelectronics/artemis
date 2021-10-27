@@ -79,7 +79,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     amrex::GpuArray<int, 3> const& mag_gamma_stag = macroscopic_properties->mag_gamma_IndexType;
     amrex::GpuArray<int, 3> const& mag_exchange_stag  = macroscopic_properties->mag_exchange_IndexType;
     amrex::GpuArray<int, 3> const& mag_anisotropy_stag   = macroscopic_properties->mag_anisotropy_IndexType;
-    amrex::GpuArray<int, 3> const& mu_stag        = macroscopic_properties->mu_IndexType;
     amrex::GpuArray<int, 3> const& Mx_stag        = macroscopic_properties->Mx_IndexType;
     amrex::GpuArray<int, 3> const& My_stag        = macroscopic_properties->My_IndexType;
     amrex::GpuArray<int, 3> const& Mz_stag        = macroscopic_properties->Mz_IndexType;
@@ -109,6 +108,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         a_temp_static[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
         b_temp_static[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
     }
+
+    const auto getMu = GetMuMacroparameter();
 
     // calculate the b_temp_static, a_temp_static
     for (MFIter mfi(*a_temp_static[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) {
@@ -938,10 +939,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             const auto problo = warpx.Geom(lev).ProbLoArray();
             const auto mag_parser = macroscopic_properties->m_mag_Ms_parser->compile<3>();
 
-            // mu_mf will be imported but will only be called at grids where Ms == 0
-            auto& mu_mf = macroscopic_properties->getmu_mf();
-            Array4<Real> const& mu_arr = mu_mf.array(mfi);
-
             amrex::Real const mu0_inv = 1. / PhysConst::mu0;
 
             // Loop over the cells and update the fields
@@ -953,14 +950,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     WarpXUtilAlgo::getCellCoordinates(i, j, k, Hx_stag, problo, dx, x, y, z);
                     amrex::Real mag_Ms_arrx = mag_parser(x,y,z);
                     if (mag_Ms_arrx == 0._rt){ // nonmagnetic region
-                        Real mu_arrx = CoarsenIO::Interp( mu_arr, mu_stag, Hx_stag, macro_cr, i, j, k, 0);
-                        Hx(i, j, k) = Hx_old(i, j, k) + 1. / mu_arrx * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
+                        amrex::Real mu = getMu(x,y,z);
+                        Hx(i, j, k) = Hx_old(i, j, k) + 1. / mu * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
                                                                            - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
                     } else if (mag_Ms_arrx > 0){ // magnetic region
                         Hx(i, j, k) = Hx_old(i, j, k) + mu0_inv * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
                                                                       - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
                         if (coupling == 1) {
-                        Hx(i, j, k) += - M_xface(i, j, k, 0) + M_xface_old(i, j, k, 0);
+                            Hx(i, j, k) += - M_xface(i, j, k, 0) + M_xface_old(i, j, k, 0);
                         }
                     }
                 },
@@ -971,8 +968,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     WarpXUtilAlgo::getCellCoordinates(i, j, k, Hy_stag, problo, dx, x, y, z);
                     amrex::Real mag_Ms_arry = mag_parser(x,y,z);
                     if (mag_Ms_arry == 0._rt){ // nonmagnetic region
-                        Real mu_arry = CoarsenIO::Interp( mu_arr, mu_stag, Hy_stag, macro_cr, i, j, k, 0);
-                        Hy(i, j, k) = Hy_old(i, j, k) + 1. / mu_arry * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
+                        amrex::Real mu = getMu(x,y,z);
+                        Hy(i, j, k) = Hy_old(i, j, k) + 1. / mu * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
                                                                            - T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k));
                     } else if (mag_Ms_arry > 0){ // magnetic region
                         Hy(i, j, k) = Hy_old(i, j, k) + mu0_inv * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
@@ -989,8 +986,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     WarpXUtilAlgo::getCellCoordinates(i, j, k, Hz_stag, problo, dx, x, y, z);
                     amrex::Real mag_Ms_arrz = mag_parser(x,y,z);
                     if (mag_Ms_arrz == 0._rt){ // nonmagnetic region
-                        Real mu_arrz = CoarsenIO::Interp( mu_arr, mu_stag, Hz_stag, macro_cr, i, j, k, 0);
-                        Hz(i, j, k) = Hz_old(i, j, k) + 1. / mu_arrz * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
+                        amrex::Real mu = getMu(x,y,z);
+                        Hz(i, j, k) = Hz_old(i, j, k) + 1. / mu * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
                                                                            - T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k));
                     } else if (mag_Ms_arrz > 0){ // magnetic region
                         Hz(i, j, k) = Hz_old(i, j, k) + mu0_inv * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
@@ -1156,10 +1153,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         const auto problo = warpx.Geom(lev).ProbLoArray();
         const auto mag_parser = macroscopic_properties->m_mag_Ms_parser->compile<3>();
 
-        // mu_mf will be imported but will only be called at grids where Ms == 0
-        auto& mu_mf = macroscopic_properties->getmu_mf();
-        Array4<Real> const& mu_arr = mu_mf.array(mfi);
-
         // Loop over the cells and update the fields
         amrex::ParallelFor(tbx, tby, tbz,
 
@@ -1169,8 +1162,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, Bx_stag, problo, dx, x, y, z);
                 Real mag_Ms_arrx = mag_parser(x,y,z);
                 if (mag_Ms_arrx == 0._rt){ // nonmagnetic region
-                    Real mu_arrx = CoarsenIO::Interp( mu_arr, mu_stag, Bx_stag, macro_cr, i, j, k, 0);
-                    Bx(i, j, k) = mu_arrx * Hx(i, j, k);
+                    amrex::Real mu = getMu(x,y,z);
+                    Bx(i, j, k) = mu * Hx(i, j, k);
                 } else if (mag_Ms_arrx > 0){
                     Bx(i, j, k) = PhysConst::mu0 * (M_xface(i, j, k, 0) + Hx(i, j, k));
                 }
@@ -1182,8 +1175,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, By_stag, problo, dx, x, y, z);
                 Real mag_Ms_arry = mag_parser(x,y,z);
                 if (mag_Ms_arry == 0._rt){ // nonmagnetic region
-                    Real mu_arry = CoarsenIO::Interp( mu_arr, mu_stag, By_stag, macro_cr, i, j, k, 0);
-                    By(i, j, k) =  mu_arry * Hy(i, j, k);
+                    amrex::Real mu = getMu(x,y,z);
+                    By(i, j, k) =  mu * Hy(i, j, k);
                 } else if (mag_Ms_arry > 0){
                     By(i, j, k) = PhysConst::mu0 * (M_yface(i, j, k, 1) + Hy(i, j, k));
                 }
@@ -1195,8 +1188,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, Bz_stag, problo, dx, x, y, z);
                 Real mag_Ms_arrz = mag_parser(x,y,z);
                 if (mag_Ms_arrz == 0._rt){ // nonmagnetic region
-                    Real mu_arrz = CoarsenIO::Interp( mu_arr, mu_stag, Bz_stag, macro_cr, i, j, k, 0);
-                    Bz(i, j, k) = mu_arrz * Hz(i, j, k);
+                    amrex::Real mu = getMu(x,y,z);
+                    Bz(i, j, k) = mu * Hz(i, j, k);
                 } else if (mag_Ms_arrz > 0){
                     Bz(i, j, k) = PhysConst::mu0 * (M_zface(i, j, k, 2) + Hz(i, j, k));
                 }
