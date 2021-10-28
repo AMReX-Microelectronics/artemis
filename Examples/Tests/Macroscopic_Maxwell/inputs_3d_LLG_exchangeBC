@@ -1,7 +1,7 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 1
+max_step = 60000
 amr.n_cell = 64 64 64 # number of cells spanning the domain in each coordinate direction at level 0
 amr.max_grid_size = 32 # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 16
@@ -19,7 +19,7 @@ amr.max_level = 0
 warpx.verbose = 1
 warpx.use_filter = 0
 warpx.cfl = 0.9
-warpx.mag_time_scheme_order = 1 # default 1
+warpx.mag_time_scheme_order = 2 # default 1
 warpx.mag_M_normalization = 1 # 1 is saturated
 warpx.mag_LLG_coupling = 0
 warpx.mag_LLG_exchange_coupling = 1
