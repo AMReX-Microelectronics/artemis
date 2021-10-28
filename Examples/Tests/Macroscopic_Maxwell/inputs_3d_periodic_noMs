@@ -48,7 +48,13 @@ warpx.By_external_grid_function(x,y,z)= 0.
 warpx.Bz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
-diagnostics.diags_names = plt
+diagnostics.diags_names = plt chk
 plt.intervals = 10
 plt.fields_to_plot = Ex Ey Ez Bx By Bz
 plt.diag_type = Full
+
+chk.format = checkpoint
+chk.intervals = 100
+chk.diag_type = Full
+
+#amr.restart = diags/chk00400
