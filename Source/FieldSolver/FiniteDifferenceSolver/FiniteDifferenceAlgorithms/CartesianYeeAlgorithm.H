@@ -233,7 +233,7 @@ struct CartesianYeeAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real LaplacianDx_Mag (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_x, int const n_coefs_x, amrex::Real const Ms_lo_x, amrex::Real const Ms_hi_x, 
+        amrex::Real const * const coefs_x, int const n_coefs_x, amrex::Real const Ms_lo_x, amrex::Real const Ms_hi_x,
         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
 
         amrex::Real const inv_dx = coefs_x[0];
@@ -344,7 +344,7 @@ struct CartesianYeeAlgorithm {
         amrex::Real const * const coefs_x, amrex::Real const * const coefs_y, amrex::Real const * const coefs_z,
         int const n_coefs_x, int const n_coefs_y, int const n_coefs_z,
         amrex::Real const Ms_lo_x, amrex::Real const Ms_hi_x, amrex::Real const Ms_lo_y, amrex::Real const Ms_hi_y, amrex::Real const Ms_lo_z, amrex::Real const Ms_hi_z,
-        int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {       
+        int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
 
         return LaplacianDx_Mag(F, coefs_x, n_coefs_x, Ms_lo_x, Ms_hi_x, i, j, k, ncomp, nodality) + LaplacianDy_Mag(F, coefs_y, n_coefs_y, Ms_lo_y, Ms_hi_y, i, j, k, ncomp, nodality) + LaplacianDz_Mag(F, coefs_z, n_coefs_z, Ms_lo_z, Ms_hi_z, i, j, k, ncomp, nodality);
     }
