@@ -6,6 +6,7 @@ max_step = 4000
 amr.n_cell = n_cellx n_celly n_cellz
 amr.max_grid_size = max_grid_size
 amr.blocking_factor = blocking_factor
+amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
 
 geometry.prob_lo = -Lx/2. 0. 0.
 geometry.prob_hi =  Lx/2. Ly Lz
@@ -45,11 +46,11 @@ macroscopic.sigma_function(x,y,z) = "sigma_0
 + (sigma_pd - sigma_0) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
 + (sigma_pd - sigma_0) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
 
-macroscopic.epsilon_function(x,y,z) = "epsilon_0
-+ epsilon_0 * (epsilon_r_si - 1.) * (z <= h_si)
-+ epsilon_0 * (epsilon_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd)
-+ epsilon_0 * (epsilon_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
-+ epsilon_0 * (epsilon_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
+macroscopic.epsilon_function(x,y,z) = "eps_0
++ eps_0 * (eps_r_si - 1.) * (z <= h_si)
++ eps_0 * (eps_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd)
++ eps_0 * (eps_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
++ eps_0 * (eps_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
 
 macroscopic.mu_function(x,y,z) = "mu_0
 + mu_0 * (mu_r_si - 1.) * (z <= h_si)
@@ -83,9 +84,9 @@ my_constants.sigma_0 = 0.0
 my_constants.sigma_pd = 1.e7
 my_constants.sigma_si = 1.e1
 
-my_constants.epsilon_0 = 8.8541878128e-12
-my_constants.epsilon_r_pd = 13.
-my_constants.epsilon_r_si = 12.
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_pd = 13.
+my_constants.eps_r_si = 12.
 
 my_constants.mu_0 = 1.25663706212e-06
 my_constants.mu_r_pd = 1.0
@@ -127,8 +128,8 @@ my_constants.wavelength = 4.e-6
 
 my_constants.pi = 3.14159265358979
 
-# c is 1/sqrt(epsilon*mu) using palladium material properties
-my_constants.c = 1./sqrt(epsilon_0*epsilon_r_si*mu_0*mu_r_si)
+# c is 1/sqrt(eps*mu) using silicon material properties
+my_constants.c = 1./sqrt(eps_0*eps_r_si*mu_0*mu_r_si)
 
 # grid spacing
 my_constants.dx = Lx / n_cellx
