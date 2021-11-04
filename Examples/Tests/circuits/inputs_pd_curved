@@ -2,11 +2,14 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 4000
+
 amr.n_cell = n_cellx n_celly n_cellz
 amr.max_grid_size = max_grid_size
 amr.blocking_factor = blocking_factor
-geometry.prob_lo     = prob_lo_x prob_lo_y prob_lo_z
-geometry.prob_hi     = prob_hi_x prob_hi_y prob_hi_z
+
+geometry.prob_lo = -Lx/2. 0. 0.
+geometry.prob_hi =  Lx/2. Ly Lz
+
 amr.max_level = 0
 
 # use pec instead of pml overlaying current source so you don't get a reflection
@@ -60,7 +63,7 @@ macroscopic.mu_function(x,y,z) = "mu_0
 
 ###############
 # domain size
-# n_cellx/y/z and prob_lo/hi are needed to calculate dx/dy/dz
+# n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
 ###############
 my_constants.n_cellx = 256
 my_constants.n_celly = 384
@@ -69,12 +72,9 @@ my_constants.max_grid_size = 384   # for GPU
 #my_constants.max_grid_size = 32    # for CPU
 my_constants.blocking_factor = 32
 
-my_constants.prob_lo_x = -16.e-6
-my_constants.prob_hi_x = 16.e-6
-my_constants.prob_lo_y = 0.
-my_constants.prob_hi_y = 48.e-6
-my_constants.prob_lo_z = 0.
-my_constants.prob_hi_z = 4.e-6
+my_constants.Lx = 32.e-6
+my_constants.Ly = 48.e-6
+my_constants.Lz = 4.e-6
 
 ###############
 # material properties
@@ -103,16 +103,16 @@ my_constants.h_pd = 1.e-6
 ###############
 
 # straight
-my_constants.r_pd = 0.   # note this is irrelevant if l_pd is larger than L_y
-my_constants.l_pd = 1.e9
+#my_constants.r_pd = 0.   # note this is irrelevant if l_pd is larger than L_y
+#my_constants.l_pd = 1.e9
 
 # 90 degree angle
 #my_constants.r_pd = 0.
 #my_constants.l_pd = 32.e-6
 
 # rounded
-#my_constants.r_pd = 16.e-6
-#my_constants.l_pd = 16.e-6
+my_constants.r_pd = 16.e-6
+my_constants.l_pd = 16.e-6
 
 ###############
 # waveguide port parameters
@@ -131,9 +131,9 @@ my_constants.pi = 3.14159265358979
 my_constants.c = 1./sqrt(epsilon_0*epsilon_r_si*mu_0*mu_r_si)
 
 # grid spacing
-my_constants.dx = (prob_hi_x - prob_lo_x) / n_cellx
-my_constants.dy = (prob_hi_y - prob_lo_y) / n_celly
-my_constants.dz = (prob_hi_z - prob_lo_z) / n_cellz
+my_constants.dx = Lx / n_cellx
+my_constants.dy = Ly / n_celly
+my_constants.dz = Lz / n_cellz
 
 my_constants.tiny = 1.e-12
 
@@ -145,7 +145,7 @@ warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
 warpx.Ex_excitation_flag_function(x,y,z) = "0."
 warpx.Ey_excitation_flag_function(x,y,z) = "0."
-warpx.Ez_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > prob_lo_z) * (z < prob_lo_z + h_port) * (y >= prob_lo_y - dy/2.) * (y <= prob_lo_y + dy/2.)"
+warpx.Ez_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= -dy/2.) * (y <= dy/2.)"
 
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
@@ -155,7 +155,8 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*c*t/
 # diagnostics
 ###############
 
-diagnostics.diags_names = plt input output
+diagnostics.diags_names = plt
+#diagnostics.diags_names = plt input output
 
 ###############
 # full plotfiles
@@ -165,20 +166,20 @@ plt.diag_type = Full
 
 ###############
 # input
-input.intervals = 1
-input.fields_to_plot = Ez
-input.diag_lo = -tiny  prob_lo_y+tiny        prob_lo_z+tiny
-input.diag_hi =  tiny  prob_lo_y+2.*dy-tiny  prob_lo_z+h_si-tiny
-input.diag_type = Full
+#input.intervals = 1
+#input.fields_to_plot = Ez
+#input.diag_lo = -tiny  tiny        tiny
+#input.diag_hi =  tiny  2.*dy-tiny  h_si-tiny
+#input.diag_type = Full
 
 ###############
 # output: straight
 
-output.intervals = 1
-output.fields_to_plot = Ez
-output.diag_lo = -tiny  prob_hi_y-2.*dy+tiny  prob_lo_z+tiny
-output.diag_hi =  tiny  prob_hi_y-tiny        prob_lo_z+h_si-tiny
-output.diag_type = Full
+#output.intervals = 1
+#output.fields_to_plot = Ez
+#output.diag_lo = -tiny  Ly-2.*dy+tiny  tiny
+#output.diag_hi =  tiny  Ly-tiny        h_si-tiny
+#output.diag_type = Full
 
 ###############
 
@@ -187,8 +188,8 @@ output.diag_type = Full
 
 #output.intervals = 1
 #output.fields_to_plot = Ez
-#output.diag_lo = prob_lo_x+tiny        prob_lo_y+l_pd+r_pd-tiny  prob_lo_z+tiny
-#output.diag_hi = prob_lo_x+2.*dx-tiny  prob_lo_y+l_pd+r_pd+tiny  prob_lo_z+h_si-tiny
+#output.diag_lo = -Lx/2.+tiny        l_pd+r_pd-tiny  tiny
+#output.diag_hi = -Lx/2.+2.*dx-tiny  l_pd+r_pd+tiny  h_si-tiny
 #output.diag_type = Full
 
 ###############
