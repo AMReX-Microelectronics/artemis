@@ -83,7 +83,7 @@ FlushFormatCheckpoint::WriteToFile (
         VisMF::Write(warpx.getMfield_fp(lev, 2),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Mz_fp"));
 #endif
-        
+
         if (WarpX::fft_do_time_averaging)
         {
             VisMF::Write(warpx.getEfield_avg_fp(lev, 0),
@@ -140,7 +140,7 @@ FlushFormatCheckpoint::WriteToFile (
             VisMF::Write(warpx.getMfield_cp(lev, 2),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Mz_cp"));
 #endif
-            
+
             if (WarpX::fft_do_time_averaging)
             {
                 VisMF::Write(warpx.getEfield_avg_cp(lev, 0),
