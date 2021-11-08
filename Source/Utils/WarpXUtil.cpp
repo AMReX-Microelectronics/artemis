@@ -331,7 +331,9 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
       };
 
     for (auto it = symbols.begin(); it != symbols.end(); ) {
-        Real v;
+        // Always parsing in double precision avoids potential overflows that may occur when parsing
+        // user's expressions because of the limited range of exponentials in single precision
+        double v;
 
         WarpXUtilMsg::AlwaysAssert(recursive_symbols.count(*it)==0, "Expressions contains recursive symbol "+*it);
         recursive_symbols.insert(*it);
@@ -359,8 +361,29 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
     return parser;
 }
 
+double
+parseStringtoReal(std::string str)
+{
+    auto parser = makeParser(str, {});
+    auto exe = parser.compileHost<0>();
+    double result = exe();
+    return result;
+}
+
 int
-queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+parseStringtoInt(std::string str, std::string name)
+{
+    amrex::Real rval = parseStringtoReal(str);
+    int ival = safeCastToInt(std::round(rval), name);
+    return ival;
+}
+
+// Overloads for float/double instead of amrex::Real to allow makeParser() to query for
+// my_constants as double even in single precision mode
+// Always parsing in double precision avoids potential overflows that may occur when parsing user's
+// expressions because of the limited range of exponentials in single precision
+int
+queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val)
 {
     // call amrex::ParmParse::query, check if the user specified str.
     std::string tmp_str;
@@ -370,26 +393,45 @@ queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Re
         // If so, create a parser object and apply it to the value provided by the user.
         std::string str_val;
         Store_parserString(a_pp, str, str_val);
-
-        auto parser = makeParser(str_val, {});
-        auto exe = parser.compileHost<0>();
-
-        val = exe();
+        val = static_cast<float>(parseStringtoReal(str_val));
     }
     // return the same output as amrex::ParmParse::query
     return is_specified;
 }
 
 void
-getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val)
 {
     // If so, create a parser object and apply it to the value provided by the user.
     std::string str_val;
     Store_parserString(a_pp, str, str_val);
+    val = static_cast<float>(parseStringtoReal(str_val));
+}
 
-    auto parser = makeParser(str_val, {});
-    auto exe = parser.compileHost<0>();
-    val = exe();
+int
+queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::string tmp_str;
+    int is_specified = a_pp.query(str, tmp_str);
+    if (is_specified)
+    {
+        // If so, create a parser object and apply it to the value provided by the user.
+        std::string str_val;
+        Store_parserString(a_pp, str, str_val);
+        val = parseStringtoReal(str_val);
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
+
+void
+getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val)
+{
+    // If so, create a parser object and apply it to the value provided by the user.
+    std::string str_val;
+    Store_parserString(a_pp, str, str_val);
+    val = parseStringtoReal(str_val);
 }
 
 int
@@ -405,29 +447,11 @@ queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::v
         int const n = static_cast<int>(tmp_str_arr.size());
         val.resize(n);
         for (int i=0 ; i < n ; i++) {
-            auto parser = makeParser(tmp_str_arr[i], {});
-            auto exe = parser.compileHost<0>();
-            val[i] = exe();
+            val[i] = parseStringtoReal(tmp_str_arr[i]);
         }
     }
     // return the same output as amrex::ParmParse::query
     return is_specified;
-}
-
-void
-getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val)
-{
-    // Create parser objects and apply them to the values provided by the user.
-    std::vector<std::string> tmp_str_arr;
-    a_pp.getarr(str, tmp_str_arr);
-
-    int const n = static_cast<int>(tmp_str_arr.size());
-    val.resize(n);
-    for (int i=0 ; i < n ; i++) {
-        auto parser = makeParser(tmp_str_arr[i], {});
-        auto exe = parser.compileHost<0>();
-        val[i] = exe();
-    }
 }
 
 void
@@ -441,9 +465,7 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     int const n = static_cast<int>(tmp_str_arr.size());
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
-        auto parser = makeParser(tmp_str_arr[i], {});
-        auto exe = parser.compileHost<0>();
-        val[i] = exe();
+        val[i] = parseStringtoReal(tmp_str_arr[i]);
     }
 }
 
@@ -473,15 +495,6 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
         }
     }
     return result;
-}
-
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val) {
-    std::vector<amrex::Real> rval;
-    getArrWithParser(a_pp, str, rval);
-    val.resize(rval.size());
-    for (unsigned long i = 0 ; i < val.size() ; i++) {
-        val[i] = safeCastToInt(std::round(rval[i]), str);
-    }
 }
 
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
@@ -528,7 +541,7 @@ void CheckGriddingForRZSpectral ()
     ParmParse pp_amr("amr");
 
     pp_amr.get("max_level",max_level);
-    pp_amr.getarr("n_cell",n_cell,0,AMREX_SPACEDIM);
+    pp_amr.getarr("n_cell", n_cell, 0, AMREX_SPACEDIM);
 
     Vector<int> blocking_factor_x(max_level+1);
     Vector<int> max_grid_size_x(max_level+1);
@@ -560,8 +573,8 @@ void CheckGriddingForRZSpectral ()
     // Get the longitudinal blocking factor in case it was set by the user.
     // If not set, use the default value of 8.
     Vector<int> bf;
-    pp_amr.queryarr("blocking_factor",bf);
-    pp_amr.queryarr("blocking_factor_y",bf);
+    pp_amr.queryarr("blocking_factor", bf);
+    pp_amr.queryarr("blocking_factor_y", bf);
     bf.resize(std::max(static_cast<int>(bf.size()),1),8);
 
     // Modify the default or any user input, making sure that the blocking factor
@@ -575,8 +588,8 @@ void CheckGriddingForRZSpectral ()
     // Get the longitudinal max grid size in case it was set by the user.
     // If not set, use the default value of 128.
     Vector<int> mg;
-    pp_amr.queryarr("max_grid_size",mg);
-    pp_amr.queryarr("max_grid_size_y",mg);
+    pp_amr.queryarr("max_grid_size", mg);
+    pp_amr.queryarr("max_grid_size_y", mg);
     mg.resize(std::max(static_cast<int>(mg.size()),1),128);
 
     // Modify the default or any user input, making sure that the max grid size

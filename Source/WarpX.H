@@ -17,6 +17,8 @@
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "Evolve/WarpXDtType.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
@@ -44,6 +46,7 @@
 #endif
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
@@ -95,6 +98,9 @@ public:
     void Evolve (int numsteps = -1);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
+    MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
+
+    ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::Real external_field=0.0,
@@ -124,6 +130,7 @@ public:
     static std::string E_excitation_grid_s;
 #ifdef WARPX_MAG_LLG
     static std::string H_excitation_grid_s;
+    static std::string H_bias_excitation_grid_s;
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -154,6 +161,10 @@ public:
     static std::string str_Hx_excitation_grid_function;
     static std::string str_Hy_excitation_grid_function;
     static std::string str_Hz_excitation_grid_function;
+    // Function for H bias excitation (x,y,z,t) on the grid
+    static std::string str_Hx_bias_excitation_grid_function;
+    static std::string str_Hy_bias_excitation_grid_function;
+    static std::string str_Hz_bias_excitation_grid_function;
 #endif
     // Flag for type of excitation (hard/soft)
     static std::string str_Ex_excitation_flag_function;
@@ -166,6 +177,9 @@ public:
     static std::string str_Hx_excitation_flag_function;
     static std::string str_Hy_excitation_flag_function;
     static std::string str_Hz_excitation_flag_function;
+    static std::string str_Hx_bias_excitation_flag_function;
+    static std::string str_Hy_bias_excitation_flag_function;
+    static std::string str_Hz_bias_excitation_flag_function;
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -206,6 +220,10 @@ public:
     std::unique_ptr<amrex::Parser> Hxfield_xt_grid_parser;
     std::unique_ptr<amrex::Parser> Hyfield_xt_grid_parser;
     std::unique_ptr<amrex::Parser> Hzfield_xt_grid_parser;
+    // Parser for H_bias external excitation on the grid
+    std::unique_ptr<amrex::Parser> Hx_biasfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Hy_biasfield_xt_grid_parser;
+    std::unique_ptr<amrex::Parser> Hz_biasfield_xt_grid_parser;
 #endif
     std::unique_ptr<amrex::Parser> Exfield_flag_parser;
     std::unique_ptr<amrex::Parser> Eyfield_flag_parser;
@@ -217,6 +235,9 @@ public:
     std::unique_ptr<amrex::Parser> Hxfield_flag_parser;
     std::unique_ptr<amrex::Parser> Hyfield_flag_parser;
     std::unique_ptr<amrex::Parser> Hzfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hx_biasfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hy_biasfield_flag_parser;
+    std::unique_ptr<amrex::Parser> Hz_biasfield_flag_parser;
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -302,7 +323,7 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
-    static bool serialize_ics;
+    static bool serialize_ics; //! Serialize the initial conditions
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
@@ -330,7 +351,7 @@ public:
     static int do_multi_J_n_depositions;
     static int J_linear_in_time;
 
-    static bool do_device_synchronize_before_profile;
+    static int do_device_synchronize;
     static bool safe_guard_cells;
 
     // buffers
@@ -450,6 +471,8 @@ public:
 
     const amrex::MultiFab& getEfield_avg_fp (int lev, int direction) {return *Efield_avg_fp[lev][direction];}
     const amrex::MultiFab& getBfield_avg_fp (int lev, int direction) {return *Bfield_avg_fp[lev][direction];}
+    const amrex::MultiFab& getEfield_avg_cp (int lev, int direction) {return *Efield_avg_cp[lev][direction];}
+    const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
 
@@ -486,10 +509,10 @@ public:
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
 
     amrex::Real time_of_last_gal_shift  = 0;
-    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
+    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
     amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
 
-    amrex::Array<amrex::Real,3> m_v_comoving = {{0.}};
+    amrex::Vector<amrex::Real> m_v_comoving{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -497,12 +520,15 @@ public:
     amrex::Vector<int> mirror_z_npoints;
 
     /// object with all reduced diagnotics, similar to MultiParticleContainer for species.
-    MultiReducedDiags* reduced_diags;
+    std::unique_ptr<MultiReducedDiags> reduced_diags;
 
     void applyMirrors(amrex::Real time);
 
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
+
+    /** Print dt and dx,dy,dz */
+    void PrintDtDxDyDz ();
 
     /**
      * \brief
@@ -737,7 +763,7 @@ public:
     /*
       /brief This computes the lower of the problem domain, taking into account any shift when using the Galilean algorithm.
      */
-    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev);
+    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Vector<amrex::Real>& v_galilean, int lev);
 
     static amrex::IntVect RefRatio (int lev);
 
@@ -800,6 +826,7 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
+    ElectrostaticSolver::BoundaryHandler field_boundary_handler;
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
@@ -823,12 +850,8 @@ public:
                        int const verbosity) const;
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                   std::array<bool,AMREX_SPACEDIM> dirichlet_flag,
-                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo,
-                   amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi
-                   ) const;
-    void getPhiBC (const int idim, amrex::Real &pot_lo,
-                   amrex::Real &pot_hi) const;
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
+                   amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_hi ) const;
 
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
@@ -852,13 +875,15 @@ public:
      * \param[in] xfield_parser, parser function to initialize x-field
      * \param[in] yfield_parser, parser function to initialize y-field
      * \param[in] zfield_parser, parser function to initialize z-field
+     * \param[in] geom_data, geometric data, can be m_edge_lengths or m_face_areass
      * \param[in] lev, level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          amrex::ParserExecutor<3> const& xfield_parser,
          amrex::ParserExecutor<3> const& yfield_parser,
-         amrex::ParserExecutor<3> const& zfield_parser, const int lev);
+         amrex::ParserExecutor<3> const& zfield_parser,
+         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -1006,34 +1031,10 @@ private:
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
     /**
-     * \brief Synchronize the nodal points of the electric field MultiFabs
+     * \brief Synchronize the nodal points of a given field MultiFab (all mesh refinement levels)
      */
-    void NodalSyncE ();
-
-    /**
-     * \brief Synchronize the nodal points of the electric field MultiFabs for given MR level
-     */
-    void NodalSyncE (int lev);
-
-    /**
-     * \brief Synchronize the nodal points of the electric field MultiFabs for given MR level and patch
-     */
-    void NodalSyncE (int lev, PatchType patch_type);
-
-    /**
-     * \brief Synchronize the nodal points of the magnetic field MultiFabs
-     */
-    void NodalSyncB ();
-
-    /**
-     * \brief Synchronize the nodal points of the magnetic field MultiFabs for given MR level
-     */
-    void NodalSyncB (int lev);
-
-    /**
-     * \brief Synchronize the nodal points of the magnetic field MultiFabs for given MR level and patch
-     */
-    void NodalSyncB (int lev, PatchType patch_type);
+    void NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
+                    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_cp);
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
@@ -1083,6 +1084,9 @@ private:
 
     void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
                          const amrex::DistributionMapping& new_dmap);
+
+    amrex::DistributionMapping
+    GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, int lev) const;
 
     void InitFromCheckpoint ();
     void PostRestart ();
@@ -1222,8 +1226,16 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
     //EB grid info
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_info_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
+    amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
+
+    //This is just needed for the ECT solver
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > ECTRhofield;
 
     //EB level set
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
@@ -1403,17 +1415,70 @@ private:
     }
 #endif
 
+public:
     void InitEB ();
+    /**
+    * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
+    *        An edge of length 0 is fully covered.
+    */
 
+public:
     void ComputeEdgeLengths ();
+    /**
+    * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
+    *        An edge of area 0 is fully covered.
+    */
     void ComputeFaceAreas ();
+    /**
+    * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
+    */
     void ScaleEdges ();
+    /**
+    * \brief Scale the edges areas by the mesh width to obtain the real areas.
+    */
     void ScaleAreas ();
+    /**
+    * \brief Initialize information for cell extensions.
+    *        The flags convention for m_flag_info_face is as follows
+    *          - 0 for unstable cells
+    *          - 1 for stable cells which have not been intruded
+    *          - 2 for stable cells which have been intruded
+    *        Here we cannot know if a cell is intruded or not so we initialize all stable cells with 1
+    */
+    void MarkCells();
+    /**
+    * \brief Compute the level set function used for particle-boundary interaction.
+    */
     void ComputeDistanceToEB ();
+    /**
+    * \brief Auxiliary function to count the amount of faces which still need to be extended
+    */
+    amrex::Array1D<int, 0, 2> CountExtFaces();
+    /**
+    * \brief Main function computing the cell extension. Where possible it computes one-way
+    *       extensions and, when this is not possible, it does eight-ways extensions.
+    */
+    void ComputeFaceExtensions();
+    /**
+    * \brief Initialize the memory for the FaceInfoBoxes
+    */
+    void InitBorrowing();
+    /**
+    * \brief Shrink the vectors in the FaceInfoBoxes
+    */
+    void ShrinkBorrowing();
+    /**
+    * \brief Do the one-way extension
+    */
+    void ComputeOneWayExtensions();
+    /**
+    * \brief Do the eight-ways extension
+    */
+    void ComputeEightWaysExtensions();
 
-    void ScrapeParticles ();
 
 private:
+    void ScrapeParticles ();
 
     void PushPSATD ();
 
@@ -1496,11 +1561,7 @@ private:
      * \brief Set averaged E,B fields to zero before new iteration
      */
     void PSATDEraseAverageFields ();
-#endif
 
-    int fftw_plan_measure = 1; // used with PSATD
-
-#ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_fp;
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_cp;

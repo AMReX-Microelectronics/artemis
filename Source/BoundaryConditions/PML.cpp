@@ -508,9 +508,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
 
         ParmParse pp_psatd("psatd");
-        pp_psatd.query("nx_guard", ngFFt_x);
-        pp_psatd.query("ny_guard", ngFFt_y);
-        pp_psatd.query("nz_guard", ngFFt_z);
+        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if (AMREX_SPACEDIM == 3)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
@@ -615,14 +615,17 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
     if (m_dive_cleaning)
     {
-        pml_F_fp = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dm, 3, ngf);
+        const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+        pml_F_fp = std::make_unique<MultiFab>(amrex::convert(ba, F_nodal_flag), dm, 3, ngf);
         pml_F_fp->setVal(0.0);
     }
 
     if (m_divb_cleaning)
     {
         // TODO Shall we define a separate guard cells parameter ngG?
-        pml_G_fp = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheZeroVector()), dm, 3, ngf);
+        const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
+                                                        : amrex::IntVect::TheCellVector();
+        pml_G_fp = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, 3, ngf);
         pml_G_fp->setVal(0.0);
     }
 
@@ -650,8 +653,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
         // Get the cell-centered box, with guard cells
         BoxArray realspace_ba = ba; // Copy box
-        Array<Real,3> const v_galilean_zero = {0., 0., 0.};
-        Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+        amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+        amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
@@ -766,14 +769,17 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
         if (m_dive_cleaning)
         {
-            pml_F_cp = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()), cdm, 3, ngf);
+            const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+            pml_F_cp = std::make_unique<MultiFab>(amrex::convert(cba, F_nodal_flag), cdm, 3, ngf);
             pml_F_cp->setVal(0.0);
         }
 
         if (m_divb_cleaning)
         {
             // TODO Shall we define a separate guard cells parameter ngG?
-            pml_G_cp = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheZeroVector()), cdm, 3, ngf);
+            const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
+                                                            : amrex::IntVect::TheCellVector();
+            pml_G_cp = std::make_unique<MultiFab>(amrex::convert(cba, G_nodal_flag), cdm, 3, ngf);
             pml_G_cp->setVal(0.0);
         }
 
@@ -809,8 +815,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
             // Get the cell-centered box, with guard cells
             BoxArray realspace_cba = cba; // Copy box
-            Array<Real,3> const v_galilean_zero = {0., 0., 0.};
-            Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+            amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+            amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
                 nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
@@ -1148,6 +1154,24 @@ PML::ExchangeF (PatchType patch_type, amrex::MultiFab* Fp, int do_pml_in_domain)
         Exchange(*pml_F_fp, *Fp, *m_geom, do_pml_in_domain);
     } else if (patch_type == PatchType::coarse && pml_F_cp && Fp) {
         Exchange(*pml_F_cp, *Fp, *m_cgeom, do_pml_in_domain);
+    }
+}
+
+void PML::ExchangeG (amrex::MultiFab* G_fp, amrex::MultiFab* G_cp, int do_pml_in_domain)
+{
+    ExchangeG(PatchType::fine, G_fp, do_pml_in_domain);
+    ExchangeG(PatchType::coarse, G_cp, do_pml_in_domain);
+}
+
+void PML::ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_domain)
+{
+    if (patch_type == PatchType::fine && pml_G_fp && Gp)
+    {
+        Exchange(*pml_G_fp, *Gp, *m_geom, do_pml_in_domain);
+    }
+    else if (patch_type == PatchType::coarse && pml_G_cp && Gp)
+    {
+        Exchange(*pml_G_cp, *Gp, *m_cgeom, do_pml_in_domain);
     }
 }
 
