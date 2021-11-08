@@ -456,8 +456,6 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifndef WARPX_MAG_LLG
         EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver);
-        // ApplyExternalFieldExcitation
-        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // apply B external excitation; soft source to be fixed
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -492,8 +490,6 @@ WarpX::OneStep_nosub (Real cur_time)
         }
 
         FillBoundaryE(guard_cells.ng_FieldSolver);
-        // ApplyExternalFieldExcitation
-        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternal); // apply E external excitation; soft source to be fixed
 
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
@@ -521,8 +517,6 @@ WarpX::OneStep_nosub (Real cur_time)
             // outdated.
             if (safe_guard_cells) {
                 FillBoundaryB(guard_cells.ng_alloc_EB);
-                // ApplyExternalFieldExcitation
-                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // redundant for hs; need to fix the way to increment ss
             }
 #ifdef WARPX_MAG_LLG
 #ifndef WARPX_DIM_RZ
@@ -544,10 +538,9 @@ WarpX::OneStep_nosub (Real cur_time)
             if ( safe_guard_cells ){
                 FillBoundaryH(guard_cells.ng_alloc_EB);
                 FillBoundaryM(guard_cells.ng_alloc_EB);
-               // ApplyExternalFieldExcitation
-               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
-               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
-
+                // ApplyExternalFieldExcitation
+                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
+                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
             }
 #endif //
     } // !PSATD
