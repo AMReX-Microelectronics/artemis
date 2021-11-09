@@ -17,7 +17,7 @@ geometry.coord_sys = 0               # 0=Cartesian
 amr.max_level = 0
 
 # total dimention in x is summation: 2*my_constants.gap_cpw + my_constants.width_line + 2*my_constants.width_gnd
-# total dimension in y is CPW length: my_constants.length_cpw
+# total dimension in y is CPW length
 # total dimenion in z has no direct relation with the geometries, z dimension needs to be large enough to encompass all leackage fields
 # x,y,z dimension must be consistent w/ my_constants.Lx; Ly; Lz
 geometry.prob_lo = -Lx/2 -Ly/2 -Lz/2
@@ -40,15 +40,20 @@ my_constants.dz = Lz / nz
 
 my_constants.th_si = 30.0e-6 # thickness of the silicon substrate is 70um
 my_constants.th_nb = 250.0e-9 # thickness of niobium metal is 250nm
-my_constants.gap_chip = 3.25e-6 # gap between silicon surfaces of wiring & qubit chips
+
 my_constants.gap_cpw = 6.0e-6 # air gap of CPW
 my_constants.width_line = 10.0e-6 # line width of CPW
 my_constants.width_gnd = 25.0e-6 # width of each ground patch
-my_constants.length_cpw = 20.0e-2 # length of CPW in longitudinal direction
 
 my_constants.wavelength = 0.0545 # center frequency is 5.5 GHz
 my_constants.TP = 5.4545e-10 # Gaussian pulse width, 3 x time period of excitation
-my_constants.epr = 11.7 # relative permittivity of ferrite slab
+
+my_constans.sigma_0 = 0.0
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_silicon = 11.7 # relative permittivity of silicon
+
+my_constants.mu_0 = 1.25663706212e-06"
 
 my_constants.flag_none = 0 # no source flag
 my_constants.flag_hs = 1 # hard source flag
@@ -68,11 +73,13 @@ algo.em_solver_medium = macroscopic           # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
 
 macroscopic.sigma_init_style = "parse_sigma_function"                             # parse or "constant"
-macroscopic.sigma_function(x,y,z) = "0.0"                                         # Nb is approximately PEC, with infinite conductivity
+macroscopic.sigma_function(x,y,z) = "sigma_0"                                     # Nb is approximately PEC, with infinite conductivity
+
 macroscopic.epsilon_init_style = "parse_epsilon_function"                         # parse or "constant"
-macroscopic.epsilon_function(x,y,z) = "epr * 8.8541878128e-12 * (z<=-Lz/2+th_si)" # EPr is 11.7 for silicon
+macroscopic.epsilon_function(x,y,z) = "eps_r_silicon * eps_0 * (z<=-Lz/2+th_si)"
+
 macroscopic.mu_init_style = "parse_mu_function"                                   # parse or "constant"
-macroscopic.mu_function(x,y,z) = "1.25663706212e-06"                              # nonmagnetic material allover
+macroscopic.mu_function(x,y,z) = "mu_0"                                           # nonmagnetic material allover
 
 #################################
 ############ FIELDS #############
@@ -83,7 +90,7 @@ macroscopic.mu_function(x,y,z) = "1.25663706212e-06"                            
 warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 
 warpx.Ex_excitation_grid_function(x,y,z,t) = "
-0.0 * (y < -length_cpw/2 + dy) 
+0.0 * (y < -Ly/2 + dy) 
 + 0.0 * (z < -Lz/2 + th_si + th_nb + dz/2) * (z > -Lz/2 + th_si + th_nb - dz/2) * (x < -Lx/2 + width_gnd) 
 + 0.0 * (z < -Lz/2 + th_si + th_nb + dz/2) * (z > -Lz/2 + th_si + th_nb - dz/2) * (x > -width_line/2) * (x < width_line/2) 
 + 0.0 * (z < -Lz/2 + th_si + th_nb + dz/2) * (z > -Lz/2 + th_si + th_nb - dz/2) * (x > Lx/2 - width_gnd) 
@@ -92,7 +99,7 @@ warpx.Ex_excitation_grid_function(x,y,z,t) = "
 + 0.0 * (z < -Lz/2 + th_si + dz/2) * (z > -Lz/2 + th_si - dz/2) * (x > Lx/2 - width_gnd)"
 
 warpx.Ex_excitation_flag_function(x,y,z) = "flag_none 
-+ flag_hs * (y < -length_cpw/2 + dy) 
++ flag_hs * (y < -Ly/2 + dy) 
 + flag_hs * (z < -Lz/2 + th_si + th_nb + dz/2) * (z > -Lz/2 + th_si + th_nb - dz/2) * (x < -Lx/2 + width_gnd) 
 + flag_hs * (z < -Lz/2 + th_si + th_nb + dz/2) * (z > -Lz/2 + th_si + th_nb - dz/2) * (x > -width_line/2) * (x < width_line/2) 
 + flag_hs * (z < -Lz/2 + th_si + th_nb + dz/2) * (z > -Lz/2 + th_si + th_nb - dz/2) * (x > Lx/2 - width_gnd) 
@@ -125,14 +132,14 @@ warpx.Ey_excitation_flag_function(x,y,z) = "flag_none
 + flag_hs * (z < -Lz/2 + th_si + dz/2) * (z > -Lz/2 + th_si - dz/2) * (x > Lx/2 - width_gnd) "
 
 warpx.Ez_excitation_grid_function(x,y,z,t) = "
-1.0 * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (x < width_line/2 + gap_cpw + width_gnd/2) * (x > -width_line/2 - gap_cpw - width_gnd/2) * (z >= - Lz/2) * (z < - Lz/2 + 2*th_si + th_nb) * (y < -length_cpw/2 + dy) + 0.0 * (y < -length_cpw/2 + dy)
+1.0 * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (x < width_line/2 + gap_cpw + width_gnd/2) * (x > -width_line/2 - gap_cpw - width_gnd/2) * (z >= - Lz/2) * (z < - Lz/2 + 2*th_si + th_nb) * (y < -Ly/2 + dy) + 0.0 * (y < -Ly/2 + dy)
 + 0.0 * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (x > -Lx/2 + width_gnd - dx/2) * (x < -Lx/2 + width_gnd + dx/2)
 + 0.0 * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (x > -width_line/2 - dx/2) * (x < -width_line/2 + dx/2) 
 + 0.0 * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (x > width_line/2 - dx/2) * (x < width_line/2 + dx/2) 
 + 0.0 * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (x > Lx/2 - width_gnd - dx/2) * (x < Lx/2 - width_gnd + dx/2)"
 
 warpx.Ez_excitation_flag_function(x,y,z) = "flag_none
-+ flag_hs * (y < -length_cpw/2 + dy)
++ flag_hs * (y < -Ly/2 + dy)
 + flag_hs * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (x > -Lx/2 + width_gnd - dx/2) * (x < -Lx/2 + width_gnd + dx/2)
 + flag_hs * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (x > -width_line/2 - dx/2) * (x < -width_line/2 + dx/2)
 + flag_hs * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (x > width_line/2 - dx/2) * (x < width_line/2 + dx/2)
