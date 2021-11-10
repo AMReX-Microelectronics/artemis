@@ -54,13 +54,10 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
 macroscopic.sigma_function(x,y,z) = "0.0"
 
-macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
 macroscopic.epsilon_function(x,y,z) = "epr * 8.8541878128e-12 * (x<=thickness-width/2) + 8.8541878128e-12 * (x>thickness-width/2)" # EPr is 13 of the ferrite slab
 
-macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
 macroscopic.mu_function(x,y,z) = "1.25663706212e-06" # MUr is not predefined in ferrite materials
 
 #unit conversion: 1 Gauss = (1000/4pi) A/m
