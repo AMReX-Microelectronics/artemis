@@ -52,7 +52,8 @@ my_constants.w_gnd = 21.0e-6 # width of each ground patch
 my_constants.wavelength = Ly/3 # hack short domain
 my_constants.TP = 5.4545e-10 # Gaussian pulse width, 3 x time period of excitation
 
-my_constants.w_port = w_line + w_gnd + 2*gap_cpw
+my_constants.w_port = w_line + 2*gap_cpw + w_gnd
+my_constants.h_port = 2*th_si + th_nb
 
 my_constants.sigma_0 = 0.0
 my_constants.sigma_nb = 1.e7
@@ -90,15 +91,12 @@ algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
 # 2. si substrate
 ###############
 
-macroscopic.sigma_init_style = "parse_sigma_function"
 macroscopic.sigma_function(x,y,z) = "sigma_0
 + (sigma_si - sigma_0) * (z < -Lz/2 + th_si)"
 
-macroscopic.epsilon_init_style = "parse_epsilon_function"
 macroscopic.epsilon_function(x,y,z) = "eps_0
 + eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si)"
 
-macroscopic.mu_init_style = "parse_mu_function"
 macroscopic.mu_function(x,y,z) = "mu_0
 + mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si)"
 
@@ -124,13 +122,14 @@ warpx.Ez_excitation_flag_function(x,y,z) = "
   flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)
-+ flag_hs * (x < w_line/2 + gap_cpw + w_gnd/2) * (x > -w_line/2 - gap_cpw - w_gnd/2) * (z >= -Lz/2) * (z < -Lz/2 + 2*th_si + th_nb) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
++ flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < -Lz/2 + h_port) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
 
-#Diagnostics
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "(y > -Ly/2 - tiny) * (y < -Ly/2 + tiny) * exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "(y > -Ly/2 - tiny) * (y < -Ly/2 + tiny) * sin(2*pi*c*t/wavelength)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
+
+# Diagnostics
 
 diagnostics.diags_names = plt
 
