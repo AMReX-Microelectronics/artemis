@@ -27,13 +27,9 @@ my_constants.pi = 3.14159265359
 my_constants.c = 299792458.
 
 # domain sizes and cell numbers separately defined for easier excitation function definition
-my_constants.Lx = 72.0e-6  # total x-dimension of entire simulation domain 
-my_constants.Ly = 20.0e-2  # total y-dimension of entire simulation domain 
-my_constants.Ly = 100.0e-6  # hack short domain
-my_constants.Lz = 100.0e-6 # total z-dimension of entire simulation domain
-my_constants.nx = 512      # total number of cells in x direction 
-my_constants.ny = 128      # total number of cells in y direction
-my_constants.nz = 1024     # total number of cells in z direction
+my_constants.Lx = 64.0e-6  # total x-dimension of entire simulation domain 
+my_constants.Ly = 64.0e-6  # hack short domain
+my_constants.Lz = 64.0e-6 # total z-dimension of entire simulation domain
 my_constants.nx = 128
 my_constants.ny = 128      # total number of cells in y direction
 my_constants.nz = 128
@@ -44,15 +40,16 @@ my_constants.dx = Lx / nx
 my_constants.dy = Ly / ny
 my_constants.dz = Lz / nz
 
+my_constants.tiny = 1.e-9
+
 my_constants.th_si = 30.0e-6 # thickness of the silicon substrate is 70um
-my_constants.th_nb = 250.0e-9 # thickness of niobium metal is 250nm
+my_constants.th_nb = 4.0e-6
 
 my_constants.gap_cpw = 6.0e-6 # air gap of CPW
 my_constants.w_line = 10.0e-6 # line width of CPW
-my_constants.w_gnd = 25.0e-6 # width of each ground patch
+my_constants.w_gnd = 21.0e-6 # width of each ground patch
 
-my_constants.wavelength = 0.0545 # center frequency is 5.5 GHz
-my_constants.wavelength = Ly/5 # hack short domain
+my_constants.wavelength = Ly/3 # hack short domain
 my_constants.TP = 5.4545e-10 # Gaussian pulse width, 3 x time period of excitation
 
 my_constants.w_port = w_line + w_gnd + 2*gap_cpw
@@ -76,7 +73,7 @@ my_constants.flag_ss = 2 # soft source flag
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 0
+warpx.verbose = 1
 warpx.use_filter = 0
 warpx.cfl = 0.8
 boundary.field_lo = pml pec pml   # PML at -x to extend GND patches; PEC at -y end to superimpose waveguide port; PML at -z end to extend Si substrate;
@@ -98,21 +95,21 @@ algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
 
 macroscopic.sigma_init_style = "parse_sigma_function"
 macroscopic.sigma_function(x,y,z) = "sigma_0
-+ (sigma_si - sigma_0) * (z > -Lz/2) * (z < -Lz/2 + th_si)
++ (sigma_si - sigma_0) * (z < -Lz/2 + th_si)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2 - gap_cpw - w_gnd) * (x < -w_line/2 - gap_cpw)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < +w_line/2 + gap_cpw + w_gnd) * (x > +w_line/2 + gap_cpw)"
 
 macroscopic.epsilon_init_style = "parse_epsilon_function"
 macroscopic.epsilon_function(x,y,z) = "eps_0
-+ eps_0 * (eps_r_si - 1) * (z > -Lz/2) * (z < -Lz/2 + th_si)
++ eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si)
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2)
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2 - gap_cpw - w_gnd) * (x < -w_line/2 - gap_cpw)
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < +w_line/2 + gap_cpw + w_gnd) * (x > +w_line/2 + gap_cpw)"
 
 macroscopic.mu_init_style = "parse_mu_function"
 macroscopic.mu_function(x,y,z) = "mu_0
-+ mu_0 * (mu_r_si - 1) * (z > -Lz/2) * (z < -Lz/2 + th_si)
++ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2 - gap_cpw - w_gnd) * (x < -w_line/2 - gap_cpw)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < +w_line/2 + gap_cpw + w_gnd) * (x > +w_line/2 + gap_cpw)"
@@ -125,16 +122,16 @@ macroscopic.mu_function(x,y,z) = "mu_0
 # in the waveform of modified Gaussian pulse
 warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 
+warpx.Ex_excitation_flag_function(x,y,z) = "0."
+warpx.Ey_excitation_flag_function(x,y,z) = "0."
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_hs * (x < w_line/2 + gap_cpw + w_gnd/2) * (x > -w_line/2 - gap_cpw - w_gnd/2) * (z >= -Lz/2) * (z < -Lz/2 + 2*th_si + th_nb) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
+
+#Diagnostics
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ez_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*c*t/wavelength)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength)"
 
-warpx.Ex_excitation_flag_function(x,y,z) = "0."
-warpx.Ey_excitation_flag_function(x,y,z) = "0."
-warpx.Ez_excitation_flag_function(x,y,z) = "flag_hs * (x < w_line/2 + gap_cpw + w_gnd/2) * (x > -w_line/2 - gap_cpw - w_gnd/2) * (z >= -Lz/2) * (z < -Lz/2 + 2*th_si + th_nb) * (y > -Ly/2 - dy) * (y < -Ly/2 + dy)"
-
-#Diagnostics
 diagnostics.diags_names = plt
 
 plt.intervals = 5
