@@ -94,13 +94,13 @@ algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
 # NOTE: the "tinys" can go away once we parse to cell-centers and average to faces/edges
 
 macroscopic.sigma_function(x,y,z) = "sigma_0
-+ (sigma_si - sigma_0) * (z < -Lz/2 + th_si - tiny)
++ (sigma_si - sigma_0) * (z < -Lz/2 + th_si - tiny)"
 
 macroscopic.epsilon_function(x,y,z) = "eps_0
-+ eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si - tiny)
++ eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si - tiny)"
 
 macroscopic.mu_function(x,y,z) = "mu_0
-+ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si - tiny)
++ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si - tiny)"
 
 #################################
 ############ FIELDS #############
