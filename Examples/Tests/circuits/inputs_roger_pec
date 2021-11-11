@@ -49,7 +49,7 @@ my_constants.gap_cpw = 6.0e-6 # air gap of CPW
 my_constants.w_line = 10.0e-6 # line width of CPW
 my_constants.w_gnd = 21.0e-6 # width of each ground patch
 
-my_constants.wavelength = Ly/3 # hack short domain
+my_constants.wavelength = Ly # hack short domain
 my_constants.TP = 5.4545e-10 # Gaussian pulse width, 3 x time period of excitation
 
 my_constants.w_port = w_line
