@@ -91,14 +91,16 @@ algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
 # 2. si substrate
 ###############
 
+# NOTE: the "tinys" can go away once we parse to cell-centers and average to faces/edges
+
 macroscopic.sigma_function(x,y,z) = "sigma_0
-+ (sigma_si - sigma_0) * (z < -Lz/2 + th_si)"
++ (sigma_si - sigma_0) * (z < -Lz/2 + th_si - tiny)
 
 macroscopic.epsilon_function(x,y,z) = "eps_0
-+ eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si)"
++ eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si - tiny)
 
 macroscopic.mu_function(x,y,z) = "mu_0
-+ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si)"
++ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si - tiny)
 
 #################################
 ############ FIELDS #############
@@ -107,6 +109,14 @@ macroscopic.mu_function(x,y,z) = "mu_0
 # vertical electric voltage excitation superimposed with PEC at one end of CPW
 # in the waveform of modified Gaussian pulse
 warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+
+###############
+# geometry
+# each row represents a different part of the circuit
+# 1. transmission line in center
+# 2. left ground
+# 3. right ground
+###############
 
 warpx.Ex_excitation_flag_function(x,y,z) = "
   flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)

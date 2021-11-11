@@ -94,23 +94,25 @@ algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
 # 5. right ground
 ###############
 
+# NOTE: the "tinys" can go away once we parse to cell-centers and average to faces/edges
+
 macroscopic.sigma_function(x,y,z) = "sigma_0
-+ (sigma_si - sigma_0) * (z < -Lz/2 + th_si)
-+ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2)
-+ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2 - gap_cpw - w_gnd) * (x < -w_line/2 - gap_cpw)
-+ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < +w_line/2 + gap_cpw + w_gnd) * (x > +w_line/2 + gap_cpw)"
++ (sigma_si - sigma_0) * (z < -Lz/2 + th_si - tiny)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)"
 
 macroscopic.epsilon_function(x,y,z) = "eps_0
-+ eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si)
-+ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2)
-+ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2 - gap_cpw - w_gnd) * (x < -w_line/2 - gap_cpw)
-+ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < +w_line/2 + gap_cpw + w_gnd) * (x > +w_line/2 + gap_cpw)"
++ eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si - tiny)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)"
 
 macroscopic.mu_function(x,y,z) = "mu_0
-+ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si)
-+ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2)
-+ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2 - gap_cpw - w_gnd) * (x < -w_line/2 - gap_cpw)
-+ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < +w_line/2 + gap_cpw + w_gnd) * (x > +w_line/2 + gap_cpw)"
++ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si - tiny)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)"
 
 #################################
 ############ FIELDS #############
