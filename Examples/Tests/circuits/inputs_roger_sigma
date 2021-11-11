@@ -8,7 +8,7 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 10000
+max_step = 2000
 
 amr.n_cell = nx ny nz                  # number of cells spanning the domain in each coordinate direction at level 0
 amr.max_grid_size = max_grid_size      # maximum size of each AMReX box, used to decompose the domain
@@ -42,18 +42,18 @@ my_constants.dz = Lz / nz
 
 my_constants.tiny = 1.e-9
 
-my_constants.th_si = 30.0e-6 # thickness of the silicon substrate is 70um
-my_constants.th_nb = 4.0e-6
+my_constants.th_si = 32.0e-6 # thickness of the silicon substrate is 70um
+my_constants.th_nb = 2.0e-6
 
 my_constants.gap_cpw = 6.0e-6 # air gap of CPW
 my_constants.w_line = 10.0e-6 # line width of CPW
 my_constants.w_gnd = 21.0e-6 # width of each ground patch
 
-my_constants.wavelength = Ly/3 # hack short domain
+my_constants.wavelength = Ly # hack short domain
 my_constants.TP = 5.4545e-10 # Gaussian pulse width, 3 x time period of excitation
 
-my_constants.w_port = w_line + 2*gap_cpw + w_gnd
-my_constants.h_port = 2*th_si + th_nb
+my_constants.w_port = w_line
+my_constants.h_port = th_si + th_nb
 
 my_constants.sigma_0 = 0.0
 my_constants.sigma_nb = 1.e7
