@@ -69,6 +69,21 @@ FlushFormatCheckpoint::WriteToFile (
         VisMF::Write(warpx.getBfield_fp(lev, 2),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_fp"));
 
+#ifdef WARPX_MAG_LLG
+        VisMF::Write(warpx.getHfield_fp(lev, 0),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hx_fp"));
+        VisMF::Write(warpx.getHfield_fp(lev, 1),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hy_fp"));
+        VisMF::Write(warpx.getHfield_fp(lev, 2),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hz_fp"));
+        VisMF::Write(warpx.getMfield_fp(lev, 0),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Mx_fp"));
+        VisMF::Write(warpx.getMfield_fp(lev, 1),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "My_fp"));
+        VisMF::Write(warpx.getMfield_fp(lev, 2),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Mz_fp"));
+#endif
+
         if (WarpX::fft_do_time_averaging)
         {
             VisMF::Write(warpx.getEfield_avg_fp(lev, 0),
@@ -110,6 +125,21 @@ FlushFormatCheckpoint::WriteToFile (
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "By_cp"));
             VisMF::Write(warpx.getBfield_cp(lev, 2),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_cp"));
+
+#ifdef WARPX_MAG_LLG
+            VisMF::Write(warpx.getHfield_cp(lev, 0),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hx_cp"));
+            VisMF::Write(warpx.getHfield_cp(lev, 1),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hy_cp"));
+            VisMF::Write(warpx.getHfield_cp(lev, 2),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hz_cp"));
+            VisMF::Write(warpx.getMfield_cp(lev, 0),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Mx_cp"));
+            VisMF::Write(warpx.getMfield_cp(lev, 1),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "My_cp"));
+            VisMF::Write(warpx.getMfield_cp(lev, 2),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Mz_cp"));
+#endif
 
             if (WarpX::fft_do_time_averaging)
             {
@@ -159,8 +189,35 @@ FlushFormatCheckpoint::CheckpointParticles (
     const amrex::Vector<ParticleDiag>& particle_diags) const
 {
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
-        particle_diags[i].getParticleContainer()->Checkpoint(
-            dir, particle_diags[i].getSpeciesName());
+        WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+
+        Vector<std::string> real_names;
+        Vector<std::string> int_names;
+        Vector<int> int_flags;
+        Vector<int> real_flags;
+
+        real_names.push_back("weight");
+
+        real_names.push_back("momentum_x");
+        real_names.push_back("momentum_y");
+        real_names.push_back("momentum_z");
+
+#ifdef WARPX_DIM_RZ
+        real_names.push_back("theta");
+#endif
+
+        // get the names of the real comps
+        real_names.resize(pc->NumRealComps());
+        auto runtime_rnames = pc->getParticleRuntimeComps();
+        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
+
+        // and the int comps
+        int_names.resize(pc->NumIntComps());
+        auto runtime_inames = pc->getParticleRuntimeiComps();
+        for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
+
+        pc->Checkpoint(dir, particle_diags[i].getSpeciesName(), true,
+                       real_names, int_names);
     }
 }
 
