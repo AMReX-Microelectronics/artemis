@@ -264,6 +264,13 @@ WarpX::InitFromCheckpoint ()
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_fp"));
 
 #ifdef WARPX_MAG_LLG
+        VisMF::Read(*Hfield_fp[lev][0],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hx_fp"));
+        VisMF::Read(*Hfield_fp[lev][1],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hy_fp"));
+        VisMF::Read(*Hfield_fp[lev][2],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hz_fp"));
+
         VisMF::Read(*Mfield_fp[lev][0],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mx_fp"));
         VisMF::Read(*Mfield_fp[lev][1],
@@ -314,6 +321,13 @@ WarpX::InitFromCheckpoint ()
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_cp"));
 
 #ifdef WARPX_MAG_LLG
+            VisMF::Read(*Hfield_cp[lev][0],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hx_cp"));
+            VisMF::Read(*Hfield_cp[lev][1],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hy_cp"));
+            VisMF::Read(*Hfield_cp[lev][2],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hz_cp"));
+
             VisMF::Read(*Mfield_cp[lev][0],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mx_cp"));
             VisMF::Read(*Mfield_cp[lev][1],
