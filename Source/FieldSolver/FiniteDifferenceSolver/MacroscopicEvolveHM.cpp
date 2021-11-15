@@ -99,52 +99,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     // obtain the maximum relative amount we let M deviate from Ms before aborting
     amrex::Real mag_normalized_error = macroscopic_properties->getmag_normalized_error();
 
-    // calculate LaplacianM at the previous time step
-    std::array<std::unique_ptr<amrex::MultiFab>, 3> LapM_old; // make multifab to store Laplacian of M from previous timestep
-    for (int i = 0; i < 3; i++){
-        LapM_old[i].reset(new MultiFab(Mfield_old[i]->boxArray(), Mfield_old[i]->DistributionMap(), 3, 0)); // last index = 0 : no need to assign LapM to ghost cell
-    }
-    if (mag_exchange_coupling == 1){
-        for (MFIter mfi(*Mfield_old[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) /* remember to FIX */
-        {
-            Array4<Real> const &M_xface_old = Mfield_old[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
-            Array4<Real> const &M_yface_old = Mfield_old[1]->array(mfi); // note M_yface include x,y,z components at |_y faces
-            Array4<Real> const &M_zface_old = Mfield_old[2]->array(mfi); // note M_zface include x,y,z components at |_z faces
-            Array4<Real> const &LapM_old_xface = LapM_old[0]->array(mfi);
-            Array4<Real> const &LapM_old_yface = LapM_old[1]->array(mfi);
-            Array4<Real> const &LapM_old_zface = LapM_old[2]->array(mfi);
-
-            // extract tileboxes for which to loop
-            Box const &tbx = mfi.tilebox(Mfield_old[0]->ixType().toIntVect()); /* just define which grid type */
-            Box const &tby = mfi.tilebox(Mfield_old[1]->ixType().toIntVect());
-            Box const &tbz = mfi.tilebox(Mfield_old[2]->ixType().toIntVect());
-
-            // Extract stencil coefficients for calculating the exchange field H_exchange and the anisotropy field H_anisotropy
-            amrex::Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-            amrex::Real const *const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-            amrex::Real const *const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-
-            amrex::ParallelFor(tbx,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                LapM_old_xface(i,j,k,0) = T_Algo::Laplacian(M_xface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                LapM_old_xface(i,j,k,1) = T_Algo::Laplacian(M_xface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                LapM_old_xface(i,j,k,2) = T_Algo::Laplacian(M_xface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2);
-            });
-            amrex::ParallelFor(tby,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                LapM_old_yface(i,j,k,0) = T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                LapM_old_yface(i,j,k,1) = T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                LapM_old_yface(i,j,k,2) = T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2);
-            });
-            amrex::ParallelFor(tbz,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-                LapM_old_zface(i,j,k,0) = T_Algo::Laplacian(M_zface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                LapM_old_zface(i,j,k,1) = T_Algo::Laplacian(M_zface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                LapM_old_zface(i,j,k,2) = T_Algo::Laplacian(M_zface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2);
-            });
-        }
-    }
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -175,10 +129,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Array4<Real> const &Hx_bias = H_biasfield[0]->array(mfi);    // Hx_bias is the x component at |_x faces
         Array4<Real> const &Hy_bias = H_biasfield[1]->array(mfi);    // Hy_bias is the y component at |_y faces
         Array4<Real> const &Hz_bias = H_biasfield[2]->array(mfi);    // Hz_bias is the z component at |_z faces
-
-        Array4<Real> const &LapM_old_xface = LapM_old[0]->array(mfi);
-        Array4<Real> const &LapM_old_yface = LapM_old[1]->array(mfi);
-        Array4<Real> const &LapM_old_zface = LapM_old[2]->array(mfi);
 
         amrex::IntVect Mxface_stag = Mfield[0]->ixType().toIntVect();
         amrex::IntVect Myface_stag = Mfield[1]->ixType().toIntVect();
@@ -234,9 +184,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                         // H_exchange
                         if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
-                        Hx_eff += H_exchange_coeff * LapM_old_xface(i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * LapM_old_xface(i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * LapM_old_xface(i, j, k, 2);
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -347,9 +297,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                         // H_exchange
                         if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
-                        Hx_eff += H_exchange_coeff * LapM_old_yface(i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * LapM_old_yface(i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * LapM_old_yface(i, j, k, 2);
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -460,9 +410,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                         // H_exchange
                         if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
-                        Hx_eff += H_exchange_coeff * LapM_old_zface(i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * LapM_old_zface(i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * LapM_old_zface(i, j, k, 2);
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                     }
 
                     if (mag_anisotropy_coupling == 1){
