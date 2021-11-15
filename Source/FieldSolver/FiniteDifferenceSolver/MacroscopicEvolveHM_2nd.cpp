@@ -109,13 +109,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         b_temp_static[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
     }
 
-    std::array<std::unique_ptr<amrex::MultiFab>, 3> LapM_prev; // make multifab to store Laplacian of M from previous iteration of current timestep
-    std::array<std::unique_ptr<amrex::MultiFab>, 3> LapM_old;  // make multifab to store Laplacian of M from previous timestep
-    for (int i = 0; i < 3; i++){
-        LapM_prev[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, 0)); // last index = 0 : no need to assign LapM to ghost cell
-        LapM_old[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, 0));  // last index = 0 : no need to assign LapM to ghost cell
-    }
-
     const auto getMu = GetMuMacroparameter();
 
     // calculate the b_temp_static, a_temp_static
@@ -149,10 +142,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Array4<Real> const &b_temp_static_xface = b_temp_static[0]->array(mfi);
         Array4<Real> const &b_temp_static_yface = b_temp_static[1]->array(mfi);
         Array4<Real> const &b_temp_static_zface = b_temp_static[2]->array(mfi);
-
-        Array4<Real> const &LapM_old_xface = LapM_old[0]->array(mfi);
-        Array4<Real> const &LapM_old_yface = LapM_old[1]->array(mfi);
-        Array4<Real> const &LapM_old_zface = LapM_old[2]->array(mfi);
 
         // extract tileboxes for which to loop
         amrex::IntVect Mxface_stag = Mfield[0]->ixType().toIntVect();
@@ -205,15 +194,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (mag_exchange_coupling == 1){
                         // H_exchange
                         if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
-
-                        LapM_old_xface(i, j, k, 0) = T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_xface is not updated yet, i.e. M = M_old 
-                        LapM_old_xface(i, j, k, 1) = T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_xface is not updated yet, i.e. M = M_old 
-                        LapM_old_xface(i, j, k, 2) = T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_xface is not updated yet, i.e. M = M_old 
-
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
-                        Hx_eff += H_exchange_coeff * LapM_old_xface(i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * LapM_old_xface(i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * LapM_old_xface(i, j, k, 2);
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -291,15 +275,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (mag_exchange_coupling == 1){
                         // H_exchange
                         if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
-
-                        LapM_old_yface(i, j, k, 0) = T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_yface is not updated yet, i.e. M = M_old 
-                        LapM_old_yface(i, j, k, 1) = T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_yface is not updated yet, i.e. M = M_old 
-                        LapM_old_yface(i, j, k, 2) = T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_yface is not updated yet, i.e. M = M_old 
-
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
-                        Hx_eff += H_exchange_coeff * LapM_old_yface(i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * LapM_old_yface(i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * LapM_old_yface(i, j, k, 2);
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -377,15 +356,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (mag_exchange_coupling == 1){
                         // H_exchange
                         if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
-
-                        LapM_old_zface(i, j, k, 0) = T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_zface is not updated yet, i.e. M = M_old 
-                        LapM_old_zface(i, j, k, 1) = T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_zface is not updated yet, i.e. M = M_old 
-                        LapM_old_zface(i, j, k, 2) = T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_zface is not updated yet, i.e. M = M_old 
-
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
-                        Hx_eff += H_exchange_coeff * LapM_old_zface(i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * LapM_old_zface(i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * LapM_old_zface(i, j, k, 2);
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -484,9 +458,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             Array4<Real> const &b_temp_static_xface = b_temp_static[0]->array(mfi);
             Array4<Real> const &b_temp_static_yface = b_temp_static[1]->array(mfi);
             Array4<Real> const &b_temp_static_zface = b_temp_static[2]->array(mfi);
-            Array4<Real> const &LapM_prev_xface = LapM_prev[0]->array(mfi);
-            Array4<Real> const &LapM_prev_yface = LapM_prev[1]->array(mfi);
-            Array4<Real> const &LapM_prev_zface = LapM_prev[2]->array(mfi);
+
             // extract tileboxes for which to loop
             amrex::IntVect Hxnodal = Hfield[0]->ixType().toIntVect();
             amrex::IntVect Hynodal = Hfield[1]->ixType().toIntVect();
@@ -538,15 +510,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_exchange_coupling == 1){
                             // H_exchange
                             if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
-
-                            LapM_prev_xface(i, j, k, 0) = T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_xface from previous iteration of current time step
-                            LapM_prev_xface(i, j, k, 1) = T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_xface from previous iteration of current time step
-                            LapM_prev_xface(i, j, k, 2) = T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_xface from previous iteration of current time step
-
                             amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
-                            Hx_eff += H_exchange_coeff * LapM_prev_xface(i, j, k, 0);
-                            Hy_eff += H_exchange_coeff * LapM_prev_xface(i, j, k, 1);
-                            Hz_eff += H_exchange_coeff * LapM_prev_xface(i, j, k, 2);
+                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                         }
 
                         if (mag_anisotropy_coupling == 1){
@@ -554,7 +521,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
-                                M_dot_anisotropy_axis += M_prev_xface(i, j, k, comp) * anisotropy_axis[comp];
+                                M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
                             }
                             amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
                             Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
@@ -653,15 +620,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_exchange_coupling == 1){
                             // H_exchange
                             if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
-                            
-                            LapM_prev_yface(i, j, k, 0) = T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_yface from previous iteration of current time step
-                            LapM_prev_yface(i, j, k, 1) = T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_yface from previous iteration of current time step
-                            LapM_prev_yface(i, j, k, 2) = T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_yface from previous iteration of current time step
-
                             amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
-                            Hx_eff += H_exchange_coeff * LapM_prev_yface(i, j, k, 0);
-                            Hy_eff += H_exchange_coeff * LapM_prev_yface(i, j, k, 1);
-                            Hz_eff += H_exchange_coeff * LapM_prev_yface(i, j, k, 2);
+                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                         }
 
                         if (mag_anisotropy_coupling == 1){
@@ -669,7 +631,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
-                                M_dot_anisotropy_axis += M_prev_yface(i, j, k, comp) * anisotropy_axis[comp];
+                                M_dot_anisotropy_axis += M_yface(i, j, k, comp) * anisotropy_axis[comp];
                             }
                             amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
                             Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
@@ -769,15 +731,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_exchange_coupling == 1){
                             // H_exchange
                             if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
-
-                            LapM_prev_zface(i, j, k, 0) = T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_zface from previous iteration of current time step
-                            LapM_prev_zface(i, j, k, 1) = T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_zface from previous iteration of current time step
-                            LapM_prev_zface(i, j, k, 2) = T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_zface from previous iteration of current time step
-
                             amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
-                            Hx_eff += H_exchange_coeff * LapM_prev_zface(i, j, k, 0);
-                            Hy_eff += H_exchange_coeff * LapM_prev_zface(i, j, k, 1);
-                            Hz_eff += H_exchange_coeff * LapM_prev_zface(i, j, k, 2);
+                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                         }
 
                         if (mag_anisotropy_coupling == 1){
@@ -785,7 +742,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
-                                M_dot_anisotropy_axis += M_prev_zface(i, j, k, comp) * anisotropy_axis[comp];
+                                M_dot_anisotropy_axis += M_zface(i, j, k, comp) * anisotropy_axis[comp];
                             }
                             amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
                             Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
