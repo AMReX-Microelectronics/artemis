@@ -107,12 +107,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         a_temp[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
         a_temp_static[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
         b_temp_static[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
-        if (mag_exchange_coupling == 1){
-            std::array<std::unique_ptr<amrex::MultiFab>, 3> LapM_prev; // make multifab to store Laplacian of M from previous iteration of current timestep
-            std::array<std::unique_ptr<amrex::MultiFab>, 3> LapM_old; // make multifab to store Laplacian of M from previous timestep
-            LapM_prev[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, 0)); // last index = 0 : no need to assign LapM to ghost cell
-            LapM_old[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, 0)); // last index = 0 : no need to assign LapM to ghost cell
-        }
+    }
+
+    std::array<std::unique_ptr<amrex::MultiFab>, 3> LapM_prev; // make multifab to store Laplacian of M from previous iteration of current timestep
+    std::array<std::unique_ptr<amrex::MultiFab>, 3> LapM_old;  // make multifab to store Laplacian of M from previous timestep
+    for (int i = 0; i < 3; i++){
+        LapM_prev[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, 0)); // last index = 0 : no need to assign LapM to ghost cell
+        LapM_old[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, 0));  // last index = 0 : no need to assign LapM to ghost cell
     }
 
     const auto getMu = GetMuMacroparameter();
@@ -148,6 +149,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Array4<Real> const &b_temp_static_xface = b_temp_static[0]->array(mfi);
         Array4<Real> const &b_temp_static_yface = b_temp_static[1]->array(mfi);
         Array4<Real> const &b_temp_static_zface = b_temp_static[2]->array(mfi);
+
+        Array4<Real> const &LapM_old_xface = LapM_old[0]->array(mfi);
+        Array4<Real> const &LapM_old_yface = LapM_old[1]->array(mfi);
+        Array4<Real> const &LapM_old_zface = LapM_old[2]->array(mfi);
 
         // extract tileboxes for which to loop
         amrex::IntVect Mxface_stag = Mfield[0]->ixType().toIntVect();
@@ -287,9 +292,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // H_exchange
                         if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
-                        LapM_old_yface(i, j, k, 0) = T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_yface is not updated yet, i.e. M = M_old 
-                        LapM_old_yface(i, j, k, 1) = T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_yface is not updated yet, i.e. M = M_old 
-                        LapM_old_yface(i, j, k, 2) = T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_yface is not updated yet, i.e. M = M_old 
+                        LapM_old_yface(i, j, k, 0) = T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_yface is not updated yet, i.e. M = M_old 
+                        LapM_old_yface(i, j, k, 1) = T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_yface is not updated yet, i.e. M = M_old 
+                        LapM_old_yface(i, j, k, 2) = T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_yface is not updated yet, i.e. M = M_old 
 
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
                         Hx_eff += H_exchange_coeff * LapM_old_yface(i, j, k, 0);
@@ -373,9 +378,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // H_exchange
                         if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
-                        LapM_old_zface(i, j, k, 0) = T_Algo::Laplacian(M_zface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_zface is not updated yet, i.e. M = M_old 
-                        LapM_old_zface(i, j, k, 1) = T_Algo::Laplacian(M_zface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_zface is not updated yet, i.e. M = M_old 
-                        LapM_old_zface(i, j, k, 2) = T_Algo::Laplacian(M_zface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_zface is not updated yet, i.e. M = M_old 
+                        LapM_old_zface(i, j, k, 0) = T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0); // M_zface is not updated yet, i.e. M = M_old 
+                        LapM_old_zface(i, j, k, 1) = T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1); // M_zface is not updated yet, i.e. M = M_old 
+                        LapM_old_zface(i, j, k, 2) = T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2); // M_zface is not updated yet, i.e. M = M_old 
 
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
                         Hx_eff += H_exchange_coeff * LapM_old_zface(i, j, k, 0);
@@ -479,12 +484,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             Array4<Real> const &b_temp_static_xface = b_temp_static[0]->array(mfi);
             Array4<Real> const &b_temp_static_yface = b_temp_static[1]->array(mfi);
             Array4<Real> const &b_temp_static_zface = b_temp_static[2]->array(mfi);
-            if (mag_exchange_coupling == 1)
-            {
-                Array4<Real> const &LapM_prev_xface = LapM_prev[0]->array(mfi);
-                Array4<Real> const &LapM_prev_yface = LapM_prev[1]->array(mfi);
-                Array4<Real> const &LapM_prev_zface = LapM_prev[2]->array(mfi);
-            }
+            Array4<Real> const &LapM_prev_xface = LapM_prev[0]->array(mfi);
+            Array4<Real> const &LapM_prev_yface = LapM_prev[1]->array(mfi);
+            Array4<Real> const &LapM_prev_zface = LapM_prev[2]->array(mfi);
             // extract tileboxes for which to loop
             amrex::IntVect Hxnodal = Hfield[0]->ixType().toIntVect();
             amrex::IntVect Hynodal = Hfield[1]->ixType().toIntVect();

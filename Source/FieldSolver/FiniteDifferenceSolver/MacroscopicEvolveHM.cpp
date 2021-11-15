@@ -100,11 +100,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     amrex::Real mag_normalized_error = macroscopic_properties->getmag_normalized_error();
 
     // calculate LaplacianM at the previous time step
+    std::array<std::unique_ptr<amrex::MultiFab>, 3> LapM_old; // make multifab to store Laplacian of M from previous timestep
+    for (int i = 0; i < 3; i++){
+        LapM_old[i].reset(new MultiFab(Mfield_old[i]->boxArray(), Mfield_old[i]->DistributionMap(), 3, 0)); // last index = 0 : no need to assign LapM to ghost cell
+    }
     if (mag_exchange_coupling == 1){
-        for (int i = 0; i < 3; i++){
-            std::array<std::unique_ptr<amrex::MultiFab>, 3> LapM_old; // make multifab to store Laplacian of M from previous timestep
-            LapM_old[i].reset(new MultiFab(Mfield_old[i]->boxArray(), Mfield_old[i]->DistributionMap(), 3, 0)); // last index = 0 : no need to assign LapM to ghost cell
-        }
         for (MFIter mfi(*Mfield_old[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) /* remember to FIX */
         {
             Array4<Real> const &M_xface_old = Mfield_old[0]->array(mfi); // note M_xface include x,y,z components at |_x faces
@@ -118,6 +118,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             Box const &tbx = mfi.tilebox(Mfield_old[0]->ixType().toIntVect()); /* just define which grid type */
             Box const &tby = mfi.tilebox(Mfield_old[1]->ixType().toIntVect());
             Box const &tbz = mfi.tilebox(Mfield_old[2]->ixType().toIntVect());
+
+            // Extract stencil coefficients for calculating the exchange field H_exchange and the anisotropy field H_anisotropy
+            amrex::Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
+            amrex::Real const *const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
+            amrex::Real const *const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
 
             amrex::ParallelFor(tbx,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
@@ -170,12 +175,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Array4<Real> const &Hx_bias = H_biasfield[0]->array(mfi);    // Hx_bias is the x component at |_x faces
         Array4<Real> const &Hy_bias = H_biasfield[1]->array(mfi);    // Hy_bias is the y component at |_y faces
         Array4<Real> const &Hz_bias = H_biasfield[2]->array(mfi);    // Hz_bias is the z component at |_z faces
-        if (mag_exchange_coupling == 1)
-        {
-            Array4<Real> const &LapM_old_xface = LapM_old[0]->array(mfi);
-            Array4<Real> const &LapM_old_yface = LapM_old[1]->array(mfi);
-            Array4<Real> const &LapM_old_zface = LapM_old[2]->array(mfi);
-        }
+
+        Array4<Real> const &LapM_old_xface = LapM_old[0]->array(mfi);
+        Array4<Real> const &LapM_old_yface = LapM_old[1]->array(mfi);
+        Array4<Real> const &LapM_old_zface = LapM_old[2]->array(mfi);
 
         amrex::IntVect Mxface_stag = Mfield[0]->ixType().toIntVect();
         amrex::IntVect Myface_stag = Mfield[1]->ixType().toIntVect();
