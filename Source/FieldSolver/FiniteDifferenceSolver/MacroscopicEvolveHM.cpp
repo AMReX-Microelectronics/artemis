@@ -172,9 +172,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Array4<Real> const &Hx_bias = H_biasfield[0]->array(mfi);    // Hx_bias is the x component at |_x faces
         Array4<Real> const &Hy_bias = H_biasfield[1]->array(mfi);    // Hy_bias is the y component at |_y faces
         Array4<Real> const &Hz_bias = H_biasfield[2]->array(mfi);    // Hz_bias is the z component at |_z faces
-        Array4<Real> const &LapM_old_xface = LapM_old[0]->array(mfi);
-        Array4<Real> const &LapM_old_yface = LapM_old[1]->array(mfi);
-        Array4<Real> const &LapM_old_zface = LapM_old[2]->array(mfi);
+        if (mag_exchange_coupling == 1)
+        {
+            Array4<Real> const &LapM_old_xface = LapM_old[0]->array(mfi);
+            Array4<Real> const &LapM_old_yface = LapM_old[1]->array(mfi);
+            Array4<Real> const &LapM_old_zface = LapM_old[2]->array(mfi);
+        }
 
         amrex::IntVect Mxface_stag = Mfield[0]->ixType().toIntVect();
         amrex::IntVect Myface_stag = Mfield[1]->ixType().toIntVect();
