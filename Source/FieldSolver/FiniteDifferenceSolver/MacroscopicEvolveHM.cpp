@@ -124,14 +124,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 LapM_old_xface(i,j,k,0) = T_Algo::Laplacian(M_xface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0);
                 LapM_old_xface(i,j,k,1) = T_Algo::Laplacian(M_xface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1);
                 LapM_old_xface(i,j,k,2) = T_Algo::Laplacian(M_xface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2);
-                
             });
             amrex::ParallelFor(tby,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 LapM_old_yface(i,j,k,0) = T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 0);
                 LapM_old_yface(i,j,k,1) = T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 1);
                 LapM_old_yface(i,j,k,2) = T_Algo::Laplacian(M_yface_old, coefs_x, coefs_y, coefs_z, i, j, k, 2);
-
             });
             amrex::ParallelFor(tbz,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
