@@ -211,7 +211,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                                                               : mag_Ms_arrx;
                     amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alpha_arrx / M_magnitude;
 
-                    // now you have access to use M_xface(i,j,k,0) M_xface(i,j,k,1), M_xface(i,j,k,2), Hx(i,j,k), Hy, Hz on the RHS of these update lines below
+                    // now you have access to use M_old_xface(i,j,k,:), Hx_eff, Hy_eff, and Hz_eff on the RHS of these update lines below
                     // x component on x-faces of grid
                     M_xface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_xface(i, j, k, 1) * Hz_eff - M_old_xface(i, j, k, 2) * Hy_eff)
                                          + dt * Gil_damp * (M_old_xface(i, j, k, 1) * (M_old_xface(i, j, k, 0) * Hy_eff - M_old_xface(i, j, k, 1) * Hx_eff)
@@ -324,6 +324,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                                                               : mag_Ms_arry;
                     amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alpha_arry / M_magnitude;
 
+                    // now you have access to use M_old_yface(i,j,k,:), Hx_eff, Hy_eff, and Hz_eff on the RHS of these update lines below
                     // x component on y-faces of grid
                     M_yface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_yface(i, j, k, 1) * Hz_eff - M_old_yface(i, j, k, 2) * Hy_eff)
                                          + dt * Gil_damp * (M_old_yface(i, j, k, 1) * (M_old_yface(i, j, k, 0) * Hy_eff - M_old_yface(i, j, k, 1) * Hx_eff)
@@ -437,6 +438,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                                                               : mag_Ms_arrz;
                     amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alpha_arrz / M_magnitude;
 
+                    // now you have access to use M_old_zface(i,j,k,:), Hx_eff, Hy_eff, and Hz_eff on the RHS of these update lines below
                     // x component on z-faces of grid
                     M_zface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_zface(i, j, k, 1) * Hz_eff - M_old_zface(i, j, k, 2) * Hy_eff)
                                          + dt * Gil_damp * (M_old_zface(i, j, k, 1) * (M_old_zface(i, j, k, 0) * Hy_eff - M_old_zface(i, j, k, 1) * Hx_eff)
