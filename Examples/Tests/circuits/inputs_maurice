@@ -1,0 +1,145 @@
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 4000
+
+amr.n_cell = n_cellx n_celly n_cellz
+amr.max_grid_size = max_grid_size
+amr.blocking_factor = blocking_factor
+amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
+
+geometry.prob_lo = -Lx/2. 0. 0.
+geometry.prob_hi =  Lx/2. Ly Lz
+
+amr.max_level = 0
+
+# use pec instead of pml overlaying current source so you don't get a reflection
+boundary.field_lo = pml pec pec
+boundary.field_hi = pml pml pml
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+
+warpx.cfl = 0.9
+
+# vacuum or macroscopic
+algo.em_solver_medium = macroscopic
+
+# laxwendroff or backwardeuler
+algo.macroscopic_sigma_method = laxwendroff
+
+###############
+# geometry
+# each row represents a different part of the circuit
+# 1. SiO2 everywhere, then add in palladium and aluminum
+# 2. first segment of pd electrode
+# 3. upward portion of pd electrode
+# 4. last segment of pd electrode
+# 5. aluminum block
+# if the gate oxide is different from SiO2, will need to add in gate oxide block
+###############
+
+macroscopic.sigma_function(x,y,z) = "sigma_ox
+"
+
+macroscopic.epsilon_function(x,y,z) = "eps_0 * eps_ox
+"
+
+macroscopic.mu_function(x,y,z) = "mu_0 * mu_ox
+"
+
+#################################
+############ FIELDS #############
+#################################
+
+###############
+# domain size
+# n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
+###############
+my_constants.n_cellx = 400
+my_constants.n_celly = 120
+my_constants.n_cellz = 400
+my_constants.max_grid_size = 400
+my_constants.blocking_factor = 40
+
+my_constants.Lx = 4.e-6
+my_constants.Ly = 12.e-6
+my_constants.Lz = 4.e-6
+
+###############
+# material properties
+###############
+my_constants.sigma_0 = 0.0
+my_constants.sigma_pd = 3.8e7
+my_constants.sigma_al = 1.e7
+my_constants.sigma_ox = 1.e-10
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_pd = 13.  # fix
+my_constants.eps_r_al = 13.  # fix
+my_constants.eps_r_ox = 12.  # fix
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_pd = 1.0  # fix
+my_constants.mu_r_al = 1.0  # fix
+my_constants.mu_r_ox = 1.0  # fix
+
+###############
+# silicon and palladium cross section
+###############
+
+my_constants.r_pd = 50.e-9
+my_constants.h_pd = 2.e-6
+my_constants.l_pd = 6.e-6
+
+my_constants.th_ox = 20.e-9
+
+my_constants.l_al = 3.e-6
+
+###############
+# waveguide port parameters
+###############
+my_constants.w_port = 2.e-6
+my_constants.h_port = 2.e-6
+
+my_constants.freq = 1.e11
+
+###############
+# derived quantities and fundamental constants - don't touch these
+###############
+
+my_constants.pi = 3.14159265358979
+
+# grid spacing
+my_constants.dx = Lx / n_cellx
+my_constants.dy = Ly / n_celly
+my_constants.dz = Lz / n_cellz
+
+my_constants.tiny = 1.e-12
+
+###############
+# excitation
+###############
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "0."
+warpx.Ey_excitation_flag_function(x,y,z) = "0."
+warpx.Ez_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= -dy/2.) * (y <= dy/2.)"
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*freq*t)"
+
+###############
+# diagnostics
+###############
+
+diagnostics.diags_names = plt
+
+# full plotfiles
+plt.intervals = 10
+plt.fields_to_plot = Ez
+plt.diag_type = Full
