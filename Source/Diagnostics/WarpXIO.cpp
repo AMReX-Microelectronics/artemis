@@ -11,6 +11,7 @@
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/CoarsenIO.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -264,6 +265,13 @@ WarpX::InitFromCheckpoint ()
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_fp"));
 
 #ifdef WARPX_MAG_LLG
+        VisMF::Read(*Hfield_fp[lev][0],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hx_fp"));
+        VisMF::Read(*Hfield_fp[lev][1],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hy_fp"));
+        VisMF::Read(*Hfield_fp[lev][2],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hz_fp"));
+
         VisMF::Read(*Mfield_fp[lev][0],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mx_fp"));
         VisMF::Read(*Mfield_fp[lev][1],
@@ -314,6 +322,13 @@ WarpX::InitFromCheckpoint ()
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_cp"));
 
 #ifdef WARPX_MAG_LLG
+            VisMF::Read(*Hfield_cp[lev][0],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hx_cp"));
+            VisMF::Read(*Hfield_cp[lev][1],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hy_cp"));
+            VisMF::Read(*Hfield_cp[lev][2],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hz_cp"));
+
             VisMF::Read(*Mfield_cp[lev][0],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mx_cp"));
             VisMF::Read(*Mfield_cp[lev][1],
@@ -349,9 +364,9 @@ WarpX::InitFromCheckpoint ()
         }
     }
 
+    InitPML();
     if (do_pml)
     {
-        InitPML();
         for (int lev = 0; lev < nlevs; ++lev) {
             pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
         }
@@ -392,7 +407,7 @@ WarpX::GetCellCenteredData() {
         const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
         AverageAndPackScalarField( *cc[lev], *charge_density, dmap[lev], dcomp, ng );
 
-        cc[lev]->FillBoundary(geom[lev].periodicity());
+        WarpXCommUtil::FillBoundary(*cc[lev], geom[lev].periodicity());
     }
 
     for (int lev = finest_level; lev > 0; --lev)
