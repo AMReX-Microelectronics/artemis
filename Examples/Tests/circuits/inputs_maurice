@@ -45,25 +45,25 @@ algo.macroscopic_sigma_method = laxwendroff
 ###############
 
 macroscopic.sigma_function(x,y,z) = "sigma_SiO2
-+ (sigma_Pd - sigma_SiO2) * (x >= -r_Pd) * (x <= r_Pd) * (y <= l_Pd) * (z >= h_Pd) * (z <= h_Pd + 2*r_Pd)
-+ (sigma_Pd - sigma_SiO2) * (x >= -r_Pd) * (x <= r_Pd) * (y >= l_Pd - 2*r_Pd) * (y <= l_Pd) * (z > h_Pd + 2*r_Pd) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ (sigma_Pd - sigma_SiO2) * (x >= -r_Pd) * (x <= r_Pd) * (y > l_Pd) * (z >= h_Pd + th_gate) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ (sigma_Pd - sigma_Al)   * (y >= Ly - l_Al) * (z <= h_Pd + th_gate)
-+ (sigma_Pd - sigma_gate) * (y > l_Pd) * (z > h_Pd) * (z < h_Pd + th_gate)"
++ (sigma_Pd - sigma_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y <= l_Pd) * (z >= h_Pd) * (z <= h_Pd + 2*r_Pd)
++ (sigma_Pd - sigma_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y >= l_Pd - 2*r_Pd) * (y <= l_Pd) * (z > h_Pd + 2*r_Pd) * (z <= h_Pd + 2*r_Pd + th_gate)
++ (sigma_Pd - sigma_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y > l_Pd) * (z >= h_Pd + th_gate) * (z <= h_Pd + 2*r_Pd + th_gate)
++ (sigma_Al - sigma_SiO2)   * (y >= Ly - l_Al) * (z <= h_Pd + th_gate)
++ (sigma_gate - sigma_SiO2) * (y > l_Pd) * (z > h_Pd) * (z < h_Pd + th_gate)"
 
 macroscopic.epsilon_function(x,y,z) = "eps_0 * eps_r_SiO2
-+ eps_0 * (eps_r_Pd - eps_r_SiO2) * (x >= -r_Pd) * (x <= r_Pd) * (y <= l_Pd) * (z >= h_Pd) * (z <= h_Pd + 2*r_Pd)
-+ eps_0 * (eps_r_Pd - eps_r_SiO2) * (x >= -r_Pd) * (x <= r_Pd) * (y >= l_Pd - 2*r_Pd) * (y <= l_Pd) * (z > h_Pd + 2*r_Pd) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ eps_0 * (eps_r_Pd - eps_r_SiO2) * (x >= -r_Pd) * (x <= r_Pd) * (y > l_Pd) * (z >= h_Pd + th_gate) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ eps_0 * (eps_r_Pd - eps_r_Al)   * (y >= Ly - l_Al) * (z <= h_Pd + th_gate)
-+ eps_0 * (eps_r_Pd - eps_r_gate) * (y > l_Pd) * (z > h_Pd) * (z < h_Pd + th_gate)"
++ eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y <= l_Pd) * (z >= h_Pd) * (z <= h_Pd + 2*r_Pd)
++ eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y >= l_Pd - 2*r_Pd) * (y <= l_Pd) * (z > h_Pd + 2*r_Pd) * (z <= h_Pd + 2*r_Pd + th_gate)
++ eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y > l_Pd) * (z >= h_Pd + th_gate) * (z <= h_Pd + 2*r_Pd + th_gate)
++ eps_0 * (eps_r_Al - eps_r_SiO2)   * (y >= Ly - l_Al) * (z <= h_Pd + th_gate)
++ eps_0 * (eps_r_gate - eps_r_SiO2) * (y > l_Pd) * (z > h_Pd) * (z < h_Pd + th_gate)"
 
 macroscopic.mu_function(x,y,z) = "mu_0 * mu_r_SiO2
-+ mu_0 * (mu_r_Pd - mu_r_SiO2) * (x >= -r_Pd) * (x <= r_Pd) * (y <= l_Pd) * (z >= h_Pd) * (z <= h_Pd + 2*r_Pd)
-+ mu_0 * (mu_r_Pd - mu_r_SiO2) * (x >= -r_Pd) * (x <= r_Pd) * (y >= l_Pd - 2*r_Pd) * (y <= l_Pd) * (z > h_Pd + 2*r_Pd) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ mu_0 * (mu_r_Pd - mu_r_SiO2) * (x >= -r_Pd) * (x <= r_Pd) * (y > l_Pd) * (z >= h_Pd + th_gate) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ mu_0 * (mu_r_Pd - mu_r_Al)   * (y >= Ly - l_Al) * (z <= h_Pd + th_gate)
-+ mu_0 * (mu_r_Pd - mu_r_gate) * (y > l_Pd) * (z > h_Pd) * (z < h_Pd + th_gate)"
++ mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y <= l_Pd) * (z >= h_Pd) * (z <= h_Pd + 2*r_Pd)
++ mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y >= l_Pd - 2*r_Pd) * (y <= l_Pd) * (z > h_Pd + 2*r_Pd) * (z <= h_Pd + 2*r_Pd + th_gate)
++ mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y > l_Pd) * (z >= h_Pd + th_gate) * (z <= h_Pd + 2*r_Pd + th_gate)
++ mu_0 * (mu_r_Al - mu_r_SiO2)   * (y >= Ly - l_Al) * (z <= h_Pd + th_gate)
++ mu_0 * (mu_r_gate - mu_r_SiO2) * (y > l_Pd) * (z > h_Pd) * (z < h_Pd + th_gate)"
 
 #################################
 ############ FIELDS #############
@@ -119,7 +119,7 @@ my_constants.l_Al = 3.e-6
 ###############
 # waveguide port parameters
 ###############
-my_constants.w_port = 2.e-6
+my_constants.w_port = 1.e-6
 my_constants.h_port = 2.e-6
 
 my_constants.freq = 100.e12
