@@ -73,14 +73,14 @@ macroscopic.mu_function(x,y,z) = "mu_0 * mu_r_SiO2
 # domain size
 # n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
 ###############
-my_constants.n_cellx = 400
-my_constants.n_celly = 120
+my_constants.n_cellx = 200
+my_constants.n_celly = 60
 my_constants.n_cellz = 400
-my_constants.max_grid_size = 400
+my_constants.max_grid_size = 40
 my_constants.blocking_factor = 40
 
-my_constants.Lx = 4.e-6
-my_constants.Ly = 12.e-6
+my_constants.Lx = 2.e-6
+my_constants.Ly = 6.e-6
 my_constants.Lz = 4.e-6
 
 ###############
@@ -110,7 +110,7 @@ my_constants.mu_r_gate = 1.0
 
 my_constants.r_Pd = 50.e-9
 my_constants.h_Pd = 2.e-6
-my_constants.l_Pd = 6.e-6
+my_constants.l_Pd = 3.e-6
 
 my_constants.th_gate = 20.e-9
 
@@ -122,7 +122,7 @@ my_constants.l_Al = 3.e-6
 my_constants.w_port = 2.e-6
 my_constants.h_port = 2.e-6
 
-my_constants.freq = 1.e11
+my_constants.freq = 100.e12
 
 ###############
 # derived quantities and fundamental constants - don't touch these
