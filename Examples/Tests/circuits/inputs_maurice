@@ -76,7 +76,7 @@ macroscopic.mu_function(x,y,z) = "mu_0 * mu_r_SiO2
 my_constants.n_cellx = 200
 my_constants.n_celly = 60
 my_constants.n_cellz = 400
-my_constants.max_grid_size = 40
+my_constants.max_grid_size = 200
 my_constants.blocking_factor = 40
 
 my_constants.Lx = 2.e-6
@@ -114,7 +114,7 @@ my_constants.l_Pd = 3.e-6
 
 my_constants.th_gate = 20.e-9
 
-my_constants.l_Al = 3.e-6
+my_constants.l_Al = 1.5e-6
 
 ###############
 # waveguide port parameters
