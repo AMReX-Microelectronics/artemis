@@ -18,6 +18,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -61,7 +62,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-
+#include <sstream>
 
 using namespace amrex;
 
@@ -198,6 +199,7 @@ WarpX::InitDiagnostics () {
                                                slice_realbox,
                                                particle_slice_width_lab);
     }
+    reduced_diags->InitData();
 }
 
 void
@@ -816,6 +818,41 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 #endif
 
+#ifdef AMREX_USE_EB
+    if(lev==maxLevel()) {
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee
+            || WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+            ComputeEdgeLengths();
+            ComputeFaceAreas();
+            ScaleEdges();
+            ScaleAreas();
+            ComputeDistanceToEB();
+
+            const auto &period = Geom(lev).periodicity();
+            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][0], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][1], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_edge_lengths[lev][2], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_face_areas[lev][0], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_face_areas[lev][1], guard_cells.ng_alloc_EB, period);
+            WarpXCommUtil::FillBoundary(*m_face_areas[lev][2], guard_cells.ng_alloc_EB, period);
+
+            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+                WarpXCommUtil::FillBoundary(*m_area_mod[lev][0], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_area_mod[lev][1], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_area_mod[lev][2], guard_cells.ng_alloc_EB, period);
+                MarkCells();
+                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][0], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][1], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_info_face[lev][2], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][0], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][1], guard_cells.ng_alloc_EB, period);
+                WarpXCommUtil::FillBoundary(*m_flag_ext_face[lev][2], guard_cells.ng_alloc_EB, period);
+                ComputeFaceExtensions();
+            }
+        }
+    }
+#endif
+
     // if the input string for the B-field is "parse_b_ext_grid_function",
     // then the analytical expression or function must be
     // provided in the input file.
@@ -1096,7 +1133,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
     if (costs[lev]) {
-        for (int i : costs[lev]->IndexArray()) {
+        const auto iarr = costs[lev]->IndexArray();
+        for (int i : iarr) {
             (*costs[lev])[i] = 0.0;
             WarpX::setLoadBalanceEfficiency(lev, -1);
         }
@@ -1289,8 +1327,9 @@ WarpX::PerformanceHints ()
     for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
         total_nboxes += boxArray(ilev).size();
     }
-    if (ParallelDescriptor::NProcs() > total_nboxes)
-        amrex::Print() << "\n[Warning] [Performance] Too many resources / too little work!\n"
+    if (ParallelDescriptor::NProcs() > total_nboxes){
+        std::stringstream warnMsg;
+        warnMsg << "Too many resources / too little work!\n"
             << "  It looks like you requested more compute resources than "
             << "there are total number of boxes of cells available ("
             << total_nboxes << "). "
@@ -1304,6 +1343,9 @@ WarpX::PerformanceHints ()
 #endif
             << "  More information:\n"
             << "  https://warpx.readthedocs.io/en/latest/running_cpp/parallelization.html\n";
+
+        WarpX::GetInstance().RecordWarning("Performance", warnMsg.str(), WarnPriority::high);
+    }
 
     // TODO: warn if some ranks have disproportionally more work than all others
     //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
