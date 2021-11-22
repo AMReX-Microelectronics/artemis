@@ -173,8 +173,7 @@ class FiniteDifferenceSolver
                       amrex::MultiFab* const Ffield,
                       MultiSigmaBox const& sigba,
                       amrex::Real const dt, bool pml_has_particles,
-                      std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
-                      const int lev);
+                      std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
 #ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
