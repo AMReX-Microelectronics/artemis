@@ -62,6 +62,23 @@ public:
      /** Gpu Vector with index type of the Bz multifab */
      amrex::GpuArray<int, 3> Bz_IndexType;
 
+     /** Stores initialization type for conductivity : constant or parser */
+     std::string m_sigma_s = "constant";
+     /** Stores initialization type for permittivity : constant or parser */
+     std::string m_epsilon_s = "constant";
+     /** Stores initialization type for permeability : constant or parser */
+     std::string m_mu_s = "constant";
+     /** Conductivity, sigma, of the medium */
+     amrex::Real m_sigma = 0.0;
+     /** Permittivity, epsilon, of the medium */
+     amrex::Real m_epsilon = PhysConst::ep0;
+     /** Permeability, mu, of the medium */
+     amrex::Real m_mu = PhysConst::mu0;
+     /** Parser Wrappers */
+     std::unique_ptr<amrex::Parser> m_sigma_parser;
+     std::unique_ptr<amrex::Parser> m_epsilon_parser;
+     std::unique_ptr<amrex::Parser> m_mu_parser;
+
 #ifdef WARPX_MAG_LLG
      /** Gpu Vector with index type of the Hx multifab */
      amrex::GpuArray<int, 3> Hx_IndexType;
@@ -211,12 +228,6 @@ public:
 #endif //closes ifdef MAG_LLG
 private:
 
-     /** Conductivity, sigma, of the medium */
-     amrex::Real m_sigma = 0.0;
-     /** Permittivity, epsilon, of the medium */
-     amrex::Real m_epsilon = PhysConst::ep0;
-     /** Permeability, mu, of the medium */
-     amrex::Real m_mu = PhysConst::mu0;
      /** Multifab for m_sigma */
      std::unique_ptr<amrex::MultiFab> m_sigma_mf;
      /** Multifab for m_epsilon */
@@ -224,21 +235,11 @@ private:
      /** Multifab for m_mu */
      std::unique_ptr<amrex::MultiFab> m_mu_mf;
 
-     /** Stores initialization type for conductivity : constant or parser */
-     std::string m_sigma_s = "constant";
-     /** Stores initialization type for permittivity : constant or parser */
-     std::string m_epsilon_s = "constant";
-     /** Stores initialization type for permeability : constant or parser */
-     std::string m_mu_s = "constant";
 
      /** string for storing parser function */
      std::string m_str_sigma_function;
      std::string m_str_epsilon_function;
      std::string m_str_mu_function;
-     /** Parser Wrappers */
-     std::unique_ptr<amrex::Parser> m_sigma_parser;
-     std::unique_ptr<amrex::Parser> m_epsilon_parser;
-     std::unique_ptr<amrex::Parser> m_mu_parser;
 
 
 #ifdef WARPX_MAG_LLG
