@@ -35,7 +35,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
     amrex::MultiFab* const eps_mf,
     amrex::MultiFab* const mu_mf,
-    amrex::MultiFab const sigma_mf)
+    amrex::MultiFab* const sigma_mf)
 {
 
    // Select algorithm (The choice of algorithm is a runtime option,
@@ -126,7 +126,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
     amrex::MultiFab* const eps_mf,
     amrex::MultiFab* const mu_mf,
-    amrex::MultiFab const sigma_mf)
+    amrex::MultiFab* const sigma_mf)
 {
 
     amrex::ignore_unused(Ffield);
