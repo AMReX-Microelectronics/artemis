@@ -234,21 +234,6 @@ public:
          return M_field;
      }
 #endif //closes ifdef MAG_LLG
-private:
-
-     /** Multifab for m_sigma */
-     std::unique_ptr<amrex::MultiFab> m_sigma_mf;
-     /** Multifab for m_epsilon */
-     std::unique_ptr<amrex::MultiFab> m_eps_mf;
-     /** Multifab for m_mu */
-     std::unique_ptr<amrex::MultiFab> m_mu_mf;
-
-
-     /** string for storing parser function */
-     std::string m_str_sigma_function;
-     std::string m_str_epsilon_function;
-     std::string m_str_mu_function;
-
 
 #ifdef WARPX_MAG_LLG
      /** Saturation magnetization, only applies for magnetic materials */
@@ -301,6 +286,22 @@ private:
      std::unique_ptr<amrex::Parser> m_mag_exchange_parser;
      std::unique_ptr<amrex::Parser> m_mag_anisotropy_parser;
 #endif
+
+private:
+
+     /** Multifab for m_sigma */
+     std::unique_ptr<amrex::MultiFab> m_sigma_mf;
+     /** Multifab for m_epsilon */
+     std::unique_ptr<amrex::MultiFab> m_eps_mf;
+     /** Multifab for m_mu */
+     std::unique_ptr<amrex::MultiFab> m_mu_mf;
+
+
+     /** string for storing parser function */
+     std::string m_str_sigma_function;
+     std::string m_str_epsilon_function;
+     std::string m_str_mu_function;
+
 };
 
 /**

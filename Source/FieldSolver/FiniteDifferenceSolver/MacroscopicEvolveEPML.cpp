@@ -157,7 +157,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
         // material prop //
         amrex::Array4<amrex::Real> const& sigma_arr = sigma_mf.array(mfi);
         amrex::Array4<amrex::Real> const& eps_arr = epsilon_mf.array(mfi);
+#ifndef WARPX_MAG_LLG
         amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi);
+#endif
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();

@@ -237,18 +237,13 @@ MacroscopicProperties::InitData ()
 
     }
 #ifdef WARPX_MAG_LLG
-    // Get BoxArray and DistributionMap of warpx instant.
-    int lev = 0;
-    BoxArray ba = warpx.boxArray(lev);
-    DistributionMapping dmap = warpx.DistributionMap(lev);
-    const amrex::IntVect ng = warpx.getngE();
 
     // all magnetic macroparameters are stored on cell centers
-    m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    m_mag_gamma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    m_mag_exchange_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    m_mag_anisotropy_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
+    m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
+    m_mag_gamma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
+    m_mag_exchange_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
+    m_mag_anisotropy_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
     // mag_Ms - defined at cell centers
     if (m_mag_Ms_s == "constant") {
         m_mag_Ms_mf->setVal(m_mag_Ms);
