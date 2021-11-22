@@ -139,11 +139,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     amrex::GpuArray<int, 3> const& Ex_stag = macroscopic_properties->Ex_IndexType;
     amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
     amrex::GpuArray<int, 3> const& Ez_stag = macroscopic_properties->Ez_IndexType;
-#ifndef WARPX_MAG_LLG
-    amrex::GpuArray<int, 3> const& Bx_stag = macroscopic_properties->Bx_IndexType;
-    amrex::GpuArray<int, 3> const& By_stag = macroscopic_properties->By_IndexType;
-    amrex::GpuArray<int, 3> const& Bz_stag = macroscopic_properties->Bz_IndexType;
-#endif
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
@@ -193,6 +188,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
         Box const& tey  = mfi.tilebox(Efield[1]->ixType().toIntVect());
         Box const& tez  = mfi.tilebox(Efield[2]->ixType().toIntVect());
+        // starting component to interpolate macro properties to Ex, Ey, Ez locations
+        const int scomp = 0;
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
