@@ -269,7 +269,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
 
             amrex::ParallelFor( tex, tey, tez,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    // Interpolate conductivity, sigma, to Ex position on the grid 
+                    // Interpolate conductivity, sigma, to Ex position on the grid
                     amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
                                                Ex_stag, macro_cr, i, j, k, scomp);
                     // Interpolated permittivity, epsilon, to Ex position on the grid

@@ -489,7 +489,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             });
     }
 
-    amrex::MultiFab& mu_mf = macroscopic_properties->getmu_mf();    
+    amrex::MultiFab& mu_mf = macroscopic_properties->getmu_mf();
     // Update H(new_time) = f(H(old_time), M(new_time), M(old_time), E(old_time))
     for (MFIter mfi(*Hfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -508,7 +508,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Array4<Real> const &M_zface_old = Mfield_old[2]->array(mfi); // note M_zface_old include x,y,z components at |_z faces
 
         // macroscopic parameter
-        amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi); 
+        amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi);
 
         // Extract stencil coefficients
         amrex::Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
@@ -613,7 +613,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Box const &tbz = mfi.tilebox(Bznodal);
 
         // macroscopic parameter
-        amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi); 
+        amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi);
 
         const auto dx = warpx.Geom(lev).CellSizeArray();
         const auto problo = warpx.Geom(lev).ProbLoArray();
