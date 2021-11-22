@@ -208,17 +208,6 @@ int
 safeCastToInt(amrex::Real x, const std::string& real_name);
 
 /**
-* \brief Do a safe cast of a real to an int
-* This ensures that the float value is within the range of ints and if not,
-* raises an exception.
-*
-* \param x Real value to cast
-* \param real_name String, the name of the variable being casted to use in the error message
-*/
-int
-safeCastToInt(amrex::Real x, const std::string& real_name);
-
-/**
 * \brief Initialize an amrex::Parser object from a string containing a math expression
 *
 * \param parse_function String to read to initialize the parser.
@@ -286,8 +275,6 @@ int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, doubl
  * \param[in] num_val number of input values to use (optional with arrays, default is
  * amrex::ParmParse::LAST for reading until the last input value)
  */
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
                         const int start_ix = amrex::ParmParse::FIRST,
                         const int num_val = amrex::ParmParse::LAST);

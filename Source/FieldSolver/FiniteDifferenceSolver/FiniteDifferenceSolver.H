@@ -107,9 +107,7 @@ class FiniteDifferenceSolver
 #endif
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                             amrex::Real const dt,
-                            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
-                            int const lev);
-
+                            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 #ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
         /**
@@ -306,8 +304,7 @@ class FiniteDifferenceSolver
 #endif
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
             amrex::Real const dt,
-            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
-            int const lev);
+            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
 #ifdef WARPX_MAG_LLG
         template< typename T_Algo >
