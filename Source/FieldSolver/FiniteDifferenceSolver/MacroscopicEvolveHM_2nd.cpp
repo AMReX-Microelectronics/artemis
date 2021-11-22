@@ -188,14 +188,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     if (coupling == 1){
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
-                        // H_maxwell
+
+                        // H_maxwell - use H^(old_time)
                         Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mxface_stag, Hx_old);
                         Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mxface_stag, Hy_old);
                         Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mxface_stag, Hz_old);
                     }
 
                     if (mag_exchange_coupling == 1){
-                        // H_exchange
+                        // H_exchange - use M^(old_time)
                         if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
 
@@ -218,7 +219,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     }
 
                     if (mag_anisotropy_coupling == 1){
-                        // H_anisotropy
+                        // H_anisotropy - use M^(old_time)
                         if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
@@ -283,14 +284,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (coupling == 1){
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
-                        // H_maxwell
+                        // H_maxwell - use H^(old_time)
                         Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Myface_stag, Hx_old);
                         Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Myface_stag, Hy_old);
                         Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Myface_stag, Hz_old);
                     }
 
                     if (mag_exchange_coupling == 1){
-                        // H_exchange
+                        // H_exchange - use M^(old_time)
                         if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
 
@@ -313,7 +314,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     }
 
                     if (mag_anisotropy_coupling == 1){
-                        // H_anisotropy
+                        // H_anisotropy - use M^(old_time)
                         if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
@@ -378,14 +379,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     if (coupling == 1){
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
-                        // H_maxwell
+                        // H_maxwell - use H^(old_time)
                         Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mzface_stag, Hx_old);
                         Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mzface_stag, Hy_old);
                         Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mzface_stag, Hz_old);
                     }
 
                     if (mag_exchange_coupling == 1){
-                        // H_exchange
+                        // H_exchange - use M^(old_time)
                         if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
 
@@ -408,7 +409,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     }
 
                     if (mag_anisotropy_coupling == 1){
-                        // H_anisotropy
+                        // H_anisotropy - use M^(old_time)
                         if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
@@ -549,18 +550,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (coupling == 1){
                             // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
-                            // H_maxwell
+                            // H_maxwell - use H^[(new_time),r-1]
                             Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hxnodal, Hxnodal, Hx);
                             Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hynodal, Hxnodal, Hy);
                             Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hznodal, Hxnodal, Hz);
                         }
 
                         if (mag_exchange_coupling == 1){
-                            // H_exchange
+                            // H_exchange - use M^[(new_time),r-1]
                             if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
                             amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
 
-                WarpXUtilAlgo::getCellCoordinates(i-1, j, k, Mx_stag, problo, dx, x, y, z);
+                            WarpXUtilAlgo::getCellCoordinates(i-1, j, k, Mx_stag, problo, dx, x, y, z);
                             amrex::Real Ms_lo_x = mag_parser(x,y,z);
                             WarpXUtilAlgo::getCellCoordinates(i+1, j, k, Mx_stag, problo, dx, x, y, z);
                             amrex::Real Ms_hi_x = mag_parser(x,y,z);
@@ -573,13 +574,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             WarpXUtilAlgo::getCellCoordinates(i, j, k+1, Mx_stag, problo, dx, x, y, z);
                             amrex::Real Ms_hi_z = mag_parser(x,y,z);
 
-                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 0); //Last argument is nodality -- xface = 0
-                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 0); //Last argument is nodality -- xface = 0
-                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 0); //Last argument is nodality -- xface = 0
+                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 0); //Last argument is nodality -- xface = 0
+                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 0); //Last argument is nodality -- xface = 0
+                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 0); //Last argument is nodality -- xface = 0
                         }
 
                         if (mag_anisotropy_coupling == 1){
-                            // H_anisotropy
+                            // H_anisotropy - use M^[(new_time),r-1]
                             if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
@@ -673,18 +674,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (coupling == 1){
                             // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
-                            // H_maxwell
+                            // H_maxwell - use H^[(new_time),r-1]
                             Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hxnodal, Hynodal, Hx);
                             Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hynodal, Hynodal, Hy);
                             Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hznodal, Hynodal, Hz);
                         }
 
                         if (mag_exchange_coupling == 1){
-                            // H_exchange
+                            // H_exchange - use M^[(new_time),r-1]
                             if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
                             amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
 
-                WarpXUtilAlgo::getCellCoordinates(i-1, j, k, My_stag, problo, dx, x, y, z);
+                            WarpXUtilAlgo::getCellCoordinates(i-1, j, k, My_stag, problo, dx, x, y, z);
                             amrex::Real Ms_lo_x = mag_parser(x,y,z);
                             WarpXUtilAlgo::getCellCoordinates(i+1, j, k, My_stag, problo, dx, x, y, z);
                             amrex::Real Ms_hi_x = mag_parser(x,y,z);
@@ -697,13 +698,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             WarpXUtilAlgo::getCellCoordinates(i, j, k+1, My_stag, problo, dx, x, y, z);
                             amrex::Real Ms_hi_z = mag_parser(x,y,z);
 
-                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 1); //Last argument is nodality -- yface = 1
-                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 1); //Last argument is nodality -- yface = 1
-                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 1); //Last argument is nodality -- yface = 1
+                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 1); //Last argument is nodality -- yface = 1
+                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 1); //Last argument is nodality -- yface = 1
+                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 1); //Last argument is nodality -- yface = 1
                         }
 
                         if (mag_anisotropy_coupling == 1){
-                            // H_anisotropy
+                            // H_anisotropy - use M^[(new_time),r-1]
                             if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
@@ -798,18 +799,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (coupling == 1){
                             // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
-                            // H_maxwell
+                            // H_maxwell - use H^[(new_time),r-1]
                             Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hxnodal, Hznodal, Hx);
                             Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hynodal, Hznodal, Hy);
                             Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Hznodal, Hznodal, Hz);
                         }
 
                         if (mag_exchange_coupling == 1){
-                            // H_exchange
+                            // H_exchange - use M^[(new_time),r-1]
                             if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
                             amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
 
-                WarpXUtilAlgo::getCellCoordinates(i-1, j, k, Mz_stag, problo, dx, x, y, z);
+                            WarpXUtilAlgo::getCellCoordinates(i-1, j, k, Mz_stag, problo, dx, x, y, z);
                             amrex::Real Ms_lo_x = mag_parser(x,y,z);
                             WarpXUtilAlgo::getCellCoordinates(i+1, j, k, Mz_stag, problo, dx, x, y, z);
                             amrex::Real Ms_hi_x = mag_parser(x,y,z);
@@ -822,13 +823,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             WarpXUtilAlgo::getCellCoordinates(i, j, k+1, Mz_stag, problo, dx, x, y, z);
                             amrex::Real Ms_hi_z = mag_parser(x,y,z);
 
-                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 2); //Last argument is nodality -- zface = 2
-                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 2); //Last argument is nodality -- zface = 2
-                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 2); //Last argument is nodality -- zface = 2
+                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 2); //Last argument is nodality -- zface = 2
+                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 2); //Last argument is nodality -- zface = 2
+                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 2); //Last argument is nodality -- zface = 2
                         }
 
                         if (mag_anisotropy_coupling == 1){
-                            // H_anisotropy
+                            // H_anisotropy - use M^[(new_time),r-1]
                             if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {

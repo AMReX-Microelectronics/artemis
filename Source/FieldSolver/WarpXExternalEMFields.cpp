@@ -106,6 +106,9 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
     amrex::Real t = gett_new(lev);
     const auto problo = Geom(lev).ProbLoArray();
     const auto dx = Geom(lev).CellSizeArray();
+    amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
+    amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
+    amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -116,9 +119,9 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
         amrex::Array4<amrex::Real> const& Fy = mfy->array(mfi);
         amrex::Array4<amrex::Real> const& Fz = mfz->array(mfi);
 
-        const amrex::Box& tbx = mfi.tilebox( mfx->ixType().toIntVect() );
-        const amrex::Box& tby = mfi.tilebox( mfy->ixType().toIntVect() );
-        const amrex::Box& tbz = mfi.tilebox( mfz->ixType().toIntVect() );
+        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
+        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
+        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tbx, tby, tbz,

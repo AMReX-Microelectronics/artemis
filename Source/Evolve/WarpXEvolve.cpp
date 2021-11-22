@@ -70,6 +70,7 @@ WarpX::Evolve (int numsteps)
 
     static Real evolve_time = 0;
 
+    const int step_begin = istep[0];
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
@@ -340,6 +341,7 @@ WarpX::Evolve (int numsteps)
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
+            this->PrintGlobalWarnings("FIRST STEP"); //Print the warning list right after the first step.
             early_params_checked = true;
         }
 
@@ -352,7 +354,7 @@ WarpX::Evolve (int numsteps)
                         << " DT = " << dt[0] << "\n";
             amrex::Print()<< "Evolve time = " << evolve_time
                       << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
-                      << " s; Avg. per step = " << evolve_time/(step+1) << " s\n";
+                      << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n";
         }
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
@@ -425,6 +427,10 @@ WarpX::OneStep_nosub (Real cur_time)
         }
         PushPSATD();
 
+        if (do_pml) {
+            DampPML();
+        }
+
         if (use_hybrid_QED) {
             FillBoundaryE(guard_cells.ng_alloc_EB);
             FillBoundaryB(guard_cells.ng_alloc_EB);
@@ -445,7 +451,6 @@ WarpX::OneStep_nosub (Real cur_time)
         NodalSync(Bfield_fp, Bfield_cp);
 
         if (do_pml) {
-            DampPML();
             NodalSyncPML();
         }
     } else {
@@ -667,9 +672,11 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         if (WarpX::do_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
         if (WarpX::do_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
 
-        // Synchronize E and B fields on nodal points
+        // Synchronize E, B, F, G fields on nodal points
         NodalSync(Efield_fp, Efield_cp);
         NodalSync(Bfield_fp, Bfield_cp);
+        if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
+        if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
     }
     else
     {
