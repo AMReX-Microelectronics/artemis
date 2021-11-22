@@ -1303,13 +1303,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     //! EB: Areas of the mesh faces
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
-    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_info_face;
-    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
-    amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
-
-    //This is just needed for the ECT solver
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > ECTRhofield;
 
     /** EB: for every mesh face flag_info_face contains a:
      *           * 0 if the face needs to be extended
