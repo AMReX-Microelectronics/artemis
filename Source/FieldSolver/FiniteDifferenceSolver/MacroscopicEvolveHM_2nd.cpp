@@ -1115,9 +1115,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             }
         }
         else{
-            // Copy Mfield to Mfield_previous
+            const auto& period = warpx.Geom(lev).periodicity();
+            // Copy Mfield to Mfield_previous and fill periodic/interior ghost cells
             for (int i = 0; i < 3; i++){
                 MultiFab::Copy(*Mfield_prev[i], *Mfield[i], 0, 0, 3, Mfield[i]->nGrow());
+                (*Mfield_prev[i]).FillBoundary(Mfield[i]->nGrowVect(), period);
             }
         }
 
