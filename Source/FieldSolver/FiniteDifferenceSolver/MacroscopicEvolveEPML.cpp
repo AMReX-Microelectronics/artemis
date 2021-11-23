@@ -160,7 +160,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
 #endif
         // material prop //
         amrex::Array4<amrex::Real> const& sigma_arr = sigma_mf->array(mfi);
-        amrex::Array4<amrex::Real> const& eps_arr = epsilon_mf->array(mfi);
+        amrex::Array4<amrex::Real> const& eps_arr = eps_mf->array(mfi);
 #ifndef WARPX_MAG_LLG
         amrex::Array4<amrex::Real> const& mu_arr = mu_mf->array(mfi);
 #endif
