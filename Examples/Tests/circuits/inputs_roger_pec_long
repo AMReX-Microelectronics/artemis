@@ -29,7 +29,7 @@ my_constants.pi = 3.14159265359
 my_constants.c = 299792458.
 
 # domain sizes and cell numbers separately defined for easier excitation function definition
-my_constants.Lx = 64.0e-6  # total x-dimension of entire simulation domain 
+my_constants.Lx = 64.0e-6  # total x-dimension of entire simulation domain
 my_constants.Ly = 512.0e-6  # hack short domain
 my_constants.Lz = 64.0e-6 # total z-dimension of entire simulation domain
 my_constants.nx = 128
