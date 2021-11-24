@@ -32,15 +32,19 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
     amrex::MultiFab* const Ffield,
     MultiSigmaBox const& sigba,
     amrex::Real const dt, bool pml_has_particles,
-    std::unique_ptr<MacroscopicProperties> const& macroscopic_properties) {
+    std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+    amrex::MultiFab* const eps_mf,
+    amrex::MultiFab* const mu_mf,
+    amrex::MultiFab* const sigma_mf)
+{
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
 #    ifndef WARPX_MAG_LLG
-    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, macroscopic_properties);
+    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, macroscopic_properties, eps_mf, mu_mf, sigma_mf);
 #    else
-    amrex::ignore_unused(Efield, Hfield, Jfield, Ffield, sigba, dt, pml_has_particles, macroscopic_properties);
+    amrex::ignore_unused(Efield, Hfield, Jfield, Ffield, sigba, dt, pml_has_particles, macroscopic_properties, eps_mf, mu_mf, sigma_mf);
 #    endif
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
@@ -59,7 +63,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
                 Hfield,
 #endif
                 Jfield, Ffield, sigba, dt, pml_has_particles,
-                macroscopic_properties);
+                macroscopic_properties, eps_mf, mu_mf, sigma_mf);
         }
         else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
             MacroscopicEvolveEPMLCartesian <CartesianYeeAlgorithm, BackwardEulerAlgo> (
@@ -70,7 +74,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
                 Hfield,
 #endif
                 Jfield, Ffield, sigba, dt, pml_has_particles,
-                macroscopic_properties);
+                macroscopic_properties, eps_mf, mu_mf, sigma_mf);
         }
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
@@ -84,7 +88,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
                 Hfield,
 #endif
                 Jfield, Ffield, sigba, dt, pml_has_particles,
-                macroscopic_properties);
+                macroscopic_properties, eps_mf, mu_mf, sigma_mf);
         }
         else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
             MacroscopicEvolveEPMLCartesian <CartesianCKCAlgorithm, BackwardEulerAlgo> (
@@ -95,7 +99,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
                 Hfield,
 #endif
                 Jfield, Ffield, sigba, dt, pml_has_particles,
-                macroscopic_properties);
+                macroscopic_properties, eps_mf, mu_mf, sigma_mf);
         }
 
     } else {
@@ -119,15 +123,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
     amrex::MultiFab* const Ffield,
     MultiSigmaBox const& sigba,
     amrex::Real const dt, bool pml_has_particles,
-    std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
+    std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+    amrex::MultiFab* const eps_mf,
+    amrex::MultiFab* const mu_mf,
+    amrex::MultiFab* const sigma_mf)
 {
 
     amrex::ignore_unused(Ffield);
-
-    amrex::MultiFab& sigma_mf = macroscopic_properties->getsigma_mf();
-    amrex::MultiFab& epsilon_mf = macroscopic_properties->getepsilon_mf();
-#ifndef WARPX_MAG_LLG
-    amrex::MultiFab& mu_mf = macroscopic_properties->getmu_mf();
+#ifdef WARPX_MAG_LLG
+    amrex::ignore_unused(mu_mf);
 #endif
 
     // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
@@ -155,10 +159,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 #endif
         // material prop //
-        amrex::Array4<amrex::Real> const& sigma_arr = sigma_mf.array(mfi);
-        amrex::Array4<amrex::Real> const& eps_arr = epsilon_mf.array(mfi);
+        amrex::Array4<amrex::Real> const& sigma_arr = sigma_mf->array(mfi);
+        amrex::Array4<amrex::Real> const& eps_arr = eps_mf->array(mfi);
 #ifndef WARPX_MAG_LLG
-        amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi);
+        amrex::Array4<amrex::Real> const& mu_arr = mu_mf->array(mfi);
 #endif
 
         // Extract stencil coefficients
