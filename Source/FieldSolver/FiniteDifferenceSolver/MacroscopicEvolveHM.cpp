@@ -498,7 +498,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                     // z component on z-faces of grid
                     M_zface(i, j, k, 2) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_zface(i, j, k, 0) * Hy_eff - M_old_zface(i, j, k, 1) * Hx_eff)
                                          + dt * Gil_damp * (M_old_zface(i, j, k, 0) * (M_old_zface(i, j, k, 2) * Hx_eff - M_old_zface(i, j, k, 0) * Hz_eff)
-                                         - M_old_zface(i, j, k, 1) * (M_old_zface(i, j, k, 1) * Hz_eff - M_old_yface(i, j, k, 2) * Hy_eff));
+                                         - M_old_zface(i, j, k, 1) * (M_old_zface(i, j, k, 1) * Hz_eff - M_old_zface(i, j, k, 2) * Hy_eff));
 
                     // temporary normalized magnitude of M_zface field at the fixed point
                     // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp

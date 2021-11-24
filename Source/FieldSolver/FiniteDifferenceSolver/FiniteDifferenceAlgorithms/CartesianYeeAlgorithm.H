@@ -276,28 +276,31 @@ struct CartesianYeeAlgorithm {
     if(ncomp != nodality){
           if ( Ms_hi_y == 0.) //non-magnetic on right
           {
-                return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j-1,k,ncomp) + 4.*F(i,j-2,k,ncomp) - F(i,j-3,k,ncomp));
+//                return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j-1,k,ncomp) + 4.*F(i,j-2,k,ncomp) - F(i,j-3,k,ncomp));
           }
           else if (Ms_lo_y == 0.) //non-magnetic on left
           {
-                return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j+1,k,ncomp) + 4.*F(i,j+2,k,ncomp) - F(i,j+3,k,ncomp));
+//                return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j+1,k,ncomp) + 4.*F(i,j+2,k,ncomp) - F(i,j+3,k,ncomp));
       } else
           {
-             return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+//             return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
           }
     } else {
           if ( Ms_hi_y == 0.) //non-magnetic on right
           {
-             return inv_dy*(0. - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+//             return inv_dy*(0. - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
           }
           else if (Ms_lo_y == 0.) //non-magnetic on left
           {
-             return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - 0.);
+//             return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - 0.);
       } else
           {
-             return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+//             return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
           }
     }
+
+    return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+    
     }
 
      /**
@@ -346,7 +349,9 @@ struct CartesianYeeAlgorithm {
         amrex::Real const Ms_lo_x, amrex::Real const Ms_hi_x, amrex::Real const Ms_lo_y, amrex::Real const Ms_hi_y, amrex::Real const Ms_lo_z, amrex::Real const Ms_hi_z,
         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
 
-        return LaplacianDx_Mag(F, coefs_x, n_coefs_x, Ms_lo_x, Ms_hi_x, i, j, k, ncomp, nodality) + LaplacianDy_Mag(F, coefs_y, n_coefs_y, Ms_lo_y, Ms_hi_y, i, j, k, ncomp, nodality) + LaplacianDz_Mag(F, coefs_z, n_coefs_z, Ms_lo_z, Ms_hi_z, i, j, k, ncomp, nodality);
+        return 0*LaplacianDx_Mag(F, coefs_x, n_coefs_x, Ms_lo_x, Ms_hi_x, i, j, k, ncomp, nodality)
+            + LaplacianDy_Mag(F, coefs_y, n_coefs_y, Ms_lo_y, Ms_hi_y, i, j, k, ncomp, nodality)
+            + 0*LaplacianDz_Mag(F, coefs_z, n_coefs_z, Ms_lo_z, Ms_hi_z, i, j, k, ncomp, nodality);
     }
 
 #endif
