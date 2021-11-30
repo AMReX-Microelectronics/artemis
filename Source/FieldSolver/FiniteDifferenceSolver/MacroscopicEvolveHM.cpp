@@ -76,6 +76,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     amrex::GpuArray<int, 3> const& mag_gamma_stag      = macroscopic_properties->mag_gamma_IndexType;
     amrex::GpuArray<int, 3> const& mag_exchange_stag   = macroscopic_properties->mag_exchange_IndexType;
     amrex::GpuArray<int, 3> const& mag_anisotropy_stag = macroscopic_properties->mag_anisotropy_IndexType;
+    amrex::GpuArray<int, 3> const& mu_stag             = macroscopic_properties->mu_IndexType;
     amrex::GpuArray<int, 3> const& Mx_stag             = macroscopic_properties->Mx_IndexType;
     amrex::GpuArray<int, 3> const& My_stag             = macroscopic_properties->My_IndexType;
     amrex::GpuArray<int, 3> const& Mz_stag             = macroscopic_properties->Mz_IndexType;
@@ -123,9 +124,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Array4<Real> const &M_xface = Mfield[0]->array(mfi);         // note M_xface include x,y,z components at |_x faces
         Array4<Real> const &M_yface = Mfield[1]->array(mfi);         // note M_yface include x,y,z components at |_y faces
         Array4<Real> const &M_zface = Mfield[2]->array(mfi);         // note M_zface include x,y,z components at |_z faces
-        Array4<Real> const &M_xface_old = Mfield_old[0]->array(mfi); // note M_xface_old include x,y,z components at |_x faces
-        Array4<Real> const &M_yface_old = Mfield_old[1]->array(mfi); // note M_yface_old include x,y,z components at |_y faces
-        Array4<Real> const &M_zface_old = Mfield_old[2]->array(mfi); // note M_zface_old include x,y,z components at |_z faces
+        Array4<Real> const &M_old_xface = Mfield_old[0]->array(mfi); // note M_old_xface include x,y,z components at |_x faces
+        Array4<Real> const &M_old_yface = Mfield_old[1]->array(mfi); // note M_old_yface include x,y,z components at |_y faces
+        Array4<Real> const &M_old_zface = Mfield_old[2]->array(mfi); // note M_old_zface include x,y,z components at |_z faces
         Array4<Real> const &Hx_bias = H_biasfield[0]->array(mfi);    // Hx_bias is the x component at |_x faces
         Array4<Real> const &Hy_bias = H_biasfield[1]->array(mfi);    // Hy_bias is the y component at |_y faces
         Array4<Real> const &Hz_bias = H_biasfield[2]->array(mfi);    // Hz_bias is the z component at |_z faces
@@ -174,27 +175,27 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                     {
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy ... (only the first two terms are considered here)
 
-                        // H_maxwell
+                        // H_maxwell - use H^(old_time)
                         Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mxface_stag, Hx);
                         Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mxface_stag, Hy);
                         Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mxface_stag, Hz);
                     }
 
                     if (mag_exchange_coupling == 1){
-                        // H_exchange
+                        // H_exchange - use M^(old_time)
                         if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
-                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                     }
 
                     if (mag_anisotropy_coupling == 1){
-                        // H_anisotropy
+                        // H_anisotropy - use M^(old_time)
                         if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
-                            M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
+                            M_dot_anisotropy_axis += M_old_xface(i, j, k, comp) * anisotropy_axis[comp];
                         }
                         amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
                         Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
@@ -211,21 +212,21 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                                                               : mag_Ms_arrx;
                     amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alpha_arrx / M_magnitude;
 
-                    // now you have access to use M_xface(i,j,k,0) M_xface(i,j,k,1), M_xface(i,j,k,2), Hx(i,j,k), Hy, Hz on the RHS of these update lines below
+                    // now you have access to use M_old_xface(i,j,k,:), Hx_eff, Hy_eff, and Hz_eff on the RHS of these update lines below
                     // x component on x-faces of grid
-                    M_xface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gammaL) * (M_xface_old(i, j, k, 1) * Hz_eff - M_xface_old(i, j, k, 2) * Hy_eff)
-                                         + dt * Gil_damp * (M_xface_old(i, j, k, 1) * (M_xface_old(i, j, k, 0) * Hy_eff - M_xface_old(i, j, k, 1) * Hx_eff)
-                                         - M_xface_old(i, j, k, 2) * (M_xface_old(i, j, k, 2) * Hx_eff - M_xface_old(i, j, k, 0) * Hz_eff));
+                    M_xface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_xface(i, j, k, 1) * Hz_eff - M_old_xface(i, j, k, 2) * Hy_eff)
+                                         + dt * Gil_damp * (M_old_xface(i, j, k, 1) * (M_old_xface(i, j, k, 0) * Hy_eff - M_old_xface(i, j, k, 1) * Hx_eff)
+                                         - M_old_xface(i, j, k, 2) * (M_old_xface(i, j, k, 2) * Hx_eff - M_old_xface(i, j, k, 0) * Hz_eff));
 
                     // y component on x-faces of grid
-                    M_xface(i, j, k, 1) += dt * (PhysConst::mu0 * mag_gammaL) * (M_xface_old(i, j, k, 2) * Hx_eff - M_xface_old(i, j, k, 0) * Hz_eff)
-                                         + dt * Gil_damp * (M_xface_old(i, j, k, 2) * (M_xface_old(i, j, k, 1) * Hz_eff - M_xface_old(i, j, k, 2) * Hy_eff)
-                                         - M_xface_old(i, j, k, 0) * (M_xface_old(i, j, k, 0) * Hy_eff - M_xface_old(i, j, k, 1) * Hx_eff));
+                    M_xface(i, j, k, 1) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_xface(i, j, k, 2) * Hx_eff - M_old_xface(i, j, k, 0) * Hz_eff)
+                                         + dt * Gil_damp * (M_old_xface(i, j, k, 2) * (M_old_xface(i, j, k, 1) * Hz_eff - M_old_xface(i, j, k, 2) * Hy_eff)
+                                         - M_old_xface(i, j, k, 0) * (M_old_xface(i, j, k, 0) * Hy_eff - M_old_xface(i, j, k, 1) * Hx_eff));
 
                     // z component on x-faces of grid
-                    M_xface(i, j, k, 2) += dt * (PhysConst::mu0 * mag_gammaL) * (M_xface_old(i, j, k, 0) * Hy_eff - M_xface_old(i, j, k, 1) * Hx_eff)
-                                         + dt * Gil_damp * (M_xface_old(i, j, k, 0) * (M_xface_old(i, j, k, 2) * Hx_eff - M_xface_old(i, j, k, 0) * Hz_eff)
-                                         - M_xface_old(i, j, k, 1) * (M_xface_old(i, j, k, 1) * Hz_eff - M_xface_old(i, j, k, 2) * Hy_eff));
+                    M_xface(i, j, k, 2) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_xface(i, j, k, 0) * Hy_eff - M_old_xface(i, j, k, 1) * Hx_eff)
+                                         + dt * Gil_damp * (M_old_xface(i, j, k, 0) * (M_old_xface(i, j, k, 2) * Hx_eff - M_old_xface(i, j, k, 0) * Hz_eff)
+                                         - M_old_xface(i, j, k, 1) * (M_old_xface(i, j, k, 1) * Hz_eff - M_old_xface(i, j, k, 2) * Hy_eff));
 
                     // temporary normalized magnitude of M_xface field at the fixed point
                     // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
@@ -287,27 +288,27 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                     {
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy ... (only the first two terms are considered here)
 
-                        // H_maxwell
+                        // H_maxwell - use H^(old_time)
                         Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Myface_stag, Hx);
                         Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Myface_stag, Hy);
                         Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Myface_stag, Hz);
                     }
 
                     if (mag_exchange_coupling == 1){
-                        // H_exchange
+                        // H_exchange - use M^(old_time)
                         if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
-                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                     }
 
                     if (mag_anisotropy_coupling == 1){
-                        // H_anisotropy
+                        // H_anisotropy - use M^(old_time)
                         if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
-                            M_dot_anisotropy_axis += M_yface(i, j, k, comp) * anisotropy_axis[comp];
+                            M_dot_anisotropy_axis += M_old_yface(i, j, k, comp) * anisotropy_axis[comp];
                         }
                         amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
                         Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
@@ -324,20 +325,21 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                                                               : mag_Ms_arry;
                     amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alpha_arry / M_magnitude;
 
+                    // now you have access to use M_old_yface(i,j,k,:), Hx_eff, Hy_eff, and Hz_eff on the RHS of these update lines below
                     // x component on y-faces of grid
-                    M_yface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gammaL) * (M_yface_old(i, j, k, 1) * Hz_eff - M_yface_old(i, j, k, 2) * Hy_eff)
-                                         + dt * Gil_damp * (M_yface_old(i, j, k, 1) * (M_yface_old(i, j, k, 0) * Hy_eff - M_yface_old(i, j, k, 1) * Hx_eff)
-                                         - M_yface_old(i, j, k, 2) * (M_yface_old(i, j, k, 2) * Hx_eff - M_yface_old(i, j, k, 0) * Hz_eff));
+                    M_yface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_yface(i, j, k, 1) * Hz_eff - M_old_yface(i, j, k, 2) * Hy_eff)
+                                         + dt * Gil_damp * (M_old_yface(i, j, k, 1) * (M_old_yface(i, j, k, 0) * Hy_eff - M_old_yface(i, j, k, 1) * Hx_eff)
+                                         - M_old_yface(i, j, k, 2) * (M_old_yface(i, j, k, 2) * Hx_eff - M_old_yface(i, j, k, 0) * Hz_eff));
 
                     // y component on y-faces of grid
-                    M_yface(i, j, k, 1) += dt * (PhysConst::mu0 * mag_gammaL) * (M_yface_old(i, j, k, 2) * Hx_eff - M_yface_old(i, j, k, 0) * Hz_eff)
-                                         + dt * Gil_damp * (M_yface_old(i, j, k, 2) * (M_yface_old(i, j, k, 1) * Hz_eff - M_yface_old(i, j, k, 2) * Hy_eff)
-                                         - M_yface_old(i, j, k, 0) * (M_yface_old(i, j, k, 0) * Hy_eff - M_yface_old(i, j, k, 1) * Hx_eff));
+                    M_yface(i, j, k, 1) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_yface(i, j, k, 2) * Hx_eff - M_old_yface(i, j, k, 0) * Hz_eff)
+                                         + dt * Gil_damp * (M_old_yface(i, j, k, 2) * (M_old_yface(i, j, k, 1) * Hz_eff - M_old_yface(i, j, k, 2) * Hy_eff)
+                                         - M_old_yface(i, j, k, 0) * (M_old_yface(i, j, k, 0) * Hy_eff - M_old_yface(i, j, k, 1) * Hx_eff));
 
                     // z component on y-faces of grid
-                    M_yface(i, j, k, 2) += dt * (PhysConst::mu0 * mag_gammaL) * (M_yface_old(i, j, k, 0) * Hy_eff - M_yface_old(i, j, k, 1) * Hx_eff)
-                                         + dt * Gil_damp * (M_yface_old(i, j, k, 0) * (M_yface_old(i, j, k, 2) * Hx_eff - M_yface_old(i, j, k, 0) * Hz_eff)
-                                         - M_yface_old(i, j, k, 1) * (M_yface_old(i, j, k, 1) * Hz_eff - M_yface_old(i, j, k, 2) * Hy_eff));
+                    M_yface(i, j, k, 2) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_yface(i, j, k, 0) * Hy_eff - M_old_yface(i, j, k, 1) * Hx_eff)
+                                         + dt * Gil_damp * (M_old_yface(i, j, k, 0) * (M_old_yface(i, j, k, 2) * Hx_eff - M_old_yface(i, j, k, 0) * Hz_eff)
+                                         - M_old_yface(i, j, k, 1) * (M_old_yface(i, j, k, 1) * Hz_eff - M_old_yface(i, j, k, 2) * Hy_eff));
 
                     // temporary normalized magnitude of M_yface field at the fixed point
                     // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
@@ -400,27 +402,27 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                     {
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy ... (only the first two terms are considered here)
 
-                        // H_maxwell
+                        // H_maxwell - use H^(old_time)
                         Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mzface_stag, Hx);
                         Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mzface_stag, Hy);
                         Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mzface_stag, Hz);
                     }
 
                     if (mag_exchange_coupling == 1){
-                        // H_exchange
+                        // H_exchange - use M^(old_time)
                         if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
-                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
                     }
 
                     if (mag_anisotropy_coupling == 1){
-                        // H_anisotropy
+                        // H_anisotropy - use M^(old_time)
                         if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
-                            M_dot_anisotropy_axis += M_zface(i, j, k, comp) * anisotropy_axis[comp];
+                            M_dot_anisotropy_axis += M_old_zface(i, j, k, comp) * anisotropy_axis[comp];
                         }
                         amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
                         Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
@@ -437,20 +439,21 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                                                               : mag_Ms_arrz;
                     amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alpha_arrz / M_magnitude;
 
+                    // now you have access to use M_old_zface(i,j,k,:), Hx_eff, Hy_eff, and Hz_eff on the RHS of these update lines below
                     // x component on z-faces of grid
-                    M_zface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gammaL) * (M_zface_old(i, j, k, 1) * Hz_eff - M_zface_old(i, j, k, 2) * Hy_eff)
-                                         + dt * Gil_damp * (M_zface_old(i, j, k, 1) * (M_zface_old(i, j, k, 0) * Hy_eff - M_zface_old(i, j, k, 1) * Hx_eff)
-                                         - M_zface_old(i, j, k, 2) * (M_zface_old(i, j, k, 2) * Hx_eff - M_zface_old(i, j, k, 0) * Hz_eff));
+                    M_zface(i, j, k, 0) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_zface(i, j, k, 1) * Hz_eff - M_old_zface(i, j, k, 2) * Hy_eff)
+                                         + dt * Gil_damp * (M_old_zface(i, j, k, 1) * (M_old_zface(i, j, k, 0) * Hy_eff - M_old_zface(i, j, k, 1) * Hx_eff)
+                                         - M_old_zface(i, j, k, 2) * (M_old_zface(i, j, k, 2) * Hx_eff - M_old_zface(i, j, k, 0) * Hz_eff));
 
                     // y component on z-faces of grid
-                    M_zface(i, j, k, 1) += dt * (PhysConst::mu0 * mag_gammaL) * (M_zface_old(i, j, k, 2) * Hx_eff - M_zface_old(i, j, k, 0) * Hz_eff)
-                                         + dt * Gil_damp * (M_zface_old(i, j, k, 2) * (M_zface_old(i, j, k, 1) * Hz_eff - M_zface_old(i, j, k, 2) * Hy_eff)
-                                         - M_zface_old(i, j, k, 0) * (M_zface_old(i, j, k, 0) * Hy_eff - M_zface_old(i, j, k, 1) * Hx_eff));
+                    M_zface(i, j, k, 1) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_zface(i, j, k, 2) * Hx_eff - M_old_zface(i, j, k, 0) * Hz_eff)
+                                         + dt * Gil_damp * (M_old_zface(i, j, k, 2) * (M_old_zface(i, j, k, 1) * Hz_eff - M_old_zface(i, j, k, 2) * Hy_eff)
+                                         - M_old_zface(i, j, k, 0) * (M_old_zface(i, j, k, 0) * Hy_eff - M_old_zface(i, j, k, 1) * Hx_eff));
 
                     // z component on z-faces of grid
-                    M_zface(i, j, k, 2) += dt * (PhysConst::mu0 * mag_gammaL) * (M_zface_old(i, j, k, 0) * Hy_eff - M_zface_old(i, j, k, 1) * Hx_eff)
-                                         + dt * Gil_damp * (M_zface_old(i, j, k, 0) * (M_zface_old(i, j, k, 2) * Hx_eff - M_zface_old(i, j, k, 0) * Hz_eff)
-                                         - M_zface_old(i, j, k, 1) * (M_zface_old(i, j, k, 1) * Hz_eff - M_yface_old(i, j, k, 2) * Hy_eff));
+                    M_zface(i, j, k, 2) += dt * (PhysConst::mu0 * mag_gammaL) * (M_old_zface(i, j, k, 0) * Hy_eff - M_old_zface(i, j, k, 1) * Hx_eff)
+                                         + dt * Gil_damp * (M_old_zface(i, j, k, 0) * (M_old_zface(i, j, k, 2) * Hx_eff - M_old_zface(i, j, k, 0) * Hz_eff)
+                                         - M_old_zface(i, j, k, 1) * (M_old_zface(i, j, k, 1) * Hz_eff - M_old_yface(i, j, k, 2) * Hy_eff));
 
                     // temporary normalized magnitude of M_zface field at the fixed point
                     // re-investigate the way we do Ms interp, in case we encounter the case where Ms changes across two adjacent cells that you are doing interp
@@ -488,7 +491,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             });
     }
 
-    const auto getMu = GetMuMacroparameter();
+    amrex::MultiFab& mu_mf = macroscopic_properties->getmu_mf();
     // Update H(new_time) = f(H(old_time), M(new_time), M(old_time), E(old_time))
     for (MFIter mfi(*Hfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
@@ -502,9 +505,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Array4<Real> const &M_xface = Mfield[0]->array(mfi);         // note M_xface include x,y,z components at |_x faces
         Array4<Real> const &M_yface = Mfield[1]->array(mfi);         // note M_yface include x,y,z components at |_y faces
         Array4<Real> const &M_zface = Mfield[2]->array(mfi);         // note M_zface include x,y,z components at |_z faces
-        Array4<Real> const &M_xface_old = Mfield_old[0]->array(mfi); // note M_xface_old include x,y,z components at |_x faces
-        Array4<Real> const &M_yface_old = Mfield_old[1]->array(mfi); // note M_yface_old include x,y,z components at |_y faces
-        Array4<Real> const &M_zface_old = Mfield_old[2]->array(mfi); // note M_zface_old include x,y,z components at |_z faces
+        Array4<Real> const &M_old_xface = Mfield_old[0]->array(mfi); // note M_old_xface include x,y,z components at |_x faces
+        Array4<Real> const &M_old_yface = Mfield_old[1]->array(mfi); // note M_old_yface include x,y,z components at |_y faces
+        Array4<Real> const &M_old_zface = Mfield_old[2]->array(mfi); // note M_old_zface include x,y,z components at |_z faces
+
+        // macroscopic parameter
+        amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi);
 
         // Extract stencil coefficients
         amrex::Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
@@ -536,14 +542,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, Hx_stag, problo, dx, x, y, z);
                 Real mag_Ms_arrx = mag_parser(x,y,z);
                 if (mag_Ms_arrx == 0._rt){ // nonmagnetic region
-                    amrex::Real mu = getMu(x,y,z);
-                    Hx(i, j, k) += 1. / mu * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
+                    amrex::Real mu_arrx = CoarsenIO::Interp( mu_arr, mu_stag, Hx_stag,
+                                                             macro_cr, i, j, k, 0);
+                    Hx(i, j, k) += 1. / mu_arrx * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
                                                       - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
                 } else if (mag_Ms_arrx > 0){ // magnetic region
                     Hx(i, j, k) += mu0_inv * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
                                                  - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
                     if (coupling == 1) {
-                        Hx(i, j, k) += - M_xface(i, j, k, 0) + M_xface_old(i, j, k, 0);
+                        Hx(i, j, k) += - M_xface(i, j, k, 0) + M_old_xface(i, j, k, 0);
                     }
                 }
             },
@@ -553,14 +560,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, Hy_stag, problo, dx, x, y, z);
                 Real mag_Ms_arry = mag_parser(x,y,z);
                 if (mag_Ms_arry == 0._rt){ // nonmagnetic region
-                    amrex::Real mu = getMu(x,y,z);
-                    Hy(i, j, k) += 1. / mu * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
+                    amrex::Real mu_arry = CoarsenIO::Interp( mu_arr, mu_stag, Hy_stag,
+                                                             macro_cr, i, j, k, 0);
+                    Hy(i, j, k) += 1. / mu_arry * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
                                                       - T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k));
                 } else if (mag_Ms_arry > 0){ // magnetic region
                     Hy(i, j, k) += mu0_inv * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
                                                  - T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k));
                     if (coupling == 1){
-                        Hy(i, j, k) += - M_yface(i, j, k, 1) + M_yface_old(i, j, k, 1);
+                        Hy(i, j, k) += - M_yface(i, j, k, 1) + M_old_yface(i, j, k, 1);
                     }
                 }
             },
@@ -570,14 +578,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, Hz_stag, problo, dx, x, y, z);
                 Real mag_Ms_arrz = mag_parser(x,y,z);
                 if (mag_Ms_arrz == 0._rt){ // nonmagnetic region
-                    amrex::Real mu = getMu(x,y,z);
-                    Hz(i, j, k) += 1. / mu * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
+                    amrex::Real mu_arrz = CoarsenIO::Interp( mu_arr, mu_stag, Hz_stag,
+                                                             macro_cr, i, j, k, 0);
+                    Hz(i, j, k) += 1. / mu_arrz * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
                                                       - T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k));
                 } else if (mag_Ms_arrz > 0){ // magnetic region
                     Hz(i, j, k) += mu0_inv * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
                                                  - T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k));
                     if (coupling == 1){
-                        Hz(i, j, k) += - M_zface(i, j, k, 2) + M_zface_old(i, j, k, 2);
+                        Hz(i, j, k) += - M_zface(i, j, k, 2) + M_old_zface(i, j, k, 2);
                     }
                 }
             });
@@ -605,6 +614,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         Box const &tby = mfi.tilebox(Bynodal);
         Box const &tbz = mfi.tilebox(Bznodal);
 
+        // macroscopic parameter
+        amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi);
+
         const auto dx = warpx.Geom(lev).CellSizeArray();
         const auto problo = warpx.Geom(lev).ProbLoArray();
         const auto mag_parser = macroscopic_properties->m_mag_Ms_parser->compile<3>();
@@ -618,8 +630,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, Bx_stag, problo, dx, x, y, z);
                 Real mag_Ms_arrx = mag_parser(x,y,z);
                 if (mag_Ms_arrx == 0._rt){ // nonmagnetic region
-                    amrex::Real mu = getMu(x,y,z);
-                    Bx(i, j, k) = mu * Hx(i, j, k);
+                    amrex::Real mu_arrx = CoarsenIO::Interp( mu_arr, mu_stag, Bx_stag,
+                                                             macro_cr, i, j, k, 0);
+                    Bx(i, j, k) = mu_arrx * Hx(i, j, k);
                 } else if (mag_Ms_arrx > 0){
                     Bx(i, j, k) = PhysConst::mu0 * (M_xface(i, j, k, 0) + Hx(i, j, k));
                 }
@@ -631,8 +644,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, By_stag, problo, dx, x, y, z);
                 Real mag_Ms_arry = mag_parser(x,y,z);
                 if (mag_Ms_arry == 0._rt){ // nonmagnetic region
-                    amrex::Real mu = getMu(x,y,z);
-                    By(i, j, k) =  mu * Hy(i, j, k);
+                    amrex::Real mu_arry = CoarsenIO::Interp( mu_arr, mu_stag, By_stag,
+                                                             macro_cr, i, j, k, 0);
+                    By(i, j, k) =  mu_arry * Hy(i, j, k);
                 } else if (mag_Ms_arry > 0){
                     By(i, j, k) = PhysConst::mu0 * (M_yface(i, j, k, 1) + Hy(i, j, k));
                 }
@@ -644,8 +658,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, Bz_stag, problo, dx, x, y, z);
                 Real mag_Ms_arrz = mag_parser(x,y,z);
                 if (mag_Ms_arrz == 0._rt){ // nonmagnetic region
-                    amrex::Real mu = getMu(x,y,z);
-                    Bz(i, j, k) = mu * Hz(i, j, k);
+                    amrex::Real mu_arrz = CoarsenIO::Interp( mu_arr, mu_stag, Bz_stag,
+                                                             macro_cr, i, j, k, 0);
+                    Bz(i, j, k) = mu_arrz * Hz(i, j, k);
                 } else if (mag_Ms_arrz > 0){
                     Bz(i, j, k) = PhysConst::mu0 * (M_zface(i, j, k, 2) + Hz(i, j, k));
                 }
