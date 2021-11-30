@@ -481,7 +481,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "sigma" ){
             MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.get_pointer_sigma(), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "eps" ){
+        } else if ( m_varnames[comp] == "epsilon" ){
             MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.get_pointer_eps(), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "mu" ){
