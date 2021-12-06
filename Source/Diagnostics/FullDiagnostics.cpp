@@ -479,18 +479,12 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "sigma" ){
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::em_solver_medium == MediumForEM::Macroscopic,
-                                             "sigma in plotfiles only works with algo.em_solver_medium=macroscopic");
             MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.get_pointer_sigma(), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "epsilon" ){
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::em_solver_medium == MediumForEM::Macroscopic,
-                                             "epsilon in plotfiles only works with algo.em_solver_medium=macroscopic");
             MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.get_pointer_eps(), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "mu" ){
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::em_solver_medium == MediumForEM::Macroscopic,
-                                             "mu in plotfiles only works with algo.em_solver_medium=macroscopic");
             MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.get_pointer_mu(), lev, m_crse_ratio);
         }
