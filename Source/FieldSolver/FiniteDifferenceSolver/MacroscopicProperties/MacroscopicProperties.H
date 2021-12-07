@@ -39,10 +39,13 @@ public:
 
      /** return MultiFab, sigma (conductivity) of the medium. */
      amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
+     amrex::MultiFab * get_pointer_sigma () {return m_sigma_mf.get();}
      /** return MultiFab, epsilon (permittivity) of the medium. */
      amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
+     amrex::MultiFab * get_pointer_eps () {return m_eps_mf.get();}
      /** return MultiFab, mu (permeability) of the medium. */
      amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
+     amrex::MultiFab * get_pointer_mu () {return m_mu_mf.get();}
 
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;
