@@ -1,7 +1,7 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 4000
+max_step = 0
 
 amr.n_cell = n_cellx n_celly n_cellz
 amr.max_grid_size = max_grid_size
@@ -45,25 +45,25 @@ algo.macroscopic_sigma_method = laxwendroff
 ###############
 
 macroscopic.sigma_function(x,y,z) = "sigma_SiO2
-+ (sigma_Pd - sigma_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y <= l_Pd) * (z >= h_Pd) * (z <= h_Pd + 2*r_Pd)
-+ (sigma_Pd - sigma_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y >= l_Pd - 2*r_Pd) * (y <= l_Pd) * (z > h_Pd + 2*r_Pd) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ (sigma_Pd - sigma_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y > l_Pd) * (z >= h_Pd + th_gate) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ (sigma_Al - sigma_SiO2)   * (y >= Ly - l_Al) * (z <= h_Pd + th_gate)
-+ (sigma_gate - sigma_SiO2) * (y > l_Pd) * (z > h_Pd) * (z < h_Pd + th_gate)"
++ (sigma_Pd - sigma_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y <= l_Pd) * (z >= d_Pd) * (z <= d_Pd + h_Pd)
++ (sigma_Pd - sigma_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y >= l_Pd - h_Pd) * (y <= l_Pd) * (z > d_Pd + h_Pd) * (z <= d_Pd + h_Pd + th_gate)
++ (sigma_Pd - sigma_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y > l_Pd) * (z >= d_Pd + th_gate) * (z <= d_Pd + h_Pd + th_gate)
++ (sigma_Al - sigma_SiO2)   * (y >= Ly - l_Al) * (z <= d_Pd + th_gate)
++ (sigma_gate - sigma_SiO2) * (y > l_Pd) * (z > d_Pd) * (z < d_Pd + th_gate)"
 
 macroscopic.epsilon_function(x,y,z) = "eps_0 * eps_r_SiO2
-+ eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y <= l_Pd) * (z >= h_Pd) * (z <= h_Pd + 2*r_Pd)
-+ eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y >= l_Pd - 2*r_Pd) * (y <= l_Pd) * (z > h_Pd + 2*r_Pd) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y > l_Pd) * (z >= h_Pd + th_gate) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ eps_0 * (eps_r_Al - eps_r_SiO2)   * (y >= Ly - l_Al) * (z <= h_Pd + th_gate)
-+ eps_0 * (eps_r_gate - eps_r_SiO2) * (y > l_Pd) * (z > h_Pd) * (z < h_Pd + th_gate)"
++ eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y <= l_Pd) * (z >= d_Pd) * (z <= d_Pd + h_Pd)
++ eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y >= l_Pd - h_Pd) * (y <= l_Pd) * (z > d_Pd + h_Pd) * (z <= d_Pd + h_Pd + th_gate)
++ eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y > l_Pd) * (z >= d_Pd + th_gate) * (z <= d_Pd + h_Pd + th_gate)
++ eps_0 * (eps_r_Al - eps_r_SiO2)   * (y >= Ly - l_Al) * (z <= d_Pd + th_gate)
++ eps_0 * (eps_r_gate - eps_r_SiO2) * (y > l_Pd) * (z > d_Pd) * (z < d_Pd + th_gate)"
 
 macroscopic.mu_function(x,y,z) = "mu_0 * mu_r_SiO2
-+ mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y <= l_Pd) * (z >= h_Pd) * (z <= h_Pd + 2*r_Pd)
-+ mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y >= l_Pd - 2*r_Pd) * (y <= l_Pd) * (z > h_Pd + 2*r_Pd) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -r_Pd) * (x <= r_Pd) * (y > l_Pd) * (z >= h_Pd + th_gate) * (z <= h_Pd + 2*r_Pd + th_gate)
-+ mu_0 * (mu_r_Al - mu_r_SiO2)   * (y >= Ly - l_Al) * (z <= h_Pd + th_gate)
-+ mu_0 * (mu_r_gate - mu_r_SiO2) * (y > l_Pd) * (z > h_Pd) * (z < h_Pd + th_gate)"
++ mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y <= l_Pd) * (z >= d_Pd) * (z <= d_Pd + h_Pd)
++ mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y >= l_Pd - h_Pd) * (y <= l_Pd) * (z > d_Pd + h_Pd) * (z <= d_Pd + h_Pd + th_gate)
++ mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y > l_Pd) * (z >= d_Pd + th_gate) * (z <= d_Pd + h_Pd + th_gate)
++ mu_0 * (mu_r_Al - mu_r_SiO2)   * (y >= Ly - l_Al) * (z <= d_Pd + th_gate)
++ mu_0 * (mu_r_gate - mu_r_SiO2) * (y > l_Pd) * (z > d_Pd) * (z < d_Pd + th_gate)"
 
 #################################
 ############ FIELDS #############
@@ -79,7 +79,7 @@ my_constants.n_cellz = 400
 my_constants.max_grid_size = 200
 my_constants.blocking_factor = 40
 
-my_constants.Lx = 2.e-6
+my_constants.Lx = 4.e-6
 my_constants.Ly = 6.e-6
 my_constants.Lz = 4.e-6
 
@@ -108,8 +108,9 @@ my_constants.mu_r_gate = 1.0
 # silicon and palladium cross section
 ###############
 
-my_constants.r_Pd = 50.e-9
-my_constants.h_Pd = 2.e-6
+my_constants.h_Pd = 100.e-9
+my_constants.w_Pd = 2.e-6
+my_constants.d_Pd = 2.e-6
 my_constants.l_Pd = 3.e-6
 
 my_constants.th_gate = 20.e-9
@@ -119,7 +120,7 @@ my_constants.l_Al = 1.5e-6
 ###############
 # waveguide port parameters
 ###############
-my_constants.w_port = 1.e-6
+my_constants.w_port = 3.e-6
 my_constants.h_port = 2.e-6
 
 my_constants.freq = 100.e12
@@ -159,5 +160,5 @@ diagnostics.diags_names = plt
 
 # full plotfiles
 plt.intervals = 10
-plt.fields_to_plot = Ez
+plt.fields_to_plot = Ez epsilon sigma mu
 plt.diag_type = Full
