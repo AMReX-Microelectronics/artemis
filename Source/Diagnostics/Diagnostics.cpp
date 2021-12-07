@@ -80,6 +80,30 @@ Diagnostics::BaseReadParameters ()
             warpx.do_divb_cleaning, "G can be written to file only if warpx.do_divb_cleaning = 1");
     }
 
+    // sigma can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "sigma"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "sigma in plotfiles only works with algo.em_solver_medium=macroscopic");
+    }
+
+    // epsilon can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "epsilon"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "epsilon in plotfiles only works with algo.em_solver_medium=macroscopic");
+    }
+
+    // mu can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "mu"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "mu in plotfiles only works with algo.em_solver_medium=macroscopic");
+    }
+
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
     if (amrex::ParallelDescriptor::NProcs() == 1){
