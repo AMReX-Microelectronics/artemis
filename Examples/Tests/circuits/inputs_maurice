@@ -48,21 +48,21 @@ macroscopic.sigma_function(x,y,z) = "sigma_SiO2
 + (sigma_Pd - sigma_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y <= l_Pd) * (z >= d_Pd) * (z <= d_Pd + h_Pd)
 + (sigma_Pd - sigma_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y >= l_Pd - h_Pd) * (y <= l_Pd) * (z > d_Pd + h_Pd) * (z <= d_Pd + h_Pd + th_gate)
 + (sigma_Pd - sigma_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y > l_Pd) * (z >= d_Pd + th_gate) * (z <= d_Pd + h_Pd + th_gate)
-+ (sigma_Al - sigma_SiO2)   * (y >= Ly - l_Al) * (z <= d_Pd + th_gate)
++ (sigma_Al - sigma_SiO2)   * (y >= Ly - l_Al) * (z <= d_Pd)
 + (sigma_gate - sigma_SiO2) * (y > l_Pd) * (z > d_Pd) * (z < d_Pd + th_gate)"
 
 macroscopic.epsilon_function(x,y,z) = "eps_0 * eps_r_SiO2
 + eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y <= l_Pd) * (z >= d_Pd) * (z <= d_Pd + h_Pd)
 + eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y >= l_Pd - h_Pd) * (y <= l_Pd) * (z > d_Pd + h_Pd) * (z <= d_Pd + h_Pd + th_gate)
 + eps_0 * (eps_r_Pd - eps_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y > l_Pd) * (z >= d_Pd + th_gate) * (z <= d_Pd + h_Pd + th_gate)
-+ eps_0 * (eps_r_Al - eps_r_SiO2)   * (y >= Ly - l_Al) * (z <= d_Pd + th_gate)
++ eps_0 * (eps_r_Al - eps_r_SiO2)   * (y >= Ly - l_Al) * (z <= d_Pd)
 + eps_0 * (eps_r_gate - eps_r_SiO2) * (y > l_Pd) * (z > d_Pd) * (z < d_Pd + th_gate)"
 
 macroscopic.mu_function(x,y,z) = "mu_0 * mu_r_SiO2
 + mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y <= l_Pd) * (z >= d_Pd) * (z <= d_Pd + h_Pd)
 + mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y >= l_Pd - h_Pd) * (y <= l_Pd) * (z > d_Pd + h_Pd) * (z <= d_Pd + h_Pd + th_gate)
 + mu_0 * (mu_r_Pd - mu_r_SiO2)   * (x >= -w_Pd/2) * (x <= w_Pd/2) * (y > l_Pd) * (z >= d_Pd + th_gate) * (z <= d_Pd + h_Pd + th_gate)
-+ mu_0 * (mu_r_Al - mu_r_SiO2)   * (y >= Ly - l_Al) * (z <= d_Pd + th_gate)
++ mu_0 * (mu_r_Al - mu_r_SiO2)   * (y >= Ly - l_Al) * (z <= d_Pd)
 + mu_0 * (mu_r_gate - mu_r_SiO2) * (y > l_Pd) * (z > d_Pd) * (z < d_Pd + th_gate)"
 
 #################################
@@ -76,7 +76,7 @@ macroscopic.mu_function(x,y,z) = "mu_0 * mu_r_SiO2
 my_constants.n_cellx = 200
 my_constants.n_celly = 60
 my_constants.n_cellz = 400
-my_constants.max_grid_size = 200
+my_constants.max_grid_size = 400
 my_constants.blocking_factor = 40
 
 my_constants.Lx = 4.e-6
