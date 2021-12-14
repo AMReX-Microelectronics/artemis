@@ -157,8 +157,27 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*freq
 ###############
 
 diagnostics.diags_names = plt
+diagnostics.diags_names = plt input output
 
+###############
 # full plotfiles
 plt.intervals = 10
-plt.fields_to_plot = Ez epsilon sigma mu
+plt.fields_to_plot = Ez
+#plt.fields_to_plot = Ez epsilon sigma mu
 plt.diag_type = Full
+
+###############
+# input
+input.intervals = 1
+input.fields_to_plot = Ez
+input.diag_lo = -w_port/2. 0. 0.
+input.diag_hi =  w_port/2. 0. d_Pd
+input.diag_type = Full
+
+###############
+# output
+output.intervals = 1
+output.fields_to_plot = Ez
+output.diag_lo = -w_port/2. Ly 0.
+output.diag_hi =  w_port/2. Ly d_Pd
+output.diag_type = Full
