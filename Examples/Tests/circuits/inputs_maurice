@@ -152,12 +152,22 @@ warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*freq*t)"
 
+warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
+
+warpx.Bx_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= 0.) * (y <= dy)"
+warpx.By_excitation_flag_function(x,y,z) = "0."
+warpx.Bz_excitation_flag_function(x,y,z) = "0."
+
+warpx.Bx_excitation_grid_function(x,y,z,t) = "(mu_0*mu_r_SiO2/50.)*(cos((pi*x)/w_port) * sin(2*pi*freq*t))"
+warpx.By_excitation_grid_function(x,y,z,t) = "0."
+warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
+
 ###############
 # diagnostics
 ###############
 
 diagnostics.diags_names = plt
-diagnostics.diags_names = plt input output
+#diagnostics.diags_names = plt input output
 
 ###############
 # full plotfiles
@@ -168,16 +178,16 @@ plt.diag_type = Full
 
 ###############
 # input
-input.intervals = 1
-input.fields_to_plot = Ez
-input.diag_lo = -w_port/2. 0. 0.
-input.diag_hi =  w_port/2. 0. d_Pd
-input.diag_type = Full
+#input.intervals = 1
+#input.fields_to_plot = Ez
+#input.diag_lo = -w_port/2. 0. 0.
+#input.diag_hi =  w_port/2. 0. d_Pd
+#input.diag_type = Full
 
 ###############
 # output
-output.intervals = 1
-output.fields_to_plot = Ez
-output.diag_lo = -w_port/2. Ly 0.
-output.diag_hi =  w_port/2. Ly d_Pd
-output.diag_type = Full
+#output.intervals = 1
+#output.fields_to_plot = Ez
+#output.diag_lo = -w_port/2. Ly 0.
+#output.diag_hi =  w_port/2. Ly d_Pd
+#output.diag_type = Full
