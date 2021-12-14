@@ -17,7 +17,7 @@ geometry.prob_hi =  Lx/2. Ly Lz
 amr.max_level = 0
 
 # use pec instead of pml overlaying current source so you don't get a reflection
-boundary.field_lo = pml pec pec
+boundary.field_lo = pml pml pec
 boundary.field_hi = pml pml pml
 
 #################################
@@ -146,19 +146,19 @@ warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
 warpx.Ex_excitation_flag_function(x,y,z) = "0."
 warpx.Ey_excitation_flag_function(x,y,z) = "0."
-warpx.Ez_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= -dy/2.) * (y <= dy/2.)"
+warpx.Ez_excitation_flag_function(x,y,z) = "2* (x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= -dy/2.) * (y <= dy/2.)"
 
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*freq*t)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*freq*t) * (t < (1./freq))"
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= 0.) * (y <= dy)"
+warpx.Bx_excitation_flag_function(x,y,z) = "2* (x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= 0.) * (y <= dy)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "(mu_0*mu_r_SiO2/50.)*(cos((pi*x)/w_port) * sin(2*pi*freq*t))"
+warpx.Bx_excitation_grid_function(x,y,z,t) = "(mu_0*mu_r_SiO2/50.)*(cos((pi*x)/w_port) * sin(2*pi*freq*t)) * (t < (1./freq))"
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
@@ -172,7 +172,7 @@ diagnostics.diags_names = plt
 ###############
 # full plotfiles
 plt.intervals = 10
-plt.fields_to_plot = Ez
+plt.fields_to_plot = Ez Bx
 #plt.fields_to_plot = Ez epsilon sigma mu
 plt.diag_type = Full
 
