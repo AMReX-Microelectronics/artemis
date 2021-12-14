@@ -120,7 +120,7 @@ my_constants.l_Al = 1.5e-6
 ###############
 # waveguide port parameters
 ###############
-my_constants.w_port = 3.e-6
+my_constants.w_port = 2.e-6
 my_constants.h_port = 2.e-6
 
 my_constants.freq = 100.e12
@@ -150,7 +150,7 @@ warpx.Ez_excitation_flag_function(x,y,z) = "2* (x > -w_port/2.) * (x < w_port/2.
 
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*freq*t) * (t < (1./freq))"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*freq*t) * (t < (1./freq))"
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
@@ -158,7 +158,7 @@ warpx.Bx_excitation_flag_function(x,y,z) = "2* (x > -w_port/2.) * (x < w_port/2.
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "(mu_0*mu_r_SiO2/50.)*(cos((pi*x)/w_port) * sin(2*pi*freq*t)) * (t < (1./freq))"
+warpx.Bx_excitation_grid_function(x,y,z,t) = "(mu_0*mu_r_SiO2/50.)*(sin(2*pi*freq*t)) * (t < (1./freq))"
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
