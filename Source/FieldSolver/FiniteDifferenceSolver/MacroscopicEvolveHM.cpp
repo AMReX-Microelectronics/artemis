@@ -72,7 +72,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     // temporary Multifab storing M from previous timestep (old_time) before updating to M(new_time)
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Mfield_old; // Mfield_old is M(old_time)
 
-    amrex::GpuArray<int, 3> const& mag_alpha_stag      = macroscopic_properties->mag_alpha_IndexType;
     amrex::GpuArray<int, 3> const& mag_gamma_stag      = macroscopic_properties->mag_gamma_IndexType;
     amrex::GpuArray<int, 3> const& mag_exchange_stag   = macroscopic_properties->mag_exchange_IndexType;
     amrex::GpuArray<int, 3> const& mag_anisotropy_stag = macroscopic_properties->mag_anisotropy_IndexType;
@@ -106,13 +105,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
 
     for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) /* remember to FIX */
     {
-        auto& mag_alpha_mf = macroscopic_properties->getmag_alpha_mf();
+        auto& mag_alphax_mf = macroscopic_properties->getmag_alpha_mf(0);
+        auto& mag_alphay_mf = macroscopic_properties->getmag_alpha_mf(1);
+        auto& mag_alphaz_mf = macroscopic_properties->getmag_alpha_mf(2);
         auto& mag_gamma_mf = macroscopic_properties->getmag_gamma_mf();
         auto& mag_exchange_mf = macroscopic_properties->getmag_exchange_mf();
         auto& mag_anisotropy_mf = macroscopic_properties->getmag_anisotropy_mf();
 
         // extract material properties
-        Array4<Real> const& mag_alpha_arr = mag_alpha_mf.array(mfi);
+        Array4<Real> const& mag_alphax_arr = mag_alphax_mf.array(mfi);
+        Array4<Real> const& mag_alphay_arr = mag_alphay_mf.array(mfi);
+        Array4<Real> const& mag_alphaz_arr = mag_alphaz_mf.array(mfi);
         Array4<Real> const& mag_gamma_arr = mag_gamma_mf.array(mfi);
         Array4<Real> const& mag_exchange_arr = mag_exchange_mf.array(mfi);
         Array4<Real> const& mag_anisotropy_arr = mag_anisotropy_mf.array(mfi);
@@ -161,7 +164,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 if (mag_Ms_arrx > 0._rt)
                 {
 
-                    amrex::Real mag_alpha_arrx = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mx_stag, macro_cr, i, j, k, 0);
                     amrex::Real mag_gamma_arrx = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
 
                     // when working on M_xface(i,j,k, 0:2) we have direct access to M_xface(i,j,k,0:2) and Hx(i,j,k)
@@ -211,12 +213,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
 
                     // magnetic material properties mag_alpha and mag_Ms are defined at faces
                     // removed the interpolation from version with cell-nodal material properties
-                    amrex::Real mag_gammaL = mag_gamma_arrx / (1._rt + std::pow(mag_alpha_arrx, 2._rt));
+                    amrex::Real mag_gammaL = mag_gamma_arrx / (1._rt + std::pow(mag_alphax_arr(i,j,k), 2._rt));
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
                     amrex::Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_xface(i, j, k, 0), 2._rt) + std::pow(M_xface(i, j, k, 1), 2._rt) + std::pow(M_xface(i, j, k, 2), 2._rt))
                                                               : mag_Ms_arrx;
-                    amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alpha_arrx / M_magnitude;
+                    amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alphax_arr(i,j,k) / M_magnitude;
 
                     // now you have access to use M_old_xface(i,j,k,:), Hx_eff, Hy_eff, and Hz_eff on the RHS of these update lines below
                     // x component on x-faces of grid
@@ -280,7 +282,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 if (mag_Ms_arry > 0._rt)
                 {
 
-                    amrex::Real mag_alpha_arry = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, My_stag, macro_cr, i, j, k, 0);
                     amrex::Real mag_gamma_arry = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
 
                     // when working on M_yface(i,j,k,0:2) we have direct access to M_yface(i,j,k,0:2) and Hy(i,j,k)
@@ -330,12 +331,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
 
                     // magnetic material properties mag_alpha and mag_Ms are defined at faces
                     // removed the interpolation from version with cell-nodal material properties
-                    amrex::Real mag_gammaL = mag_gamma_arry / (1._rt + std::pow(mag_alpha_arry, 2._rt));
+                    amrex::Real mag_gammaL = mag_gamma_arry / (1._rt + std::pow(mag_alphay_arr(i,j,k), 2._rt));
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
                     amrex::Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_yface(i, j, k, 0), 2._rt) + std::pow(M_yface(i, j, k, 1), 2._rt) + std::pow(M_yface(i, j, k, 2), 2._rt))
                                                               : mag_Ms_arry;
-                    amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alpha_arry / M_magnitude;
+                    amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alphay_arr(i,j,k) / M_magnitude;
 
                     // now you have access to use M_old_yface(i,j,k,:), Hx_eff, Hy_eff, and Hz_eff on the RHS of these update lines below
                     // x component on y-faces of grid
@@ -399,7 +400,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
                 if (mag_Ms_arrz > 0._rt)
                 {
 
-                    amrex::Real mag_alpha_arrz = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mz_stag, macro_cr, i, j, k, 0);
                     amrex::Real mag_gamma_arrz = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
 
                     // when working on M_zface(i,j,k,0:2) we have direct access to M_zface(i,j,k,0:2) and Hz(i,j,k)
@@ -450,12 +450,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
 
                     // magnetic material properties mag_alpha and mag_Ms are defined at faces
                     // removed the interpolation from version with cell-nodal material properties
-                    amrex::Real mag_gammaL = mag_gamma_arrz / (1._rt + std::pow(mag_alpha_arrz, 2._rt));
+                    amrex::Real mag_gammaL = mag_gamma_arrz / (1._rt + std::pow(mag_alphaz_arr(i,j,k), 2._rt));
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
                     amrex::Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_zface(i, j, k, 0), 2._rt) + std::pow(M_zface(i, j, k, 1), 2._rt) + std::pow(M_zface(i, j, k, 2), 2._rt))
                                                               : mag_Ms_arrz;
-                    amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alpha_arrz / M_magnitude;
+                    amrex::Real Gil_damp = PhysConst::mu0 * mag_gammaL * mag_alphaz_arr(i,j,k) / M_magnitude;
 
                     // now you have access to use M_old_zface(i,j,k,:), Hx_eff, Hy_eff, and Hz_eff on the RHS of these update lines below
                     // x component on z-faces of grid

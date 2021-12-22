@@ -100,7 +100,9 @@ public:
      /** Gpu Vector with index type of the Hz multifab */
      amrex::GpuArray<int, 3> Hz_IndexType;
      /** Gpu Vector with index type of the Gilbert damping factor multifab */
-     amrex::GpuArray<int, 3> mag_alpha_IndexType;
+     amrex::GpuArray<int, 3> mag_alphax_IndexType;
+     amrex::GpuArray<int, 3> mag_alphay_IndexType;
+     amrex::GpuArray<int, 3> mag_alphaz_IndexType;
      /** Gpu Vector with index type of the gyromagnetic ratio multifab */
      amrex::GpuArray<int, 3> mag_gamma_IndexType;
      /** Gpu Vector with index type of the Mx multifab */
@@ -116,7 +118,7 @@ public:
      /** Gpu Vector of the anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff */
      amrex::GpuArray<amrex::Real, 3> mag_LLG_anisotropy_axis;
 
-     amrex::MultiFab& getmag_alpha_mf () {return (*m_mag_alpha_mf);}
+     amrex::MultiFab& getmag_alpha_mf (int dir) {return (*m_mag_alpha_mf[dir]);}
      amrex::MultiFab& getmag_gamma_mf () {return (*m_mag_gamma_mf);}
      amrex::MultiFab& getmag_exchange_mf () {return (*m_mag_exchange_mf);}
      amrex::MultiFab& getmag_anisotropy_mf () {return (*m_mag_anisotropy_mf);}
@@ -263,7 +265,7 @@ public:
      /** Multifab storing spatially varying saturation magnetization */
      std::unique_ptr<amrex::MultiFab> m_mag_Ms_mf;
      /** Multifab storing spatially varying Gilbert damping */
-     std::unique_ptr<amrex::MultiFab> m_mag_alpha_mf;
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_alpha_mf;
      /** Multifab storing spatially varying gyromagnetic ratio */
      std::unique_ptr<amrex::MultiFab> m_mag_gamma_mf;
      /** Multifab storing spatially varying coefficient of the exchange coupling term */
@@ -271,12 +273,14 @@ public:
      /** Multifab storing spatially varying coefficient of the anisotropy coupling term */
      std::unique_ptr<amrex::MultiFab> m_mag_anisotropy_mf;
 
+     // these store the type of initialization, e.g., "constant", "parse_X_function", etc.
      std::string m_mag_Ms_s;
      std::string m_mag_alpha_s;
      std::string m_mag_gamma_s;
      std::string m_mag_exchange_s;
      std::string m_mag_anisotropy_s;
 
+     // these store the parsed expression for the material properties
      std::string m_str_mag_Ms_function;
      std::string m_str_mag_alpha_function;
      std::string m_str_mag_gamma_function;

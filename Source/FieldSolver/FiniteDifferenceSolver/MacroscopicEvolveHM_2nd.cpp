@@ -75,7 +75,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     std::array<std::unique_ptr<amrex::MultiFab>, 3> a_temp_static; // α M^(old_time)/|M| in the right-hand side of vector a, see the documentation
     std::array<std::unique_ptr<amrex::MultiFab>, 3> b_temp_static; // right-hand side of vector b, see the documentation
 
-    amrex::GpuArray<int, 3> const& mag_alpha_stag = macroscopic_properties->mag_alpha_IndexType;
     amrex::GpuArray<int, 3> const& mag_gamma_stag = macroscopic_properties->mag_gamma_IndexType;
     amrex::GpuArray<int, 3> const& mag_exchange_stag  = macroscopic_properties->mag_exchange_IndexType;
     amrex::GpuArray<int, 3> const& mag_anisotropy_stag   = macroscopic_properties->mag_anisotropy_IndexType;
@@ -114,13 +113,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
     // calculate the b_temp_static, a_temp_static
     for (MFIter mfi(*a_temp_static[0], TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-        auto& mag_alpha_mf = macroscopic_properties->getmag_alpha_mf();
+        auto& mag_alphax_mf = macroscopic_properties->getmag_alpha_mf(0);
+        auto& mag_alphay_mf = macroscopic_properties->getmag_alpha_mf(1);
+        auto& mag_alphaz_mf = macroscopic_properties->getmag_alpha_mf(2);
         auto& mag_gamma_mf = macroscopic_properties->getmag_gamma_mf();
         auto& mag_exchange_mf = macroscopic_properties->getmag_exchange_mf();
         auto& mag_anisotropy_mf = macroscopic_properties->getmag_anisotropy_mf();
 
         // extract material properties
-        Array4<Real> const& mag_alpha_arr = mag_alpha_mf.array(mfi);
+        Array4<Real> const& mag_alphax_arr = mag_alphax_mf.array(mfi);
+        Array4<Real> const& mag_alphay_arr = mag_alphay_mf.array(mfi);
+        Array4<Real> const& mag_alphaz_arr = mag_alphaz_mf.array(mfi);
         Array4<Real> const& mag_gamma_arr = mag_gamma_mf.array(mfi);
         Array4<Real> const& mag_exchange_arr = mag_exchange_mf.array(mfi);
         Array4<Real> const& mag_anisotropy_arr = mag_anisotropy_mf.array(mfi);
@@ -172,7 +175,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrx > 0._rt){
 
-                    amrex::Real mag_alpha_arrx = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mx_stag, macro_cr, i, j, k, 0);
                     amrex::Real mag_gamma_arrx = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
 
                     // when working on M_xface(i,j,k, 0:2) we have direct access to M_xface(i,j,k,0:2) and Hx(i,j,k)
@@ -224,7 +226,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     amrex::Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_xface(i, j, k, 0), 2._rt) + std::pow(M_xface(i, j, k, 1), 2._rt) + std::pow(M_xface(i, j, k, 2), 2._rt))
                                                               : mag_Ms_arrx;
                     // a_temp_static_coeff does not change in the current step for SATURATED materials; but it does change for UNSATURATED ones
-                    amrex::Real a_temp_static_coeff = mag_alpha_arrx / M_magnitude;
+                    amrex::Real a_temp_static_coeff = mag_alphax_arr(i,j,k) / M_magnitude;
 
                     // calculate the b_temp_static_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                     // while in real simulations, the input dt is actually dt/2.0)
@@ -258,7 +260,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arry > 0._rt){
 
-                    amrex::Real mag_alpha_arry = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, My_stag, macro_cr, i, j, k, 0);
                     amrex::Real mag_gamma_arry = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
 
                     // when working on M_yface(i,j,k,0:2) we have direct access to M_yface(i,j,k,0:2) and Hy(i,j,k)
@@ -310,7 +311,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // note the unsaturated case is less usefull in real devices
                     amrex::Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_yface(i, j, k, 0), 2._rt) + std::pow(M_yface(i, j, k, 1), 2._rt) + std::pow(M_yface(i, j, k, 2), 2._rt))
                                                               : mag_Ms_arry;
-                    amrex::Real a_temp_static_coeff = mag_alpha_arry / M_magnitude;
+                    amrex::Real a_temp_static_coeff = mag_alphay_arr(i,j,k) / M_magnitude;
 
                     // calculate the b_temp_static_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                     // while in real simulations, the input dt is actually dt/2.0)
@@ -344,7 +345,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrz > 0._rt){
 
-                    amrex::Real mag_alpha_arrz = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mz_stag, macro_cr, i, j, k, 0);
                     amrex::Real mag_gamma_arrz = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
 
                     // when working on M_zface(i,j,k,0:2) we have direct access to M_zface(i,j,k,0:2) and Hz(i,j,k)
@@ -395,7 +395,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
                     amrex::Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_zface(i, j, k, 0), 2._rt) + std::pow(M_zface(i, j, k, 1), 2._rt) + std::pow(M_zface(i, j, k, 2), 2._rt))
                                                               : mag_Ms_arrz;
-                    amrex::Real a_temp_static_coeff = mag_alpha_arrz / M_magnitude;
+                    amrex::Real a_temp_static_coeff = mag_alphaz_arr(i,j,k) / M_magnitude;
 
                     // calculate the b_temp_static_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                     // while in real simulations, the input dt is actually dt/2.0)
@@ -434,13 +434,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         warpx.FillBoundaryH(warpx.getngE());
 
         for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi){
-            auto& mag_alpha_mf = macroscopic_properties->getmag_alpha_mf();
+            auto& mag_alphax_mf = macroscopic_properties->getmag_alpha_mf(0);
+            auto& mag_alphay_mf = macroscopic_properties->getmag_alpha_mf(1);
+            auto& mag_alphaz_mf = macroscopic_properties->getmag_alpha_mf(2);
             auto& mag_gamma_mf = macroscopic_properties->getmag_gamma_mf();
             auto& mag_exchange_mf = macroscopic_properties->getmag_exchange_mf();
             auto& mag_anisotropy_mf = macroscopic_properties->getmag_anisotropy_mf();
 
             // extract material properties
-            Array4<Real> const& mag_alpha_arr = mag_alpha_mf.array(mfi);
+            Array4<Real> const& mag_alphax_arr = mag_alphax_mf.array(mfi);
+            Array4<Real> const& mag_alphay_arr = mag_alphay_mf.array(mfi);
+            Array4<Real> const& mag_alphaz_arr = mag_alphaz_mf.array(mfi);
             Array4<Real> const& mag_gamma_arr = mag_gamma_mf.array(mfi);
             Array4<Real> const& mag_exchange_arr = mag_exchange_mf.array(mfi);
             Array4<Real> const& mag_anisotropy_arr = mag_anisotropy_mf.array(mfi);
@@ -504,7 +508,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // determine if the material is nonmagnetic or not
                     if (mag_Ms_arrx > 0._rt){
 
-                        amrex::Real mag_alpha_arrx = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mx_stag, macro_cr, i, j, k, 0);
                         amrex::Real mag_gamma_arrx = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
 
                         // when working on M_xface(i,j,k, 0:2) we have direct access to M_xface(i,j,k,0:2) and Hx(i,j,k)
@@ -566,7 +569,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             // all components on x-faces of grid
                             a_temp_xface(i, j, k, comp) = (M_normalization != 0) ? -(dt * a_temp_dynamic_coeff * H_eff[comp] + a_temp_static_xface(i, j, k, comp))
                                                                                  : -(dt * a_temp_dynamic_coeff * H_eff[comp] + 0.5 * a_temp_static_xface(i, j, k, comp)
-                                                                                     + 0.5 * mag_alpha_arrx * 1. / std::sqrt(std::pow(M_xface(i, j, k, 0), 2._rt) + std::pow(M_xface(i, j, k, 1), 2._rt) + std::pow(M_xface(i, j, k, 2), 2._rt)) * M_old_xface(i, j, k, comp));
+                                                                                     + 0.5 * mag_alphax_arr(i,j,k) * 1. / std::sqrt(std::pow(M_xface(i, j, k, 0), 2._rt) + std::pow(M_xface(i, j, k, 1), 2._rt) + std::pow(M_xface(i, j, k, 2), 2._rt)) * M_old_xface(i, j, k, comp));
                         }
 
                         for (int comp=0; comp<3; ++comp) {
@@ -620,7 +623,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // determine if the material is nonmagnetic or not
                     if (mag_Ms_arry > 0._rt){
 
-                        amrex::Real mag_alpha_arry = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, My_stag, macro_cr, i, j, k, 0);
                         amrex::Real mag_gamma_arry = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
 
                         // when working on M_yface(i,j,k,0:2) we have direct access to M_yface(i,j,k,0:2) and Hy(i,j,k)
@@ -682,7 +684,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             // all components on y-faces of grid
                             a_temp_yface(i, j, k, comp) = (M_normalization != 0) ? -(dt * a_temp_dynamic_coeff * H_eff[comp] + a_temp_static_yface(i, j, k, comp))
                                                                                  : -(dt * a_temp_dynamic_coeff * H_eff[comp] + 0.5 * a_temp_static_yface(i, j, k, comp)
-                                                                                     + 0.5 * mag_alpha_arry * 1. / std::sqrt(std::pow(M_yface(i, j, k, 0), 2._rt) + std::pow(M_yface(i, j, k, 1), 2._rt) + std::pow(M_yface(i, j, k, 2), 2._rt)) * M_old_yface(i, j, k, comp));
+                                                                                     + 0.5 * mag_alphay_arr(i,j,k) * 1. / std::sqrt(std::pow(M_yface(i, j, k, 0), 2._rt) + std::pow(M_yface(i, j, k, 1), 2._rt) + std::pow(M_yface(i, j, k, 2), 2._rt)) * M_old_yface(i, j, k, comp));
                         }
 
                         for (int comp=0; comp<3; ++comp) {
@@ -737,7 +739,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // determine if the material is nonmagnetic or not
                     if (mag_Ms_arrz > 0._rt){
 
-                        amrex::Real mag_alpha_arrz = CoarsenIO::Interp( mag_alpha_arr, mag_alpha_stag, Mz_stag, macro_cr, i, j, k, 0);
                         amrex::Real mag_gamma_arrz = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
 
                         // when working on M_zface(i,j,k,0:2) we have direct access to M_zface(i,j,k,0:2) and Hz(i,j,k)
@@ -799,7 +800,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             // all components on z-faces of grid
                             a_temp_zface(i, j, k, comp) = (M_normalization != 0) ? -(dt * a_temp_dynamic_coeff * H_eff[comp] + a_temp_static_zface(i, j, k, comp))
                                                                               : -(dt * a_temp_dynamic_coeff * H_eff[comp] + 0.5 * a_temp_static_zface(i, j, k, comp)
-                                                                                  + 0.5 * mag_alpha_arrz * 1. / std::sqrt(std::pow(M_zface(i, j, k, 0), 2._rt) + std::pow(M_zface(i, j, k, 1), 2._rt) + std::pow(M_zface(i, j, k, 2), 2._rt)) * M_old_zface(i, j, k, comp));
+                                                                                  + 0.5 * mag_alphaz_arr(i,j,k) * 1. / std::sqrt(std::pow(M_zface(i, j, k, 0), 2._rt) + std::pow(M_zface(i, j, k, 1), 2._rt) + std::pow(M_zface(i, j, k, 2), 2._rt)) * M_old_zface(i, j, k, comp));
                         }
 
                         for (int comp=0; comp<3; ++comp) {

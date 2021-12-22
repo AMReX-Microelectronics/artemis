@@ -240,7 +240,9 @@ MacroscopicProperties::InitData ()
 
     // all magnetic macroparameters are stored on cell centers
     m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
-    m_mag_alpha_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
+    m_mag_alpha_mf[0] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(1,0,0)), dmap, 1, ng_EB_alloc);
+    m_mag_alpha_mf[1] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,1,0)), dmap, 1, ng_EB_alloc);
+    m_mag_alpha_mf[2] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,0,1)), dmap, 1, ng_EB_alloc);
     m_mag_gamma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
     m_mag_exchange_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
     m_mag_anisotropy_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
@@ -263,13 +265,19 @@ MacroscopicProperties::InitData ()
 
     // mag_alpha - defined at cell centers
     if (m_mag_alpha_s == "constant") {
-        m_mag_alpha_mf->setVal(m_mag_alpha);
+        m_mag_alpha_mf[0]->setVal(m_mag_alpha);
+        m_mag_alpha_mf[1]->setVal(m_mag_alpha);
+        m_mag_alpha_mf[2]->setVal(m_mag_alpha);
     }
     else if (m_mag_alpha_s == "parse_mag_alpha_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf.get(), m_mag_alpha_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf[0].get(), m_mag_alpha_parser->compile<3>(), lev);       
+        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf[1].get(), m_mag_alpha_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf[2].get(), m_mag_alpha_parser->compile<3>(), lev);
     }
-    if (m_mag_alpha_mf->min(0,m_mag_alpha_mf->nGrow()) < 0._rt) {
-        amrex::Abort("alpha should be positive, but the user input has negative values");
+    for (int i=0; i<3; ++i) {
+        if (m_mag_alpha_mf[i]->min(0,m_mag_alpha_mf[i]->nGrow()) < 0._rt) {
+            amrex::Abort("alpha should be positive, but the user input has negative values");
+        }
     }
 
     // mag_gamma - defined at cell centers
@@ -316,7 +324,9 @@ MacroscopicProperties::InitData ()
     IntVect Hx_stag = warpx.getHfield_fp(0,0).ixType().toIntVect();
     IntVect Hy_stag = warpx.getHfield_fp(0,1).ixType().toIntVect();
     IntVect Hz_stag = warpx.getHfield_fp(0,2).ixType().toIntVect();
-    IntVect mag_alpha_stag = m_mag_alpha_mf->ixType().toIntVect();
+    IntVect mag_alphax_stag = m_mag_alpha_mf[0]->ixType().toIntVect();
+    IntVect mag_alphay_stag = m_mag_alpha_mf[1]->ixType().toIntVect();
+    IntVect mag_alphaz_stag = m_mag_alpha_mf[2]->ixType().toIntVect();
     IntVect mag_gamma_stag = m_mag_gamma_mf->ixType().toIntVect();
     IntVect Mx_stag = warpx.getMfield_fp(0,0).ixType().toIntVect(); // face-centered
     IntVect My_stag = warpx.getMfield_fp(0,1).ixType().toIntVect();
@@ -341,7 +351,9 @@ MacroscopicProperties::InitData ()
         Hx_IndexType[idim]             = Hx_stag[idim];
         Hy_IndexType[idim]             = Hy_stag[idim];
         Hz_IndexType[idim]             = Hz_stag[idim];
-        mag_alpha_IndexType[idim]      = mag_alpha_stag[idim];
+        mag_alphax_IndexType[idim]     = mag_alphax_stag[idim];
+        mag_alphay_IndexType[idim]     = mag_alphay_stag[idim];
+        mag_alphaz_IndexType[idim]     = mag_alphaz_stag[idim];
         mag_gamma_IndexType[idim]      = mag_gamma_stag[idim];
         Mx_IndexType[idim]             = Mx_stag[idim];
         My_IndexType[idim]             = My_stag[idim];
@@ -365,7 +377,9 @@ MacroscopicProperties::InitData ()
         Hx_IndexType[2]              = 0;
         Hy_IndexType[2]              = 0;
         Hz_IndexType[2]              = 0;
-        mag_alpha_IndexType[2]       = 0;
+        mag_alphax_IndexType[2]      = 0;
+        mag_alphay_IndexType[2]      = 0;
+        mag_alphaz_IndexType[2]      = 0;
         mag_gamma_IndexType[2]       = 0;
         Mx_IndexType[2]              = 0;
         My_IndexType[2]              = 0;
