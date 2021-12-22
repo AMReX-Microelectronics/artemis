@@ -185,7 +185,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
 
                         amrex::Real mag_exchange_arrx = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, Mx_stag, macro_cr, i, j, k, 0);
                         if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
-                        
+
                         // H_exchange - use M^(old_time)
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
                         Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_old_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
