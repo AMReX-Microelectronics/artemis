@@ -388,18 +388,6 @@ MacroscopicProperties::InitData ()
         Mx_IndexType[idim]              = Mx_stag[idim];
         My_IndexType[idim]              = My_stag[idim];
         Mz_IndexType[idim]              = Mz_stag[idim];
-        mag_alphax_IndexType[idim]      = mag_alphax_stag[idim];
-        mag_alphay_IndexType[idim]      = mag_alphay_stag[idim];
-        mag_alphaz_IndexType[idim]      = mag_alphaz_stag[idim];
-        mag_gammax_IndexType[idim]      = mag_gammax_stag[idim];
-        mag_gammay_IndexType[idim]      = mag_gammay_stag[idim];
-        mag_gammaz_IndexType[idim]      = mag_gammaz_stag[idim];
-        mag_exchangex_IndexType[idim]   = mag_exchangex_stag[idim];
-        mag_exchangey_IndexType[idim]   = mag_exchangey_stag[idim];
-        mag_exchangez_IndexType[idim]   = mag_exchangez_stag[idim];
-        mag_anisotropyx_IndexType[idim] = mag_anisotropyx_stag[idim];
-        mag_anisotropyy_IndexType[idim] = mag_anisotropyy_stag[idim];
-        mag_anisotropyz_IndexType[idim] = mag_anisotropyz_stag[idim];
 #endif
     }
 #if (AMREX_SPACEDIM==2)
@@ -420,18 +408,6 @@ MacroscopicProperties::InitData ()
         Mx_IndexType[2]              = 0;
         My_IndexType[2]              = 0;
         Mz_IndexType[2]              = 0;
-        mag_alphax_IndexType[2]      = 0;
-        mag_alphay_IndexType[2]      = 0;
-        mag_alphaz_IndexType[2]      = 0;
-        mag_gammax_IndexType[2]      = 0;
-        mag_gammay_IndexType[2]      = 0;
-        mag_gammaz_IndexType[2]      = 0;
-        mag_exchangex_IndexType[2]   = 0;
-        mag_exchangey_IndexType[2]   = 0;
-        mag_exchangez_IndexType[2]   = 0;
-        mag_anisotropyx_IndexType[2] = 0;
-        mag_anisotropyy_IndexType[2] = 0;
-        mag_anisotropyz_IndexType[2] = 0;
 #endif
 #endif
 }

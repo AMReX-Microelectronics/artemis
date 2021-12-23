@@ -105,22 +105,6 @@ public:
      amrex::GpuArray<int, 3> My_IndexType;
      /** Gpu Vector with index type of the Mz multifab */
      amrex::GpuArray<int, 3> Mz_IndexType;
-     /** Gpu Vector with index type of the Gilbert damping factor multifab */
-     amrex::GpuArray<int, 3> mag_alphax_IndexType;
-     amrex::GpuArray<int, 3> mag_alphay_IndexType;
-     amrex::GpuArray<int, 3> mag_alphaz_IndexType;
-     /** Gpu Vector with index type of the gyromagnetic ratio multifab */
-     amrex::GpuArray<int, 3> mag_gammax_IndexType;
-     amrex::GpuArray<int, 3> mag_gammay_IndexType;
-     amrex::GpuArray<int, 3> mag_gammaz_IndexType;
-     /** Gpu Vector with index type of the coefficient of the exchange coupling term multifab */
-     amrex::GpuArray<int, 3> mag_exchangex_IndexType;
-     amrex::GpuArray<int, 3> mag_exchangey_IndexType;
-     amrex::GpuArray<int, 3> mag_exchangez_IndexType;
-     /** Gpu Vector with index type of the coefficient of the anisotropy coupling term multifab */
-     amrex::GpuArray<int, 3> mag_anisotropyx_IndexType;
-     amrex::GpuArray<int, 3> mag_anisotropyy_IndexType;
-     amrex::GpuArray<int, 3> mag_anisotropyz_IndexType;
      /** Gpu Vector of the anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff */
      amrex::GpuArray<amrex::Real, 3> mag_LLG_anisotropy_axis;
 
