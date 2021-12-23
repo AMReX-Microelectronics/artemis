@@ -268,15 +268,15 @@ public:
      // the relative tolerance for the second-order time advancement scheme of M field, default 0.0001
      amrex::Real m_mag_tol;
 
-     /** Multifab storing spatially varying saturation magnetization */
-     std::unique_ptr<amrex::MultiFab> m_mag_Ms_mf;
-     /** Multifab storing spatially varying Gilbert damping */
+     /** Multifabs storing spatially varying saturation magnetization on three faces  */
+     std::unique_ptr<amrex::MultiFab> m_mag_Ms_mf;  // to be fixed next
+     /** Multifabs storing spatially varying Gilbert damping on three faces */
      std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_alpha_mf;
-     /** Multifab storing spatially varying gyromagnetic ratio */
+     /** Multifabs storing spatially varying gyromagnetic ratio on three faces  */
      std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_gamma_mf;
-     /** Multifab storing spatially varying coefficient of the exchange coupling term */
+     /** Multifabs storing spatially varying coefficient of the exchange coupling term on three faces  */
      std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_exchange_mf;
-     /** Multifab storing spatially varying coefficient of the anisotropy coupling term */
+     /** Multifabs storing spatially varying coefficient of the anisotropy coupling term on three faces  */
      std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_anisotropy_mf;
 
      // these store the type of initialization, e.g., "constant", "parse_X_function", etc.
