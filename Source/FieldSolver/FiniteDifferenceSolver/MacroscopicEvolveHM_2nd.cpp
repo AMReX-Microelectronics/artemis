@@ -75,20 +75,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     std::array<std::unique_ptr<amrex::MultiFab>, 3> a_temp_static; // α M^(old_time)/|M| in the right-hand side of vector a, see the documentation
     std::array<std::unique_ptr<amrex::MultiFab>, 3> b_temp_static; // right-hand side of vector b, see the documentation
 
-    amrex::GpuArray<int, 3> const& mag_gamma_stag = macroscopic_properties->mag_gamma_IndexType;
-    amrex::GpuArray<int, 3> const& mag_exchange_stag  = macroscopic_properties->mag_exchange_IndexType;
-    amrex::GpuArray<int, 3> const& mag_anisotropy_stag   = macroscopic_properties->mag_anisotropy_IndexType;
-    amrex::GpuArray<int, 3> const& mu_stag        = macroscopic_properties->mu_IndexType;
-    amrex::GpuArray<int, 3> const& Mx_stag        = macroscopic_properties->Mx_IndexType;
-    amrex::GpuArray<int, 3> const& My_stag        = macroscopic_properties->My_IndexType;
-    amrex::GpuArray<int, 3> const& Mz_stag        = macroscopic_properties->Mz_IndexType;
-    amrex::GpuArray<int, 3> const& Bx_stag        = macroscopic_properties->Bx_IndexType;
-    amrex::GpuArray<int, 3> const& By_stag        = macroscopic_properties->By_IndexType;
-    amrex::GpuArray<int, 3> const& Bz_stag        = macroscopic_properties->Bz_IndexType;
-    amrex::GpuArray<int, 3> const& Hx_stag        = macroscopic_properties->Hx_IndexType;
-    amrex::GpuArray<int, 3> const& Hy_stag        = macroscopic_properties->Hy_IndexType;
-    amrex::GpuArray<int, 3> const& Hz_stag        = macroscopic_properties->Hz_IndexType;
-    amrex::GpuArray<int, 3> const& macro_cr       = macroscopic_properties->macro_cr_ratio;
+    amrex::GpuArray<int, 3> const& mu_stag  = macroscopic_properties->mu_IndexType;
+    amrex::GpuArray<int, 3> const& Mx_stag  = macroscopic_properties->Mx_IndexType;
+    amrex::GpuArray<int, 3> const& My_stag  = macroscopic_properties->My_IndexType;
+    amrex::GpuArray<int, 3> const& Mz_stag  = macroscopic_properties->Mz_IndexType;
+    amrex::GpuArray<int, 3> const& Bx_stag  = macroscopic_properties->Bx_IndexType;
+    amrex::GpuArray<int, 3> const& By_stag  = macroscopic_properties->By_IndexType;
+    amrex::GpuArray<int, 3> const& Bz_stag  = macroscopic_properties->Bz_IndexType;
+    amrex::GpuArray<int, 3> const& Hx_stag  = macroscopic_properties->Hx_IndexType;
+    amrex::GpuArray<int, 3> const& Hy_stag  = macroscopic_properties->Hy_IndexType;
+    amrex::GpuArray<int, 3> const& Hz_stag  = macroscopic_properties->Hz_IndexType;
+    amrex::GpuArray<int, 3> const& macro_cr = macroscopic_properties->macro_cr_ratio;
     amrex::GpuArray<amrex::Real, 3> const& anisotropy_axis = macroscopic_properties->mag_LLG_anisotropy_axis;
 
     // Initialize Hfield_old (H^(old_time)), Mfield_old (M^(old_time)), Mfield_prev (M^[(new_time),r-1]), Mfield_error
@@ -116,17 +113,29 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         auto& mag_alphax_mf = macroscopic_properties->getmag_alpha_mf(0);
         auto& mag_alphay_mf = macroscopic_properties->getmag_alpha_mf(1);
         auto& mag_alphaz_mf = macroscopic_properties->getmag_alpha_mf(2);
-        auto& mag_gamma_mf = macroscopic_properties->getmag_gamma_mf();
-        auto& mag_exchange_mf = macroscopic_properties->getmag_exchange_mf();
-        auto& mag_anisotropy_mf = macroscopic_properties->getmag_anisotropy_mf();
+        auto& mag_gammax_mf = macroscopic_properties->getmag_gamma_mf(0);
+        auto& mag_gammay_mf = macroscopic_properties->getmag_gamma_mf(1);
+        auto& mag_gammaz_mf = macroscopic_properties->getmag_gamma_mf(2);
+        auto& mag_exchangex_mf = macroscopic_properties->getmag_exchange_mf(0);
+        auto& mag_exchangey_mf = macroscopic_properties->getmag_exchange_mf(1);
+        auto& mag_exchangez_mf = macroscopic_properties->getmag_exchange_mf(2);
+        auto& mag_anisotropyx_mf = macroscopic_properties->getmag_anisotropy_mf(0);
+        auto& mag_anisotropyy_mf = macroscopic_properties->getmag_anisotropy_mf(1);
+        auto& mag_anisotropyz_mf = macroscopic_properties->getmag_anisotropy_mf(2);
 
         // extract material properties
         Array4<Real> const& mag_alphax_arr = mag_alphax_mf.array(mfi);
         Array4<Real> const& mag_alphay_arr = mag_alphay_mf.array(mfi);
         Array4<Real> const& mag_alphaz_arr = mag_alphaz_mf.array(mfi);
-        Array4<Real> const& mag_gamma_arr = mag_gamma_mf.array(mfi);
-        Array4<Real> const& mag_exchange_arr = mag_exchange_mf.array(mfi);
-        Array4<Real> const& mag_anisotropy_arr = mag_anisotropy_mf.array(mfi);
+        Array4<Real> const& mag_gammax_arr = mag_gammax_mf.array(mfi);
+        Array4<Real> const& mag_gammay_arr = mag_gammay_mf.array(mfi);
+        Array4<Real> const& mag_gammaz_arr = mag_gammaz_mf.array(mfi);
+        Array4<Real> const& mag_exchangex_arr = mag_exchangex_mf.array(mfi);
+        Array4<Real> const& mag_exchangey_arr = mag_exchangey_mf.array(mfi);
+        Array4<Real> const& mag_exchangez_arr = mag_exchangez_mf.array(mfi);
+        Array4<Real> const& mag_anisotropyx_arr = mag_anisotropyx_mf.array(mfi);
+        Array4<Real> const& mag_anisotropyy_arr = mag_anisotropyy_mf.array(mfi);
+        Array4<Real> const& mag_anisotropyz_arr = mag_anisotropyz_mf.array(mfi);
 
         // extract field data
         Array4<Real> const &M_xface = Mfield[0]->array(mfi);      // note M_xface include x,y,z components at |_x faces
@@ -175,8 +184,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrx > 0._rt){
 
-                    amrex::Real mag_gamma_arrx = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
-
                     // when working on M_xface(i,j,k, 0:2) we have direct access to M_xface(i,j,k,0:2) and Hx(i,j,k)
                     // Hy and Hz can be acquired by interpolation
 
@@ -196,11 +203,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     if (mag_exchange_coupling == 1){
 
-                        amrex::Real mag_exchange_arrx = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, Mx_stag, macro_cr, i, j, k, 0);
-                        if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
+                        if (mag_exchangex_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchangex_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                         // H_exchange - use M^(old_time)
-                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
+                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchangex_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
                         Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
                         Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
                         Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
@@ -208,15 +214,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     if (mag_anisotropy_coupling == 1){
 
-                        amrex::Real mag_anisotropy_arrx = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, Mx_stag, macro_cr, i, j, k, 0);
-                        if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
+                        if (mag_anisotropyx_arr(i,j,k) == 0._rt) amrex::Abort("The mag_anisotropyx_arr(i,j,k) is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
 
                         // H_anisotropy - use M^(old_time)
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
                             M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
                         }
-                        amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
+                        amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropyx_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
                         Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
                         Hy_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
@@ -230,7 +235,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     // calculate the b_temp_static_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                     // while in real simulations, the input dt is actually dt/2.0)
-                    amrex::Real b_temp_static_coeff = - PhysConst::mu0 * amrex::Math::abs(mag_gamma_arrx) / 2._rt;
+                    amrex::Real b_temp_static_coeff = - PhysConst::mu0 * amrex::Math::abs(mag_gammax_arr(i,j,k)) / 2._rt;
 
                     for (int comp=0; comp<3; ++comp) {
                         // calculate a_temp_static_xface
@@ -260,8 +265,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arry > 0._rt){
 
-                    amrex::Real mag_gamma_arry = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
-
                     // when working on M_yface(i,j,k,0:2) we have direct access to M_yface(i,j,k,0:2) and Hy(i,j,k)
                     // Hy and Hz can be acquired by interpolation
 
@@ -281,11 +284,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     if (mag_exchange_coupling == 1){
 
-                        amrex::Real mag_exchange_arry = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, My_stag, macro_cr, i, j, k, 0);
-                        if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
+                        if (mag_exchangey_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchangey_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                         // H_exchange - use M^(old_time)
-                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
+                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchangey_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
                         Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
                         Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
                         Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
@@ -293,15 +295,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     if (mag_anisotropy_coupling == 1){
 
-                        amrex::Real mag_anisotropy_arry = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, My_stag, macro_cr, i, j, k, 0);
-                        if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
+                        if (mag_anisotropyy_arr(i,j,k) == 0._rt) amrex::Abort("The mag_anisotropyy_arr(i,j,k) is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
 
                         // H_anisotropy - use M^(old_time)
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
                             M_dot_anisotropy_axis += M_yface(i, j, k, comp) * anisotropy_axis[comp];
                         }
-                        amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
+                        amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropyy_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
                         Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
                         Hy_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
@@ -315,7 +316,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     // calculate the b_temp_static_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                     // while in real simulations, the input dt is actually dt/2.0)
-                    amrex::Real b_temp_static_coeff = - PhysConst::mu0 * amrex::Math::abs(mag_gamma_arry) / 2._rt;
+                    amrex::Real b_temp_static_coeff = - PhysConst::mu0 * amrex::Math::abs(mag_gammay_arr(i,j,k)) / 2._rt;
 
                     for (int comp=0; comp<3; ++comp) {
                         // calculate a_temp_static_yface
@@ -345,8 +346,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                 // determine if the material is nonmagnetic or not
                 if (mag_Ms_arrz > 0._rt){
 
-                    amrex::Real mag_gamma_arrz = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
-
                     // when working on M_zface(i,j,k,0:2) we have direct access to M_zface(i,j,k,0:2) and Hz(i,j,k)
                     // Hy and Hz can be acquired by interpolation
 
@@ -366,11 +365,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     if (mag_exchange_coupling == 1){
 
-                        amrex::Real mag_exchange_arrz = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, Mz_stag, macro_cr, i, j, k, 0);
-                        if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
+                        if (mag_exchangez_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchangez_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                         // H_exchange - use M^(old_time)
-                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
+                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchangez_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
                         Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
                         Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
                         Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
@@ -378,15 +376,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     if (mag_anisotropy_coupling == 1){
 
-                        amrex::Real mag_anisotropy_arrz = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, Mz_stag, macro_cr, i, j, k, 0);
-                        if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
+                        if (mag_anisotropyz_arr(i,j,k) == 0._rt) amrex::Abort("The mag_anisotropyz_arr(i,j,k) is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
 
                         // H_anisotropy - use M^(old_time)
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
                             M_dot_anisotropy_axis += M_zface(i, j, k, comp) * anisotropy_axis[comp];
                         }
-                        amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
+                        amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropyz_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
                         Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
                         Hy_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
@@ -399,7 +396,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                     // calculate the b_temp_static_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                     // while in real simulations, the input dt is actually dt/2.0)
-                    amrex::Real b_temp_static_coeff = - PhysConst::mu0 * amrex::Math::abs(mag_gamma_arrz) / 2._rt;
+                    amrex::Real b_temp_static_coeff = - PhysConst::mu0 * amrex::Math::abs(mag_gammaz_arr(i,j,k)) / 2._rt;
 
                     for (int comp=0; comp<3; ++comp) {
                         // calculate a_temp_static_zface
@@ -437,17 +434,29 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             auto& mag_alphax_mf = macroscopic_properties->getmag_alpha_mf(0);
             auto& mag_alphay_mf = macroscopic_properties->getmag_alpha_mf(1);
             auto& mag_alphaz_mf = macroscopic_properties->getmag_alpha_mf(2);
-            auto& mag_gamma_mf = macroscopic_properties->getmag_gamma_mf();
-            auto& mag_exchange_mf = macroscopic_properties->getmag_exchange_mf();
-            auto& mag_anisotropy_mf = macroscopic_properties->getmag_anisotropy_mf();
+            auto& mag_gammax_mf = macroscopic_properties->getmag_gamma_mf(0);
+            auto& mag_gammay_mf = macroscopic_properties->getmag_gamma_mf(1);
+            auto& mag_gammaz_mf = macroscopic_properties->getmag_gamma_mf(2);
+            auto& mag_exchangex_mf = macroscopic_properties->getmag_exchange_mf(0);
+            auto& mag_exchangey_mf = macroscopic_properties->getmag_exchange_mf(1);
+            auto& mag_exchangez_mf = macroscopic_properties->getmag_exchange_mf(2);
+            auto& mag_anisotropyx_mf = macroscopic_properties->getmag_anisotropy_mf(0);
+            auto& mag_anisotropyy_mf = macroscopic_properties->getmag_anisotropy_mf(1);
+            auto& mag_anisotropyz_mf = macroscopic_properties->getmag_anisotropy_mf(2);
 
             // extract material properties
             Array4<Real> const& mag_alphax_arr = mag_alphax_mf.array(mfi);
             Array4<Real> const& mag_alphay_arr = mag_alphay_mf.array(mfi);
             Array4<Real> const& mag_alphaz_arr = mag_alphaz_mf.array(mfi);
-            Array4<Real> const& mag_gamma_arr = mag_gamma_mf.array(mfi);
-            Array4<Real> const& mag_exchange_arr = mag_exchange_mf.array(mfi);
-            Array4<Real> const& mag_anisotropy_arr = mag_anisotropy_mf.array(mfi);
+            Array4<Real> const& mag_gammax_arr = mag_gammax_mf.array(mfi);
+            Array4<Real> const& mag_gammay_arr = mag_gammay_mf.array(mfi);
+            Array4<Real> const& mag_gammaz_arr = mag_gammaz_mf.array(mfi);
+            Array4<Real> const& mag_exchangex_arr = mag_exchangex_mf.array(mfi);
+            Array4<Real> const& mag_exchangey_arr = mag_exchangey_mf.array(mfi);
+            Array4<Real> const& mag_exchangez_arr = mag_exchangez_mf.array(mfi);
+            Array4<Real> const& mag_anisotropyx_arr = mag_anisotropyx_mf.array(mfi);
+            Array4<Real> const& mag_anisotropyy_arr = mag_anisotropyy_mf.array(mfi);
+            Array4<Real> const& mag_anisotropyz_arr = mag_anisotropyz_mf.array(mfi);
 
             // extract field data
             Array4<Real> const &M_xface = Mfield[0]->array(mfi);      // note M_xface include x,y,z components at |_x faces
@@ -508,8 +517,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // determine if the material is nonmagnetic or not
                     if (mag_Ms_arrx > 0._rt){
 
-                        amrex::Real mag_gamma_arrx = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mx_stag, macro_cr, i, j, k, 0);
-
                         // when working on M_xface(i,j,k, 0:2) we have direct access to M_xface(i,j,k,0:2) and Hx(i,j,k)
                         // Hy and Hz can be acquired by interpolation
 
@@ -529,11 +536,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         if (mag_exchange_coupling == 1){
 
-                            amrex::Real mag_exchange_arrx = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, Mx_stag, macro_cr, i, j, k, 0);
-                            if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
+                            if (mag_exchangex_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchangex_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                             // H_exchange - use M^[(new_time),r-1]
-                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
+                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchangex_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
                             Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
                             Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
                             Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
@@ -541,15 +547,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         if (mag_anisotropy_coupling == 1){
 
-                            amrex::Real mag_anisotropy_arrx = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, Mx_stag, macro_cr, i, j, k, 0);
-                            if (mag_anisotropy_arrx == 0._rt) amrex::Abort("The mag_anisotropy_arrx is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
+                            if (mag_anisotropyx_arr(i,j,k) == 0._rt) amrex::Abort("The mag_anisotropyx_arr(i,j,k) is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
 
                             // H_anisotropy - use M^[(new_time),r-1]
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
                                 M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
                             }
-                            amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
+                            amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropyx_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
                             Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
                             Hy_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
                             Hz_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
@@ -557,7 +562,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         // calculate the a_temp_dynamic_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                         // while in real simulations, the input dt is actually dt/2.0)
-                        amrex::Real a_temp_dynamic_coeff = PhysConst::mu0 * amrex::Math::abs(mag_gamma_arrx) / 2._rt;
+                        amrex::Real a_temp_dynamic_coeff = PhysConst::mu0 * amrex::Math::abs(mag_gammax_arr(i,j,k)) / 2._rt;
 
                         amrex::GpuArray<amrex::Real,3> H_eff;
                         H_eff[0] = Hx_eff;
@@ -623,8 +628,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // determine if the material is nonmagnetic or not
                     if (mag_Ms_arry > 0._rt){
 
-                        amrex::Real mag_gamma_arry = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, My_stag, macro_cr, i, j, k, 0);
-
                         // when working on M_yface(i,j,k,0:2) we have direct access to M_yface(i,j,k,0:2) and Hy(i,j,k)
                         // Hy and Hz can be acquired by interpolation
 
@@ -644,11 +647,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         if (mag_exchange_coupling == 1){
 
-                            amrex::Real mag_exchange_arry = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, My_stag, macro_cr, i, j, k, 0);
-                            if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
+                            if (mag_exchangey_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchangey_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                             // H_exchange - use M^[(new_time),r-1]
-                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
+                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchangey_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
                             Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
                             Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
                             Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
@@ -656,15 +658,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         if (mag_anisotropy_coupling == 1){
 
-                            amrex::Real mag_anisotropy_arry = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, My_stag, macro_cr, i, j, k, 0);
-                            if (mag_anisotropy_arry == 0._rt) amrex::Abort("The mag_anisotropy_arry is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
+                            if (mag_anisotropyy_arr(i,j,k) == 0._rt) amrex::Abort("The mag_anisotropyy_arr(i,j,k) is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
 
                             // H_anisotropy - use M^[(new_time),r-1]
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
                                 M_dot_anisotropy_axis += M_yface(i, j, k, comp) * anisotropy_axis[comp];
                             }
-                            amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
+                            amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropyy_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
                             Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
                             Hy_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
                             Hz_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
@@ -672,7 +673,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         // calculate the a_temp_dynamic_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                         // while in real simulations, the input dt is actually dt/2.0)
-                        amrex::Real a_temp_dynamic_coeff = PhysConst::mu0 * amrex::Math::abs(mag_gamma_arry) / 2._rt;
+                        amrex::Real a_temp_dynamic_coeff = PhysConst::mu0 * amrex::Math::abs(mag_gammay_arr(i,j,k)) / 2._rt;
 
                         amrex::GpuArray<amrex::Real,3> H_eff;
                         H_eff[0] = Hx_eff;
@@ -739,8 +740,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // determine if the material is nonmagnetic or not
                     if (mag_Ms_arrz > 0._rt){
 
-                        amrex::Real mag_gamma_arrz = CoarsenIO::Interp( mag_gamma_arr, mag_gamma_stag, Mz_stag, macro_cr, i, j, k, 0);
-
                         // when working on M_zface(i,j,k,0:2) we have direct access to M_zface(i,j,k,0:2) and Hz(i,j,k)
                         // Hy and Hz can be acquired by interpolation
 
@@ -760,11 +759,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         if (mag_exchange_coupling == 1){
 
-                            amrex::Real mag_exchange_arrz = CoarsenIO::Interp( mag_exchange_arr, mag_exchange_stag, Mz_stag, macro_cr, i, j, k, 0);
-                            if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
+                            if (mag_exchangez_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchangez_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                             // H_exchange - use M^[(new_time),r-1]
-                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
+                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchangez_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
                             Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
                             Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
                             Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
@@ -772,15 +770,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         if (mag_anisotropy_coupling == 1){
 
-                            amrex::Real mag_anisotropy_arrz = CoarsenIO::Interp( mag_anisotropy_arr, mag_anisotropy_stag, Mz_stag, macro_cr, i, j, k, 0);
-                            if (mag_anisotropy_arrz == 0._rt) amrex::Abort("The mag_anisotropy_arrz is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
+                            if (mag_anisotropyz_arr(i,j,k) == 0._rt) amrex::Abort("The mag_anisotropyz_arr(i,j,k) is 0.0 while including the anisotropy coupling term H_anisotropy for H_eff");
 
                             // H_anisotropy - use M^[(new_time),r-1]
                             amrex::Real M_dot_anisotropy_axis = 0.0;
                             for (int comp=0; comp<3; ++comp) {
                                 M_dot_anisotropy_axis += M_zface(i, j, k, comp) * anisotropy_axis[comp];
                             }
-                            amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
+                            amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropyz_arr(i,j,k) / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
                             Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
                             Hy_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
                             Hz_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
@@ -788,7 +785,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         // calculate the a_temp_dynamic_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                         // while in real simulations, the input dt is actually dt/2.0)
-                        amrex::Real a_temp_dynamic_coeff = PhysConst::mu0 * amrex::Math::abs(mag_gamma_arrz) / 2._rt;
+                        amrex::Real a_temp_dynamic_coeff = PhysConst::mu0 * amrex::Math::abs(mag_gammaz_arr(i,j,k)) / 2._rt;
 
                         amrex::GpuArray<amrex::Real,3> H_eff;
                         H_eff[0] = Hx_eff;
