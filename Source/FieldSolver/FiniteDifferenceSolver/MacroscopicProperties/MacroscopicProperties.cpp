@@ -254,7 +254,7 @@ MacroscopicProperties::InitData ()
         m_mag_Ms_mf[2]->setVal(m_mag_Ms);
     }
     else if (m_mag_Ms_s == "parse_mag_Ms_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf[0].get(), m_mag_Ms_parser->compile<3>(), lev);       
+        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf[0].get(), m_mag_Ms_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_Ms_mf[1].get(), m_mag_Ms_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_Ms_mf[2].get(), m_mag_Ms_parser->compile<3>(), lev);
     }
@@ -279,7 +279,7 @@ MacroscopicProperties::InitData ()
         m_mag_alpha_mf[2]->setVal(m_mag_alpha);
     }
     else if (m_mag_alpha_s == "parse_mag_alpha_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf[0].get(), m_mag_alpha_parser->compile<3>(), lev);       
+        InitializeMacroMultiFabUsingParser(m_mag_alpha_mf[0].get(), m_mag_alpha_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_alpha_mf[1].get(), m_mag_alpha_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_alpha_mf[2].get(), m_mag_alpha_parser->compile<3>(), lev);
     }
@@ -296,7 +296,7 @@ MacroscopicProperties::InitData ()
         m_mag_gamma_mf[2]->setVal(m_mag_gamma);
     }
     else if (m_mag_gamma_s == "parse_mag_gamma_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_gamma_mf[0].get(), m_mag_gamma_parser->compile<3>(), lev);       
+        InitializeMacroMultiFabUsingParser(m_mag_gamma_mf[0].get(), m_mag_gamma_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_gamma_mf[1].get(), m_mag_gamma_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_gamma_mf[2].get(), m_mag_gamma_parser->compile<3>(), lev);
     }
@@ -313,7 +313,7 @@ MacroscopicProperties::InitData ()
         m_mag_exchange_mf[2]->setVal(m_mag_exchange);
     }
     else if (m_mag_exchange_s == "parse_mag_exchange_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_exchange_mf[0].get(), m_mag_exchange_parser->compile<3>(), lev);       
+        InitializeMacroMultiFabUsingParser(m_mag_exchange_mf[0].get(), m_mag_exchange_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_exchange_mf[1].get(), m_mag_exchange_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_exchange_mf[2].get(), m_mag_exchange_parser->compile<3>(), lev);
     }
@@ -325,7 +325,7 @@ MacroscopicProperties::InitData ()
         m_mag_anisotropy_mf[2]->setVal(m_mag_anisotropy);
     }
     else if (m_mag_anisotropy_s == "parse_mag_anisotropy_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[0].get(), m_mag_anisotropy_parser->compile<3>(), lev);       
+        InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[0].get(), m_mag_anisotropy_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[1].get(), m_mag_anisotropy_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[2].get(), m_mag_anisotropy_parser->compile<3>(), lev);
     }

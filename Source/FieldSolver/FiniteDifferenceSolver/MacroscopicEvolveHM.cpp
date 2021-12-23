@@ -497,7 +497,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
         auto& mag_Ms_xface_mf = macroscopic_properties->getmag_Ms_mf(0);
         auto& mag_Ms_yface_mf = macroscopic_properties->getmag_Ms_mf(1);
         auto& mag_Ms_zface_mf = macroscopic_properties->getmag_Ms_mf(2);
-        
+
         // Extract field data for this grid/tile
         Array4<Real> const& mag_Ms_xface_arr = mag_Ms_xface_mf.array(mfi);
         Array4<Real> const& mag_Ms_yface_arr = mag_Ms_yface_mf.array(mfi);
