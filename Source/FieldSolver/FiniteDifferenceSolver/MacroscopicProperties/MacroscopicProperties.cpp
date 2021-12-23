@@ -355,18 +355,6 @@ MacroscopicProperties::InitData ()
     IntVect Mx_stag = warpx.getMfield_fp(0,0).ixType().toIntVect();
     IntVect My_stag = warpx.getMfield_fp(0,1).ixType().toIntVect();
     IntVect Mz_stag = warpx.getMfield_fp(0,2).ixType().toIntVect();
-    IntVect mag_alphax_stag = m_mag_alpha_mf[0]->ixType().toIntVect();
-    IntVect mag_alphay_stag = m_mag_alpha_mf[1]->ixType().toIntVect();
-    IntVect mag_alphaz_stag = m_mag_alpha_mf[2]->ixType().toIntVect();
-    IntVect mag_gammax_stag = m_mag_gamma_mf[0]->ixType().toIntVect();
-    IntVect mag_gammay_stag = m_mag_gamma_mf[1]->ixType().toIntVect();
-    IntVect mag_gammaz_stag = m_mag_gamma_mf[2]->ixType().toIntVect();
-    IntVect mag_exchangex_stag = m_mag_exchange_mf[0]->ixType().toIntVect();
-    IntVect mag_exchangey_stag = m_mag_exchange_mf[1]->ixType().toIntVect();
-    IntVect mag_exchangez_stag = m_mag_exchange_mf[2]->ixType().toIntVect();
-    IntVect mag_anisotropyx_stag = m_mag_anisotropy_mf[0]->ixType().toIntVect();
-    IntVect mag_anisotropyy_stag = m_mag_anisotropy_mf[1]->ixType().toIntVect();
-    IntVect mag_anisotropyz_stag = m_mag_anisotropy_mf[2]->ixType().toIntVect();
 #endif
 
 
@@ -382,12 +370,12 @@ MacroscopicProperties::InitData ()
         Bz_IndexType[idim]      = Bz_stag[idim];
         macro_cr_ratio[idim]    = 1;
 #ifdef WARPX_MAG_LLG
-        Hx_IndexType[idim]              = Hx_stag[idim];
-        Hy_IndexType[idim]              = Hy_stag[idim];
-        Hz_IndexType[idim]              = Hz_stag[idim];
-        Mx_IndexType[idim]              = Mx_stag[idim];
-        My_IndexType[idim]              = My_stag[idim];
-        Mz_IndexType[idim]              = Mz_stag[idim];
+        Hx_IndexType[idim] = Hx_stag[idim];
+        Hy_IndexType[idim] = Hy_stag[idim];
+        Hz_IndexType[idim] = Hz_stag[idim];
+        Mx_IndexType[idim] = Mx_stag[idim];
+        My_IndexType[idim] = My_stag[idim];
+        Mz_IndexType[idim] = Mz_stag[idim];
 #endif
     }
 #if (AMREX_SPACEDIM==2)
