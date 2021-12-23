@@ -238,34 +238,37 @@ MacroscopicProperties::InitData ()
     }
 #ifdef WARPX_MAG_LLG
 
-    // all magnetic macroparameters are stored on cell centers
-    m_mag_Ms_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng_EB_alloc);
-    m_mag_alpha_mf[0]      = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(1,0,0)), dmap, 1, ng_EB_alloc);
-    m_mag_alpha_mf[1]      = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,1,0)), dmap, 1, ng_EB_alloc);
-    m_mag_alpha_mf[2]      = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,0,1)), dmap, 1, ng_EB_alloc);
-    m_mag_gamma_mf[0]      = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(1,0,0)), dmap, 1, ng_EB_alloc);
-    m_mag_gamma_mf[1]      = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,1,0)), dmap, 1, ng_EB_alloc);
-    m_mag_gamma_mf[2]      = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,0,1)), dmap, 1, ng_EB_alloc);
-    m_mag_exchange_mf[0]   = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(1,0,0)), dmap, 1, ng_EB_alloc);
-    m_mag_exchange_mf[1]   = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,1,0)), dmap, 1, ng_EB_alloc);
-    m_mag_exchange_mf[2]   = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,0,1)), dmap, 1, ng_EB_alloc);
-    m_mag_anisotropy_mf[0] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(1,0,0)), dmap, 1, ng_EB_alloc);
-    m_mag_anisotropy_mf[1] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,1,0)), dmap, 1, ng_EB_alloc);
-    m_mag_anisotropy_mf[2] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect(0,0,1)), dmap, 1, ng_EB_alloc);
+    // all magnetic macroparameters are stored on faces
+    for (int i=0; i<3; ++i) {
+        m_mag_Ms_mf[i]         = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheDimensionVector(i)), dmap, 1, ng_EB_alloc);
+        m_mag_alpha_mf[i]      = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheDimensionVector(i)), dmap, 1, ng_EB_alloc);
+        m_mag_gamma_mf[i]      = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheDimensionVector(i)), dmap, 1, ng_EB_alloc);
+        m_mag_exchange_mf[i]   = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheDimensionVector(i)), dmap, 1, ng_EB_alloc);
+        m_mag_anisotropy_mf[i] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheDimensionVector(i)), dmap, 1, ng_EB_alloc);
+    }
+
     // mag_Ms - defined at cell centers
     if (m_mag_Ms_s == "constant") {
-        m_mag_Ms_mf->setVal(m_mag_Ms);
+        m_mag_Ms_mf[0]->setVal(m_mag_Ms);
+        m_mag_Ms_mf[1]->setVal(m_mag_Ms);
+        m_mag_Ms_mf[2]->setVal(m_mag_Ms);
     }
     else if (m_mag_Ms_s == "parse_mag_Ms_function"){
-        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf.get(), m_mag_Ms_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf[0].get(), m_mag_Ms_parser->compile<3>(), lev);       
+        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf[1].get(), m_mag_Ms_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_Ms_mf[2].get(), m_mag_Ms_parser->compile<3>(), lev);
     }
     // if there are regions with Ms=0, the user must provide mur value there
-    if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) < 0._rt){
-        amrex::Abort("Ms must be non-negative values");
+    for (int i=0; i<3; ++i) {
+        if (m_mag_Ms_mf[i]->min(0,m_mag_Ms_mf[i]->nGrow()) < 0._rt){
+            amrex::Abort("Ms must be non-negative values");
+        }
     }
-    else if (m_mag_Ms_mf->min(0,m_mag_Ms_mf->nGrow()) == 0._rt){
-        if (m_mu_s != "constant" && m_mu_s != "parse_mu_function"){
-            amrex::Abort("permeability must be specified since part of the simulation domain is non-magnetic !");
+    for (int i=0; i<3; ++i) {
+        if (m_mag_Ms_mf[i]->min(0,m_mag_Ms_mf[i]->nGrow()) == 0._rt){
+            if (m_mu_s != "constant" && m_mu_s != "parse_mu_function"){
+                amrex::Abort("permeability must be specified since part of the simulation domain is non-magnetic !");
+            }
         }
     }
 
@@ -298,8 +301,8 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_mag_gamma_mf[2].get(), m_mag_gamma_parser->compile<3>(), lev);
     }
     for (int i=0; i<3; ++i) {
-        if (m_mag_gamma_mf[i]->min(0,m_mag_gamma_mf[i]->nGrow()) < 0._rt) {
-            amrex::Abort("gamma should be positive, but the user input has negative values");
+        if (m_mag_gamma_mf[i]->min(0,m_mag_gamma_mf[i]->nGrow()) > 0._rt) {
+            amrex::Abort("gamma should be negative, but the user input has positive values");
         }
     }
 
@@ -314,11 +317,6 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_mag_exchange_mf[1].get(), m_mag_exchange_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_exchange_mf[2].get(), m_mag_exchange_parser->compile<3>(), lev);
     }
-    for (int i=0; i<3; ++i) {
-        if (m_mag_exchange_mf[i]->min(0,m_mag_exchange_mf[i]->nGrow()) < 0._rt) {
-            amrex::Abort("exchange should be positive, but the user input has negative values");
-        }
-    }
 
     // mag_anisotropy - defined at faces
     if (m_mag_anisotropy_s == "constant") {
@@ -330,11 +328,6 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[0].get(), m_mag_anisotropy_parser->compile<3>(), lev);       
         InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[1].get(), m_mag_anisotropy_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[2].get(), m_mag_anisotropy_parser->compile<3>(), lev);
-    }
-    for (int i=0; i<3; ++i) {
-        if (m_mag_anisotropy_mf[i]->min(0,m_mag_anisotropy_mf[i]->nGrow()) < 0._rt) {
-            amrex::Abort("anisotropy should be positive, but the user input has negative values");
-        }
     }
 #endif
 

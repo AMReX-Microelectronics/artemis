@@ -108,6 +108,7 @@ public:
      /** Gpu Vector of the anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff */
      amrex::GpuArray<amrex::Real, 3> mag_LLG_anisotropy_axis;
 
+     amrex::MultiFab& getmag_Ms_mf        (int dir) {return (*m_mag_Ms_mf[dir]);}
      amrex::MultiFab& getmag_alpha_mf     (int dir) {return (*m_mag_alpha_mf[dir]);}
      amrex::MultiFab& getmag_gamma_mf     (int dir) {return (*m_mag_gamma_mf[dir]);}
      amrex::MultiFab& getmag_exchange_mf  (int dir) {return (*m_mag_exchange_mf[dir]);}
@@ -253,7 +254,7 @@ public:
      amrex::Real m_mag_tol;
 
      /** Multifabs storing spatially varying saturation magnetization on three faces  */
-     std::unique_ptr<amrex::MultiFab> m_mag_Ms_mf;  // to be fixed next
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_Ms_mf;
      /** Multifabs storing spatially varying Gilbert damping on three faces */
      std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_alpha_mf;
      /** Multifabs storing spatially varying gyromagnetic ratio on three faces  */
