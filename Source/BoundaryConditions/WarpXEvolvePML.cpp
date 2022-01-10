@@ -133,6 +133,9 @@ WarpX::DampPML (int lev, PatchType patch_type)
             auto const& pml_Sxfab = pml_face_areas[0]->array(mfi);
             auto const& pml_Syfab = pml_face_areas[1]->array(mfi);
             auto const& pml_Szfab = pml_face_areas[2]->array(mfi);
+#ifdef WARPX_MAG_LLG
+            amrex::ignore_unused(pml_Sxfab, pml_Syfab, pml_Szfab);
+#endif
 #endif
 
             amrex::Real const * AMREX_RESTRICT sigma_fac_x = sigba[mfi].sigma_fac[0].data();
