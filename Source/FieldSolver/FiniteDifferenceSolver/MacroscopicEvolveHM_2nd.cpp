@@ -29,7 +29,6 @@ using namespace amrex;
 void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
     // The MField here is a vector of three multifabs, with M on each face, and each multifab is a three-component multifab.
     // Each M-multifab has three components, one for each component in x, y, z. (All multifabs are four dimensional, (i,j,k,n)), where, n=1 for E, B, but, n=3 for M_xface, M_yface, M_zface
-    int lev,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield, // Mfield contains three components MultiFab
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
@@ -39,7 +38,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
     std::unique_ptr<MacroscopicProperties> const &macroscopic_properties) {
 
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-        MacroscopicEvolveHMCartesian_2nd<CartesianYeeAlgorithm>(lev, Mfield, Hfield, Bfield, H_biasfield, Efield, dt, macroscopic_properties);
+        MacroscopicEvolveHMCartesian_2nd<CartesianYeeAlgorithm>(Mfield, Hfield, Bfield, H_biasfield, Efield, dt, macroscopic_properties);
     } else {
         amrex::Abort("Only yee algorithm is compatible for M updates.");
     }
@@ -48,7 +47,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
 #ifdef WARPX_MAG_LLG
 template <typename T_Algo>
 void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
-    int lev,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
