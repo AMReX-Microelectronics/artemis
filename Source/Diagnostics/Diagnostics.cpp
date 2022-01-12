@@ -11,6 +11,7 @@
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
@@ -77,6 +78,30 @@ Diagnostics::BaseReadParameters ()
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_divb_cleaning, "G can be written to file only if warpx.do_divb_cleaning = 1");
+    }
+
+    // sigma can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "sigma"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "sigma in plotfiles only works with algo.em_solver_medium=macroscopic");
+    }
+
+    // epsilon can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "epsilon"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "epsilon in plotfiles only works with algo.em_solver_medium=macroscopic");
+    }
+
+    // mu can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "mu"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "mu in plotfiles only works with algo.em_solver_medium=macroscopic");
     }
 
     // If user requests to plot proc_number for a serial run,
@@ -318,7 +343,7 @@ Diagnostics::ComputeAndPack ()
 
             // needed for contour plots of rho, i.e. ascent/sensei
             if (m_format == "sensei" || m_format == "ascent") {
-                m_mf_output[i_buffer][lev].FillBoundary(warpx.Geom(lev).periodicity());
+                WarpXCommUtil::FillBoundary(m_mf_output[i_buffer][lev], warpx.Geom(lev).periodicity());
             }
         }
     }

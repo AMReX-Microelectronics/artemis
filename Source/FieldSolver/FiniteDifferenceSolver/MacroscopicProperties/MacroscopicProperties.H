@@ -23,80 +23,6 @@
 #include <string>
 
 
-enum MacroparameterInitType { ConstantValue, ParserFunction};
-
-/**
- * \brief Functor to return macropameter, either constant value, m_value, or
- *        spatially varying scalar value computed using the parser function, m_parser.
- */
-
-struct GetMacroparameter
-{
-    /* Type of initialization for macroparameter, constant or parser function */
-    MacroparameterInitType m_type;
-    /* Constant value of the macroparameter. */
-    amrex::Real m_value;
-    /* Parser funtion of the spatially varying macroparameter*/
-    amrex::ParserExecutor<3> m_parser;
-    /**
-     * \brief Functor call. This method returns the value of the macroparameter,
-     *        or property of the medium needed for the macroscopic Maxwell solver,
-     *        at a given location (x,y,z) in the domain.
-     *
-     * @param[in] x x-coordinate of a given location
-     * @param[in] y y-coordinate of a given location
-     * @param[in] z z-coordinate of a given location
-     * @return value of the macroparameter at (x,y,z).
-     *         m_value if init-type is constant
-     *         m_parser(x,y,z) if init-type is parser function
-     */
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    amrex::Real operator () (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
-    {
-        using namespace amrex::literals;
-        if (m_type == ConstantValue)
-        {
-            return m_value;
-        }
-        else if (m_type == ParserFunction)
-        {
-            return m_parser(x,y,z);
-        }
-        else
-        {
-            amrex::Abort("macroparameter init type not valid.");
-            return 0.;
-        }
-        return 0.;
-    }
-};
-
-/**
- * \brief Functor for conductivity, sigma, of the medium.
- */
-struct GetSigmaMacroparameter : GetMacroparameter
-{
-    /** Constructor to store the type of intialization, m_type, and the value or parser function. */
-    GetSigmaMacroparameter () noexcept;
-};
-
-/**
- * \brief Functor for permeability, mu, of the medium.
- */
-struct GetMuMacroparameter : GetMacroparameter
-{
-    /** Constructor to store the type of intialization, m_type, and the value or parser function. */
-    GetMuMacroparameter () noexcept;
-};
-
-/**
- * \brief Functor for permittivity, epsilon, of the medium.
- */
-struct GetEpsilonMacroparameter : GetMacroparameter
-{
-    /** Constructor to store the type of intialization, m_type, and the value or parser function. */
-    GetEpsilonMacroparameter () noexcept;
-};
 /**
  * \brief This class contains the macroscopic properties of the medium needed to
  * evaluate macroscopic Maxwell equation.
@@ -110,12 +36,32 @@ public:
      void ReadParameters ();
      /** Initialize multifabs storing macroscopic multifabs */
      void InitData ();
+
+     /** return MultiFab, sigma (conductivity) of the medium. */
+     amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
+     amrex::MultiFab * get_pointer_sigma () {return m_sigma_mf.get();}
+     /** return MultiFab, epsilon (permittivity) of the medium. */
+     amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
+     amrex::MultiFab * get_pointer_eps () {return m_eps_mf.get();}
+     /** return MultiFab, mu (permeability) of the medium. */
+     amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
+     amrex::MultiFab * get_pointer_mu () {return m_mu_mf.get();}
+
+     /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
+     amrex::GpuArray<int, 3> macro_cr_ratio;
      /** Initializes the Multifabs storing macroscopic properties
       *  with user-defined functions(x,y,z).
       */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
-                                              amrex::ParserExecutor<3> const& macro_parser,
-                                              int lev);
+                                  amrex::ParserExecutor<3> const& macro_parser,
+                                  const int lev);
+
+     /** Gpu Vector with index type of the conductivity multifab */
+     amrex::GpuArray<int, 3> sigma_IndexType;
+     /** Gpu Vector with index type of the permittivity multifab */
+     amrex::GpuArray<int, 3> epsilon_IndexType;
+     /** Gpu Vector with index type of the permeability multifab */
+     amrex::GpuArray<int, 3> mu_IndexType;
      /** Gpu Vector with index type of the Ex multifab */
      amrex::GpuArray<int, 3> Ex_IndexType;
      /** Gpu Vector with index type of the Ey multifab */
@@ -128,6 +74,23 @@ public:
      amrex::GpuArray<int, 3> By_IndexType;
      /** Gpu Vector with index type of the Bz multifab */
      amrex::GpuArray<int, 3> Bz_IndexType;
+
+     /** Stores initialization type for conductivity : constant or parser */
+     std::string m_sigma_s = "constant";
+     /** Stores initialization type for permittivity : constant or parser */
+     std::string m_epsilon_s = "constant";
+     /** Stores initialization type for permeability : constant or parser */
+     std::string m_mu_s = "constant";
+     /** Conductivity, sigma, of the medium */
+     amrex::Real m_sigma = 0.0;
+     /** Permittivity, epsilon, of the medium */
+     amrex::Real m_epsilon = PhysConst::ep0;
+     /** Permeability, mu, of the medium */
+     amrex::Real m_mu = PhysConst::mu0;
+     /** Parser Wrappers */
+     std::unique_ptr<amrex::Parser> m_sigma_parser;
+     std::unique_ptr<amrex::Parser> m_epsilon_parser;
+     std::unique_ptr<amrex::Parser> m_mu_parser;
 
 #ifdef WARPX_MAG_LLG
      /** Gpu Vector with index type of the Hx multifab */
@@ -152,8 +115,6 @@ public:
      amrex::GpuArray<int, 3> mag_anisotropy_IndexType;
      /** Gpu Vector of the anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff */
      amrex::GpuArray<amrex::Real, 3> mag_LLG_anisotropy_axis;
-     /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
-     amrex::GpuArray<int, 3> macro_cr_ratio;
 
      amrex::MultiFab& getmag_alpha_mf () {return (*m_mag_alpha_mf);}
      amrex::MultiFab& getmag_gamma_mf () {return (*m_mag_gamma_mf);}
@@ -277,29 +238,6 @@ public:
      }
 #endif //closes ifdef MAG_LLG
 
-     /** Conductivity, sigma, of the medium */
-     amrex::Real m_sigma = 0.0;
-     /** Permittivity, epsilon, of the medium */
-     amrex::Real m_epsilon = PhysConst::ep0;
-     /** Permeability, mu, of the medium */
-     amrex::Real m_mu = PhysConst::mu0;
-     /** Stores initialization type for conductivity : constant or parser */
-     std::string m_sigma_s = "constant";
-     /** Stores initialization type for permittivity : constant or parser */
-     std::string m_epsilon_s = "constant";
-     /** Stores initialization type for permeability : constant or parser */
-     std::string m_mu_s = "constant";
-
-     /** string for storing parser function */
-     std::string m_str_sigma_function;
-     std::string m_str_epsilon_function;
-     std::string m_str_mu_function;
-     /** Parser Wrappers */
-     std::unique_ptr<amrex::Parser> m_sigma_parser;
-     std::unique_ptr<amrex::Parser> m_epsilon_parser;
-     std::unique_ptr<amrex::Parser> m_mu_parser;
-
-
 #ifdef WARPX_MAG_LLG
      /** Saturation magnetization, only applies for magnetic materials */
      amrex::Real m_mag_Ms;
@@ -351,6 +289,22 @@ public:
      std::unique_ptr<amrex::Parser> m_mag_exchange_parser;
      std::unique_ptr<amrex::Parser> m_mag_anisotropy_parser;
 #endif
+
+private:
+
+     /** Multifab for m_sigma */
+     std::unique_ptr<amrex::MultiFab> m_sigma_mf;
+     /** Multifab for m_epsilon */
+     std::unique_ptr<amrex::MultiFab> m_eps_mf;
+     /** Multifab for m_mu */
+     std::unique_ptr<amrex::MultiFab> m_mu_mf;
+
+
+     /** string for storing parser function */
+     std::string m_str_sigma_function;
+     std::string m_str_epsilon_function;
+     std::string m_str_mu_function;
+
 };
 
 /**
