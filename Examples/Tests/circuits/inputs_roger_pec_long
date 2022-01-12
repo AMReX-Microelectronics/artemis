@@ -53,8 +53,8 @@ my_constants.wavelength = Ly # hack short domain
 my_constants.frequency = 300e9 # input signal frequency
 my_constants.TP = 5.4545e-10 # Gaussian pulse width, 3 x time period of excitation
 
-my_constants.w_port = w_line
-my_constants.h_port = th_si + th_nb
+my_constants.w_port = w_line + 2*gap_cpw + 0.5*w_gnd
+my_constants.h_port = th_si + th_nb + th_si/2
 
 my_constants.sigma_0 = 0.0
 my_constants.sigma_nb = 1.e7
