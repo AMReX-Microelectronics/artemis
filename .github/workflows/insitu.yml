@@ -54,10 +54,3 @@ jobs:
       run: |
         . /ascent_docker_setup_env.sh
         cmake --build build -j 2
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ascent-test-artifacts
-        path: |
-          *.png
-          conduit_*
-        if-no-files-found: error
