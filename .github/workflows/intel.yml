@@ -82,19 +82,6 @@ jobs:
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
-        python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel -v .
-        python3 -m pip install *.whl
-
-    - name: run pywarpx
-      run: |
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        export OMP_NUM_THREADS=2
-        Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
-
   build_dpcc:
     name: oneAPI DPC++ SP
     runs-on: ubuntu-20.04
