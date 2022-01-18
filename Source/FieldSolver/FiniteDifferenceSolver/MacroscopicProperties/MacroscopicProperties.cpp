@@ -350,7 +350,7 @@ MacroscopicProperties::InitData ()
         mag_anisotropy_IndexType[idim] = mag_anisotropy_stag[idim];
 #endif
     }
-#if (AMREX_SPACEDIM==2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         sigma_IndexType[2]   = 0;
         epsilon_IndexType[2] = 0;
         mu_IndexType[2]      = 0;
@@ -396,7 +396,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                 // Shift x, y, z position based on index type
                 amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
-#if (AMREX_SPACEDIM==2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j * dx_lev[1] + real_box.lo(1) + fac_z;
