@@ -48,6 +48,9 @@
 #include <cmath>
 #include <memory>
 #include <utility>
+#ifdef AMREX_USE_EB
+#   include "AMReX_EBFabFactory.H"
+#endif
 
 using namespace amrex;
 
@@ -113,6 +116,7 @@ namespace
         });
     }
 
+#if (AMREX_SPACEDIM != 1)
     static void FillZero (int idim, Sigma& sigma, Sigma& sigma_cumsum,
                           Sigma& sigma_star, Sigma& sigma_star_cumsum,
                           const Box& overlap)
@@ -138,7 +142,9 @@ namespace
             }
         });
     }
+#endif
 }
+
 
 SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int ncell, int delta)
 {
@@ -186,8 +192,10 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
+#if (AMREX_SPACEDIM >= 2)
         int jdim = (idim+1) % AMREX_SPACEDIM;
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
         int kdim = (idim+2) % AMREX_SPACEDIM;
 #endif
 
@@ -200,11 +208,12 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             {
                 direct_faces.push_back(kv.first);
             }
+#if (AMREX_SPACEDIM >= 2)
             else if (amrex::grow(grid_box, jdim, ncell).intersects(box))
             {
                 side_faces.push_back(kv.first);
             }
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             else if (amrex::grow(grid_box, kdim, ncell).intersects(box))
             {
                 side_faces.push_back(kv.first);
@@ -229,15 +238,17 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             {
                 corners.push_back(kv.first);
             }
+#endif
         }
 
+#if (AMREX_SPACEDIM >= 2)
         for (auto gid : corners)
         {
             const Box& grid_box = grids[gid];
 
             Box lobox = amrex::adjCellLo(grid_box, idim, ncell);
             lobox.grow(jdim,ncell);
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             lobox.grow(kdim,ncell);
 #endif
             Box looverlap = lobox & box;
@@ -249,7 +260,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
             Box hibox = amrex::adjCellHi(grid_box, idim, ncell);
             hibox.grow(jdim,ncell);
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             hibox.grow(kdim,ncell);
 #endif
             Box hioverlap = hibox & box;
@@ -263,8 +274,9 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
                 amrex::Abort("SigmaBox::SigmaBox(): corners, how did this happen?\n");
             }
         }
+#endif
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         for (auto gid : side_side_edges)
         {
             const Box& grid_box = grids[gid];
@@ -304,10 +316,11 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
         }
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
         for (auto gid : side_faces)
         {
             const Box& grid_box = grids[gid];
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             const Box& overlap = amrex::grow(grid_box,jdim,ncell) & box;
 #else
             const Box& overlap = amrex::grow(amrex::grow(grid_box,jdim,ncell),kdim,ncell) & box;
@@ -319,6 +332,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
                 amrex::Abort("SigmaBox::SigmaBox(): side_faces, how did this happen?\n");
             }
         }
+#endif
 
         for (auto gid : direct_faces)
         {
@@ -371,7 +385,12 @@ SigmaBox::ComputePMLFactorsB (const Real* a_dx, Real dt)
         N[idim] = sigma_star[idim].size();
         dx[idim] = a_dx[idim];
     }
-    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    amrex::ParallelFor(
+#if (AMREX_SPACEDIM >= 2)
+        amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+#else
+        N[0],
+#endif
     [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -400,7 +419,12 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
         N[idim] = sigma[idim].size();
         dx[idim] = a_dx[idim];
     }
-    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    amrex::ParallelFor(
+#if (AMREX_SPACEDIM >= 2)
+        amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+#else
+        N[0],
+#endif
     [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -450,13 +474,14 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     }
 }
 
-PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
+PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
-          const bool J_linear_in_time,
+          const bool do_multi_J,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
+          int max_guard_EB,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_dive_cleaning(do_pml_dive_cleaning),
       m_divb_cleaning(do_pml_divb_cleaning),
@@ -492,8 +517,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         m_ok = true;
     }
 
-    DistributionMapping dm{ba};
-
     // Define the number of guard cells in each direction, for E, B, and F
     IntVect nge = IntVect(AMREX_D_DECL(2, 2, 2));
     IntVect ngb = IntVect(AMREX_D_DECL(2, 2, 2));
@@ -522,10 +545,12 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
         queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#elif defined(WARPX_DIM_1D_Z)
+        IntVect ngFFT = IntVect(ngFFt_z);
 #endif
 
         // Set the number of guard cells to the maximum of each field
@@ -537,6 +562,23 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         ngb = ngFFT;
         ngf = ngFFT;
     }
+
+    DistributionMapping dm;
+    if (WarpX::do_similar_dm_pml) {
+        auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
+        dm = amrex::MakeSimilarDM(ba, grid_ba, grid_dm, ng_sim);
+    } else {
+        dm.define(ba);
+    }
+
+#ifdef AMREX_USE_EB
+    pml_field_factory = amrex::makeEBFabFactory(*geom, ba, dm,
+                                              {max_guard_EB, max_guard_EB, max_guard_EB},
+                                              amrex::EBSupport::full);
+#else
+    amrex::ignore_unused(max_guard_EB);
+    pml_field_factory = std::make_unique<FArrayBoxFactory>();
+#endif
 
     // Allocate diagonal components (xx,yy,zz) only with divergence cleaning
     const int ncompe = (m_dive_cleaning) ? 3 : 2;
@@ -623,6 +665,36 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
     pml_j_fp[1]->setVal(0.0);
     pml_j_fp[2]->setVal(0.0);
 
+#ifdef AMREX_USE_EB
+    pml_edge_lengths[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_edge_lengths[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_edge_lengths[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_face_areas[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_face_areas[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+    pml_face_areas[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
+
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
+        WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
+        WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+
+        auto const eb_fact = fieldEBFactory();
+
+        WarpX::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
+        WarpX::ComputeFaceAreas(pml_face_areas, eb_fact);
+        std::array<amrex::Real,3> cellsize = {AMREX_D_DECL(geom->CellSize()[0],geom->CellSize()[1],geom->CellSize()[2])};
+        WarpX::ScaleEdges(pml_edge_lengths, cellsize);
+        WarpX::ScaleAreas(pml_face_areas, cellsize);
+
+    }
+#endif
+
+
     if (m_dive_cleaning)
     {
         const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
@@ -648,7 +720,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
-        amrex::ignore_unused(lev, dt, J_linear_in_time);
+        amrex::ignore_unused(lev, dt, do_multi_J);
 #   if(AMREX_SPACEDIM!=3)
         amrex::ignore_unused(noy_fft);
 #   endif
@@ -669,7 +741,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
             v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
-            fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
+            fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
     }
 
@@ -703,7 +775,14 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
         const BoxArray& cba = (do_pml_in_domain) ?
             MakeBoxArray(*cgeom, grid_cba_reduced, ncell/ref_ratio[0], do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
             MakeBoxArray(*cgeom, grid_cba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-        DistributionMapping cdm{cba};
+
+        DistributionMapping cdm;
+        if (WarpX::do_similar_dm_pml) {
+            auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
+            cdm = amrex::MakeSimilarDM(cba, grid_cba_reduced, grid_dm, ng_sim);
+        } else {
+            cdm.define(cba);
+        }
 
         pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
             WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, ncompe, nge );
@@ -831,7 +910,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& /*g
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
                 nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
                 v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
-                fft_do_time_averaging, J_linear_in_time, m_dive_cleaning, m_divb_cleaning);
+                fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
         }
     }
@@ -875,7 +954,7 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
         bx &= domain;
 
         Vector<Box> bndryboxes;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         int kbegin = -1, kend = 1;
 #else
         int kbegin =  0, kend = 0;
@@ -975,6 +1054,18 @@ std::array<MultiFab*,3>
 PML::Getj_cp ()
 {
     return {pml_j_cp[0].get(), pml_j_cp[1].get(), pml_j_cp[2].get()};
+}
+
+std::array<MultiFab*,3>
+PML::Get_edge_lengths()
+{
+    return {pml_edge_lengths[0].get(), pml_edge_lengths[1].get(), pml_edge_lengths[2].get()};
+}
+
+std::array<MultiFab*,3>
+PML::Get_face_areas()
+{
+    return {pml_face_areas[0].get(), pml_face_areas[1].get(), pml_face_areas[2].get()};
 }
 
 MultiFab*
