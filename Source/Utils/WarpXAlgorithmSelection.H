@@ -143,6 +143,13 @@ struct ReductionType {
     };
 };
 
+struct IntegrationType {
+    enum {
+        Volume = 0,
+        Surface = 1
+    };
+};
+
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
 
