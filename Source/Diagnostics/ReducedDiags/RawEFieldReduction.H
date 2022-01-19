@@ -84,7 +84,8 @@ public:
         const auto nLevel = 1;
         auto reduction_function_parser = m_parser->compile<m_nvars>();
         int integral_type = m_integral_type;        
-        
+        int surface_normal = m_surface_normal;
+
         for (int lev = 0; lev < nLevel; ++lev) {
             const amrex::MultiFab &Ex = warpx.getEfield(lev,0);
             const amrex::MultiFab &Ey = warpx.getEfield(lev,1);
