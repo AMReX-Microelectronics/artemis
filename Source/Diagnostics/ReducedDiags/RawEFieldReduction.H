@@ -61,6 +61,7 @@ private:
 
     // Type of reduction (e.g. Maximum, Minimum or Sum)
     int m_reduction_type;
+    // Type of integration (e.g. volume or surface)
     int m_integral_type;
     int m_surface_normal;
 
