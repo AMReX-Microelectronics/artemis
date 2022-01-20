@@ -15,7 +15,6 @@ max_step = 5000
 amr.n_cell = nx ny nz                  # number of cells spanning the domain in each coordinate direction at level 0
 amr.max_grid_size = max_grid_size      # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = blocking_factor  # box lengths must be integer multiples of this
-geometry.coord_sys = 0                 # 0=Cartesian
 amr.max_level = 0
 
 # total dimention in x is summation: 2*my_constants.gap_cpw + my_constants.width_line + 2*my_constants.width_gnd
