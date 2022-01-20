@@ -176,6 +176,15 @@ plt.intervals = 10
 plt.fields_to_plot = Ex Ey Ez Bx By Bz epsilon sigma mu
 plt.diag_type = Full
 
+warpx.reduced_diags_names = Int_ymaxplane
+
+Int_ymaxplane.type = RawEFieldReduction
+Ey_ymax.reduction_type = integral
+Ey_ymax.integration_type = surface
+my_constants.yPlaneLoc = 2*my_constants.dx #Plane is defined at 2 cell length inside
+Ey_ymax.reduced_function(x,y,z) = " (x > w_port/2.) * (x < w_port/2.) * ( y > yPlaneLoc - tiny)* (y < yPlaneLoc + tiny) * (z > 0.) * (z < h_port) * 1"
+Ey_ymax.intervals = 1
+
 ###############
 # input
 #input.intervals = 1
