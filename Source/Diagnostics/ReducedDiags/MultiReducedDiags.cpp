@@ -20,6 +20,7 @@
 #include "ParticleMomentum.H"
 #include "ParticleNumber.H"
 #include "RhoMaximum.H"
+#include "RawEFieldReduction.H"
 #include "Utils/IntervalsParser.H"
 
 #include <AMReX.H>
@@ -60,7 +61,8 @@ MultiReducedDiags::MultiReducedDiags ()
             {"LoadBalanceEfficiency", [](CS s){return std::make_unique<LoadBalanceEfficiency>(s);}},
             {"ParticleHistogram",     [](CS s){return std::make_unique<ParticleHistogram>(s);}},
             {"ParticleNumber",        [](CS s){return std::make_unique<ParticleNumber>(s);}},
-            {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}}
+            {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}},
+            {"RawEFieldReduction",    [](CS s){return std::make_unique<RawEFieldReduction>(s);}}
         };
     // loop over all reduced diags and fill m_multi_rd with requested reduced diags
     std::transform(m_rd_names.begin(), m_rd_names.end(), std::back_inserter(m_multi_rd),
@@ -70,7 +72,7 @@ MultiReducedDiags::MultiReducedDiags ()
             // read reduced diags type
             std::string rd_type;
             pp_rd_name.get("type", rd_type);
-
+            std::cout << "[Debug] rd_type: " <<  rd_type << "\n";
             if(reduced_diags_dictionary.count(rd_type) == 0)
                 Abort(rd_type + " is not a valid type for reduced diagnostic " + rd_name);
 

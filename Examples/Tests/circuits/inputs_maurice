@@ -11,6 +11,7 @@ amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively
 # need this here for some reason with blocking_factor = 40
 amr.check_input = 0
 
+geometry.dims = 3
 geometry.prob_lo = -Lx/2. 0. 0.
 geometry.prob_hi =  Lx/2. Ly Lz
 
