@@ -22,6 +22,7 @@ amr.max_level = 0
 # total dimension in y is CPW length
 # total dimenion in z has no direct relation with the geometries, z dimension needs to be large enough to encompass all leackage fields
 # x,y,z dimension must be consistent w/ my_constants.Lx; Ly; Lz
+geometry.dims = 3
 geometry.prob_lo = -Lx/2 -Ly/2 -Lz/2
 geometry.prob_hi =  Lx/2  Ly/2  Lz/2
 
