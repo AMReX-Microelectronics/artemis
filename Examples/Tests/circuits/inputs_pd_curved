@@ -10,6 +10,7 @@ amr.max_grid_size = max_grid_size
 amr.blocking_factor = blocking_factor
 amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
 
+geometry.dims = 3
 geometry.prob_lo = -Lx/2. 0. 0.
 geometry.prob_hi =  Lx/2. Ly Lz
 
