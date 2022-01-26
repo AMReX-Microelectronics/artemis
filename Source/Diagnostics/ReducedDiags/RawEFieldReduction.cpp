@@ -66,7 +66,6 @@ RawEFieldReduction::RawEFieldReduction (std::string rd_name)
 
     std::string surface_normal_string;
     pp_rd_name.get("surface_normal", surface_normal_string);
-    amrex::Print() << " surface_normal " << surface_normal_string << "\n";
     if (surface_normal_string == "X") {
         m_surface_normal[0] = 1;
     }
