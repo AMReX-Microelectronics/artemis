@@ -72,7 +72,6 @@ MultiReducedDiags::MultiReducedDiags ()
             // read reduced diags type
             std::string rd_type;
             pp_rd_name.get("type", rd_type);
-            std::cout << "[Debug] rd_type: " <<  rd_type << "\n";
             if(reduced_diags_dictionary.count(rd_type) == 0)
                 Abort(rd_type + " is not a valid type for reduced diagnostic " + rd_name);
 
