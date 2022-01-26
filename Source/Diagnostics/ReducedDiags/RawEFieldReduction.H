@@ -88,7 +88,7 @@ public:
         const auto nLevel = 1;
         auto reduction_function_parser = m_parser->compile<m_nvars>();
         int integral_type = m_integral_type;        
-	int* surface_normal = &m_surface_normal[0];
+    int* surface_normal = &m_surface_normal[0];
 
 
         for (int lev = 0; lev < nLevel; ++lev) {
@@ -250,12 +250,12 @@ public:
 #endif
                 } else {
 #if (AMREX_SPACEDIM==2)
-		amrex::Real length = m_surface_normal[0]*dx[1] + m_surface_normal[1]*dx[0];
+        amrex::Real length = m_surface_normal[0]*dx[1] + m_surface_normal[1]*dx[0];
                 reducedEx_value *= length;
                 reducedEy_value *= length;
                 reducedEz_value *= length;
 #else
-		amrex::Real area = m_surface_normal[0]*dx[1]*dx[2] + m_surface_normal[1]*dx[2]*dx[0] + m_surface_normal[2]*dx[0]*dx[1];
+        amrex::Real area = m_surface_normal[0]*dx[1]*dx[2] + m_surface_normal[1]*dx[2]*dx[0] + m_surface_normal[2]*dx[0]*dx[1];
                 reducedEx_value *= area;
                 reducedEy_value *= area;
                 reducedEz_value *= area;
