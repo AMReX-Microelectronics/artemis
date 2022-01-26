@@ -1,0 +1,74 @@
+# This is test case for verifying reduced diagnostics to calculate surface/volume integrals for cubic cells in a cubic domain. (use USE_LLG=FALSE, ie., no M field) 
+# Efield is simulated in a vacuum and initialized on each cells to be equal to 1.
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 500
+amr.n_cell = 32 32 32
+amr.max_grid_size = 32
+amr.blocking_factor = 4
+geometry.dims = 3
+geometry.prob_lo     =  -L/2. -L/2. -L/2.
+geometry.prob_hi     =   L/2.  L/2.  L/2.
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
+amr.max_level = 0
+
+# grid spacing
+my_constants.L = 16.e-6
+my_constants.tiny = 1.e-12
+my_constants.dx = L/32.
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+warpx.use_filter = 0
+warpx.cfl = 0.9
+my_constants.sigma = 0.
+my_constants.eps_r = 1.0
+my_constants.mu_r = 1.0
+
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+macroscopic.sigma_function(x,y,z) = "sigma"
+macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
+
+#################################
+############ FIELDS #############
+#################################
+
+my_constants.pi = 3.14159265359
+my_constants.c = 299792458.
+
+warpx.E_ext_grid_init_style = parse_E_ext_grid_function
+warpx.Ez_external_grid_function(x,y,z) = "1"
+warpx.Ex_external_grid_function(x,y,z) = "1"
+warpx.Ey_external_grid_function(x,y,z) = "1"
+
+warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.Bx_external_grid_function(x,y,z)= "0."
+warpx.By_external_grid_function(x,y,z)= "0."
+warpx.Bz_external_grid_function(x,y,z) = "0."
+
+# Diagnostics
+diagnostics.diags_names = plt chk
+plt.intervals = 10
+plt.fields_to_plot = Ex Ey Ez Bx By Bz
+plt.diag_type = Full
+
+chk.format = checkpoint
+chk.intervals = 100
+chk.diag_type = Full
+
+
+warpx.reduced_diags_names = Int_ymaxPlane
+
+Int_ymaxPlane.type = RawEFieldReduction
+Int_ymaxPlane.reduction_type = integral
+Int_ymaxPlane.integration_type = surface
+my_constants.eps=1.e-9
+my_constants.YPlaneLoc=0.5*dx #0 also works
+Int_ymaxPlane.reduced_function(x,y,z) = " (x >= -L/2.) * (x <= L/2.) * (y >= YPlaneLoc -0.5*dx) * (y <= YPlaneLoc + 0.5*dx) * (z >= -L/2.) * (z <= L/2.) * 1"
+Int_ymaxPlane.intervals = 1

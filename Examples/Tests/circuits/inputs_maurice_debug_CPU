@@ -183,9 +183,8 @@ Int_ymaxPlane.type = RawEFieldReduction
 Int_ymaxPlane.reduction_type = integral
 Int_ymaxPlane.integration_type = surface
 my_constants.yInputPlaneLoc = 2.*dy #Plane is defined at 2 cell length inside
-my_constants.eps = dy/2. 
-#Int_ymaxPlane.reduced_function(x,y,z) = " (x > -w_port/2.) * (x < w_port/2.) * ( y > yInputPlaneLoc - delta)* (y < yInputPlaneLoc + delta) * (z > 0.) * (z < h_port) * 1"
-Int_ymaxPlane.reduced_function(x,y,z) = " (x > -eps) * (x < eps) * ( y > yInputPlaneLoc - eps)* (y < yInputPlaneLoc + eps) * (z > -eps) * (z < h_port+eps) * 1"
+# Int_ymaxPlane.reduced_function(x,y,z) = " (x > -dx/2.) * (x < dx/2.) * ( y > yInputPlaneLoc - dy/2.)* (y < yInputPlaneLoc + dy/2.) * (z > -dz/2.) * (z < h_port+dz/2.) * 1"
+Int_ymaxPlane.reduced_function(x,y,z) = " (x > -dx/2.) * (x < dx/2.) * (y > yInputPlaneLoc - 0.2*dy) * (y< yInputPlaneLoc + 0.75*dy) * (z > -dz/2.) * (z < h_port+dz/2.) * 1"
 Int_ymaxPlane.intervals = 1
 
 ###############
