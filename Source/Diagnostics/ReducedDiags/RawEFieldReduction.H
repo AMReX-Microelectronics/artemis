@@ -257,7 +257,6 @@ public:
                 reducedEz_value *= length;
 #else
 		amrex::Real area = m_surface_normal[0]*dx[1]*dx[2] + m_surface_normal[1]*dx[2]*dx[0] + m_surface_normal[2]*dx[0]*dx[1];
-                amrex::Print() << " area" << area << "\n";
                 reducedEx_value *= area;
                 reducedEy_value *= area;
                 reducedEz_value *= area;
