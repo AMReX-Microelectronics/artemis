@@ -90,7 +90,6 @@ public:
         int integral_type = m_integral_type;        
 	int* surface_normal = &m_surface_normal[0];
 
-//	amrex:: IntVect surface_normal= amrex::IntVect::TheZeroVector();
 
         for (int lev = 0; lev < nLevel; ++lev) {
             const amrex::MultiFab &Ex = warpx.getEfield(lev,0);
