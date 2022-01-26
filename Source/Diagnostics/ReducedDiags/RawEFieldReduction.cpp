@@ -62,7 +62,25 @@ RawEFieldReduction::RawEFieldReduction (std::string rd_name)
     if (m_reduction_type == 2) {
         m_integral_type = GetAlgorithmInteger (pp_rd_name, "integration_type");
     }
-    amrex::Print() << " reduction type : " << m_reduction_type << " integratuon tyoe " << m_integral_type << "\n";
+    amrex::Print() << " reduction type : " << m_reduction_type << " integration type " << m_integral_type << "\n";
+
+    std::string surface_normal_string;
+    pp_rd_name.get("surface_normal", surface_normal_string);
+    amrex::Print() << " surface_normal " << surface_normal_string << "\n";
+    if (surface_normal_string == "X") {
+        m_surface_normal[0] = 1;
+        amrex::Print() << " String is X m_surface_normal[0]" << m_surface_normal[0] << "\n";
+    }
+    else if (surface_normal_string == "Y") {
+        m_surface_normal[1] = 1;
+        amrex::Print() << " String is Y m_surface_normal[1]" << m_surface_normal[1] << "\n";
+    }
+#if (AMREX_SPACEDIM==3)
+    else if (surface_normal_string == "Z") {
+        m_surface_normal[2] = 1;
+        amrex::Print() << " String is Z m_surface_normal[2]" << m_surface_normal[2] << "\n";
+    }
+#endif
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {

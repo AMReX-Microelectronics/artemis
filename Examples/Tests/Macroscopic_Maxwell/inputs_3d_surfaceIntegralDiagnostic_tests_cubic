@@ -1,24 +1,34 @@
-# This is test case for verifying reduced diagnostics to calculate surface/volume integrals for cubic cells in a cubic domain. (use USE_LLG=FALSE, ie., no M field) 
+# This is test case for verifying reduced diagnostics to calculate surface/volume integrals for cubic cells in a noncubic domain. (use USE_LLG=FALSE, ie., no M field) 
 # Efield is simulated in a vacuum and initialized on each cells to be equal to 1.
 
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 500
-amr.n_cell = 32 32 32
-amr.max_grid_size = 32
+amr.n_cell = n_cellx n_celly n_cellz
+
+amr.max_grid_size = 16
 amr.blocking_factor = 4
 geometry.dims = 3
-geometry.prob_lo     =  -L/2. -L/2. -L/2.
-geometry.prob_hi     =   L/2.  L/2.  L/2.
+geometry.prob_lo     =  -Lx/2. -Ly/2. -Lz/2.
+geometry.prob_hi     =   Lx/2.  Ly/2.  Lz/2.
 boundary.field_lo = periodic periodic periodic
 boundary.field_hi = periodic periodic periodic
 amr.max_level = 0
 
+# domain size
+my_constants.n_cellx = 8
+my_constants.n_celly = 16
+my_constants.n_cellz = 12
+
 # grid spacing
-my_constants.L = 16.e-6
+my_constants.Lx = 8.e-6
+my_constants.Ly = 16.e-6
+my_constants.Lz = 12.e-6
 my_constants.tiny = 1.e-12
-my_constants.dx = L/32.
+my_constants.dx = Lx/n_cellx
+my_constants.dy = Ly/n_celly
+my_constants.dz = Lz/n_cellz
 #################################
 ############ NUMERICS ###########
 #################################
@@ -63,12 +73,20 @@ chk.intervals = 100
 chk.diag_type = Full
 
 
-warpx.reduced_diags_names = Int_ymaxPlane
-
-Int_ymaxPlane.type = RawEFieldReduction
-Int_ymaxPlane.reduction_type = integral
-Int_ymaxPlane.integration_type = surface
+warpx.reduced_diags_names = Int_yPlane
 my_constants.eps=1.e-9
-my_constants.YPlaneLoc=0.5*dx #0 also works
-Int_ymaxPlane.reduced_function(x,y,z) = " (x >= -L/2.) * (x <= L/2.) * (y >= YPlaneLoc -0.5*dx) * (y <= YPlaneLoc + 0.5*dx) * (z >= -L/2.) * (z <= L/2.) * 1"
-Int_ymaxPlane.intervals = 1
+Int_yPlane.type = RawEFieldReduction
+Int_yPlane.reduction_type = integral
+Int_yPlane.integration_type = surface
+Int_yPlane.intervals = 1
+Int_yPlane.surface_normal = X
+my_constants.YPlaneLoc=0.
+
+#Example 1
+# Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= -Lz/2.) * (z <= Lz/2.) * 1" # This is for a plane strip. Ex=7*12*dx*dz, Ey=8*12*dx*dz, Ez=8*11*dx*dz
+
+#Example 2
+# Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= -Lz/2.) * (z <= 0.-eps) * 1" # This is for a half planar strip. Ex=7*6*dx*dz, Ey=8*6*dx*dz, Ez=8*6*dx*dz (Note eps in z function)
+
+#Example 3
+Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= 0. - eps) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= -Lz/2.) * (z <= 0.-eps) * 1" # This is for a quarter planar strip. Ex=4*6*dx*dz, Ey=4*6*dx*dz, Ez=4*6*dx*dz (Note eps in x and z function)

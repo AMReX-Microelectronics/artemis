@@ -63,7 +63,11 @@ private:
     int m_reduction_type;
     // Type of integration (e.g. volume or surface)
     int m_integral_type;
-    int m_surface_normal;
+#if (AMREX_SPACEDIM==2)
+    int m_surface_normal[2]={0,0};
+#else
+    int m_surface_normal[3]={0,0,0};
+#endif
 
 public:
 
@@ -84,7 +88,9 @@ public:
         const auto nLevel = 1;
         auto reduction_function_parser = m_parser->compile<m_nvars>();
         int integral_type = m_integral_type;        
-        int surface_normal = m_surface_normal;
+	int* surface_normal = &m_surface_normal[0];
+
+//	amrex:: IntVect surface_normal= amrex::IntVect::TheZeroVector();
 
         for (int lev = 0; lev < nLevel; ++lev) {
             const amrex::MultiFab &Ex = warpx.getEfield(lev,0);
@@ -233,6 +239,7 @@ public:
             // If reduction operation is a sum, multiply the value by the cell volume so that the
             // result is the integral of the function over the simulation domain.
                 if (integral_type == 0) {
+
 #if (AMREX_SPACEDIM==2)
                 reducedEx_value *= dx[0]*dx[1];
                 reducedEy_value *= dx[0]*dx[1];
@@ -243,15 +250,17 @@ public:
                 reducedEz_value *= dx[0]*dx[1]*dx[2];
 #endif
                 } else {
-                // works only when dx = dy = dz
 #if (AMREX_SPACEDIM==2)
-                reducedEx_value *= dx[0];
-                reducedEy_value *= dx[0];
-                reducedEz_value *= dx[0];
+		amrex::Real length = m_surface_normal[0]*dx[1] + m_surface_normal[1]*dx[0];
+                reducedEx_value *= length;
+                reducedEy_value *= length;
+                reducedEz_value *= length;
 #else
-                reducedEx_value *= dx[0]*dx[1];
-                reducedEy_value *= dx[0]*dx[1];
-                reducedEz_value *= dx[0]*dx[1];
+		amrex::Real area = m_surface_normal[0]*dx[1]*dx[2] + m_surface_normal[1]*dx[2]*dx[0] + m_surface_normal[2]*dx[0]*dx[1];
+                amrex::Print() << " area" << area << "\n";
+                reducedEx_value *= area;
+                reducedEy_value *= area;
+                reducedEz_value *= area;
 #endif
                 }
             }
