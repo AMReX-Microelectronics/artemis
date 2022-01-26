@@ -173,8 +173,8 @@ diagnostics.diags_names = plt
 ###############
 # full plotfiles
 plt.intervals = 10
-# aplt.fields_to_plot = Ez Bx 
-plt.fields_to_plot = Ex Ey Ez Bx By Bz epsilon sigma mu
+plt.fields_to_plot = Ez Bx 
+#plt.fields_to_plot = Ex Ey Ez Bx By Bz epsilon sigma mu
 plt.diag_type = Full
 
 
@@ -198,9 +198,6 @@ my_constants.YOutputPlaneLoc=Ly - l_Al #Nodes aligned with Y
 
  Int_yInputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YInputPlaneLoc - dy/2.) * (y <= YInputPlaneLoc) * (z >= 0.) * (z <= h_port) * 1"
  Int_yOutputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YOutputPlaneLoc - dy/2.) * (y <= YOutputPlaneLoc) * (z >= 0.) * (z <= h_port) * 1"
-#This function is for a Y-plane strip.
-#We correctly predict: Ez=(n_cellsx/2.)*(n_cellsz/2.)*dx*dz. YPlaneLoc=dy/2. or 0. does not affect computation of Ez.
-
 ###############
 # input
 #input.intervals = 1
