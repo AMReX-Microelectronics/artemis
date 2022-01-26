@@ -1,0 +1,153 @@
+# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
+
+####################################################################################################
+## This input file simulates the simplified TRL
+## Superconducting metal is simplified to PEC
+## The plane wave excitation is the time-dependent modified Gaussian pulse
+## This input file requires USE_LLG=FALSE in the GNUMakefile.
+####################################################################################################
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 5000
+
+amr.n_cell = nx ny nz                  # number of cells spanning the domain in each coordinate direction at level 0
+amr.max_grid_size = max_grid_size      # maximum size of each AMReX box, used to decompose the domain
+amr.blocking_factor = blocking_factor  # box lengths must be integer multiples of this
+amr.max_level = 0
+
+# total dimention in x is summation: 2*my_constants.gap_cpw + my_constants.width_line + 2*my_constants.width_gnd
+# total dimension in y is CPW length
+# total dimenion in z has no direct relation with the geometries, z dimension needs to be large enough to encompass all leackage fields
+# x,y,z dimension must be consistent w/ my_constants.Lx; Ly; Lz
+geometry.dims = 3
+geometry.prob_lo = -Lx/2 -Ly/2 -Lz/2
+geometry.prob_hi =  Lx/2  Ly/2  Lz/2
+
+my_constants.pi = 3.14159265359
+my_constants.c = 299792458.
+
+# domain sizes and cell numbers separately defined for easier excitation function definition
+my_constants.Lx = 64.0e-6  # total x-dimension of entire simulation domain
+my_constants.Ly = 512.0e-6  # hack short domain
+my_constants.Lz = 64.0e-6 # total z-dimension of entire simulation domain
+my_constants.nx = 128
+my_constants.ny = 128      # total number of cells in y direction
+my_constants.nz = 128
+my_constants.max_grid_size = 128
+my_constants.blocking_factor = 32
+
+my_constants.dx = Lx / nx
+my_constants.dy = Ly / ny
+my_constants.dz = Lz / nz
+
+my_constants.tiny = 1.e-9
+
+my_constants.th_si = 32.0e-6 # thickness of the silicon substrate is 70um
+my_constants.th_nb = 2.0e-6
+
+my_constants.gap_cpw = 6.0e-6 # air gap of CPW
+my_constants.w_line = 10.0e-6 # line width of CPW
+my_constants.w_gnd = 21.0e-6 # width of each ground patch
+
+my_constants.wavelength = Ly # hack short domain
+my_constants.frequency = 300e9 # input signal frequency
+my_constants.TP = 5.4545e-10 # Gaussian pulse width, 3 x time period of excitation
+
+my_constants.w_port = w_line + 2*gap_cpw + 0.5*w_gnd
+my_constants.h_port = th_si + th_nb + th_si/2
+
+my_constants.sigma_0 = 0.0
+my_constants.sigma_nb = 1.e7
+my_constants.sigma_si = 1.e1
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_nb = 13.
+my_constants.eps_r_si = 11.7
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_nb = 1.0
+my_constants.mu_r_si = 1.0
+
+my_constants.flag_none = 0 # no source flag
+my_constants.flag_hs = 1 # hard source flag
+my_constants.flag_ss = 2 # soft source flag
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+warpx.use_filter = 0
+warpx.cfl = 0.8
+boundary.field_lo = pml pec pml   # PML at -x to extend GND patches; PEC at -y end to superimpose waveguide port; PML at -z end to extend Si substrate;
+boundary.field_hi = pml pml pml   # PML at +x to extend GND patches; PML at +y end to extend the TRL; PML at -z end to extend Si substrate;
+particles.nspecies = 0
+
+algo.em_solver_medium = macroscopic           # vacuum/macroscopic
+algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
+
+###############
+# geometry
+# each row represents a different part of the circuit
+# 1. vacuum everywhere, then add in si section
+# 2. si substrate
+###############
+
+# NOTE: the "tinys" can go away once we parse to cell-centers and average to faces/edges
+
+macroscopic.sigma_function(x,y,z) = "sigma_0
++ (sigma_si - sigma_0) * (z < -Lz/2 + th_si - tiny)"
+
+macroscopic.epsilon_function(x,y,z) = "eps_0
++ eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si - tiny)"
+
+macroscopic.mu_function(x,y,z) = "mu_0
++ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si - tiny)"
+
+#################################
+############ FIELDS #############
+#################################
+
+# vertical electric voltage excitation superimposed with PEC at one end of CPW
+# in the waveform of modified Gaussian pulse
+warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+
+###############
+# geometry
+# each row represents a different part of the circuit
+# 1. transmission line in center
+# 2. left ground
+# 3. right ground
+###############
+
+warpx.Ex_excitation_flag_function(x,y,z) = "
+  flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
++ flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
++ flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)"
+
+warpx.Ey_excitation_flag_function(x,y,z) = "
+  flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
++ flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
++ flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)"
+
+warpx.Ez_excitation_flag_function(x,y,z) = "
+  flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
++ flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
++ flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)
++ flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < -Lz/2 + h_port) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*frequency*t) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
+
+# Diagnostics
+
+diagnostics.diags_names = plt
+
+plt.intervals = 5
+#plt.diag_lo = 0.0 0.0 -Lz/2.0
+#plt.diag_hi = 0.0 0.0  Lz/2.0
+plt.diag_type = Full
+plt.fields_to_plot = Ex Ey Ez Bx By Bz

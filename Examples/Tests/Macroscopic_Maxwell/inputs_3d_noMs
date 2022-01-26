@@ -8,7 +8,6 @@ max_step = 500
 amr.n_cell = 16 16 128
 amr.max_grid_size = 32
 amr.blocking_factor = 16
-geometry.coord_sys   = 0
 geometry.prob_lo     =  -16.e-6 -16.e-6 -128.e-6
 geometry.prob_hi     =   16.e-6  16.e-6  128.e-6
 boundary.field_lo = periodic periodic pml
