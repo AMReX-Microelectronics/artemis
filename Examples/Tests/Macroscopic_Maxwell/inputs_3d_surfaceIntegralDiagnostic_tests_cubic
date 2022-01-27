@@ -1,4 +1,4 @@
-# This is test case for verifying reduced diagnostics to calculate surface/volume integrals for cubic cells in a noncubic domain. (use USE_LLG=FALSE, ie., no M field) 
+# This is test case for verifying reduced diagnostics to calculate surface/volume integrals for cubic cells in a noncubic domain. (use USE_LLG=FALSE, ie., no M field)
 # Efield is simulated in a vacuum and initialized on each cells to be equal to 1.
 
 ################################

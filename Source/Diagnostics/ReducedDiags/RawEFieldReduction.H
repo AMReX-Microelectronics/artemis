@@ -74,7 +74,7 @@ public:
 
 
     /**
-     * This function does the actual reduction computation. 
+     * This function does the actual reduction computation.
      * The reduction operation is performed on the raw fields using amrex::ReduceOps.
      *
      * \tparam ReduceOp the type of reduction that is performed. This is typically
@@ -88,7 +88,7 @@ public:
         auto & warpx = WarpX::GetInstance();
         const auto nLevel = 1;
         auto reduction_function_parser = m_parser->compile<m_nvars>();
-        int integral_type = m_integral_type;        
+        int integral_type = m_integral_type;
         int* surface_normal = &m_surface_normal[0];
 
 
@@ -140,7 +140,7 @@ public:
                 const amrex::Box& tx = mfi.tilebox(Ex_nodalType);
                 const amrex::Box& ty = mfi.tilebox(Ey_nodalType);
                 const amrex::Box& tz = mfi.tilebox(Ez_nodalType);
- 
+
                 const amrex::IntVect lx = tx.smallEnd() ;
                 const amrex::IntVect hx = tx.bigEnd()   - amrex::IntVect::TheNodeVector();
                 const amrex::Box& tex = amrex::Box(lx,hx,Ex_nodalType);
@@ -152,7 +152,7 @@ public:
                 const amrex::IntVect lz = tz.smallEnd() ;
                 const amrex::IntVect hz = tz.bigEnd()   - amrex::IntVect::TheNodeVector();
                 const amrex::Box& tez = amrex::Box(lz,hz,Ez_nodalType);
- 
+
                 const auto& Ex_arr = Ex[mfi].array();
                 const auto& Ey_arr = Ey[mfi].array();
                 const auto& Ez_arr = Ez[mfi].array();
@@ -178,7 +178,7 @@ public:
                 reduceEy_op.eval(tey, reduceEy_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
-                    // Shift x, y, z position based on index type 
+                    // Shift x, y, z position based on index type
                     amrex::Real fac_x = (1._rt - Ey_nodalType[0]) * dx[0] * 0.5_rt;
                     amrex::Real x = i * dx[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
@@ -196,7 +196,7 @@ public:
                 reduceEz_op.eval(tez, reduceEz_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
-                    // Shift x, y, z position based on index type 
+                    // Shift x, y, z position based on index type
                     amrex::Real fac_x = (1._rt - Ez_nodalType[0]) * dx[0] * 0.5_rt;
                     amrex::Real x = i * dx[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
@@ -266,7 +266,7 @@ public:
             m_data[index_Ex] = reducedEx_value;
             m_data[index_Ey] = reducedEy_value;
             m_data[index_Ez] = reducedEz_value;
-           
+
         }
     }
 
