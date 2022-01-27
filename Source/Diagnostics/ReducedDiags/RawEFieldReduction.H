@@ -63,6 +63,7 @@ private:
     int m_reduction_type;
     // Type of integration (e.g. volume or surface)
     int m_integral_type;
+    // The direction of the surface for surface integration. (e.g. X, Y, or Z)
 #if (AMREX_SPACEDIM==2)
     int m_surface_normal[2]={0,0};
 #else
@@ -88,7 +89,7 @@ public:
         const auto nLevel = 1;
         auto reduction_function_parser = m_parser->compile<m_nvars>();
         int integral_type = m_integral_type;        
-    int* surface_normal = &m_surface_normal[0];
+        int* surface_normal = &m_surface_normal[0];
 
 
         for (int lev = 0; lev < nLevel; ++lev) {

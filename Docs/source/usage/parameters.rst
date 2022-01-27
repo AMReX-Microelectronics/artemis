@@ -2385,15 +2385,21 @@ Reduced Diagnostics
         * ``<reduced_diags_name>.reduction_type`` (`string`)
             The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
             ``Integral``.
-            ``Integral`` computes the spatial integral of the function defined in the parser by
-            summing its value on all grid points and multiplying the result by the volume of a
-            cell.
+            ``Integral`` computes the spatial surface or volume integral, depending on the choice 
+            of the integration_type, of the function defined in the parser by summing its value on
+            all grid points and multiplying the result by the area or volume of a cell.
             Please be also aware that measuring maximum quantities might be very noisy in PIC
             simulations.
 
         The only output column is the reduced value.
 
         Note that the fields are averaged on the cell centers before the reduction is performed.
+
+        * ``<reduced_diags_name>.integration_type`` (`string`)
+           The type of integration to be performed. It must be either ``surface`` or ``volume``.
+
+        * ``<reduced_diags_name>.surface_normal`` (`string`)
+           The surface on which the surface integration is required. It must be either ``X``, ``Y`` or ``Z``.
 
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the
