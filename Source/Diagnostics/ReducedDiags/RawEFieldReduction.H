@@ -97,7 +97,6 @@ public:
             const amrex::MultiFab &Ey = warpx.getEfield(lev,1);
             const amrex::MultiFab &Ez = warpx.getEfield(lev,2);
 
-            constexpr int noutput = 3;
             constexpr int index_Ex = 0;
             constexpr int index_Ey = 1;
             constexpr int index_Ez = 2;
@@ -113,7 +112,6 @@ public:
                 Ey_IndexType[idim] = Ey_nodalType[idim];
                 Ez_IndexType[idim] = Ez_nodalType[idim];
             }
-            constexpr int reduction_comp = 0;
 
             amrex::ReduceOps<ReduceOp> reduceEx_op;
             amrex::ReduceOps<ReduceOp> reduceEy_op;
