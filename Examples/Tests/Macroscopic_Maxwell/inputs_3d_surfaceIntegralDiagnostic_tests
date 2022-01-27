@@ -90,10 +90,6 @@ my_constants.YPlaneLoc=dy/2. #Intesect Y-nodes. #Tests showed 0 also works.
 #This function is for a Y-plane strip. 
 #We predict: Ex=(n_cellsx-1)*(n_cellsz)*dx*dz, Ey=(n_cellsx)*(n_cellsz)*dx*dz, Ez=(n_cellsx)*(n_cellsz-1)*dx*dz 
 #Note that we compute E over the surface so the unit is [V/m . m] = [V.m]
-#The above prediction of Ez holds as long as max_grid_size >= n_cellsz. If max_grid_size < n_cellsz then we get Ez=(n_cellsx)*(n_cellsz-(n_cellsz/max_grid_size))*dx*dz
-#Also, if max_grid_size < n_cellsx, then Ex prediction is affected by the choice of max_grid_size and is equal to Ex \approx (n_cellsx-(n_cellsx/max_grid_size))*(n_cellsz))*dx*dz.
-#Ey is unaffected by the choice of max_grid_size.
-#So the rule of thumb is select max_grid_size >= max(n_cellsx, n_cellsz)
 
 #Example 2:
 # Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= -Lz/2.) * (z <= 0.-eps) * 1" 
@@ -119,9 +115,6 @@ my_constants.YPlaneLoc=dy/2. #Intesect Y-nodes. #Tests showed 0 also works.
 #Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc-dx/2.) * (x <= XPlaneLoc) * (y >= -Ly/2.) * (y <= 0.-eps) * (z >= -Lz/2.) * (z <= 0.-eps) * 1" 
 #This function is for a quarter X-plane strip. Note eps in y & z function.
 #We predict: Ex=0.25*(n_cellsy)*(n_cellsz)*dx*dz, Ey=0.25*(n_cellsy)*(n_cellsz)*dx*dz, Ez=0.25*(n_cellsy)*(n_cellsz)*dx*dz
-#The above prediction of Ey holds as long as max_grid_size = n_cellsy. If max_grid_size < n_cellsy then we get Ey \approx 0.25*(n_cellsy-(n_cellsy/max_grid_size))*(n_cellsz)*dx*dz.
-#Also, if max_grid_size < n_cellsz, then Ez prediction is affected by the choice of max_grid_size and is equal to Ez \approx 0.25*(n_cellsy)*(n_cellsz-(n_cellsz/max_grid_size))*dx*dz.
-#Ex is unaffected by the choice of max_grid_size.
 
 ######################### Surface Integral on the Z-Plane #############################
 #warpx.reduced_diags_names = Int_zPlane
@@ -136,7 +129,3 @@ my_constants.YPlaneLoc=dy/2. #Intesect Y-nodes. #Tests showed 0 also works.
 #Int_zPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= 0.-eps) * (y >= -Ly/2.) * (y <= 0.-eps) * (z >= ZPlaneLoc - dz/2.) * (z <= ZPlaneLoc) * 1" 
 #This function is for a quarter Z-plane strip. Note eps in x & y function.
 #We predict: Ex=Ey=Ez=0.25*(n_cellsx)*(n_cellsy)*dx*dz.
-#The prediction of Ey holds as long as max_grid_size = n_cellsy. If max_grid_size < n_cellsy, then we get Ey \approx 0.25*(n_cellsy-(n_cellsy/max_grid_size))*(n_cellsz)*dx*dz. 
-#Also, if max_grid_size < n_cellsx, then Ex prediction is affected by the choice of max_grid_size and is equal to Ex \approx 0.25*(n_cellsx- (n_cellsx/max_grid_size))*(n_cellsy)*dx*dz
-#Ez is unaffected by max_grid_size.
-
