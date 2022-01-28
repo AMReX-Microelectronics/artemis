@@ -139,23 +139,11 @@ public:
                 const amrex::Box& ty = mfi.tilebox(Ey_nodalType);
                 const amrex::Box& tz = mfi.tilebox(Ez_nodalType);
 
-                const amrex::IntVect lx = tx.smallEnd() ;
-                const amrex::IntVect hx = tx.bigEnd()   - amrex::IntVect::TheNodeVector();
-                const amrex::Box& tex = amrex::Box(lx,hx,Ex_nodalType);
-
-                const amrex::IntVect ly = ty.smallEnd() ;
-                const amrex::IntVect hy = ty.bigEnd()   - amrex::IntVect::TheNodeVector();
-                const amrex::Box& tey = amrex::Box(ly,hy,Ey_nodalType);
-
-                const amrex::IntVect lz = tz.smallEnd() ;
-                const amrex::IntVect hz = tz.bigEnd()   - amrex::IntVect::TheNodeVector();
-                const amrex::Box& tez = amrex::Box(lz,hz,Ez_nodalType);
-
                 const auto& Ex_arr = Ex[mfi].array();
                 const auto& Ey_arr = Ey[mfi].array();
                 const auto& Ez_arr = Ez[mfi].array();
 
-                reduceEx_op.eval(tex, reduceEx_data,
+                reduceEx_op.eval(tx, reduceEx_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
                     // Shift x, y, z position based on index type
@@ -173,7 +161,7 @@ public:
 #endif
                     return reduction_function_parser(x,y,z)*Ex_arr(i,j,k);
                 });
-                reduceEy_op.eval(tey, reduceEy_data,
+                reduceEy_op.eval(ty, reduceEy_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
                     // Shift x, y, z position based on index type
@@ -191,7 +179,7 @@ public:
 #endif
                     return reduction_function_parser(x,y,z)*Ey_arr(i,j,k);
                 });
-                reduceEz_op.eval(tez, reduceEz_data,
+                reduceEz_op.eval(tz, reduceEz_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
                     // Shift x, y, z position based on index type
