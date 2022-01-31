@@ -138,7 +138,16 @@ public:
                 const amrex::Box& tx = mfi.tilebox(Ex_nodalType);
                 const amrex::Box& ty = mfi.tilebox(Ey_nodalType);
                 const amrex::Box& tz = mfi.tilebox(Ez_nodalType);
+                
+		const amrex::IntVect lx = tx.smallEnd();
+		const amrex::IntVect hx = tx.bigEnd();
 
+		const amrex::IntVect ly = ty.smallEnd();
+		const amrex::IntVect hy = ty.bigEnd();
+
+		const amrex::IntVect lz = tz.smallEnd();
+		const amrex::IntVect hz = tz.bigEnd();
+                
                 const auto& Ex_arr = Ex[mfi].array();
                 const auto& Ey_arr = Ey[mfi].array();
                 const auto& Ez_arr = Ez[mfi].array();
@@ -159,7 +168,26 @@ public:
                     amrex::Real fac_z = (1._rt - Ex_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
-                    return reduction_function_parser(x,y,z)*Ex_arr(i,j,k);
+                    amrex::Real weight = 1.0;
+                    if (surface_normal[0] == 1) {
+		        if (k == lx[2] || k == hx[2]) {
+                             weight *= 0.5;
+		        }
+		        if (j == lx[1] || j == hx[1]) {
+                             weight *= 0.5;      
+                        }
+		    }
+		    else if (surface_normal[1] == 1) {
+                        if (k == lx[2] || k == hx[2]) {
+                             weight *= 0.5;
+                        }
+                    }
+                    else if (surface_normal[2] == 1) {
+			if (j == lx[1] || j == hx[1]) {
+                            weight *= 0.5;
+                        }
+                    }
+                    return weight*reduction_function_parser(x,y,z)*Ex_arr(i,j,k);
                 });
                 reduceEy_op.eval(ty, reduceEy_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
@@ -177,7 +205,26 @@ public:
                     amrex::Real fac_z = (1._rt - Ey_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
-                    return reduction_function_parser(x,y,z)*Ey_arr(i,j,k);
+                    amrex::Real weight = 1.0;
+		    if (surface_normal[0] == 1) {
+                        if (k == ly[2] || k == hy[2]) {
+                            weight *= 0.5;
+                        }
+                    }
+		    else if (surface_normal[1] == 1) {
+		        if (i == ly[0] || i == hy[0]) {
+                            weight *= 0.5;
+		        }
+		        if (k == ly[2] || k == hy[2]) {
+                            weight *= 0.5;      
+                        }
+		    }
+                    else if (surface_normal[2] == 1) {
+			if (i == ly[0] || i == hy[0]) {
+                            weight *= 0.5;
+                        }
+                    }
+                    return weight*reduction_function_parser(x,y,z)*Ey_arr(i,j,k);
                 });
                 reduceEz_op.eval(tz, reduceEz_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
@@ -195,7 +242,26 @@ public:
                     amrex::Real fac_z = (1._rt - Ez_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
-                    return reduction_function_parser(x,y,z)*Ez_arr(i,j,k);
+                    amrex::Real weight = 1.0;
+		    if (surface_normal[0] == 1) {
+                        if (j == lz[1] || j == hz[1]) {
+                            weight *= 0.5;
+                        }
+                    }
+                    else if (surface_normal[1] == 1) {
+			if (i == lz[0] || i == hz[0]) {
+                            weight *= 0.5;
+                        }
+                    }
+		    else if (surface_normal[2] == 1) {
+		        if (i == lz[0] || i == hz[0]) {
+                            weight *= 0.5;
+		        }
+		        if (j == lz[1] || j == hz[1]) {
+                            weight *= 0.5;      
+                        }
+		    }
+                    return weight*reduction_function_parser(x,y,z)*Ez_arr(i,j,k);
                 });
             }
 
