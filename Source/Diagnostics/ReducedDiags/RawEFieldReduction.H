@@ -139,15 +139,15 @@ public:
                 const amrex::Box& ty = mfi.tilebox(Ey_nodalType);
                 const amrex::Box& tz = mfi.tilebox(Ez_nodalType);
                 
-		const amrex::IntVect lx = tx.smallEnd();
-		const amrex::IntVect hx = tx.bigEnd();
+                const amrex::IntVect lx = tx.smallEnd();
+                const amrex::IntVect hx = tx.bigEnd();
 
-		const amrex::IntVect ly = ty.smallEnd();
-		const amrex::IntVect hy = ty.bigEnd();
+                const amrex::IntVect ly = ty.smallEnd();
+                const amrex::IntVect hy = ty.bigEnd();
 
-		const amrex::IntVect lz = tz.smallEnd();
-		const amrex::IntVect hz = tz.bigEnd();
-                
+                const amrex::IntVect lz = tz.smallEnd();
+                const amrex::IntVect hz = tz.bigEnd();
+
                 const auto& Ex_arr = Ex[mfi].array();
                 const auto& Ey_arr = Ey[mfi].array();
                 const auto& Ez_arr = Ez[mfi].array();
