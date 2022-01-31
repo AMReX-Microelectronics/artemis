@@ -138,7 +138,7 @@ public:
                 const amrex::Box& tx = mfi.tilebox(Ex_nodalType);
                 const amrex::Box& ty = mfi.tilebox(Ey_nodalType);
                 const amrex::Box& tz = mfi.tilebox(Ez_nodalType);
-                
+
                 const amrex::IntVect lx = tx.smallEnd();
                 const amrex::IntVect hx = tx.bigEnd();
 
@@ -174,7 +174,7 @@ public:
                              weight *= 0.5;
                 }
                 if (j == lx[1] || j == hx[1]) {
-                             weight *= 0.5;      
+                             weight *= 0.5;
                         }
             }
             else if (surface_normal[1] == 1) {
@@ -216,7 +216,7 @@ public:
                             weight *= 0.5;
                 }
                 if (k == ly[2] || k == hy[2]) {
-                            weight *= 0.5;      
+                            weight *= 0.5;
                         }
             }
                     else if (surface_normal[2] == 1) {
@@ -258,7 +258,7 @@ public:
                             weight *= 0.5;
                 }
                 if (j == lz[1] || j == hz[1]) {
-                            weight *= 0.5;      
+                            weight *= 0.5;
                         }
             }
                     return weight*reduction_function_parser(x,y,z)*Ez_arr(i,j,k);
