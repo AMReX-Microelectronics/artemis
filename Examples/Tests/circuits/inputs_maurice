@@ -78,7 +78,7 @@ my_constants.n_cellx = 200
 my_constants.n_celly = 60
 my_constants.n_cellz = 400
 my_constants.max_grid_size = 400
-my_constants.blocking_factor = 40
+my_constants.blocking_factor = 400
 
 my_constants.Lx = 4.e-6
 my_constants.Ly = 6.e-6
@@ -173,15 +173,15 @@ diagnostics.diags_names = plt
 ###############
 # full plotfiles
 plt.intervals = 10
-plt.fields_to_plot = Ez Bx 
-#plt.fields_to_plot = Ex Ey Ez Bx By Bz epsilon sigma mu
+#plt.fields_to_plot = Ez Bx 
+plt.fields_to_plot = Ex Ey Ez Bx By Bz epsilon sigma mu
 plt.diag_type = Full
 
 
 ########################## Surface Integral on the Y-Plane #############################
 my_constants.eps=1.e-9
 
-warpx.reduced_diags_names = Int_yInputPlane Int_yOutputPlane
+warpx.reduced_diags_names = Int_yInputPlane Int_yOutputPlane Int_yOutputPlane2
 Int_yInputPlane.type = RawEFieldReduction
 Int_yInputPlane.reduction_type = integral
 Int_yInputPlane.integration_type = surface
@@ -196,8 +196,16 @@ Int_yOutputPlane.intervals = 1
 Int_yOutputPlane.surface_normal = Y
 my_constants.YOutputPlaneLoc=Ly - l_Al #Nodes aligned with Y
 
+Int_yOutputPlane2.type = RawEFieldReduction
+Int_yOutputPlane2.reduction_type = integral
+Int_yOutputPlane2.integration_type = surface
+Int_yOutputPlane2.intervals = 1
+Int_yOutputPlane2.surface_normal = Y
+my_constants.YOutputPlaneLoc2=Ly-2*dy #Nodes aligned with Y
+
  Int_yInputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YInputPlaneLoc - dy/2.) * (y <= YInputPlaneLoc) * (z >= 0.) * (z <= h_port) * 1"
  Int_yOutputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YOutputPlaneLoc - dy/2.) * (y <= YOutputPlaneLoc) * (z >= 0.) * (z <= h_port) * 1"
+ Int_yOutputPlane2.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YOutputPlaneLoc2 - dy/2.) * (y <= YOutputPlaneLoc2) * (z >= 0.) * (z <= h_port+th_gate) * 1"
 ###############
 # input
 #input.intervals = 1
