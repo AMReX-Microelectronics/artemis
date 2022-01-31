@@ -170,20 +170,20 @@ public:
 #endif
                     amrex::Real weight = 1.0;
                     if (surface_normal[0] == 1) {
-		        if (k == lx[2] || k == hx[2]) {
+                if (k == lx[2] || k == hx[2]) {
                              weight *= 0.5;
-		        }
-		        if (j == lx[1] || j == hx[1]) {
+                }
+                if (j == lx[1] || j == hx[1]) {
                              weight *= 0.5;      
                         }
-		    }
-		    else if (surface_normal[1] == 1) {
+            }
+            else if (surface_normal[1] == 1) {
                         if (k == lx[2] || k == hx[2]) {
                              weight *= 0.5;
                         }
                     }
                     else if (surface_normal[2] == 1) {
-			if (j == lx[1] || j == hx[1]) {
+            if (j == lx[1] || j == hx[1]) {
                             weight *= 0.5;
                         }
                     }
@@ -206,21 +206,21 @@ public:
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
                     amrex::Real weight = 1.0;
-		    if (surface_normal[0] == 1) {
+            if (surface_normal[0] == 1) {
                         if (k == ly[2] || k == hy[2]) {
                             weight *= 0.5;
                         }
                     }
-		    else if (surface_normal[1] == 1) {
-		        if (i == ly[0] || i == hy[0]) {
+            else if (surface_normal[1] == 1) {
+                if (i == ly[0] || i == hy[0]) {
                             weight *= 0.5;
-		        }
-		        if (k == ly[2] || k == hy[2]) {
+                }
+                if (k == ly[2] || k == hy[2]) {
                             weight *= 0.5;      
                         }
-		    }
+            }
                     else if (surface_normal[2] == 1) {
-			if (i == ly[0] || i == hy[0]) {
+            if (i == ly[0] || i == hy[0]) {
                             weight *= 0.5;
                         }
                     }
@@ -243,24 +243,24 @@ public:
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
                     amrex::Real weight = 1.0;
-		    if (surface_normal[0] == 1) {
+            if (surface_normal[0] == 1) {
                         if (j == lz[1] || j == hz[1]) {
                             weight *= 0.5;
                         }
                     }
                     else if (surface_normal[1] == 1) {
-			if (i == lz[0] || i == hz[0]) {
+            if (i == lz[0] || i == hz[0]) {
                             weight *= 0.5;
                         }
                     }
-		    else if (surface_normal[2] == 1) {
-		        if (i == lz[0] || i == hz[0]) {
+            else if (surface_normal[2] == 1) {
+                if (i == lz[0] || i == hz[0]) {
                             weight *= 0.5;
-		        }
-		        if (j == lz[1] || j == hz[1]) {
+                }
+                if (j == lz[1] || j == hz[1]) {
                             weight *= 0.5;      
                         }
-		    }
+            }
                     return weight*reduction_function_parser(x,y,z)*Ez_arr(i,j,k);
                 });
             }
