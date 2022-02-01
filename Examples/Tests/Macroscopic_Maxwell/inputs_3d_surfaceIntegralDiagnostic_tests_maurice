@@ -5,7 +5,7 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 500
+max_step = 10
 amr.n_cell = n_cellx n_celly n_cellz
 
 amr.max_grid_size = 400
@@ -84,7 +84,7 @@ chk.diag_type = Full
 ######################### Surface Integral on the Y-Plane #############################
 my_constants.eps=1.e-9
 
-warpx.reduced_diags_names = Int_yInputPlane Int_yOutputPlane
+warpx.reduced_diags_names = Int_yInputPlane 
 Int_yInputPlane.type = RawEFieldReduction
 Int_yInputPlane.reduction_type = integral
 Int_yInputPlane.integration_type = surface
@@ -92,17 +92,8 @@ Int_yInputPlane.intervals = 1
 Int_yInputPlane.surface_normal = Y
 my_constants.YInputPlaneLoc=2*dy #Nodes aligned with Y
 
-Int_yOutputPlane.type = RawEFieldReduction
-Int_yOutputPlane.reduction_type = integral
-Int_yOutputPlane.integration_type = surface
-Int_yOutputPlane.intervals = 1
-Int_yOutputPlane.surface_normal = Y
-my_constants.YOutputPlaneLoc=10*dy #Nodes aligned with Y
-
 #select entire input port similar to Maurice's circuit.
- Int_yInputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YInputPlaneLoc - dy/2.) * (y <= YInputPlaneLoc) * (z >= 0.) * (z <= h_port) * 1" 
 #This function is for a Y-plane strip. 
-#We correctly predict: Ez=(n_cellsx/2.)*(n_cellsz/2.)*dx*dz. YPlaneLoc=dy/2. or 0. does not affect computation of Ez.
+#We correctly predict: Ez=(n_cellsx/2.)*(n_cellsz/2.)*dx*dz=(200/2)*(400/2)*2e-8*1e-8
+ Int_yInputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YInputPlaneLoc - dy/2.) * (y <= YInputPlaneLoc) * (z > 0.) * (z <= h_port) * 1" 
 
-#Another port inside the material is chosen.
- Int_yOutputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YOutputPlaneLoc - dy/2.) * (y <= YOutputPlaneLoc) * (z >= 0.) * (z <= h_port) * 1" 

@@ -7,7 +7,7 @@
 max_step = 10
 amr.n_cell = n_cellx n_celly n_cellz
 
-amr.max_grid_size = 16
+amr.max_grid_size = 2
 amr.blocking_factor = 2
 geometry.dims = 3
 geometry.prob_lo     =  -Lx/2. -Ly/2. -Lz/2.
