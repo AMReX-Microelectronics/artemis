@@ -106,10 +106,12 @@ public:
             amrex::IntVect Ex_nodalType = Ex.ixType().toIntVect();
             amrex::IntVect Ey_nodalType = Ey.ixType().toIntVect();
             amrex::IntVect Ez_nodalType = Ez.ixType().toIntVect();
-            for (int idim = 0; idim < 3; ++idim) {
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 Ex_IndexType[idim] = Ex_nodalType[idim];
                 Ey_IndexType[idim] = Ey_nodalType[idim];
+#if (AMREX_SPACEDIM==3)
                 Ez_IndexType[idim] = Ez_nodalType[idim];
+#endif
             }
 
             amrex::ReduceOps<ReduceOp> reduceEx_op;
