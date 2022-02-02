@@ -1,4 +1,4 @@
-# This test case is for verifying reduced diagnostics to calculate surface/volume integrals on the Y-plane in the same domain and cell sizes as the Maurice's circuit. (use USE_LLG=FALSE, ie., no M field) 
+# This test case is for verifying reduced diagnostics to calculate surface/volume integrals on the Y-plane in the same domain and cell sizes as the Maurice's circuit. (use USE_LLG=FALSE, ie., no M field)
 # For simplicity, Efield is simulated in a vacuum and initialized on each cells to be equal to 1.
 # The diagnostic function correctly calculates the Ez field.
 
@@ -84,7 +84,7 @@ chk.diag_type = Full
 ######################### Surface Integral on the Y-Plane #############################
 my_constants.eps=1.e-9
 
-warpx.reduced_diags_names = Int_yInputPlane 
+warpx.reduced_diags_names = Int_yInputPlane
 Int_yInputPlane.type = RawEFieldReduction
 Int_yInputPlane.reduction_type = integral
 Int_yInputPlane.integration_type = surface
@@ -93,7 +93,7 @@ Int_yInputPlane.surface_normal = Y
 my_constants.YInputPlaneLoc=2*dy #Nodes aligned with Y
 
 #select entire input port similar to Maurice's circuit.
-#This function is for a Y-plane strip. 
+#This function is for a Y-plane strip.
 #We correctly predict: Ez=(n_cellsx/2.)*(n_cellsz/2.)*dx*dz=(200/2)*(400/2)*2e-8*1e-8
- Int_yInputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YInputPlaneLoc - dy/2.) * (y <= YInputPlaneLoc) * (z > 0.) * (z <= h_port) * 1" 
+ Int_yInputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.) * (y >= YInputPlaneLoc - dy/2.) * (y <= YInputPlaneLoc) * (z > 0.) * (z <= h_port) * 1"
 

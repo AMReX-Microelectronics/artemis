@@ -104,26 +104,26 @@ my_constants.ZPlaneLoc=0.
 
 #Example 1
 ## This is for a full X-plane strip. Ex=Ey=Ez=n_celly*n_cellz*dy*dz = 2*4*(4.e-6)**2 = 1.28e-10
-#Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc - dx/2.) * (x <= XPlaneLoc) * (y >= -Ly/2.) * (y <= Ly/2.) * (z >= -Lz/2.) * (z <= Lz/2.) * 1" 
+#Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc - dx/2.) * (x <= XPlaneLoc) * (y >= -Ly/2.) * (y <= Ly/2.) * (z >= -Lz/2.) * (z <= Lz/2.) * 1"
 ## This is for a full Y-plane strip. Ex=Ey=Ez=n_cellx*n_cellz*dx*dz = 2*2*(4.e-6)**2 = 6.4e-11
-#Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= -Lz/2.) * (z <= Lz/2.) * 1" 
+#Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= -Lz/2.) * (z <= Lz/2.) * 1"
 ## This is for a full Z-plane strip. Ex=Ey=Ez=n_cellx*n_celly*dx*dy = 4*2*(4.e-6)**2 = 1.28e-10
-#Int_zPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= -Ly/2.) * (y <= Ly/2.) * (z >= ZPlaneLoc) * (z <= dz/2.) * 1" 
+#Int_zPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= -Ly/2.) * (y <= Ly/2.) * (z >= ZPlaneLoc) * (z <= dz/2.) * 1"
 
 # The above example is still prone to error if max_grid_size < min(n_cellx,n_celly,n_cellz). Change max_grid_size from 4 to 2 and see the error in Ey. This error is because of double-counting.
 
 #Example 2
 ## This is for a half X-plane strip. Ex=Ey=Ez=0.5*n_celly*n_cellz*dy*dz = 6.4e-11 (Note the function for z; upper boundary pt is excluded)
-#Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc - dx/2.) * (x <= XPlaneLoc) * (y >= -Ly/2.) * (y <= Ly/2.) * (z >= 0.) * (z < Lz/2.) * 1" 
+#Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc - dx/2.) * (x <= XPlaneLoc) * (y >= -Ly/2.) * (y <= Ly/2.) * (z >= 0.) * (z < Lz/2.) * 1"
 ## This is for a half Y-plane strip. Ex=Ey=Ez=0.5*n_cellx*n_cellz*dx*dz = 3.2e-11 (Note the function for z; upper boundary pt is excluded)
-#Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= 0.) * (z < Lz/2.) * 1" 
+#Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= 0.) * (z < Lz/2.) * 1"
 ## This is for a half Z-plane strip. Ex=Ey=Ez=0.5*n_cellx*n_celly*dx*dy = 6.4e-11 (Note the function for y; upper boundary pt is excluded)
-#Int_zPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= 0.) * (y < Ly/2.) * (z >= ZPlaneLoc) * (z <= dz/2.) * 1" 
+#Int_zPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= 0.) * (y < Ly/2.) * (z >= ZPlaneLoc) * (z <= dz/2.) * 1"
 
 #Example 3
 # This is for a quarter X-plane strip. Ex=Ey=Ez=0.25*n_celly*n_cellz*dy*dz = 3.2e-11 (Note the function for y,z)
-Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc - dx/2.) * (x <= XPlaneLoc) * (y >= 0.) * (y < Ly/2.) * (z >= 0.) * (z < Lz/2.) * 1" 
+Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc - dx/2.) * (x <= XPlaneLoc) * (y >= 0.) * (y < Ly/2.) * (z >= 0.) * (z < Lz/2.) * 1"
 # This is for a quarter Y-plane strip. Ex=Ey=Ez=0.25*n_cellx*n_cellz*dx*dz = 1.6e-11 (Note the function for x,z)
-Int_yPlane.reduced_function(x,y,z) = " (x >= 0) * (x < Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= 0.) * (z < Lz/2.) * 1" 
+Int_yPlane.reduced_function(x,y,z) = " (x >= 0) * (x < Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= 0.) * (z < Lz/2.) * 1"
 # This is for a quarter Z-plane strip. Ex=Ey=Ez=0.25*n_cellx*n_celly*dx*dy = 3.2e-11 (Note the function for x,y)
-Int_zPlane.reduced_function(x,y,z) = " (x >= 0.) * (x < Lx/2.) * (y >= 0.) * (y < Ly/2.) * (z >= ZPlaneLoc) * (z <= dz/2.) * 1" 
+Int_zPlane.reduced_function(x,y,z) = " (x >= 0.) * (x < Lx/2.) * (y >= 0.) * (y < Ly/2.) * (z >= ZPlaneLoc) * (z <= dz/2.) * 1"
