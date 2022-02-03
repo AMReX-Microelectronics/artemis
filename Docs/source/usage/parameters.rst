@@ -2386,7 +2386,7 @@ Reduced Diagnostics
             The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
             ``Integral``.
             ``Integral`` computes the spatial surface or volume integral, depending on the choice
-            of the integration_type, of the function defined in the parser by summing its value on
+            of the ``integration_type``, of the function defined in the parser by summing its value on
             all grid points and multiplying the result by the area or volume of a cell.
             Please be also aware that measuring maximum quantities might be very noisy in PIC
             simulations.
