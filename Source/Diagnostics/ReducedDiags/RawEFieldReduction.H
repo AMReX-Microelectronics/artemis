@@ -34,7 +34,6 @@
 #include <type_traits>
 #include <vector>
 
-
 class RawEFieldReduction : public ReducedDiags
 {
 public:
@@ -71,7 +70,6 @@ private:
 #endif
 
 public:
-
 
     /**
      * This function does the actual reduction computation.
@@ -127,15 +125,11 @@ public:
             const amrex::RealBox& real_box = geom.ProbDomain();
             const auto dx = geom.CellSizeArray();
 
-
-        // MFIter loop to interpolate fields to cell center and get maximum values
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-
             for ( amrex::MFIter mfi(Ex, false); mfi.isValid(); ++mfi)
             {
-                // not including the boundary points
                 const amrex::Box& tx = mfi.tilebox(Ex_nodalType);
                 const amrex::Box& ty = mfi.tilebox(Ey_nodalType);
                 const amrex::Box& tz = mfi.tilebox(Ez_nodalType);
@@ -169,27 +163,16 @@ public:
                     amrex::Real fac_z = (1._rt - Ex_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
+                    // we want to weight interior edges by 1
+                    // edges that are on faces of the box by 0.5
+                    // edges that are on the edges of the box by 0.25
                     amrex::Real weight = 1.0;
-//                    if (surface_normal[0] == 1) {
-                        if (k == lx[2] || k == hx[2]) {
-                            weight *= 0.5;
-                        }
-                        if (j == lx[1] || j == hx[1]) {
-                            weight *= 0.5;
-                        }
-                        /*
+                    if (k == lx[2] || k == hx[2]) {
+                        weight *= 0.5;
                     }
-                    else if (surface_normal[1] == 1) {
-                        if (k == lx[2] || k == hx[2]) {
-                            weight *= 0.5;
-                        }
+                    if (j == lx[1] || j == hx[1]) {
+                        weight *= 0.5;
                     }
-                    else if (surface_normal[2] == 1) {
-                        if (j == lx[1] || j == hx[1]) {
-                            weight *= 0.5;
-                        }
-                    }
-                        */
                     return weight*reduction_function_parser(x,y,z)*Ex_arr(i,j,k);
                 });
                 reduceEy_op.eval(ty, reduceEy_data,
@@ -208,13 +191,16 @@ public:
                     amrex::Real fac_z = (1._rt - Ey_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
+                    // we want to weight interior edges by 1
+                    // edges that are on faces of the box by 0.5
+                    // edges that are on the edges of the box by 0.25
                     amrex::Real weight = 1.0;
-                        if (i == ly[0] || i == hy[0]) {
-                            weight *= 0.5;
-                        }
-                        if (k == ly[2] || k == hy[2]) {
-                            weight *= 0.5;
-                        }
+                    if (i == ly[0] || i == hy[0]) {
+                        weight *= 0.5;
+                    }
+                    if (k == ly[2] || k == hy[2]) {
+                        weight *= 0.5;
+                    }
                     return weight*reduction_function_parser(x,y,z)*Ey_arr(i,j,k);
                 });
                 reduceEz_op.eval(tz, reduceEz_data,
@@ -233,13 +219,16 @@ public:
                     amrex::Real fac_z = (1._rt - Ez_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
+                    // we want to weight interior edges by 1
+                    // edges that are on faces of the box by 0.5
+                    // edges that are on the edges of the box by 0.25
                     amrex::Real weight = 1.0;
-                        if (i == lz[0] || i == hz[0]) {
-                            weight *= 0.5;
-                        }
-                        if (j == lz[1] || j == hz[1]) {
-                            weight *= 0.5;
-                        }
+                    if (i == lz[0] || i == hz[0]) {
+                        weight *= 0.5;
+                    }
+                    if (j == lz[1] || j == hz[1]) {
+                        weight *= 0.5;
+                    }
                     return weight*reduction_function_parser(x,y,z)*Ez_arr(i,j,k);
                 });
             }
@@ -248,7 +237,6 @@ public:
             amrex::Real reducedEy_value = amrex::get<0>(reduceEy_data.value());
             amrex::Real reducedEz_value = amrex::get<0>(reduceEz_data.value());
 
-            // MPI Reduce
             // MPI reduce
             if (std::is_same<ReduceOp, amrex::ReduceOpMax>::value)
             {
@@ -267,8 +255,9 @@ public:
                 amrex::ParallelDescriptor::ReduceRealSum(reducedEx_value);
                 amrex::ParallelDescriptor::ReduceRealSum(reducedEy_value);
                 amrex::ParallelDescriptor::ReduceRealSum(reducedEz_value);
-            // If reduction operation is a sum, multiply the value by the cell volume so that the
-            // result is the integral of the function over the simulation domain.
+
+                // If reduction operation is an integral, multiply the value by the cell volume
+                // If reduction operation is a surface, multiply the value by the cell face area
                 if (integral_type == 0) {
 
 #if (AMREX_SPACEDIM==2)
