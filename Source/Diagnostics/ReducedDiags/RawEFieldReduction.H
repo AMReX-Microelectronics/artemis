@@ -97,20 +97,9 @@ public:
             constexpr int index_Ex = 0;
             constexpr int index_Ey = 1;
             constexpr int index_Ez = 2;
-
-            amrex::GpuArray<int, 3> Ex_IndexType{0,0,0};
-            amrex::GpuArray<int, 3> Ey_IndexType{0,0,0};
-            amrex::GpuArray<int, 3> Ez_IndexType{0,0,0};
             amrex::IntVect Ex_nodalType = Ex.ixType().toIntVect();
             amrex::IntVect Ey_nodalType = Ey.ixType().toIntVect();
             amrex::IntVect Ez_nodalType = Ez.ixType().toIntVect();
-            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                Ex_IndexType[idim] = Ex_nodalType[idim];
-                Ey_IndexType[idim] = Ey_nodalType[idim];
-#if (AMREX_SPACEDIM==3)
-                Ez_IndexType[idim] = Ez_nodalType[idim];
-#endif
-            }
 
             amrex::ReduceOps<ReduceOp> reduceEx_op;
             amrex::ReduceOps<ReduceOp> reduceEy_op;
