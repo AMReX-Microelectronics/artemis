@@ -66,14 +66,21 @@ RawEFieldReduction::RawEFieldReduction (std::string rd_name)
 
     std::string surface_normal_string;
     pp_rd_name.get("surface_normal", surface_normal_string);
-    if (surface_normal_string == "X") {
+    if (surface_normal_string == "x" || surface_normal_string == "X") {
         m_surface_normal[0] = 1;
     }
-    else if (surface_normal_string == "Y") {
+#if (AMREX_SPACEDIM==2)
+    else if (surface_normal_string == "y" || surface_normal_string == "Y") {
+        Abort("In 2-D, we compute over X-Z plane. So the plane of interest is Z.");
+    }
+    else if (surface_normal_string == "z" || surface_normal_string == "Z") {
+        amrex::Print() << m_surface_normal[1] = 1;
+    }
+#else 
+    else if (surface_normal_string == "y" || surface_normal_string == "Y") {
         m_surface_normal[1] = 1;
     }
-#if (AMREX_SPACEDIM==3)
-    else if (surface_normal_string == "Z") {
+    else if (surface_normal_string == "z" || surface_normal_string == "Z") {
         m_surface_normal[2] = 1;
     }
 #endif
