@@ -70,10 +70,10 @@ RawEFieldReduction::RawEFieldReduction (std::string rd_name)
     }
 #if (AMREX_SPACEDIM==2)
     else if (surface_normal_string == "y" || surface_normal_string == "Y") {
-        Abort("In 2-D, we compute over X-Z plane. So the plane of interest is Z.");
+        Abort("In 2-D, we compute over an X-Z plane. So the plane of interest for the surface integral is Z.");
     }
     else if (surface_normal_string == "z" || surface_normal_string == "Z") {
-        amrex::Print() << m_surface_normal[1] = 1;
+        m_surface_normal[1] = 1;
     }
 #else
     else if (surface_normal_string == "y" || surface_normal_string == "Y") {
