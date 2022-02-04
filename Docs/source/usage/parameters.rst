@@ -2397,20 +2397,20 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.integration_type`` (`string`)
            The type of integration to be performed. It must be either ``surface`` or ``volume``.
-           Note that the surface integral provides the integrated normal as well as the 
-           traverse fields over the surface. For the surface integral, the user-defined parser 
+           Note that the surface integral provides the integrated normal as well as the
+           traverse fields over the surface. For the surface integral, the user-defined parser
            for the plane should be less than one cell size in thickness in the direction of the surface normal.
-           Also, if the specified surface has an edge that overlaps with the domain boundary but the edge parallel 
+           Also, if the specified surface has an edge that overlaps with the domain boundary but the edge parallel
            to it does not overlap with the domain boundary, then exclude the edge that overlaps with the domain boundary
            while defining the surface.
            See examples in Examples/Tests/Macroscopic_Maxwell/inputs_3d_surfaceIntegralDiagnostic_tests_cubic and
-           Examples/Tests/Macroscopic_Maxwell/inputs_3d_surfaceIntegralDiagnostic_tests_noncubic for ways to 
+           Examples/Tests/Macroscopic_Maxwell/inputs_3d_surfaceIntegralDiagnostic_tests_noncubic for ways to
            define a full, half, and a quarter plane.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
            The surface on which the surface integration is required. It must be either ``x``, ``y`` or ``z``.
-           The direction of the normal is positive in the Cartesian directions. 
-           Note that the user must account for the sign, if the outward normal of the defined surface is 
+           The direction of the normal is positive in the Cartesian directions.
+           Note that the user must account for the sign, if the outward normal of the defined surface is
            in the negative direction.
 
     * ``ParticleNumber``

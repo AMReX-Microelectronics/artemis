@@ -75,7 +75,7 @@ RawEFieldReduction::RawEFieldReduction (std::string rd_name)
     else if (surface_normal_string == "z" || surface_normal_string == "Z") {
         amrex::Print() << m_surface_normal[1] = 1;
     }
-#else 
+#else
     else if (surface_normal_string == "y" || surface_normal_string == "Y") {
         m_surface_normal[1] = 1;
     }
