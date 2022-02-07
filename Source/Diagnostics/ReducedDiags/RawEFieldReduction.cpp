@@ -1,4 +1,4 @@
-/* Copyright 2021 Revathi Jambunathan
+/* Copyright 2021 Revathi Jambunathan, Saurabh Sawant, Andrew Nonaka
  *
  * This file is part of WarpX.
  *
