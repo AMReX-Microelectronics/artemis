@@ -2385,13 +2385,29 @@ Reduced Diagnostics
         * ``<reduced_diags_name>.reduction_type`` (`string`)
             The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
             ``Integral``.
+            ``Integral`` computes the spatial integral of the function defined in the parser by
+            summing its value on all grid points and multiplying the result by the volume of a
+            cell.
+            Please be also aware that measuring maximum quantities might be very noisy in PIC
+            simulations.
+
+        The only output column is the reduced value.
+
+        Note that the fields are averaged on the cell centers before the reduction is performed.
+
+    * ``RawEFieldReduction``
+        This type computes an arbitrary reduction of electric field components.
+
+        * ``<reduced_diags_name>.reduction_type`` (`string`)
+            The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
+            ``Integral``.
             ``Integral`` computes the spatial surface or volume integral, depending on the choice
             of the ``integration_type``, of the function defined in the parser by summing its value on
             all grid points and multiplying the result by the area or volume of a cell.
             Please be also aware that measuring maximum quantities might be very noisy in PIC
             simulations.
 
-        The only output column is the reduced value.
+        The output columns correspond to the timestep counter, physical time, and reduced values of Ex, Ey, Ez components.
 
         Note that the fields are averaged on the cell centers before the reduction is performed.
 
