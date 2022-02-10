@@ -109,17 +109,17 @@ my_constants.ZPlaneLoc=0.
 #Int_zPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= -Ly/2.) * (y <= Ly/2.) * (z >= ZPlaneLoc) * (z <= dz/2.) * 1"
 
 #Example 2: Half Surface
-## This is for a full X-plane strip. Ex=Ey=Ez=0.5*n_celly*n_cellz*dy*dz = 9.6e-11
+## This is for a half X-plane strip. Ex=Ey=Ez=0.5*n_celly*n_cellz*dy*dz = 9.6e-11
 #Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc - dx/2.) * (x <= XPlaneLoc) * (y >= -Ly/2.) * (y <= Ly/2.) * (z > -Lz/2.) * (z <= 0.) * 1"
-## This is for a full Y-plane strip. Ex=Ey=Ez=0.5*n_cellx*n_cellz*dx*dz = 4.8e-11
+## This is for a half Y-plane strip. Ex=Ey=Ez=0.5*n_cellx*n_cellz*dx*dz = 4.8e-11
 #Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z > -Lz/2.) * (z <= 0.) * 1"
-## This is for a full Z-plane strip. Ex=Ey=Ez=0.5*n_cellx*n_celly*dx*dy = 6.4e-11
+## This is for a half Z-plane strip. Ex=Ey=Ez=0.5*n_cellx*n_celly*dx*dy = 6.4e-11
 #Int_zPlane.reduced_function(x,y,z) = " (x > -Lx/2.) * (x <= 0.) * (y >= -Ly/2.) * (y <= Ly/2.) * (z >= ZPlaneLoc) * (z <= dz/2.) * 1"
 
 #Example 3: Quarter Surface
-# This is for a full X-plane strip. Ex=Ey=Ez=0.25*n_celly*n_cellz*dy*dz = 4.8e-11
+# This is for a quarter l X-plane strip. Ex=Ey=Ez=0.25*n_celly*n_cellz*dy*dz = 4.8e-11
 Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc - dx/2.) * (x <= XPlaneLoc) * (y >= 0.) * (y < Ly/2.) * (z > -Lz/2.) * (z <= 0.) * 1"
-# This is for a full Y-plane strip. Ex=Ey=Ez=0.25*n_cellx*n_cellz*dx*dz = 2.4e-11
+# This is for a quarter Y-plane strip. Ex=Ey=Ez=0.25*n_cellx*n_cellz*dx*dz = 2.4e-11
 Int_yPlane.reduced_function(x,y,z) = " (x > -Lx/2.) * (x <= 0.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z > -Lz/2.) * (z <= 0.) * 1"
-# This is for a full Z-plane strip. Ex=Ey=Ez=0.25*n_cellx*n_celly*dx*dy = 3.2e-11
+# This is for a quarter Z-plane strip. Ex=Ey=Ez=0.25*n_cellx*n_celly*dx*dy = 3.2e-11
 Int_zPlane.reduced_function(x,y,z) = " (x > -Lx/2.) * (x <= 0.) * (y > -Ly/2.) * (y <= 0.) * (z >= ZPlaneLoc) * (z <= dz/2.) * 1"
