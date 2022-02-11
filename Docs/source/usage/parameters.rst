@@ -2396,7 +2396,8 @@ Reduced Diagnostics
         Note that the fields are averaged on the cell centers before the reduction is performed.
 
     * ``RawEFieldReduction``
-        This type computes an arbitrary reduction of electric field components.
+        This type is ONLY for the E-field at the respected staggering and executes the parser 
+        as a function of (x,y,z) to reduce Ex, Ey, and Ez.
 
         * ``<reduced_diags_name>.reduction_type`` (`string`)
             The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
@@ -2408,8 +2409,6 @@ Reduced Diagnostics
             simulations.
 
         The output columns correspond to the timestep counter, physical time, and reduced values of Ex, Ey, Ez components.
-
-        Note that the fields are averaged on the cell centers before the reduction is performed.
 
         * ``<reduced_diags_name>.integration_type`` (`string`)
            The type of integration to be performed. It must be either ``surface`` or ``volume``.
