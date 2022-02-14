@@ -23,9 +23,9 @@ jobs:
         .github/workflows/dependencies/icc.sh
     - name: build WarpX
       run: |
-        set +e
+        set +eu
         source /opt/intel/oneapi/setvars.sh
-        set -e
+        set -eu
         export CXX=$(which icpc)
         export CC=$(which icc)
 
@@ -81,11 +81,6 @@ jobs:
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
-
-        python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel -v .
-        python3 -m pip install *.whl
 
   build_dpcc:
     name: oneAPI DPC++ SP
