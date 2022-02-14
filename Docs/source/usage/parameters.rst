@@ -2401,7 +2401,7 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.reduced_function(x,y,z)`` (`string`)
               An analytic function used to select the region over which the electric fields will be reduced using
-              the ``reduction_type`` described below.               
+              the ``reduction_type`` described below.
 
         * ``<reduced_diags_name>.reduction_type`` (`string`)
             The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
