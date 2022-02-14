@@ -2423,9 +2423,6 @@ Reduced Diagnostics
            Also, if the specified surface has an edge that overlaps with the domain boundary but the edge parallel
            to it does not overlap with the domain boundary, then exclude the edge that overlaps with the domain boundary
            while defining the surface.
-           See examples in Examples/Tests/Macroscopic_Maxwell/inputs_3d_surfaceIntegralDiagnostic_tests_cubic and
-           Examples/Tests/Macroscopic_Maxwell/inputs_3d_surfaceIntegralDiagnostic_tests_noncubic for ways to
-           define a full, half, and a quarter plane.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
            The surface on which the surface integration is required. It must be either ``x``, ``y`` or ``z``.
