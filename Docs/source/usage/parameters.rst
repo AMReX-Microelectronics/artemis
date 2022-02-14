@@ -2396,8 +2396,13 @@ Reduced Diagnostics
         Note that the fields are averaged on the cell centers before the reduction is performed.
 
     * ``RawEFieldReduction``
-        This type is ONLY for the E-field at the respected staggering and executes the parser 
-        as a function of (x,y,z) to reduce Ex, Ey, and Ez.
+        This type is ONLY for the E-field at their respective staggering on the Yee-grid (or the type of grid used in the
+        simulation) and executes the ``reduced_function`` which is a user-defined analytic function as given below.
+
+        * ``<reduced_diags_name>.reduced_function(x,y,z)`` (`string`)
+              An analytic function used to select the region over which the electric fields will be reduced using
+              the ``reduction_type`` described below.               
+        
 
         * ``<reduced_diags_name>.reduction_type`` (`string`)
             The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
