@@ -253,31 +253,23 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
 
         amrex::Real const inv_dx = coefs_x[0];
-    if(ncomp != nodality){
-          if ( Ms_hi_x == 0.) //non-magnetic on right
-          {
-                return inv_dx*inv_dx*(2.*F(i,j,k,ncomp) - 5.*F(i-1,j,k,ncomp) + 4.*F(i-2,j,k,ncomp) - F(i-3,j,k,ncomp));
-          }
-          else if (Ms_lo_x == 0.) //non-magnetic on left
-          {
-                return inv_dx*inv_dx*(2.*F(i,j,k,ncomp) - 5.*F(i+1,j,k,ncomp) + 4.*F(i+2,j,k,ncomp) - F(i+3,j,k,ncomp));
-      } else
-          {
-             return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
-          }
-    } else {
-          if ( Ms_hi_x == 0.) //non-magnetic on right
-          {
-             return inv_dx*(0. - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
-          }
-          else if (Ms_lo_x == 0.) //non-magnetic on left
-          {
-             return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - 0.);
-      } else
-          {
-             return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
-          }
-    }
+        if (nodality == 0){ // at x face (normal face). dM/dx = 0
+           if (Ms_hi_x == 0.){
+               return 0.5 * inv_dx * inv_dx * (8. * F(i-1, j, k, ncomp) - F(i-2, j, k, ncomp) - 7. * F(i, j, k, ncomp));
+           } else if (Ms_lo_x == 0){
+               return 0.5 * inv_dx * inv_dx * (8. * F(i+1, j, k, ncomp) - F(i+2, j, k, ncomp) - 7. * F(i, j, k, ncomp));
+           } else {
+               return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
+           }
+        } else { // at y or z faces
+           if (Ms_hi_x == 0.){
+               return inv_dx*(0. - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
+           } else if (Ms_lo_x == 0.){
+               return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - 0.);
+           } else {
+               return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
+           }
+        }
     }
 
     /**
@@ -289,31 +281,24 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
 
         amrex::Real const inv_dy = coefs_y[0];
-    if(ncomp != nodality){
-          if ( Ms_hi_y == 0.) //non-magnetic on right
-          {
-                return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j-1,k,ncomp) + 4.*F(i,j-2,k,ncomp) - F(i,j-3,k,ncomp));
-          }
-          else if (Ms_lo_y == 0.) //non-magnetic on left
-          {
-                return inv_dy*inv_dy*(2.*F(i,j,k,ncomp) - 5.*F(i,j+1,k,ncomp) + 4.*F(i,j+2,k,ncomp) - F(i,j+3,k,ncomp));
-      } else
-          {
-             return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
-          }
-    } else {
-          if ( Ms_hi_y == 0.) //non-magnetic on right
-          {
-             return inv_dy*(0. - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
-          }
-          else if (Ms_lo_y == 0.) //non-magnetic on left
-          {
-             return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - 0.);
-      } else
-          {
-             return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
-          }
-    }
+        if (nodality == 1){ // y face (normal face), dM/dy = 0
+           if (Ms_hi_y == 0.){
+               return 0.5 * inv_dy * inv_dy * (8. * F(i, j-1, k, ncomp) - F(i, j-2, k, ncomp) - 7. * F(i, j, k, ncomp));
+           } else if (Ms_lo_y == 0.) {
+               return 0.5 * inv_dy * inv_dy * (8. * F(i, j+1, k, ncomp) - F(i, j+2, k, ncomp) - 7. * F(i, j, k, ncomp));
+           } else {
+               return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+           }
+
+        } else { // x or z faces
+           if (Ms_hi_y == 0.){
+               return inv_dy*(0. - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+           } else if (Ms_lo_y == 0.) {
+               return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - 0.);
+           } else {
+               return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+           }
+        }
     }
 
      /**
@@ -325,31 +310,24 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
 
         amrex::Real const inv_dz = coefs_z[0];
-    if(ncomp != nodality){
-          if ( Ms_hi_z == 0.) //non-magnetic on right
-          {
-                return inv_dz*inv_dz*(2.*F(i,j,k,ncomp) - 5.*F(i,j,k-1,ncomp) + 4.*F(i,j,k-2,ncomp) - F(i,j,k-3,ncomp));
-          }
-          else if (Ms_lo_z == 0.) //non-magnetic on left
-          {
-                return inv_dz*inv_dz*(2.*F(i,j,k,ncomp) - 5.*F(i,j,k+1,ncomp) + 4.*F(i,j,k+2,ncomp) - F(i,j,k+3,ncomp));
-      } else
-          {
-             return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
-          }
-    } else {
-          if ( Ms_hi_z == 0.) //non-magnetic on right
-          {
-             return inv_dz*(0. - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
-          }
-          else if (Ms_lo_z == 0.) //non-magnetic on left
-          {
-             return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - 0.);
-      } else
-          {
-             return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
-          }
-    }
+        if (nodality == 2){ // z face (normal face) dM/dz = 0
+           if ( Ms_hi_z == 0.) {
+               return 0.5 * inv_dz * inv_dz * (8. * F(i, j, k-1, ncomp) - F(i, j, k-2, ncomp) - 7. * F(i, j, k, ncomp));
+           } else if ( Ms_lo_z == 0.){
+               return 0.5 * inv_dz * inv_dz * (8. * F(i, j, k+1, ncomp) - F(i, j, k+2, ncomp) - 7. * F(i, j, k, ncomp));
+           } else {
+               return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+           }
+
+        } else { // x or y face
+           if ( Ms_hi_z == 0.) {
+               return inv_dz*(0. - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+           } else if ( Ms_lo_z == 0.){
+               return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - 0.);
+           } else {
+               return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+           }
+        }
     }
 
      /**
