@@ -2396,8 +2396,12 @@ Reduced Diagnostics
         Note that the fields are averaged on the cell centers before the reduction is performed.
 
     * ``RawEFieldReduction``
-        This type is ONLY for the E-field at the respected staggering and executes the parser
-        as a function of (x,y,z) to reduce Ex, Ey, and Ez.
+        This type is ONLY for the E-field at their respective staggering on the Yee-grid (or the type of grid used in the
+        simulation) and executes the ``reduced_function`` which is a user-defined analytic function as given below.
+
+        * ``<reduced_diags_name>.reduced_function(x,y,z)`` (`string`)
+              An analytic function used to select the region over which the electric fields will be reduced using
+              the ``reduction_type`` described below.               
 
         * ``<reduced_diags_name>.reduction_type`` (`string`)
             The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
@@ -2415,11 +2419,9 @@ Reduced Diagnostics
            Note that the surface integral provides the integrated normal as well as the
            traverse fields over the surface. For the surface integral, the user-defined parser
            for the plane should be less than one cell size in thickness in the direction of the surface normal.
-           Also, if the specified surface has an edge that overlaps with the domain boundary but the edge parallel
-           to it does not overlap with the domain boundary, then exclude the edge that overlaps with the domain boundary
-           while defining the surface.
-           See example: Examples/Tests/Macroscopic_Maxwell/inputs_3d_surfaceIntegralDiagnostic_tests_noncubic 
-           for ways to define a full, half, and a quarter plane.
+           Also, if the surface to be defined has an edge that overlaps with the domain boundary but the edge parallel
+           to it does not overlap with the domain boundary, e.g. a half cross-section of a plane, then exclude the
+           edge that overlaps with the domain boundary while defining the surface.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
            The surface on which the surface integration is required. It must be either ``x``, ``y`` or ``z``.
