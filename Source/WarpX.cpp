@@ -2108,19 +2108,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
 #ifdef WARPX_MAG_LLG
     // Create the MultiFabs for M
-        Mfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Mx_nodal_flag),dm,3     ,ngE);
-        Mfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,My_nodal_flag),dm,3     ,ngE);
-        Mfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Mz_nodal_flag),dm,3     ,ngE);
+        Mfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Mx_nodal_flag),dm,3     ,ngEB);
+        Mfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,My_nodal_flag),dm,3     ,ngEB);
+        Mfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Mz_nodal_flag),dm,3     ,ngEB);
 
         // Create the MultiFabs for H
-        Hfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Hx_nodal_flag),dm,ncomps,ngE);
-        Hfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Hy_nodal_flag),dm,ncomps,ngE);
-        Hfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Hz_nodal_flag),dm,ncomps,ngE);
+        Hfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Hx_nodal_flag),dm,ncomps,ngEB);
+        Hfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Hy_nodal_flag),dm,ncomps,ngEB);
+        Hfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Hz_nodal_flag),dm,ncomps,ngEB);
 
         // Create the MultiFabs for H_bias
-        H_biasfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Hx_bias_nodal_flag),dm,ncomps,ngE);
-        H_biasfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Hy_bias_nodal_flag),dm,ncomps,ngE);
-        H_biasfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Hz_bias_nodal_flag),dm,ncomps,ngE);
+        H_biasfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Hx_bias_nodal_flag),dm,ncomps,ngEB);
+        H_biasfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Hy_bias_nodal_flag),dm,ncomps,ngEB);
+        H_biasfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Hz_bias_nodal_flag),dm,ncomps,ngEB);
 
 #endif
 
