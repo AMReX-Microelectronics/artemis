@@ -31,3 +31,26 @@ jobs:
     - name: Build
       run: |
         cmake --build build -j 2
+
+  ascent:
+    name: Ascent
+    runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
+    env:
+      CXX: g++
+      CC: gcc
+      CMAKE_PREFIX_PATH: /ascent/install-debug/lib/cmake/
+    container:
+      image: alpinedav/ascent:ascent-ubuntu-18_2021-11-02-sha458045
+    steps:
+    - uses: actions/checkout@v2
+    - name: Configure
+      run: |
+        . /ascent_docker_setup_env.sh
+        cmake -S . -B build   \
+            -DWarpX_ASCENT=ON \
+            -DWarpX_COMPUTE=NOACC
+    - name: Build
+      run: |
+        . /ascent_docker_setup_env.sh
+        cmake --build build -j 2

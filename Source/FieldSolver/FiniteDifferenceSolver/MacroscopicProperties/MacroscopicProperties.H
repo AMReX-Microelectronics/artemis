@@ -39,10 +39,13 @@ public:
 
      /** return MultiFab, sigma (conductivity) of the medium. */
      amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
+     amrex::MultiFab * get_pointer_sigma () {return m_sigma_mf.get();}
      /** return MultiFab, epsilon (permittivity) of the medium. */
      amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
+     amrex::MultiFab * get_pointer_eps () {return m_eps_mf.get();}
      /** return MultiFab, mu (permeability) of the medium. */
      amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
+     amrex::MultiFab * get_pointer_mu () {return m_mu_mf.get();}
 
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;
@@ -96,27 +99,20 @@ public:
      amrex::GpuArray<int, 3> Hy_IndexType;
      /** Gpu Vector with index type of the Hz multifab */
      amrex::GpuArray<int, 3> Hz_IndexType;
-     /** Gpu Vector with index type of the Gilbert damping factor multifab */
-     amrex::GpuArray<int, 3> mag_alpha_IndexType;
-     /** Gpu Vector with index type of the gyromagnetic ratio multifab */
-     amrex::GpuArray<int, 3> mag_gamma_IndexType;
      /** Gpu Vector with index type of the Mx multifab */
      amrex::GpuArray<int, 3> Mx_IndexType;
      /** Gpu Vector with index type of the My multifab */
      amrex::GpuArray<int, 3> My_IndexType;
      /** Gpu Vector with index type of the Mz multifab */
      amrex::GpuArray<int, 3> Mz_IndexType;
-     /** Gpu Vector with index type of the coefficient of the exchange coupling term multifab */
-     amrex::GpuArray<int, 3> mag_exchange_IndexType;
-     /** Gpu Vector with index type of the coefficient of the anisotropy coupling term multifab */
-     amrex::GpuArray<int, 3> mag_anisotropy_IndexType;
      /** Gpu Vector of the anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff */
      amrex::GpuArray<amrex::Real, 3> mag_LLG_anisotropy_axis;
 
-     amrex::MultiFab& getmag_alpha_mf () {return (*m_mag_alpha_mf);}
-     amrex::MultiFab& getmag_gamma_mf () {return (*m_mag_gamma_mf);}
-     amrex::MultiFab& getmag_exchange_mf () {return (*m_mag_exchange_mf);}
-     amrex::MultiFab& getmag_anisotropy_mf () {return (*m_mag_anisotropy_mf);}
+     amrex::MultiFab& getmag_Ms_mf        (int dir) {return (*m_mag_Ms_mf[dir]);}
+     amrex::MultiFab& getmag_alpha_mf     (int dir) {return (*m_mag_alpha_mf[dir]);}
+     amrex::MultiFab& getmag_gamma_mf     (int dir) {return (*m_mag_gamma_mf[dir]);}
+     amrex::MultiFab& getmag_exchange_mf  (int dir) {return (*m_mag_exchange_mf[dir]);}
+     amrex::MultiFab& getmag_anisotropy_mf(int dir) {return (*m_mag_anisotropy_mf[dir]);}
 
      amrex::Real getmag_normalized_error () {return m_mag_normalized_error;}
      int getmag_max_iter () {return m_mag_max_iter;}
@@ -257,23 +253,25 @@ public:
      // the relative tolerance for the second-order time advancement scheme of M field, default 0.0001
      amrex::Real m_mag_tol;
 
-     /** Multifab storing spatially varying saturation magnetization */
-     std::unique_ptr<amrex::MultiFab> m_mag_Ms_mf;
-     /** Multifab storing spatially varying Gilbert damping */
-     std::unique_ptr<amrex::MultiFab> m_mag_alpha_mf;
-     /** Multifab storing spatially varying gyromagnetic ratio */
-     std::unique_ptr<amrex::MultiFab> m_mag_gamma_mf;
-     /** Multifab storing spatially varying coefficient of the exchange coupling term */
-     std::unique_ptr<amrex::MultiFab> m_mag_exchange_mf;
-     /** Multifab storing spatially varying coefficient of the anisotropy coupling term */
-     std::unique_ptr<amrex::MultiFab> m_mag_anisotropy_mf;
+     /** Multifabs storing spatially varying saturation magnetization on three faces  */
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_Ms_mf;
+     /** Multifabs storing spatially varying Gilbert damping on three faces */
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_alpha_mf;
+     /** Multifabs storing spatially varying gyromagnetic ratio on three faces  */
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_gamma_mf;
+     /** Multifabs storing spatially varying coefficient of the exchange coupling term on three faces  */
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_exchange_mf;
+     /** Multifabs storing spatially varying coefficient of the anisotropy coupling term on three faces  */
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_anisotropy_mf;
 
+     // these store the type of initialization, e.g., "constant", "parse_X_function", etc.
      std::string m_mag_Ms_s;
      std::string m_mag_alpha_s;
      std::string m_mag_gamma_s;
      std::string m_mag_exchange_s;
      std::string m_mag_anisotropy_s;
 
+     // these store the parsed expression for the material properties
      std::string m_str_mag_Ms_function;
      std::string m_str_mag_alpha_function;
      std::string m_str_mag_gamma_function;

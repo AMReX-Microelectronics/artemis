@@ -20,7 +20,7 @@ PhotonEmissionTransformFunc::
 PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor,
                              int const opt_depth_runtime_comp,
                              QuantumSynchrotronPhotonEmission const emission_functor,
-                             const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
+                             const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
                              amrex::FArrayBox const& exfab,
                              amrex::FArrayBox const& eyfab,
                              amrex::FArrayBox const& ezfab,
@@ -34,8 +34,7 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
  m_emission_functor{emission_functor}
 {
     m_get_position  = GetParticlePosition(a_pti, a_offset);
-    m_get_externalE = GetExternalEField  (a_pti, a_offset);
-    m_get_externalB = GetExternalBField  (a_pti, a_offset);
+    m_get_externalEB = GetExternalEBField(a_pti, a_offset);
 
     m_ex_arr = exfab.array();
     m_ey_arr = eyfab.array();
@@ -52,7 +51,7 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
     m_bz_type = bzfab.box().ixType();
 
     amrex::Box box = a_pti.tilebox();
-    box.grow(ngE);
+    box.grow(ngEB);
 
     const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
     m_dx_arr = {dx[0], dx[1], dx[2]};

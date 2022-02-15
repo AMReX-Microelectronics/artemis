@@ -49,6 +49,9 @@ guardCellManager::Init (
     const int do_electrostatic,
     const int do_multi_J,
     const bool fft_do_time_averaging,
+    const bool do_pml,
+    const int do_pml_in_domain,
+    const int pml_ncell,
     const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
 #ifdef WARPX_MAG_LLG
@@ -112,12 +115,15 @@ guardCellManager::Init (
         ngJz = std::max(ngJz,max_r);
     }
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     ng_alloc_EB = IntVect(ngx,ngy,ngz);
     ng_alloc_J = IntVect(ngJx,ngJy,ngJz);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     ng_alloc_EB = IntVect(ngx,ngz);
     ng_alloc_J = IntVect(ngJx,ngJz);
+#elif defined(WARPX_DIM_1D_Z)
+    ng_alloc_EB = IntVect(ngz);
+    ng_alloc_J = IntVect(ngJz);
 #endif
 
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
@@ -197,10 +203,22 @@ guardCellManager::Init (
         queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
         queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#elif defined(WARPX_DIM_1D_Z)
+        IntVect ngFFT = IntVect(ngFFt_z);
+#endif
+
+#ifdef WARPX_DIM_RZ
+        if (do_pml) {
+            if (!do_pml_in_domain) {
+                ngFFT[0] = std::max(ngFFT[0], pml_ncell);
+            }
+        }
+#else
+       amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
 #endif
 
         // All boxes should have the same number of guard cells, to avoid temporary parallel copies:
@@ -285,7 +303,7 @@ guardCellManager::Init (
         // If NCI filter, add guard cells in the z direction
         IntVect ng_NCIFilter = IntVect::TheZeroVector();
         if (do_fdtd_nci_corr)
-            ng_NCIFilter[AMREX_SPACEDIM-1] = NCIGodfreyFilter::m_stencil_width;
+            ng_NCIFilter[WARPX_ZINDEX] = NCIGodfreyFilter::m_stencil_width;
         // Note: communications of guard cells for bilinear filter are handled
         // separately.
         ng_FieldGather = ng_FieldGather_noNCI + ng_NCIFilter;

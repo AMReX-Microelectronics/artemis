@@ -11,6 +11,7 @@
 #include "FlushFormats/FlushFormat.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -62,9 +63,11 @@ FullDiagnostics::InitializeParticleBuffer ()
         }
     }
     // Initialize one ParticleDiag per species requested
-    for (auto const& species : m_output_species_names){
-        const int idx = mpc.getSpeciesID(species);
-        m_output_species.push_back(ParticleDiag(m_diag_name, species, mpc.GetParticleContainerPtr(idx)));
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        for (auto const& species : m_output_species_names){
+            const int idx = mpc.getSpeciesID(species);
+            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species, mpc.GetParticleContainerPtr(idx)));
+        }
     }
 }
 
@@ -123,8 +126,8 @@ FullDiagnostics::Flush ( int i_buffer )
 
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_output_species, nlev_output, m_file_prefix, m_file_min_digits,
-        m_plot_raw_fields, m_plot_raw_fields_guards);
+        warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
+        m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
 
     FlushRaw();
 }
@@ -274,7 +277,7 @@ FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
 
 
 void
-FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
+FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
     auto & warpx = WarpX::GetInstance();
     amrex::RealBox diag_dom;
     bool use_warpxba = true;
@@ -477,6 +480,15 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "sigma" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.get_pointer_sigma(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "epsilon" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.get_pointer_eps(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "mu" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.get_pointer_mu(), lev, m_crse_ratio);
         }
         else {
             amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
@@ -492,14 +504,21 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     // First, make sure all guard cells are properly filled
     // Probably overkill/unnecessary, but safe and shouldn't happen often !!
     auto & warpx = WarpX::GetInstance();
-    warpx.FillBoundaryE(warpx.getngE());
-    warpx.FillBoundaryB(warpx.getngE());
+    warpx.FillBoundaryE(warpx.getngEB());
+    warpx.FillBoundaryB(warpx.getngEB());
     warpx.UpdateAuxilaryData();
     warpx.FillBoundaryAux(warpx.getngUpdateAux());
 
     // Update the RealBox used for the geometry filter in particle diags
-    for (int i = 0; i < m_output_species.size(); ++i) {
-        m_output_species[i].m_diag_domain = m_geom_output[0][0].ProbDomain();
+    // Note that full diagnostics every diag has only one buffer. (m_num_buffers = 1).
+    // For m_geom_output[i_buffer][lev], the first element is the buffer index, and
+    // second is level=0
+    // The level is set to 0, because the whole physical domain of the simulation is used
+    // to set the domain dimensions for the output particle container.
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        for (int i = 0; i < m_output_species.at(i_buffer).size(); ++i) {
+            m_output_species[i_buffer][i].m_diag_domain = m_geom_output[i_buffer][0].ProbDomain();
+        }
     }
 }
 
@@ -511,27 +530,37 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
     // Account for galilean shift
     amrex::Real new_lo[AMREX_SPACEDIM];
     amrex::Real new_hi[AMREX_SPACEDIM];
+    // Note that Full diagnostics has only one snapshot, m_num_buffers = 1
+    // m_geom_output[i_buffer][lev] below have values 0 and 0, respectively, because
+    // we need the physical extent from mesh-refinement level = 0,
+    // and only for the 0th snapshot, since full diagnostics has only one snapshot.
     const amrex::Real* current_lo = m_geom_output[0][0].ProbLo();
     const amrex::Real* current_hi = m_geom_output[0][0].ProbHi();
 
-#if (AMREX_SPACEDIM == 3 )
+#if defined(WARPX_DIM_3D)
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         new_lo[idim] = current_lo[idim] + warpx.m_galilean_shift[idim];
         new_hi[idim] = current_hi[idim] + warpx.m_galilean_shift[idim];
     }
-#elif (AMREX_SPACEDIM == 2 )
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     {
         new_lo[0] = current_lo[0] + warpx.m_galilean_shift[0];
         new_hi[0] = current_hi[0] + warpx.m_galilean_shift[0];
         new_lo[1] = current_lo[1] + warpx.m_galilean_shift[2];
         new_hi[1] = current_hi[1] + warpx.m_galilean_shift[2];
     }
+#elif defined(WARPX_DIM_1D_Z)
+    {
+        new_lo[0] = current_lo[0] + warpx.m_galilean_shift[2];
+        new_hi[0] = current_hi[0] + warpx.m_galilean_shift[2];
+    }
 #endif
-    // Update RealBox of geometry with galilean-shifted boundary
+    // Update RealBox of geometry with galilean-shifted boundary.
     for (int lev = 0; lev < nmax_lev; ++lev) {
+        // Note that Full diagnostics has only one snapshot, m_num_buffers = 1
+        // Thus here we set the prob domain for the 0th snapshot only.
         m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
     }
-
     // For Moving Window Shift
     if (warpx.moving_window_active(step+1)) {
         int moving_dir = warpx.moving_window_dir;
@@ -552,6 +581,8 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
         new_hi[moving_dir] = cur_hi[moving_dir] + num_shift_base*geom_dx[moving_dir];
         // Update RealBox of geometry with shifted domain geometry for moving-window
         for (int lev = 0; lev < nmax_lev; ++lev) {
+            // Note that Full diagnostics has only one snapshot, m_num_buffers = 1
+            // Thus here we set the prob domain for the 0th snapshot only.
             m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
         }
     }

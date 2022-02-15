@@ -9,6 +9,9 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "Filter/BilinearFilter.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/IntervalsParser.H"
@@ -163,7 +166,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         BoxArray const& nba = Bfield_aux[lev][0]->boxArray();
         BoxArray const& cnba = amrex::coarsen(nba,2);
         DistributionMapping const& dm = Bfield_aux[lev][0]->DistributionMap();
-        auto const& cperiod = Geom(lev-1).periodicity();
+        amrex::Periodicity const& cperiod = Geom(lev-1).periodicity();
 
         // Bfield
         {
@@ -285,7 +288,7 @@ WarpX::UpdateAuxilaryDataSameType ()
 {
     for (int lev = 1; lev <= finest_level; ++lev)
     {
-        const auto& crse_period = Geom(lev-1).periodicity();
+        const amrex::Periodicity& crse_period = Geom(lev-1).periodicity();
         const IntVect& ng = Bfield_cp[lev][0]->nGrowVect();
         const DistributionMapping& dm = Bfield_cp[lev][0]->DistributionMap();
 
@@ -544,57 +547,52 @@ WarpX::FillBoundaryE(int lev, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
+WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng)
 {
+    std::array<amrex::MultiFab*,3> mf;
+    amrex::Periodicity period;
+
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
-        {
-            pml[lev]->ExchangeE(patch_type,
-                                { Efield_fp[lev][0].get(),
-                                  Efield_fp[lev][1].get(),
-                                  Efield_fp[lev][2].get() },
-                                do_pml_in_domain);
-            pml[lev]->FillBoundaryE(patch_type);
-        }
-
-        const auto& period = Geom(lev).periodicity();
-        if ( safe_guard_cells ){
-            Vector<MultiFab*> mf{Efield_fp[lev][0].get(),Efield_fp[lev][1].get(),Efield_fp[lev][2].get()};
-            WarpXCommUtil::FillBoundary(mf, period);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_fp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryE, requested more guard cells than allocated");
-            WarpXCommUtil::FillBoundary(*Efield_fp[lev][0], ng, period);
-            WarpXCommUtil::FillBoundary(*Efield_fp[lev][1], ng, period);
-            WarpXCommUtil::FillBoundary(*Efield_fp[lev][2], ng, period);
-        }
+        mf     = {Efield_fp[lev][0].get(), Efield_fp[lev][1].get(), Efield_fp[lev][2].get()};
+        period = Geom(lev).periodicity();
     }
-    else if (patch_type == PatchType::coarse)
+    else // coarse patch
     {
-        if (do_pml && pml[lev]->ok())
+        mf     = {Efield_cp[lev][0].get(), Efield_cp[lev][1].get(), Efield_cp[lev][2].get()};
+        period = Geom(lev-1).periodicity();
+    }
+
+    // Exchange data between valid domain and PML
+    // Fill guard cells in PML
+    if (do_pml)
+    {
+        if (pml[lev] && pml[lev]->ok())
         {
-            pml[lev]->ExchangeE(patch_type,
-                                { Efield_cp[lev][0].get(),
-                                  Efield_cp[lev][1].get(),
-                                  Efield_cp[lev][2].get() },
-                                do_pml_in_domain);
+            std::array<amrex::MultiFab*,3> mf_pml =
+                (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
+
+            pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
             pml[lev]->FillBoundaryE(patch_type);
         }
-        const auto& cperiod = Geom(lev-1).periodicity();
-        if ( safe_guard_cells ) {
-            Vector<MultiFab*> mf{Efield_cp[lev][0].get(),Efield_cp[lev][1].get(),Efield_cp[lev][2].get()};
-            WarpXCommUtil::FillBoundary(mf, cperiod);
 
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Efield_cp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryE, requested more guard cells than allocated");
-            WarpXCommUtil::FillBoundary(*Efield_cp[lev][0], ng, cperiod);
-            WarpXCommUtil::FillBoundary(*Efield_cp[lev][1], ng, cperiod);
-            WarpXCommUtil::FillBoundary(*Efield_cp[lev][2], ng, cperiod);
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+        if (pml_rz[lev])
+        {
+            pml_rz[lev]->FillBoundaryE(patch_type);
         }
+#endif
+    }
+
+    // Fill guard cells in valid domain
+    for (int i = 0; i < 3; ++i)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ng <= mf[i]->nGrowVect(),
+            "Error: in FillBoundaryE, requested more guard cells than allocated");
+
+        const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
     }
 }
 
@@ -606,57 +604,52 @@ WarpX::FillBoundaryB (int lev, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
+WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng)
 {
+    std::array<amrex::MultiFab*,3> mf;
+    amrex::Periodicity period;
+
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
-        {
-            pml[lev]->ExchangeB(patch_type,
-                            { Bfield_fp[lev][0].get(),
-                              Bfield_fp[lev][1].get(),
-                              Bfield_fp[lev][2].get() },
-                              do_pml_in_domain);
-        pml[lev]->FillBoundaryB(patch_type);
-        }
-        const auto& period = Geom(lev).periodicity();
-        if ( safe_guard_cells ) {
-            Vector<MultiFab*> mf{Bfield_fp[lev][0].get(),Bfield_fp[lev][1].get(),Bfield_fp[lev][2].get()};
-            WarpXCommUtil::FillBoundary(mf, period);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_fp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryB, requested more guard cells than allocated");
-
-            WarpXCommUtil::FillBoundary(*Bfield_fp[lev][0], ng, period);
-            WarpXCommUtil::FillBoundary(*Bfield_fp[lev][1], ng, period);
-            WarpXCommUtil::FillBoundary(*Bfield_fp[lev][2], ng, period);
-        }
+        mf     = {Bfield_fp[lev][0].get(), Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get()};
+        period = Geom(lev).periodicity();
     }
-    else if (patch_type == PatchType::coarse)
+    else // coarse patch
     {
-        if (do_pml && pml[lev]->ok())
-        {
-        pml[lev]->ExchangeB(patch_type,
-                      { Bfield_cp[lev][0].get(),
-                        Bfield_cp[lev][1].get(),
-                        Bfield_cp[lev][2].get() },
-                        do_pml_in_domain);
-        pml[lev]->FillBoundaryB(patch_type);
-        }
-        const auto& cperiod = Geom(lev-1).periodicity();
-        if ( safe_guard_cells ){
-            Vector<MultiFab*> mf{Bfield_cp[lev][0].get(),Bfield_cp[lev][1].get(),Bfield_cp[lev][2].get()};
-            WarpXCommUtil::FillBoundary(mf, cperiod);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Bfield_cp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryB, requested more guard cells than allocated");
+        mf     = {Bfield_cp[lev][0].get(), Bfield_cp[lev][1].get(), Bfield_cp[lev][2].get()};
+        period = Geom(lev-1).periodicity();
+    }
 
-            WarpXCommUtil::FillBoundary(*Bfield_cp[lev][0], ng, cperiod);
-            WarpXCommUtil::FillBoundary(*Bfield_cp[lev][1], ng, cperiod);
-            WarpXCommUtil::FillBoundary(*Bfield_cp[lev][2], ng, cperiod);
+    // Exchange data between valid domain and PML
+    // Fill guard cells in PML
+    if (do_pml)
+    {
+        if (pml[lev] && pml[lev]->ok())
+        {
+            std::array<amrex::MultiFab*,3> mf_pml =
+                (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
+
+            pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
+            pml[lev]->FillBoundaryB(patch_type);
         }
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+        if (pml_rz[lev])
+        {
+            pml_rz[lev]->FillBoundaryB(patch_type);
+        }
+#endif
+    }
+
+    // Fill guard cells in valid domain
+    for (int i = 0; i < 3; ++i)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ng <= mf[i]->nGrowVect(),
+            "Error: in FillBoundaryB, requested more guard cells than allocated");
+
+        const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
     }
 }
 
@@ -680,52 +673,35 @@ WarpX::FillBoundaryM (int lev, IntVect ng)
 void
 WarpX::FillBoundaryM (int lev, PatchType patch_type, IntVect ng)
 {
+    std::array<amrex::MultiFab*,3> mf;
+    amrex::Periodicity period;
+
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
-        {
-            // ExchangeM not needed for PML algorithm
-        }
-        const auto& period = Geom(lev).periodicity();
-        if ( safe_guard_cells ) {
-            Vector<MultiFab*> mf{Mfield_fp[lev][0].get(),Mfield_fp[lev][1].get(),Mfield_fp[lev][2].get()};
-            amrex::FillBoundary(mf, period);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Mfield_fp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryM, requested more guard cells than allocated");
-            Mfield_fp[lev][0]->FillBoundary(ng, period);
-            Mfield_fp[lev][1]->FillBoundary(ng, period);
-            Mfield_fp[lev][2]->FillBoundary(ng, period); //Mfield_fp is an amrex object
-        }
+        mf     = {Mfield_fp[lev][0].get(), Mfield_fp[lev][1].get(), Mfield_fp[lev][2].get()};
+        period = Geom(lev).periodicity();
     }
     else if (patch_type == PatchType::coarse)
     {
         amrex::Abort("EvolveHM does not come with coarse patch yet");
-        /*
-        if (do_pml && pml[lev]->ok())
-        {
-        pml[lev]->ExchangeM(patch_type,
-                      { Mfield_cp[lev][0].get(),
-                        Mfield_cp[lev][1].get(),
-                        Mfield_cp[lev][2].get() },
-                        do_pml_in_domain);
-        pml[lev]->FillBoundaryM(patch_type);
-        }
-        const auto& cperiod = Geom(lev-1).periodicity();
-        if ( safe_guard_cells ){
-            Vector<MultiFab*> mf{Mfield_cp[lev][0].get(),Mfield_cp[lev][1].get(),Mfield_cp[lev][2].get()};
-            amrex::FillBoundary(mf, cperiod);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Mfield_cp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryM, requested more guard cells than allocated");
-            Mfield_cp[lev][0]->FillBoundary(ng, cperiod);
-            Mfield_cp[lev][1]->FillBoundary(ng, cperiod);
-            Mfield_cp[lev][2]->FillBoundary(ng, cperiod);
-        }
-        */
     }
+
+    if (do_pml)
+    {
+        // ExchangeM not needed for PML algorithm
+    }
+
+    // Fill guard cells in valid domain
+    for (int i = 0; i < 3; ++i)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ng <= mf[i]->nGrowVect(),
+            "Error: in FillBoundaryM, requested more guard cells than allocated");
+
+        const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
+    }
+
 }
 
 void
@@ -747,57 +723,44 @@ WarpX::FillBoundaryH (int lev, IntVect ng)
 void
 WarpX::FillBoundaryH (int lev, PatchType patch_type, IntVect ng)
 {
+    std::array<amrex::MultiFab*,3> mf;
+    amrex::Periodicity period;
+
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
-        {
-            pml[lev]->ExchangeH(patch_type,
-                            { Hfield_fp[lev][0].get(),
-                              Hfield_fp[lev][1].get(),
-                              Hfield_fp[lev][2].get() },
-                              do_pml_in_domain);
-            pml[lev]->FillBoundaryH(patch_type);
-        }
-        const auto& period = Geom(lev).periodicity();
-        if ( safe_guard_cells ) {
-            Vector<MultiFab*> mf{Hfield_fp[lev][0].get(),Hfield_fp[lev][1].get(),Hfield_fp[lev][2].get()};
-            amrex::FillBoundary(mf, period);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Hfield_fp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryH, requested more guard cells than allocated");
-            Hfield_fp[lev][0]->FillBoundary(ng, period);
-            Hfield_fp[lev][1]->FillBoundary(ng, period);
-            Hfield_fp[lev][2]->FillBoundary(ng, period); //Hfield_fp is an amrex object
-        }
+        mf     = {Hfield_fp[lev][0].get(), Hfield_fp[lev][1].get(), Hfield_fp[lev][2].get()};
+        period = Geom(lev).periodicity();
     }
     else if (patch_type == PatchType::coarse)
     {
         amrex::Abort("EvolveHM does not come with coarse patch yet");
-        /*
-        if (do_pml && pml[lev]->ok())
-        {
-        pml[lev]->ExchangeH(patch_type,
-                      { Hfield_cp[lev][0].get(),
-                        Hfield_cp[lev][1].get(),
-                        Hfield_cp[lev][2].get() },
-                        do_pml_in_domain);
-        pml[lev]->FillBoundaryH(patch_type);
-        }
-        const auto& cperiod = Geom(lev-1).periodicity();
-        if ( safe_guard_cells ){
-            Vector<MultiFab*> mf{Hfield_cp[lev][0].get(),Hfield_cp[lev][1].get(),Hfield_cp[lev][2].get()};
-            amrex::FillBoundary(mf, cperiod);
-        } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ng <= Hfield_cp[lev][0]->nGrowVect(),
-                "Error: in FillBoundaryH, requested more guard cells than allocated");
-            Hfield_cp[lev][0]->FillBoundary(ng, cperiod);
-            Hfield_cp[lev][1]->FillBoundary(ng, cperiod);
-            Hfield_cp[lev][2]->FillBoundary(ng, cperiod);
-        }
-        */
     }
+
+    // Exchange data between valid domain and PML
+    // Fill guard cells in PML
+    if (do_pml)
+    {
+        if (pml[lev] && pml[lev]->ok())
+        {
+            std::array<amrex::MultiFab*,3> mf_pml =
+                (patch_type == PatchType::fine) ? pml[lev]->GetH_fp() : pml[lev]->GetH_cp();
+
+            pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
+            pml[lev]->FillBoundaryB(patch_type);
+        }
+    }
+
+    // Fill guard cells in valid domain
+    for (int i = 0; i < 3; ++i)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ng <= mf[i]->nGrowVect(),
+            "Error: in FillBoundaryH, requested more guard cells than allocated");
+
+        const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
+    }
+
 }
 #endif
 
@@ -818,7 +781,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
          }
 
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Efield_avg_fp[lev][0].get(),Efield_avg_fp[lev][1].get(),Efield_avg_fp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, period);
@@ -838,7 +801,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
          }
 
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Efield_avg_cp[lev][0].get(),Efield_avg_cp[lev][1].get(),Efield_avg_cp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, cperiod);
@@ -871,7 +834,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
           {
             amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
           }
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
             Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, period);
@@ -891,7 +854,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
           }
 
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
             Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, cperiod);
@@ -918,7 +881,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (F_fp[lev]) pml[lev]->ExchangeF(patch_type, F_fp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryF(patch_type);
@@ -933,7 +896,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (F_cp[lev]) pml[lev]->ExchangeF(patch_type, F_cp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryF(patch_type);
@@ -962,7 +925,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_fp[lev]) pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryG(patch_type);
@@ -977,7 +940,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_cp[lev]) pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryG(patch_type);
@@ -1004,7 +967,7 @@ WarpX::FillBoundaryAux (IntVect ng)
 void
 WarpX::FillBoundaryAux (int lev, IntVect ng)
 {
-    const auto& period = Geom(lev).periodicity();
+    const amrex::Periodicity& period = Geom(lev).periodicity();
     WarpXCommUtil::FillBoundary(*Efield_aux[lev][0], ng, period);
     WarpXCommUtil::FillBoundary(*Efield_aux[lev][1], ng, period);
     WarpXCommUtil::FillBoundary(*Efield_aux[lev][2], ng, period);
@@ -1117,17 +1080,20 @@ void
 WarpX::ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    const auto& period = Geom(glev).periodicity();
-    auto& j = (patch_type == PatchType::fine) ? current_fp[lev] : current_cp[lev];
+    const amrex::Periodicity& period = Geom(glev).periodicity();
+    std::array<std::unique_ptr<amrex::MultiFab>,3>& j = (patch_type == PatchType::fine) ?
+                                                        current_fp[lev] : current_cp[lev];
     for (int idim = 0; idim < 3; ++idim) {
         IntVect ng = j[idim]->nGrowVect();
         IntVect ng_depos_J = get_ng_depos_J();
         if (WarpX::do_current_centering)
         {
-#if   (AMREX_SPACEDIM == 2)
+#if   defined(WARPX_DIM_1D_Z)
+            ng_depos_J[0] += WarpX::current_centering_noz / 2;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             ng_depos_J[0] += WarpX::current_centering_nox / 2;
             ng_depos_J[1] += WarpX::current_centering_noz / 2;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             ng_depos_J[0] += WarpX::current_centering_nox / 2;
             ng_depos_J[1] += WarpX::current_centering_noy / 2;
             ng_depos_J[2] += WarpX::current_centering_noz / 2;
@@ -1169,7 +1135,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
         // When there are current buffers, unlike coarse patch,
         // we don't care about the final state of them.
 
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         for (int idim = 0; idim < 3; ++idim) {
             MultiFab mf(current_fp[lev][idim]->boxArray(),
                         current_fp[lev][idim]->DistributionMap(), current_fp[lev][idim]->nComp(), 0);
@@ -1178,10 +1144,10 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
             IntVect ng_depos_J = get_ng_depos_J();
             if (WarpX::do_current_centering)
             {
-#if   (AMREX_SPACEDIM == 2)
+#if   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 ng_depos_J[0] += WarpX::current_centering_nox / 2;
                 ng_depos_J[1] += WarpX::current_centering_noz / 2;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
                 ng_depos_J[0] += WarpX::current_centering_nox / 2;
                 ng_depos_J[1] += WarpX::current_centering_noy / 2;
                 ng_depos_J[2] += WarpX::current_centering_noz / 2;
@@ -1260,7 +1226,7 @@ void
 WarpX::ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    auto& r = (patch_type == PatchType::fine) ? rho_fp[lev] : rho_cp[lev];
+    std::unique_ptr<amrex::MultiFab>& r = (patch_type == PatchType::fine) ? rho_fp[lev] : rho_cp[lev];
     if (r == nullptr) return;
     ApplyFilterandSumBoundaryRho(lev, glev, *r, icomp, ncomp);
 }
@@ -1268,7 +1234,7 @@ WarpX::ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, i
 void
 WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
 {
-    const auto& period = Geom(glev).periodicity();
+    const amrex::Periodicity& period = Geom(glev).periodicity();
     IntVect ng = rho.nGrowVect();
     IntVect ng_depos_rho = get_ng_depos_rho();
     if (use_filter) {
@@ -1306,7 +1272,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
 
     if (lev < finest_level){
 
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         MultiFab mf(rho_fp[lev]->boxArray(),
                     rho_fp[lev]->DistributionMap(),
                     ncomp, 0);
@@ -1379,14 +1345,14 @@ WarpX::NodalSyncJ (int lev, PatchType patch_type)
 
     if (patch_type == PatchType::fine)
     {
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         WarpXCommUtil::OverrideSync(*current_fp[lev][0], period);
         WarpXCommUtil::OverrideSync(*current_fp[lev][1], period);
         WarpXCommUtil::OverrideSync(*current_fp[lev][2], period);
     }
     else if (patch_type == PatchType::coarse)
     {
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         WarpXCommUtil::OverrideSync(*current_cp[lev][0], cperiod);
         WarpXCommUtil::OverrideSync(*current_cp[lev][1], cperiod);
         WarpXCommUtil::OverrideSync(*current_cp[lev][2], cperiod);
@@ -1400,13 +1366,13 @@ WarpX::NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp)
 
     if (patch_type == PatchType::fine && rho_fp[lev])
     {
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         MultiFab rhof(*rho_fp[lev], amrex::make_alias, icomp, ncomp);
         WarpXCommUtil::OverrideSync(rhof, period);
     }
     else if (patch_type == PatchType::coarse && rho_cp[lev])
     {
-        const auto& cperiod = Geom(lev-1).periodicity();
+        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         MultiFab rhoc(*rho_cp[lev], amrex::make_alias, icomp, ncomp);
         WarpXCommUtil::OverrideSync(rhoc, cperiod);
     }
@@ -1427,15 +1393,17 @@ void WarpX::NodalSyncPML (int lev)
 
 void WarpX::NodalSyncPML (int lev, PatchType patch_type)
 {
-    if (pml[lev]->ok())
+    if (pml[lev] && pml[lev]->ok())
     {
-        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-        const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
-        const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
-        const auto& pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
+        const std::array<amrex::MultiFab*,3>& pml_E = (patch_type == PatchType::fine) ?
+                                                      pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
+        const std::array<amrex::MultiFab*,3>& pml_B = (patch_type == PatchType::fine) ?
+                                                      pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
+        amrex::MultiFab* const pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
+        amrex::MultiFab* const pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
 
         // Always synchronize nodal points
-        const auto& period = Geom(lev).periodicity();
+        const amrex::Periodicity& period = Geom(lev).periodicity();
         WarpXCommUtil::OverrideSync(*pml_E[0], period);
         WarpXCommUtil::OverrideSync(*pml_E[1], period);
         WarpXCommUtil::OverrideSync(*pml_E[2], period);
@@ -1449,6 +1417,24 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
             WarpXCommUtil::OverrideSync(*pml_G, period);
         }
     }
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    if (pml_rz[lev])
+    {
+        // This is not actually needed with RZ PSATD since the
+        // arrays are always cell centered. Keep for now since
+        // it may be useful if the PML is used with FDTD
+        const std::array<amrex::MultiFab*,2> pml_rz_E = pml_rz[lev]->GetE_fp();
+        const std::array<amrex::MultiFab*,2> pml_rz_B = pml_rz[lev]->GetB_fp();
+
+        // Always synchronize nodal points
+        const amrex::Periodicity& period = Geom(lev).periodicity();
+        pml_rz_E[0]->OverrideSync(period);
+        pml_rz_E[1]->OverrideSync(period);
+        pml_rz_B[0]->OverrideSync(period);
+        pml_rz_B[1]->OverrideSync(period);
+    }
+#endif
 }
 
 void WarpX::NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,

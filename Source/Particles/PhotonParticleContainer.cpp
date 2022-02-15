@@ -86,7 +86,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                  amrex::FArrayBox const * bxfab,
                                  amrex::FArrayBox const * byfab,
                                  amrex::FArrayBox const * bzfab,
-                                 const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                                 const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                                  const long offset,
                                  const long np_to_push,
                                  int lev, int gather_lev,
@@ -106,7 +106,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     }
 
     // Add guard cells to the box.
-    box.grow(ngE);
+    box.grow(ngEB);
 
     auto& attribs = pti.GetAttribs();
 
@@ -125,15 +125,14 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     }
 #endif
 
-    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
+    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
                    do_back_transformed_diagnostics && a_dt_type!=DtType::SecondHalf);
 
     const auto GetPosition = GetParticlePosition(pti, offset);
     auto SetPosition = SetParticlePosition(pti, offset);
 
-    const auto getExternalE = GetExternalEField(pti, offset);
-    const auto getExternalB = GetExternalBField(pti, offset);
+    const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
     amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
@@ -188,8 +187,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
             }
-            getExternalE(i, Exp, Eyp, Ezp);
-            getExternalB(i, Bxp, Byp, Bzp);
+            getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
 #ifdef WARPX_QED
             if (local_has_breit_wheeler) {
