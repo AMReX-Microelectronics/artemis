@@ -29,6 +29,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
     // The MField here is a vector of three multifabs, with M on each face, and each multifab is a three-component multifab.
     // Each M-multifab has three components, one for each component in x, y, z. (All multifabs are four dimensional, (i,j,k,n)), where, n=1 for E, B, but, n=3 for M_xface, M_yface, M_zface
+    int lev,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield, // Mfield contains three components MultiFab
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
@@ -38,7 +39,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
     std::unique_ptr<MacroscopicProperties> const &macroscopic_properties) {
 
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-        MacroscopicEvolveHMCartesian_2nd<CartesianYeeAlgorithm>(Mfield, Hfield, Bfield, H_biasfield, Efield, dt, macroscopic_properties);
+        MacroscopicEvolveHMCartesian_2nd<CartesianYeeAlgorithm>(lev, Mfield, Hfield, Bfield, H_biasfield, Efield, dt, macroscopic_properties);
     } else {
         amrex::Abort("Only yee algorithm is compatible for M updates.");
     }
@@ -47,6 +48,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
 #ifdef WARPX_MAG_LLG
 template <typename T_Algo>
 void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
+    int lev,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
@@ -203,21 +205,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_exchange_xface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchange_xface_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                         // H_exchange - use M^(old_time)
-                        if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
-                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
+                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
 
-            WarpXUtilAlgo::getCellCoordinates(i-1, j, k, Mx_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_lo_x = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i+1, j, k, Mx_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_hi_x = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j-1, k, Mx_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_lo_y = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j+1, k, Mx_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_hi_y = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j, k-1, Mx_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_lo_z = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j, k+1, Mx_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_hi_z = mag_parser(x,y,z);
+                        amrex::Real Ms_lo_x = mag_Ms_xface_arr(i-1, j, k);
+                        amrex::Real Ms_hi_x = mag_Ms_xface_arr(i+1, j, k);
+                        amrex::Real Ms_lo_y = mag_Ms_xface_arr(i, j-1, k);
+                        amrex::Real Ms_hi_y = mag_Ms_xface_arr(i, j+1, k);
+                        amrex::Real Ms_lo_z = mag_Ms_xface_arr(i, j, k-1);
+                        amrex::Real Ms_hi_z = mag_Ms_xface_arr(i, j, k+1);
 
                         Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 0); //Last argument is nodality -- xface = 0
                         Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 0); //Last argument is nodality -- xface = 0
@@ -295,21 +290,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_exchange_yface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchange_yface_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                         // H_exchange - use M^(old_time)
-                        if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
-                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
+                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
 
-            WarpXUtilAlgo::getCellCoordinates(i-1, j, k, My_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_lo_x = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i+1, j, k, My_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_hi_x = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j-1, k, My_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_lo_y = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j+1, k, My_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_hi_y = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j, k-1, My_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_lo_z = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j, k+1, My_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_hi_z = mag_parser(x,y,z);
+                        amrex::Real Ms_lo_x = mag_Ms_yface_arr(i-1, j, k);
+                        amrex::Real Ms_hi_x = mag_Ms_yface_arr(i+1, j, k);
+                        amrex::Real Ms_lo_y = mag_Ms_yface_arr(i, j-1, k);
+                        amrex::Real Ms_hi_y = mag_Ms_yface_arr(i, j+1, k);
+                        amrex::Real Ms_lo_z = mag_Ms_yface_arr(i, j, k-1);
+                        amrex::Real Ms_hi_z = mag_Ms_yface_arr(i, j, k+1);
 
                         Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 1); //Last argument is nodality -- yface = 1
                         Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 1); //Last argument is nodality -- yface = 1
@@ -387,21 +375,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         if (mag_exchange_zface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchange_zface_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                         // H_exchange - use M^(old_time)
-                        if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
-                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
+                        amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
 
-            WarpXUtilAlgo::getCellCoordinates(i-1, j, k, Mz_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_lo_x = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i+1, j, k, Mz_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_hi_x = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j-1, k, Mz_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_lo_y = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j+1, k, Mz_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_hi_y = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j, k-1, Mz_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_lo_z = mag_parser(x,y,z);
-                        WarpXUtilAlgo::getCellCoordinates(i, j, k+1, Mz_stag, problo, dx, x, y, z);
-                        amrex::Real Ms_hi_z = mag_parser(x,y,z);
+                        amrex::Real Ms_lo_x = mag_Ms_zface_arr(i-1, j, k);
+                        amrex::Real Ms_hi_x = mag_Ms_zface_arr(i+1, j, k);
+                        amrex::Real Ms_lo_y = mag_Ms_zface_arr(i, j-1, k);
+                        amrex::Real Ms_hi_y = mag_Ms_zface_arr(i, j+1, k);
+                        amrex::Real Ms_lo_z = mag_Ms_zface_arr(i, j, k-1);
+                        amrex::Real Ms_hi_z = mag_Ms_zface_arr(i, j, k+1);
 
                         Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 2); //Last argument is nodality -- zface = 2
                         Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 2); //Last argument is nodality -- zface = 2
@@ -575,21 +556,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             if (mag_exchange_xface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchange_xface_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                             // H_exchange - use M^[(new_time),r-1]
-                            if (mag_exchange_arrx == 0._rt) amrex::Abort("The mag_exchange_arrx is 0.0 while including the exchange coupling term H_exchange for H_eff");
-                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrx / PhysConst::mu0 / mag_Ms_arrx / mag_Ms_arrx;
+                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
 
-                            WarpXUtilAlgo::getCellCoordinates(i-1, j, k, Mx_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_lo_x = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i+1, j, k, Mx_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_hi_x = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j-1, k, Mx_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_lo_y = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j+1, k, Mx_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_hi_y = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j, k-1, Mx_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_lo_z = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j, k+1, Mx_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_hi_z = mag_parser(x,y,z);
+                            amrex::Real Ms_lo_x = mag_Ms_xface_arr(i-1, j, k);
+                            amrex::Real Ms_hi_x = mag_Ms_xface_arr(i+1, j, k);
+                            amrex::Real Ms_lo_y = mag_Ms_xface_arr(i, j-1, k);
+                            amrex::Real Ms_hi_y = mag_Ms_xface_arr(i, j+1, k);
+                            amrex::Real Ms_lo_z = mag_Ms_xface_arr(i, j, k-1);
+                            amrex::Real Ms_hi_z = mag_Ms_xface_arr(i, j, k+1);
 
                             Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 0); //Last argument is nodality -- xface = 0
                             Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 0); //Last argument is nodality -- xface = 0
@@ -697,21 +671,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             if (mag_exchange_yface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchange_yface_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                             // H_exchange - use M^[(new_time),r-1]
-                            if (mag_exchange_arry == 0._rt) amrex::Abort("The mag_exchange_arry is 0.0 while including the exchange coupling term H_exchange for H_eff");
-                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arry / PhysConst::mu0 / mag_Ms_arry / mag_Ms_arry;
+                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
 
-                            WarpXUtilAlgo::getCellCoordinates(i-1, j, k, My_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_lo_x = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i+1, j, k, My_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_hi_x = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j-1, k, My_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_lo_y = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j+1, k, My_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_hi_y = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j, k-1, My_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_lo_z = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j, k+1, My_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_hi_z = mag_parser(x,y,z);
+                            amrex::Real Ms_lo_x = mag_Ms_yface_arr(i-1, j, k);
+                            amrex::Real Ms_hi_x = mag_Ms_yface_arr(i+1, j, k);
+                            amrex::Real Ms_lo_y = mag_Ms_yface_arr(i, j-1, k);
+                            amrex::Real Ms_hi_y = mag_Ms_yface_arr(i, j+1, k);
+                            amrex::Real Ms_lo_z = mag_Ms_yface_arr(i, j, k-1);
+                            amrex::Real Ms_hi_z = mag_Ms_yface_arr(i, j, k+1);
 
                             Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 1); //Last argument is nodality -- yface = 1
                             Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 1); //Last argument is nodality -- yface = 1
@@ -820,21 +787,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             if (mag_exchange_zface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_exchange_zface_arr(i,j,k) is 0.0 while including the exchange coupling term H_exchange for H_eff");
 
                             // H_exchange - use M^[(new_time),r-1]
-                            if (mag_exchange_arrz == 0._rt) amrex::Abort("The mag_exchange_arrz is 0.0 while including the exchange coupling term H_exchange for H_eff");
-                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_arrz / PhysConst::mu0 / mag_Ms_arrz / mag_Ms_arrz;
+                            amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
 
-                            WarpXUtilAlgo::getCellCoordinates(i-1, j, k, Mz_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_lo_x = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i+1, j, k, Mz_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_hi_x = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j-1, k, Mz_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_lo_y = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j+1, k, Mz_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_hi_y = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j, k-1, Mz_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_lo_z = mag_parser(x,y,z);
-                            WarpXUtilAlgo::getCellCoordinates(i, j, k+1, Mz_stag, problo, dx, x, y, z);
-                            amrex::Real Ms_hi_z = mag_parser(x,y,z);
+                            amrex::Real Ms_lo_x = mag_Ms_zface_arr(i-1, j, k);
+                            amrex::Real Ms_hi_x = mag_Ms_zface_arr(i+1, j, k);
+                            amrex::Real Ms_lo_y = mag_Ms_zface_arr(i, j-1, k);
+                            amrex::Real Ms_hi_y = mag_Ms_zface_arr(i, j+1, k);
+                            amrex::Real Ms_lo_z = mag_Ms_zface_arr(i, j, k-1);
+                            amrex::Real Ms_hi_z = mag_Ms_zface_arr(i, j, k+1);
 
                             Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 2); //Last argument is nodality -- zface = 2
                             Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 2); //Last argument is nodality -- zface = 2

@@ -799,7 +799,7 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
 
     // Evolve H field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->MacroscopicEvolveHM_2nd(Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev], H_biasfield_fp[lev],  Efield_fp[lev],
+        m_fdtd_solver_fp[lev]->MacroscopicEvolveHM_2nd(lev, Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev], H_biasfield_fp[lev],  Efield_fp[lev],
                                                        a_dt, m_macroscopic_properties);
     }
     else {
