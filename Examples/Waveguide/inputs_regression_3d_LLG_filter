@@ -9,11 +9,11 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 300000
+max_step = 3
 amr.n_cell = 1024 4 512 # number of cells spanning the domain in each coordinate direction at level 0
 amr.max_grid_size = 1024 # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 4 # only meaningful for AMR
-geometry.coord_sys = 0
+geometry.dims = 3
 boundary.field_lo = pec pec pml  # PEC on side walls; PML at -z end
 boundary.field_hi = pec pec pec  # PEC on side walls; PEC at +z end
 
@@ -100,11 +100,8 @@ warpx.Mx_external_grid_function(x,y,z)= "0."
 warpx.My_external_grid_function(x,y,z)= "1.3926e5 * (x<=thickness-width/2) + 0 * (x>thickness-width/2)" # in unit A/m, equal to 1750 Gauss; Ms=0 triggers off LLG
 warpx.Mz_external_grid_function(x,y,z) = "0."
 
-#Diagnostics
-diagnostics.diags_names = zline_BernadoFilter0111_
-
-zline_BernadoFilter0111_.intervals = 2
-zline_BernadoFilter0111_.diag_lo = 0.0 0.0 -250.e-3
-zline_BernadoFilter0111_.diag_hi = 0.0 0.0  250.e-3
-zline_BernadoFilter0111_.diag_type = Full
-zline_BernadoFilter0111_.fields_to_plot = Ey Hx Hz
+# Diagnostics
+diagnostics.diags_names = plt
+plt.intervals = 3
+plt.diag_type = Full
+plt.fields_to_plot = Ex Ey Ez Hx Hy Hz Bx By Bz Mx_xface My_xface Mz_xface Mx_yface My_yface Mz_yface Mx_zface My_zface Mz_zface
