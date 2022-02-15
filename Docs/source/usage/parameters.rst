@@ -2423,7 +2423,7 @@ Reduced Diagnostics
            to it does not overlap with the domain boundary, e.g. a half cross-section of a plane, then exclude the
            edge that overlaps with the domain boundary while defining the surface.
 
-           For example, we can define a surface on a y-plane at a location, `y_plane_location`, having a half cross-section 
+           For example, we can define a surface on a y-plane at a location, `y_plane_location`, having a half cross-section
            from z=-Lz/2 to 0, where Lz is the length of the domain in the z-direction spanning from -Lz/2 to Lz/2, as follows:
 
            ``<reduced_diags_name>.reduced_function(x,y,z) = " (y >= y_plane_location - dy/2.) * (y <= y_plane_location) * (z > -Lz/2.) * (z <= 0.) * 1 "``
