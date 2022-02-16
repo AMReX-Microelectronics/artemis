@@ -2457,6 +2457,45 @@ Reduced Diagnostics
 
         Note that the fields are averaged on the cell centers before the reduction is performed.
 
+    * ``RawEFieldReduction``
+        This type is ONLY for the E-field at their respective staggering on the Yee-grid (or the type of grid used in the
+        simulation) and executes the ``reduced_function`` which is a user-defined analytic function as given below.
+
+        * ``<reduced_diags_name>.reduced_function(x,y,z)`` (`string`)
+              An analytic function used to select the region over which the electric fields will be reduced using
+              the ``reduction_type`` described below.
+
+        * ``<reduced_diags_name>.reduction_type`` (`string`)
+            The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
+            ``Integral``.
+            ``Integral`` computes the spatial surface or volume integral, depending on the choice
+            of the ``integration_type``, of the function defined in the parser by summing its value on
+            all grid points and multiplying the result by the area or volume of a cell.
+            Please be also aware that measuring maximum quantities might be very noisy in PIC
+            simulations.
+
+        The output columns correspond to the timestep counter, physical time, and reduced values of Ex, Ey, Ez components.
+
+        * ``<reduced_diags_name>.integration_type`` (`string`)
+           The type of integration to be performed. It must be either ``surface`` or ``volume``.
+           Note that the surface integral provides the integrated normal as well as the
+           traverse fields over the surface. For the surface integral, the user-defined parser
+           for the plane should be less than one cell size in thickness in the direction of the surface normal.
+           Also, if the surface to be defined has an edge that overlaps with the domain boundary but the edge parallel
+           to it does not overlap with the domain boundary, e.g. a half cross-section of a plane, then exclude the
+           edge that overlaps with the domain boundary while defining the surface.
+
+           For example, we can define a surface on a y-plane at a location, `y_plane_location`, having a half cross-section
+           from z=-Lz/2 to 0, where Lz is the length of the domain in the z-direction spanning from -Lz/2 to Lz/2, as follows:
+
+           ``<reduced_diags_name>.reduced_function(x,y,z) = " (y >= y_plane_location - dy/2.) * (y <= y_plane_location) * (z > -Lz/2.) * (z <= 0.) * 1 "``
+
+        * ``<reduced_diags_name>.surface_normal`` (`string`)
+           The surface on which the surface integration is required. It must be either ``x``, ``y`` or ``z``.
+           The direction of the normal is positive in the Cartesian directions.
+           Note that the user must account for the sign, if the outward normal of the defined surface is
+           in the negative direction.
+
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the
         sum of their weights) in the whole simulation domain (for each species and summed over all

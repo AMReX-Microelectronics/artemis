@@ -173,9 +173,9 @@ diagnostics.diags_names = plt
 ###############
 # full plotfiles
 plt.intervals = 10
-plt.fields_to_plot = Ez Bx
-
-#plt.fields_to_plot = Ex Ey Ez Bx By Bz epsilon sigma mu
+# plt.fields_to_plot = Ez Bx
+plt.fields_to_plot = Ex Ey Ez Bx By Bz epsilon sigma mu
+#plt.fields_to_plot = Ez epsilon sigma mu
 plt.diag_type = Full
 
 ########################## Surface Integral on the Y-Plane #############################
@@ -209,18 +209,3 @@ Int_yOutputPlane.reduced_function(x,y,z) = " (x >= -w_port/2.) * (x <= w_port/2.
 
 ###############
 
-###############
-# input
-#input.intervals = 1
-#input.fields_to_plot = Ez
-#input.diag_lo = -w_port/2. 0. 0.
-#input.diag_hi =  w_port/2. 0. d_Pd
-#input.diag_type = Full
-
-###############
-# output
-#output.intervals = 1
-#output.fields_to_plot = Ez
-#output.diag_lo = -w_port/2. Ly 0.
-#output.diag_hi =  w_port/2. Ly d_Pd
-#output.diag_type = Full
