@@ -20,7 +20,9 @@
 #include "ParticleMomentum.H"
 #include "ParticleNumber.H"
 #include "RhoMaximum.H"
+#include "RawEFieldReduction.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -60,7 +62,8 @@ MultiReducedDiags::MultiReducedDiags ()
             {"LoadBalanceEfficiency", [](CS s){return std::make_unique<LoadBalanceEfficiency>(s);}},
             {"ParticleHistogram",     [](CS s){return std::make_unique<ParticleHistogram>(s);}},
             {"ParticleNumber",        [](CS s){return std::make_unique<ParticleNumber>(s);}},
-            {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}}
+            {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}},
+            {"RawEFieldReduction",    [](CS s){return std::make_unique<RawEFieldReduction>(s);}}
         };
     // loop over all reduced diags and fill m_multi_rd with requested reduced diags
     std::transform(m_rd_names.begin(), m_rd_names.end(), std::back_inserter(m_multi_rd),
@@ -100,6 +103,8 @@ void MultiReducedDiags::LoadBalance () {
 // call functions to compute diags
 void MultiReducedDiags::ComputeDiags (int step)
 {
+    WARPX_PROFILE("MultiReducedDiags::ComputeDiags()");
+
     // loop over all reduced diags
     for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {
