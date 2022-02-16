@@ -414,7 +414,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     // begin the iteration
     while (!stop_iter){
 
-        warpx.FillBoundaryH(warpx.getngE());
+        warpx.FillBoundaryH(warpx.getngEB());
 
         for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi){
 
