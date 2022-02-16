@@ -104,8 +104,8 @@ my_constants.flag_ss = 2
 #calculation of H_bias: H_bias (oe) = frequency / 2.8e6
 
 warpx.H_bias_excitation_on_grid_style = parse_h_bias_excitation_grid_function
-#warpx.Hx_bias_excitation_grid_function(x,y,z,t) = "Hx_rf_oe * 1000/4/pi * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t))" 
-warpx.Hx_bias_excitation_grid_function(x,y,z,t) = "Hx_rf_oe * 1000/4/pi * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t)) * cos(z/thickness * pi)" 
+#warpx.Hx_bias_excitation_grid_function(x,y,z,t) = "Hx_rf_oe * 1000/4/pi * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t))"
+warpx.Hx_bias_excitation_grid_function(x,y,z,t) = "Hx_rf_oe * 1000/4/pi * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t)) * cos(z/thickness * pi)"
 
 #warpx.Hx_bias_excitation_grid_function(x,y,z,t) = "0.0"
 warpx.Hy_bias_excitation_grid_function(x,y,z,t) = "Hy_bias_oe * 1000/4/pi"
