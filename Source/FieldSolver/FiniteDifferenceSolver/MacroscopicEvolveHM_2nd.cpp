@@ -29,6 +29,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
     // The MField here is a vector of three multifabs, with M on each face, and each multifab is a three-component multifab.
     // Each M-multifab has three components, one for each component in x, y, z. (All multifabs are four dimensional, (i,j,k,n)), where, n=1 for E, B, but, n=3 for M_xface, M_yface, M_zface
+    int lev,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield, // Mfield contains three components MultiFab
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
@@ -38,7 +39,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
     std::unique_ptr<MacroscopicProperties> const &macroscopic_properties) {
 
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-        MacroscopicEvolveHMCartesian_2nd<CartesianYeeAlgorithm>(Mfield, Hfield, Bfield, H_biasfield, Efield, dt, macroscopic_properties);
+        MacroscopicEvolveHMCartesian_2nd<CartesianYeeAlgorithm>(lev, Mfield, Hfield, Bfield, H_biasfield, Efield, dt, macroscopic_properties);
     } else {
         amrex::Abort("Only yee algorithm is compatible for M updates.");
     }
@@ -47,6 +48,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
 #ifdef WARPX_MAG_LLG
 template <typename T_Algo>
 void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
+    int lev,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
@@ -167,9 +169,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Box const &tbz = mfi.tilebox(Mzface_stag);
 
         // Extract stencil coefficients for calculating the exchange field H_exchange and the anisotropy field H_anisotropy
-        amrex::Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        amrex::Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        amrex::Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        amrex::Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
+        int const n_coefs_x = m_stencil_coefs_x.size();
+        amrex::Real const *const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
+        int const n_coefs_y = m_stencil_coefs_y.size();
+        amrex::Real const *const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        int const n_coefs_z = m_stencil_coefs_z.size();
 
         // loop over cells and update fields
         amrex::ParallelFor(tbx,
@@ -201,9 +206,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         // H_exchange - use M^(old_time)
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
-                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+
+                        amrex::Real Ms_lo_x = mag_Ms_xface_arr(i-1, j, k);
+                        amrex::Real Ms_hi_x = mag_Ms_xface_arr(i+1, j, k);
+                        amrex::Real Ms_lo_y = mag_Ms_xface_arr(i, j-1, k);
+                        amrex::Real Ms_hi_y = mag_Ms_xface_arr(i, j+1, k);
+                        amrex::Real Ms_lo_z = mag_Ms_xface_arr(i, j, k-1);
+                        amrex::Real Ms_hi_z = mag_Ms_xface_arr(i, j, k+1);
+
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 0); //Last argument is nodality -- xface = 0
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 0); //Last argument is nodality -- xface = 0
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 0); //Last argument is nodality -- xface = 0
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -278,9 +291,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         // H_exchange - use M^(old_time)
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
-                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+
+                        amrex::Real Ms_lo_x = mag_Ms_yface_arr(i-1, j, k);
+                        amrex::Real Ms_hi_x = mag_Ms_yface_arr(i+1, j, k);
+                        amrex::Real Ms_lo_y = mag_Ms_yface_arr(i, j-1, k);
+                        amrex::Real Ms_hi_y = mag_Ms_yface_arr(i, j+1, k);
+                        amrex::Real Ms_lo_z = mag_Ms_yface_arr(i, j, k-1);
+                        amrex::Real Ms_hi_z = mag_Ms_yface_arr(i, j, k+1);
+
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 1); //Last argument is nodality -- yface = 1
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 1); //Last argument is nodality -- yface = 1
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 1); //Last argument is nodality -- yface = 1
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -355,9 +376,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                         // H_exchange - use M^(old_time)
                         amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
-                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+
+                        amrex::Real Ms_lo_x = mag_Ms_zface_arr(i-1, j, k);
+                        amrex::Real Ms_hi_x = mag_Ms_zface_arr(i+1, j, k);
+                        amrex::Real Ms_lo_y = mag_Ms_zface_arr(i, j-1, k);
+                        amrex::Real Ms_hi_y = mag_Ms_zface_arr(i, j+1, k);
+                        amrex::Real Ms_lo_z = mag_Ms_zface_arr(i, j, k-1);
+                        amrex::Real Ms_hi_z = mag_Ms_zface_arr(i, j, k+1);
+
+                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 2); //Last argument is nodality -- zface = 2
+                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 2); //Last argument is nodality -- zface = 2
+                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 2); //Last argument is nodality -- zface = 2
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -491,9 +520,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             Box const &tbz = mfi.tilebox(Hznodal);
 
             // Extract stencil coefficients for calculating the exchange field H_exchange and the anisotropy field H_anisotropy
-            amrex::Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-            amrex::Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-            amrex::Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+            amrex::Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
+            int const n_coefs_x = m_stencil_coefs_x.size();
+            amrex::Real const *const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
+            int const n_coefs_y = m_stencil_coefs_y.size();
+            amrex::Real const *const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+            int const n_coefs_z = m_stencil_coefs_z.size();
 
             // loop over cells and update fields
             amrex::ParallelFor(tbx,
@@ -525,9 +557,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                             // H_exchange - use M^[(new_time),r-1]
                             amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
-                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_xface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+
+                            amrex::Real Ms_lo_x = mag_Ms_xface_arr(i-1, j, k);
+                            amrex::Real Ms_hi_x = mag_Ms_xface_arr(i+1, j, k);
+                            amrex::Real Ms_lo_y = mag_Ms_xface_arr(i, j-1, k);
+                            amrex::Real Ms_hi_y = mag_Ms_xface_arr(i, j+1, k);
+                            amrex::Real Ms_lo_z = mag_Ms_xface_arr(i, j, k-1);
+                            amrex::Real Ms_hi_z = mag_Ms_xface_arr(i, j, k+1);
+
+                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 0); //Last argument is nodality -- xface = 0
+                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 0); //Last argument is nodality -- xface = 0
+                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 0); //Last argument is nodality -- xface = 0
                         }
 
                         if (mag_anisotropy_coupling == 1){
@@ -632,9 +672,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                             // H_exchange - use M^[(new_time),r-1]
                             amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
-                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_yface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+
+                            amrex::Real Ms_lo_x = mag_Ms_yface_arr(i-1, j, k);
+                            amrex::Real Ms_hi_x = mag_Ms_yface_arr(i+1, j, k);
+                            amrex::Real Ms_lo_y = mag_Ms_yface_arr(i, j-1, k);
+                            amrex::Real Ms_hi_y = mag_Ms_yface_arr(i, j+1, k);
+                            amrex::Real Ms_lo_z = mag_Ms_yface_arr(i, j, k-1);
+                            amrex::Real Ms_hi_z = mag_Ms_yface_arr(i, j, k+1);
+
+                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 1); //Last argument is nodality -- yface = 1
+                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 1); //Last argument is nodality -- yface = 1
+                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 1); //Last argument is nodality -- yface = 1
                         }
 
                         if (mag_anisotropy_coupling == 1){
@@ -740,9 +788,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
                             // H_exchange - use M^[(new_time),r-1]
                             amrex::Real const H_exchange_coeff = 2.0 * mag_exchange_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
-                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 0);
-                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 1);
-                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian(M_prev_zface, coefs_x, coefs_y, coefs_z, i, j, k, 2);
+
+                            amrex::Real Ms_lo_x = mag_Ms_zface_arr(i-1, j, k);
+                            amrex::Real Ms_hi_x = mag_Ms_zface_arr(i+1, j, k);
+                            amrex::Real Ms_lo_y = mag_Ms_zface_arr(i, j-1, k);
+                            amrex::Real Ms_hi_y = mag_Ms_zface_arr(i, j+1, k);
+                            amrex::Real Ms_lo_z = mag_Ms_zface_arr(i, j, k-1);
+                            amrex::Real Ms_hi_z = mag_Ms_zface_arr(i, j, k+1);
+
+                            Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 2); //Last argument is nodality -- zface = 2
+                            Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 2); //Last argument is nodality -- zface = 2
+                            Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_prev_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 2); //Last argument is nodality -- zface = 2
                         }
 
                         if (mag_anisotropy_coupling == 1){
@@ -1027,9 +1083,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             }
         }
         else{
-            // Copy Mfield to Mfield_previous
+            const auto& period = warpx.Geom(lev).periodicity();
+            // Copy Mfield to Mfield_previous and fill periodic/interior ghost cells
             for (int i = 0; i < 3; i++){
                 MultiFab::Copy(*Mfield_prev[i], *Mfield[i], 0, 0, 3, Mfield[i]->nGrow());
+                (*Mfield_prev[i]).FillBoundary(Mfield[i]->nGrowVect(), period);
             }
         }
 
