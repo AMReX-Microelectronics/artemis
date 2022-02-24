@@ -1,0 +1,141 @@
+# This is test case for verifying reduced diagnostics to calculate surface/volume integrals for noncubic cells in a noncubic domain. (use USE_LLG=FALSE, ie., no M field)
+# Efield is simulated in a vacuum and initialized on each cells to be equal to 1.
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 500
+amr.n_cell = n_cellx n_celly n_cellz
+
+amr.max_grid_size = 4
+amr.blocking_factor = 8
+geometry.dims = 3
+geometry.prob_lo     =  -Lx/2. -Ly/2. -Lz/2.
+geometry.prob_hi     =   Lx/2.  Ly/2.  Lz/2.
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
+amr.max_level = 0
+
+# domain size
+my_constants.n_cellx = 8
+my_constants.n_celly = 64
+my_constants.n_cellz = 24
+
+# grid spacing
+my_constants.Lx = 8.e-6
+my_constants.Ly = 16.e-6
+my_constants.Lz = 12.e-6
+my_constants.tiny = 1.e-12
+my_constants.dx = Lx/n_cellx
+my_constants.dy = Ly/n_celly
+my_constants.dz = Lz/n_cellz
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+warpx.use_filter = 0
+warpx.cfl = 0.9
+my_constants.sigma = 0.
+my_constants.eps_r = 1.0
+my_constants.mu_r = 1.0
+
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+macroscopic.sigma_function(x,y,z) = "sigma"
+macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
+
+#################################
+############ FIELDS #############
+#################################
+
+my_constants.pi = 3.14159265359
+my_constants.c = 299792458.
+
+warpx.E_ext_grid_init_style = parse_E_ext_grid_function
+warpx.Ez_external_grid_function(x,y,z) = "1"
+warpx.Ex_external_grid_function(x,y,z) = "1"
+warpx.Ey_external_grid_function(x,y,z) = "1"
+
+warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.Bx_external_grid_function(x,y,z)= "0."
+warpx.By_external_grid_function(x,y,z)= "0."
+warpx.Bz_external_grid_function(x,y,z) = "0."
+
+# Diagnostics
+diagnostics.diags_names = plt chk
+plt.intervals = 10
+plt.fields_to_plot = Ex Ey Ez Bx By Bz
+plt.diag_type = Full
+
+chk.format = checkpoint
+chk.intervals = 100
+chk.diag_type = Full
+
+
+
+######################### Surface Integral on the Y-Plane #############################
+my_constants.eps=1.e-9
+
+warpx.reduced_diags_names = Int_yPlane
+Int_yPlane.type = RawEFieldReduction
+Int_yPlane.reduction_type = integral
+Int_yPlane.integration_type = surface
+Int_yPlane.intervals = 1
+Int_yPlane.surface_normal = Y
+my_constants.YPlaneLoc=dy/2. #Intesect Y-nodes. #Tests showed 0 also works.
+
+#Example 1:
+ Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= -Lz/2.) * (z <= Lz/2.) * 1"
+#This function is for a Y-plane strip.
+#We predict: Ex=(n_cellsx-1)*(n_cellsz)*dx*dz, Ey=(n_cellsx)*(n_cellsz)*dx*dz, Ez=(n_cellsx)*(n_cellsz-1)*dx*dz
+#Note that we compute E over the surface so the unit is [V/m . m] = [V.m]
+#The above prediction of Ez holds as long as max_grid_size >= n_cellsz. If max_grid_size < n_cellsz then we get Ez=(n_cellsx)*(n_cellsz-(n_cellsz/max_grid_size))*dx*dz
+#Also, if max_grid_size < n_cellsx, then Ex prediction is affected by the choice of max_grid_size and is equal to Ex \approx (n_cellsx-(n_cellsx/max_grid_size))*(n_cellsz))*dx*dz.
+#Ey is unaffected by the choice of max_grid_size.
+#So the rule of thumb is select max_grid_size >= max(n_cellsx, n_cellsz)
+
+#Example 2:
+# Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= Lx/2.) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= -Lz/2.) * (z <= 0.-eps) * 1"
+#This function is for a half Y-plane strip. Note eps in z function.
+#We predict: Ex=0.5*(n_cellsx-1)*(n_cellsz)*dx*dz, Ey=0.5*(n_cellsx)*(n_cellsz)*dx*dz, Ez=0.5*(n_cellsx)*(n_cellsz)*dx*dz
+
+
+#Example 3:
+# Int_yPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= 0.-eps) * (y >= YPlaneLoc - dy/2.) * (y <= YPlaneLoc) * (z >= -Lz/2.) * (z <= 0.-eps) * 1"
+#This function is for a quarter Y-plane strip. Note eps in x & z function.
+#We predict: Ex=0.25*(n_cellsx)*(n_cellsz)*dx*dz, Ey=0.25*(n_cellsx)*(n_cellsz)*dx*dz, Ez=0.25*(n_cellsx)*(n_cellsz)*dx*dz
+
+######################### Surface Integral on the X-Plane #############################
+#warpx.reduced_diags_names = Int_xPlane
+#Int_xPlane.type = RawEFieldReduction
+#Int_xPlane.reduction_type = integral
+#Int_xPlane.integration_type = surface
+#Int_xPlane.intervals = 1
+#Int_xPlane.surface_normal = X
+#my_constants.XPlaneLoc=dx/2. #Intersect X nodes. Tests showed 0 also works.
+
+#Example 4:
+#Int_xPlane.reduced_function(x,y,z) = " (x >= XPlaneLoc-dx/2.) * (x <= XPlaneLoc) * (y >= -Ly/2.) * (y <= 0.-eps) * (z >= -Lz/2.) * (z <= 0.-eps) * 1"
+#This function is for a quarter X-plane strip. Note eps in y & z function.
+#We predict: Ex=0.25*(n_cellsy)*(n_cellsz)*dx*dz, Ey=0.25*(n_cellsy)*(n_cellsz)*dx*dz, Ez=0.25*(n_cellsy)*(n_cellsz)*dx*dz
+#The above prediction of Ey holds as long as max_grid_size = n_cellsy. If max_grid_size < n_cellsy then we get Ey \approx 0.25*(n_cellsy-(n_cellsy/max_grid_size))*(n_cellsz)*dx*dz.
+#Also, if max_grid_size < n_cellsz, then Ez prediction is affected by the choice of max_grid_size and is equal to Ez \approx 0.25*(n_cellsy)*(n_cellsz-(n_cellsz/max_grid_size))*dx*dz.
+#Ex is unaffected by the choice of max_grid_size.
+
+######################### Surface Integral on the Z-Plane #############################
+#warpx.reduced_diags_names = Int_zPlane
+#Int_zPlane.type = RawEFieldReduction
+#Int_zPlane.reduction_type = integral
+#Int_zPlane.integration_type = surface
+#Int_zPlane.intervals = 1
+#Int_zPlane.surface_normal = Z
+
+#Example 5:
+#my_constants.ZPlaneLoc=dz/2. #Intersect Z nodes. #For some unknown reason if 0 is chosen, then you need z from z >= ZPlaneLoc-dz/2 to z<=ZPlaneLoc+dz/2.
+#Int_zPlane.reduced_function(x,y,z) = " (x >= -Lx/2.) * (x <= 0.-eps) * (y >= -Ly/2.) * (y <= 0.-eps) * (z >= ZPlaneLoc - dz/2.) * (z <= ZPlaneLoc) * 1"
+#This function is for a quarter Z-plane strip. Note eps in x & y function.
+#We predict: Ex=Ey=Ez=0.25*(n_cellsx)*(n_cellsy)*dx*dz.
+#The prediction of Ey holds as long as max_grid_size = n_cellsy. If max_grid_size < n_cellsy, then we get Ey \approx 0.25*(n_cellsy-(n_cellsy/max_grid_size))*(n_cellsz)*dx*dz.
+#Also, if max_grid_size < n_cellsx, then Ex prediction is affected by the choice of max_grid_size and is equal to Ex \approx 0.25*(n_cellsx- (n_cellsx/max_grid_size))*(n_cellsy)*dx*dz
+#Ez is unaffected by max_grid_size.
