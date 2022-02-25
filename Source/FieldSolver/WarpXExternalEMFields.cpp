@@ -1,4 +1,5 @@
 #include "WarpX.H"
+#include "BoundaryConditions/PML.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include <AMReX_MultiFab.H>
@@ -30,6 +31,22 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype)
                                                    Eyfield_flag_parser->compile<3>(),
                                                    Ezfield_flag_parser->compile<3>(),
                                                    lev );
+                // The excitation, especially when used to set an internal PEC, will be extended
+                // to the PML region with user-defined parser.
+                // As clarified in the documentation, it is upto the user to ensure that the parser
+                // is set up correctly if this default behavior is not needed.
+                if (WarpX::isAnyBoundaryPML() and externalfieldtype == ExternalFieldType::EfieldExternalPML) {
+                    ApplyExternalFieldExcitationOnGrid(pml[lev]->GetE_fp(0),
+                                                       pml[lev]->GetE_fp(1),
+                                                       pml[lev]->GetE_fp(2),
+                                                       Exfield_xt_grid_parser->compile<4>(),
+                                                       Eyfield_xt_grid_parser->compile<4>(),
+                                                       Ezfield_xt_grid_parser->compile<4>(),
+                                                       Exfield_flag_parser->compile<3>(),
+                                                       Eyfield_flag_parser->compile<3>(),
+                                                       Ezfield_flag_parser->compile<3>(),
+                                                       lev );
+                }
             }
         }
         if (externalfieldtype == ExternalFieldType::AllExternal || externalfieldtype == ExternalFieldType::BfieldExternal) {

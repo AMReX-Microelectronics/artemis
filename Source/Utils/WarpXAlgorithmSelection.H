@@ -130,6 +130,7 @@ struct ExternalFieldType {
         HfieldExternal = 3,
         HbiasfieldExternal = 4
 #endif
+        EfieldExternalPML = 5
     };
 };
 
