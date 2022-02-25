@@ -517,6 +517,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    makeParser(str_Ey_excitation_flag_function,{"x","y","z"}));
         Ezfield_flag_parser = std::make_unique<amrex::Parser>(
                    makeParser(str_Ez_excitation_flag_function,{"x","y","z"}));
+
+        pp_warpx.query("Apply_E_excitation_in_pml_region", ApplyExcitationInPML);
     }
     if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
         // if B excitation type is set to parser then the corresponding
