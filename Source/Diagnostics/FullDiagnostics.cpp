@@ -14,7 +14,9 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+#include "FieldSolver/London/London.H"
 #include "WarpX.H"
+
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -704,6 +706,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_anisotropy(2), lev, m_crse_ratio);
 #endif
+        } else if ( m_varnames[comp] == "superconductor") {
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getLondon().m_superconductor_mf.get(), lev, m_crse_ratio);
         }
         else {
             amrex::Abort(Utils::TextMsg::Err(m_varnames[comp] + " is not a known field output type"));

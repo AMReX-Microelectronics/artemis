@@ -32,6 +32,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+#include "FieldSolver/London/London.H"
 
 #include <ablastr/utils/SignalHandling.H>
 
@@ -170,6 +171,10 @@ WarpX::Evolve (int numsteps)
                 UpdateAuxilaryData();
                 FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
+        }
+        if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+            m_london->EvolveLondonJ(-0.5_rt*dt[0]); // J^(n) to J^(n-1/2) using E^(n)
+            // Fill Boundary J should come here
         }
 
         // Run multi-physics modules:
@@ -405,6 +410,9 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("beforedeposition");
 
     PushParticlesandDepose(cur_time);
+    if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+        m_london->EvolveLondonJ(dt[0]); // J^(n-1/2) to J^(n+1/2) using E^(n)
+    }
 
     ExecutePythonCallback("afterdeposition");
 
