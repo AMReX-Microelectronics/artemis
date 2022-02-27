@@ -200,6 +200,7 @@ amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
+int WarpX::yee_coupled_solver_algo;
 
 bool WarpX::do_current_centering = false;
 
@@ -440,6 +441,9 @@ WarpX::WarpX ()
         m_macroscopic_properties = std::make_unique<MacroscopicProperties>();
     }
 
+    if (yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+        m_london = std::make_unique<London>();
+    }
 
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
@@ -1155,6 +1159,8 @@ WarpX::ReadParameters ()
         }
         // Read field excitation flags and parsers
         ReadExcitationParser();
+
+        yee_coupled_solver_algo = GetAlgorithmInteger(pp_algo, "yee_coupled_solver");
 
         // Load balancing parameters
         std::vector<std::string> load_balance_intervals_string_vec = {"0"};

@@ -38,6 +38,7 @@
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarnManager_fwd.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "FieldSolver/London/London.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -147,7 +148,8 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
-
+    London& getLondon () { return *m_london; }
+    
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
@@ -354,6 +356,7 @@ public:
      *  (0 to 3 correspond to Absorbing, Open, Reflecting, Periodic)
      */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
+    static int yee_coupled_solver_algo;
 
 
 #ifdef WARPX_MAG_LLG
@@ -1569,6 +1572,9 @@ private:
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
+    // London solver
+    std::unique_ptr<London> m_london;
+
 
 #ifdef WARPX_MAG_LLG
     // time advancement scheme of M field
