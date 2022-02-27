@@ -38,7 +38,7 @@ void
 London::InitData()
 {
     auto& warpx = WarpX::GetInstance();
-    
+
     const int lev = 0;
     amrex::BoxArray ba = warpx.boxArray(lev);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
@@ -103,7 +103,7 @@ London::EvolveLondonJ (amrex::Real dt)
         amrex::Box const& tjx = mfi.tilebox(jx->ixType().toIntVect());
         amrex::Box const& tjy = mfi.tilebox(jy->ixType().toIntVect());
         amrex::Box const& tjz = mfi.tilebox(jz->ixType().toIntVect());
-         
+
 
     amrex::ParallelFor(tjx, tjy, tjz,
         [=] AMREX_GPU_DEVICE (int i, int j, int k) {
@@ -111,7 +111,7 @@ London::EvolveLondonJ (amrex::Real dt)
                 amrex::Real const mu_interp = CoarsenIO::Interp(mu_arr, mu_stag, jx_stag,
                                                                 macro_cr, i, j, k, scomp);
                 jx_arr(i,j,k) += dt * lambda_sq_inv/mu_interp * Ex_arr(i,j,k);
-            }              
+            }
         },
         [=] AMREX_GPU_DEVICE (int i, int j, int k) {
             if (sc_arr(i,j,k)==1 and sc_arr(i,j+1,k)==1) {
@@ -129,7 +129,7 @@ London::EvolveLondonJ (amrex::Real dt)
         }
     );
     }
-    
+
 }
 
 void

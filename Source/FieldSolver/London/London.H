@@ -24,7 +24,7 @@ class London {
 
 public:
     //Constructor
-    London ();    
+    London ();
 
     void ReadParameters ();
     void InitData ();
