@@ -21,6 +21,7 @@
 #include "ParticleNumber.H"
 #include "RhoMaximum.H"
 #include "RawEFieldReduction.H"
+#include "RawHFieldReduction.H"
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
@@ -64,6 +65,7 @@ MultiReducedDiags::MultiReducedDiags ()
             {"ParticleNumber",        [](CS s){return std::make_unique<ParticleNumber>(s);}},
             {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}},
             {"RawEFieldReduction",    [](CS s){return std::make_unique<RawEFieldReduction>(s);}}
+            {"RawHFieldReduction",    [](CS s){return std::make_unique<RawHFieldReduction>(s);}}
         };
     // loop over all reduced diags and fill m_multi_rd with requested reduced diags
     std::transform(m_rd_names.begin(), m_rd_names.end(), std::back_inserter(m_multi_rd),
