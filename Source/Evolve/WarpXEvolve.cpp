@@ -143,6 +143,10 @@ WarpX::Evolve (int numsteps)
                             *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
             }
+            if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+                m_london->EvolveLondonJ(-0.5_rt*dt[0]); // J^(n) to J^(n-1/2) using E^(n)
+                // Fill Boundary J should come here
+            }
             is_synchronized = false;
         } else {
             if (do_electrostatic == ElectrostaticSolverAlgo::None) {
@@ -171,10 +175,6 @@ WarpX::Evolve (int numsteps)
                 UpdateAuxilaryData();
                 FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
-        }
-        if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
-            m_london->EvolveLondonJ(-0.5_rt*dt[0]); // J^(n) to J^(n-1/2) using E^(n)
-            // Fill Boundary J should come here
         }
 
         // Run multi-physics modules:
@@ -411,6 +411,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
     PushParticlesandDepose(cur_time);
     if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+        amrex::Print() << " in evolve london j\n";
         m_london->EvolveLondonJ(dt[0]); // J^(n-1/2) to J^(n+1/2) using E^(n)
     }
 
