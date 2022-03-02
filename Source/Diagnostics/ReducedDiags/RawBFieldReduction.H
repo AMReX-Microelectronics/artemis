@@ -65,8 +65,11 @@ private:
     // The direction of the surface for surface integration. (e.g. X, Y, or Z)
 #if (AMREX_SPACEDIM==2)
     int m_surface_normal[2]={0,0};
+    int m_sign_vector[2] = {1,1};
+//    Vector<int> asign_vector(AMREX_SPACEDIM);
 #else
     int m_surface_normal[3]={0,0,0};
+    int m_sign_vector[3] = {1,1,1};
 #endif
 
 public:
@@ -90,25 +93,25 @@ public:
         int* surface_normal = &m_surface_normal[0];
 
         for (int lev = 0; lev < nLevel; ++lev) {
-            const amrex::MultiFab &Ex = warpx.getEfield(lev,0);
-            const amrex::MultiFab &Ey = warpx.getEfield(lev,1);
-            const amrex::MultiFab &Ez = warpx.getEfield(lev,2);
+            const amrex::MultiFab &Bx = warpx.getBfield(lev,0);
+            const amrex::MultiFab &By = warpx.getBfield(lev,1);
+            const amrex::MultiFab &Bz = warpx.getBfield(lev,2);
 
-            constexpr int index_Ex = 0;
-            constexpr int index_Ey = 1;
-            constexpr int index_Ez = 2;
-            amrex::IntVect Ex_nodalType = Ex.ixType().toIntVect();
-            amrex::IntVect Ey_nodalType = Ey.ixType().toIntVect();
-            amrex::IntVect Ez_nodalType = Ez.ixType().toIntVect();
+            constexpr int index_Bx = 0;
+            constexpr int index_By = 1;
+            constexpr int index_Bz = 2;
+            amrex::IntVect Bx_nodalType = Bx.ixType().toIntVect();
+            amrex::IntVect By_nodalType = By.ixType().toIntVect();
+            amrex::IntVect Bz_nodalType = Bz.ixType().toIntVect();
 
-            amrex::ReduceOps<ReduceOp> reduceEx_op;
-            amrex::ReduceOps<ReduceOp> reduceEy_op;
-            amrex::ReduceOps<ReduceOp> reduceEz_op;
-            amrex::ReduceData<amrex::Real> reduceEx_data(reduceEx_op);
-            amrex::ReduceData<amrex::Real> reduceEy_data(reduceEy_op);
-            amrex::ReduceData<amrex::Real> reduceEz_data(reduceEz_op);
+            amrex::ReduceOps<ReduceOp> reduceBx_op;
+            amrex::ReduceOps<ReduceOp> reduceBy_op;
+            amrex::ReduceOps<ReduceOp> reduceBz_op;
+            amrex::ReduceData<amrex::Real> reduceBx_data(reduceBx_op);
+            amrex::ReduceData<amrex::Real> reduceBy_data(reduceBy_op);
+            amrex::ReduceData<amrex::Real> reduceBz_data(reduceBz_op);
 
-            using ReduceTuple = typename decltype(reduceEx_data)::Type;
+            using ReduceTuple = typename decltype(reduceBx_data)::Type;
 
             amrex::Geometry const & geom = warpx.Geom(lev);
             const amrex::RealBox& real_box = geom.ProbDomain();
@@ -117,11 +120,11 @@ public:
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-            for ( amrex::MFIter mfi(Ex, false); mfi.isValid(); ++mfi)
+            for ( amrex::MFIter mfi(Bx, false); mfi.isValid(); ++mfi)
             {
-                const amrex::Box& tx = mfi.tilebox(Ex_nodalType);
-                const amrex::Box& ty = mfi.tilebox(Ey_nodalType);
-                const amrex::Box& tz = mfi.tilebox(Ez_nodalType);
+                const amrex::Box& tx = mfi.tilebox(Bx_nodalType);
+                const amrex::Box& ty = mfi.tilebox(By_nodalType);
+                const amrex::Box& tz = mfi.tilebox(Bz_nodalType);
 
                 const amrex::IntVect lx = tx.smallEnd();
                 const amrex::IntVect hx = tx.bigEnd();
@@ -132,149 +135,142 @@ public:
                 const amrex::IntVect lz = tz.smallEnd();
                 const amrex::IntVect hz = tz.bigEnd();
 
-                const auto& Ex_arr = Ex[mfi].array();
-                const auto& Ey_arr = Ey[mfi].array();
-                const auto& Ez_arr = Ez[mfi].array();
+                const auto& Bx_arr = Bx[mfi].array();
+                const auto& By_arr = By[mfi].array();
+                const auto& Bz_arr = Bz[mfi].array();
 
-                reduceEx_op.eval(tx, reduceEx_data,
+                reduceBx_op.eval(tx, reduceBx_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
                     // Shift x, y, z position based on index type
-                    amrex::Real fac_x = (1._rt - Ex_nodalType[0]) * dx[0] * 0.5_rt;
+                    amrex::Real fac_x = (1._rt - Bx_nodalType[0]) * dx[0] * 0.5_rt;
                     amrex::Real x = i * dx[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
                     amrex::Real y = 0._rt;
-                    amrex::Real fac_z = (1._rt - Ex_nodalType[1]) * dx[1] * 0.5_rt;
+                    amrex::Real fac_z = (1._rt - Bx_nodalType[1]) * dx[1] * 0.5_rt;
                     amrex::Real z = j * dx[1] + real_box.lo(1) + fac_z;
 #else
-                    amrex::Real fac_y = (1._rt - Ex_nodalType[1]) * dx[1] * 0.5_rt;
+                    amrex::Real fac_y = (1._rt - Bx_nodalType[1]) * dx[1] * 0.5_rt;
                     amrex::Real y = j * dx[1] + real_box.lo(1) + fac_y;
-                    amrex::Real fac_z = (1._rt - Ex_nodalType[2]) * dx[2] * 0.5_rt;
+                    amrex::Real fac_z = (1._rt - Bx_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
-                    // we want to weight interior edges by 1
-                    // edges that are on faces of the box by 0.5
-                    // edges that are on the edges of the box by 0.25
+                    // we want to weight interior face-nodes by 1
+                    // face-nodes that are on the faces of the box by 0.5
+		    // Face-nodes for Bx computation can lie on xmin and xmax box faces.
                     amrex::Real weight = 1.0;
-                    if (k == lx[2] || k == hx[2]) {
+                    if (i == lx[0] || i == hx[0]) {
                         weight *= 0.5;
                     }
+                    return weight*reduction_function_parser(x,y,z)*Bx_arr(i,j,k);
+                });
+                reduceBy_op.eval(ty, reduceBy_data,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
+                {
+                    // Shift x, y, z position based on index type
+                    amrex::Real fac_x = (1._rt - By_nodalType[0]) * dx[0] * 0.5_rt;
+                    amrex::Real x = i * dx[0] + real_box.lo(0) + fac_x;
+#if (AMREX_SPACEDIM==2)
+                    amrex::Real y = 0._rt;
+                    amrex::Real fac_z = (1._rt - By_nodalType[1]) * dx[1] * 0.5_rt;
+                    amrex::Real z = j * dx[1] + real_box.lo(1) + fac_z;
+#else
+                    amrex::Real fac_y = (1._rt - By_nodalType[1]) * dx[1] * 0.5_rt;
+                    amrex::Real y = j * dx[1] + real_box.lo(1) + fac_y;
+                    amrex::Real fac_z = (1._rt - By_nodalType[2]) * dx[2] * 0.5_rt;
+                    amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
+#endif
+                    // we want to weight interior face-nodes by 1
+                    // face-nodes that are on the faces of the box by 0.5
+		    // Face-nodes for By computation can lie on ymin and ymax box faces.
+                    amrex::Real weight = 1.0;
                     if (j == lx[1] || j == hx[1]) {
                         weight *= 0.5;
                     }
-                    return weight*reduction_function_parser(x,y,z)*Ex_arr(i,j,k);
+                    return weight*reduction_function_parser(x,y,z)*By_arr(i,j,k);
                 });
-                reduceEy_op.eval(ty, reduceEy_data,
+                reduceBz_op.eval(tz, reduceBz_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
                     // Shift x, y, z position based on index type
-                    amrex::Real fac_x = (1._rt - Ey_nodalType[0]) * dx[0] * 0.5_rt;
+                    amrex::Real fac_x = (1._rt - Bz_nodalType[0]) * dx[0] * 0.5_rt;
                     amrex::Real x = i * dx[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
                     amrex::Real y = 0._rt;
-                    amrex::Real fac_z = (1._rt - Ey_nodalType[1]) * dx[1] * 0.5_rt;
+                    amrex::Real fac_z = (1._rt - Bz_nodalType[1]) * dx[1] * 0.5_rt;
                     amrex::Real z = j * dx[1] + real_box.lo(1) + fac_z;
 #else
-                    amrex::Real fac_y = (1._rt - Ey_nodalType[1]) * dx[1] * 0.5_rt;
+                    amrex::Real fac_y = (1._rt - Bz_nodalType[1]) * dx[1] * 0.5_rt;
                     amrex::Real y = j * dx[1] + real_box.lo(1) + fac_y;
-                    amrex::Real fac_z = (1._rt - Ey_nodalType[2]) * dx[2] * 0.5_rt;
+                    amrex::Real fac_z = (1._rt - Bz_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
-                    // we want to weight interior edges by 1
-                    // edges that are on faces of the box by 0.5
-                    // edges that are on the edges of the box by 0.25
+                    // we want to weight interior face-nodes by 1
+                    // face-nodes that are on the faces of the box by 0.5
+		    // Face-nodes for Bz computation can lie on zmin and zmax box faces.
                     amrex::Real weight = 1.0;
-                    if (i == ly[0] || i == hy[0]) {
+                    if (k == lx[2] || j == hx[2]) {
                         weight *= 0.5;
                     }
-                    if (k == ly[2] || k == hy[2]) {
-                        weight *= 0.5;
-                    }
-                    return weight*reduction_function_parser(x,y,z)*Ey_arr(i,j,k);
-                });
-                reduceEz_op.eval(tz, reduceEz_data,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
-                {
-                    // Shift x, y, z position based on index type
-                    amrex::Real fac_x = (1._rt - Ez_nodalType[0]) * dx[0] * 0.5_rt;
-                    amrex::Real x = i * dx[0] + real_box.lo(0) + fac_x;
-#if (AMREX_SPACEDIM==2)
-                    amrex::Real y = 0._rt;
-                    amrex::Real fac_z = (1._rt - Ez_nodalType[1]) * dx[1] * 0.5_rt;
-                    amrex::Real z = j * dx[1] + real_box.lo(1) + fac_z;
-#else
-                    amrex::Real fac_y = (1._rt - Ez_nodalType[1]) * dx[1] * 0.5_rt;
-                    amrex::Real y = j * dx[1] + real_box.lo(1) + fac_y;
-                    amrex::Real fac_z = (1._rt - Ez_nodalType[2]) * dx[2] * 0.5_rt;
-                    amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
-#endif
-                    // we want to weight interior edges by 1
-                    // edges that are on faces of the box by 0.5
-                    // edges that are on the edges of the box by 0.25
-                    amrex::Real weight = 1.0;
-                    if (i == lz[0] || i == hz[0]) {
-                        weight *= 0.5;
-                    }
-                    if (j == lz[1] || j == hz[1]) {
-                        weight *= 0.5;
-                    }
-                    return weight*reduction_function_parser(x,y,z)*Ez_arr(i,j,k);
+                    return weight*reduction_function_parser(x,y,z)*Bz_arr(i,j,k);
                 });
             }
 
-            amrex::Real reducedEx_value = amrex::get<0>(reduceEx_data.value());
-            amrex::Real reducedEy_value = amrex::get<0>(reduceEy_data.value());
-            amrex::Real reducedEz_value = amrex::get<0>(reduceEz_data.value());
+            amrex::Real reducedBx_value = amrex::get<0>(reduceBx_data.value());
+            amrex::Real reducedBy_value = amrex::get<0>(reduceBy_data.value());
+            amrex::Real reducedBz_value = amrex::get<0>(reduceBz_data.value());
 
             // MPI reduce
             if (std::is_same<ReduceOp, amrex::ReduceOpMax>::value)
             {
-                amrex::ParallelDescriptor::ReduceRealMax(reducedEx_value);
-                amrex::ParallelDescriptor::ReduceRealMax(reducedEy_value);
-                amrex::ParallelDescriptor::ReduceRealMax(reducedEz_value);
+                amrex::ParallelDescriptor::ReduceRealMax(reducedBx_value);
+                amrex::ParallelDescriptor::ReduceRealMax(reducedBy_value);
+                amrex::ParallelDescriptor::ReduceRealMax(reducedBz_value);
             }
             if (std::is_same<ReduceOp, amrex::ReduceOpMin>::value)
             {
-                amrex::ParallelDescriptor::ReduceRealMin(reducedEx_value);
-                amrex::ParallelDescriptor::ReduceRealMin(reducedEy_value);
-                amrex::ParallelDescriptor::ReduceRealMin(reducedEz_value);
+                amrex::ParallelDescriptor::ReduceRealMin(reducedBx_value);
+                amrex::ParallelDescriptor::ReduceRealMin(reducedBy_value);
+                amrex::ParallelDescriptor::ReduceRealMin(reducedBz_value);
             }
             if (std::is_same<ReduceOp, amrex::ReduceOpSum>::value)
             {
-                amrex::ParallelDescriptor::ReduceRealSum(reducedEx_value);
-                amrex::ParallelDescriptor::ReduceRealSum(reducedEy_value);
-                amrex::ParallelDescriptor::ReduceRealSum(reducedEz_value);
+                amrex::ParallelDescriptor::ReduceRealSum(reducedBx_value);
+                amrex::ParallelDescriptor::ReduceRealSum(reducedBy_value);
+                amrex::ParallelDescriptor::ReduceRealSum(reducedBz_value);
 
                 // If reduction operation is an integral, multiply the value by the cell volume
                 // If reduction operation is a surface, multiply the value by the cell face area
                 if (integral_type == 0) {
 
 #if (AMREX_SPACEDIM==2)
-                reducedEx_value *= dx[0]*dx[1];
-                reducedEy_value *= dx[0]*dx[1];
-                reducedEz_value *= dx[0]*dx[1];
+                amrex::Real area = dx[0]*dx[1];
+                reducedBx_value *= area;
+                reducedBy_value *= area;
+                reducedBz_value *= area;
 #else
-                reducedEx_value *= dx[0]*dx[1]*dx[2];
-                reducedEy_value *= dx[0]*dx[1]*dx[2];
-                reducedEz_value *= dx[0]*dx[1]*dx[2];
+                amrex::Real volume = dx[0]*dx[1]*dx[2];
+                reducedBx_value *= volume;
+                reducedBy_value *= volume;
+                reducedBz_value *= volume;
 #endif
                 } else {
 #if (AMREX_SPACEDIM==2)
                 amrex::Real length = surface_normal[0]*dx[1] + surface_normal[1]*dx[0];
-                reducedEx_value *= length;
-                reducedEy_value *= length;
-                reducedEz_value *= length;
+                reducedBx_value *= sign_vector[0]*length;
+                reducedBy_value *= length;
+                reducedBz_value *= sign_vector[1]*length;
 #else
                 amrex::Real area = surface_normal[0]*dx[1]*dx[2] + surface_normal[1]*dx[2]*dx[0] + surface_normal[2]*dx[0]*dx[1];
-                reducedEx_value *= area;
-                reducedEy_value *= area;
-                reducedEz_value *= area;
+                reducedBx_value *= sign_vector[0]*area;
+                reducedBy_value *= sign_vector[1]*area;
+                reducedBz_value *= sign_vector[2]*area;
 #endif
                 }
             }
-            m_data[index_Ex] = reducedEx_value;
-            m_data[index_Ey] = reducedEy_value;
-            m_data[index_Ez] = reducedEz_value;
+            m_data[index_Bx] = reducedBx_value;
+            m_data[index_By] = reducedBy_value;
+            m_data[index_Bz] = reducedBz_value;
 
         }
     }
