@@ -19,5 +19,5 @@ target_sources(WarpX
     FieldReduction.cpp
     FieldProbe.cpp
     RawEFieldReduction.cpp
-    RawHFieldReduction.cpp
+    RawBFieldReduction.cpp
 )
