@@ -15,6 +15,7 @@
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "BoundaryConditions/PML_RZ.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
@@ -133,7 +134,7 @@ WarpX::PSATDBackwardTransformEB ()
     // Damp the fields in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DampFieldsInGuards(Efield_fp[lev], Bfield_fp[lev]);
+        DampFieldsInGuards(lev, Efield_fp[lev], Bfield_fp[lev]);
     }
 }
 
@@ -185,6 +186,12 @@ WarpX::PSATDBackwardTransformF ()
             if (F_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F);
         }
     }
+
+    // Damp the field in the guard cells
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        DampFieldsInGuards(lev, F_fp[lev]);
+    }
 }
 
 void
@@ -217,6 +224,12 @@ WarpX::PSATDBackwardTransformG ()
             if (G_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G);
         }
     }
+
+    // Damp the field in the guard cells
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        DampFieldsInGuards(lev, G_fp[lev]);
+    }
 }
 
 void
@@ -224,12 +237,9 @@ WarpX::PSATDForwardTransformJ ()
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
-    const int idx_jx = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jx_new)
-                                                 : static_cast<int>(Idx.Jx);
-    const int idx_jy = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jy_new)
-                                                 : static_cast<int>(Idx.Jy);
-    const int idx_jz = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jz_new)
-                                                 : static_cast<int>(Idx.Jz);
+    const int idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
+    const int idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
+    const int idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -405,20 +415,30 @@ WarpX::PushPSATD ()
 
     PSATDForwardTransformEB();
     PSATDForwardTransformJ();
+
     // Do rho FFTs only if needed
     if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
     {
         PSATDForwardTransformRho(0,0); // rho old
         PSATDForwardTransformRho(1,1); // rho new
     }
+
+#ifdef WARPX_DIM_RZ
+    if (pml_rz[0]) pml_rz[0]->PushPSATD(0);
+#endif
+
+    if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
+    if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
     PSATDPushSpectralFields();
     PSATDBackwardTransformEB();
     if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
+    if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
+    if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
 
     // Evolve the fields in the PML boxes
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (do_pml && pml[lev]->ok())
+        if (pml[lev] && pml[lev]->ok())
         {
             pml[lev]->PushPSATD(lev);
         }
@@ -525,7 +545,8 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 #else
                 pml[lev]->GetB_fp(),
 #endif
-                pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
+                pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_fp(),
                 pml[lev]->GetMultiSigmaBox_fp(),
                 a_dt, pml_has_particles );
         } else {
@@ -536,7 +557,8 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 #else
                 pml[lev]->GetB_cp(),
 #endif
-                pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
+                pml[lev]->Getj_cp(), pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_cp(),
                 pml[lev]->GetMultiSigmaBox_cp(),
                 a_dt, pml_has_particles );
         }
@@ -544,6 +566,19 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 
     ApplyEfieldBoundary(lev, patch_type);
 
+    // ECTRhofield must be recomputed at the very end of the Efield update to ensure
+    // that ECTRhofield is consistent with Efield
+#ifdef AMREX_USE_EB
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
+                                                m_face_areas[lev], ECTRhofield[lev], lev);
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
+                                                m_face_areas[lev], ECTRhofield[lev], lev);
+        }
+    }
+#endif
 }
 
 
@@ -741,8 +776,8 @@ WarpX::MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real a_dt) {
 
     // Evolve H field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->MacroscopicEvolveHM( lev, Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev], H_biasfield_fp[lev], Efield_fp[lev],
-                                             a_dt, m_macroscopic_properties);
+        m_fdtd_solver_fp[lev]->MacroscopicEvolveHM(Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev], H_biasfield_fp[lev], Efield_fp[lev],
+                                                   a_dt, m_macroscopic_properties);
     }
     else {
         amrex::Abort("Macroscopic EvolveHM is not implemented for lev > 0 yet");
@@ -784,8 +819,8 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
 
     // Evolve H field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->MacroscopicEvolveHM_2nd( lev, Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev], H_biasfield_fp[lev],  Efield_fp[lev],
-                                             a_dt, m_macroscopic_properties);
+        m_fdtd_solver_fp[lev]->MacroscopicEvolveHM_2nd(lev, Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev], H_biasfield_fp[lev],  Efield_fp[lev],
+                                                       a_dt, m_macroscopic_properties);
     }
     else {
         amrex::Abort("Macroscopic EvolveHM_2nd is not implemented for lev > 0 yet");
@@ -807,7 +842,8 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
 #endif // ifndef WARPX_DIM_RZ
 
 void
-WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+WarpX::DampFieldsInGuards(const int lev,
+                          std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                           std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
 
     // Loop over dimensions
@@ -857,7 +893,7 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
                 const int tbz_bigEnd_d = tbz.bigEnd(dampdir);
 
                 // Box for the whole simulation domain
-                amrex::Box const& domain = Geom(0).Domain();
+                amrex::Box const& domain = Geom(lev).Domain();
                 int const nn_domain = domain.bigEnd(dampdir);
 
                 // Set the tileboxes so that they only cover the lower/upper half of the guard cells
@@ -899,6 +935,51 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
                     }
                 );
 
+            }
+        }
+    }
+}
+
+void WarpX::DampFieldsInGuards(const int lev, std::unique_ptr<amrex::MultiFab>& mf)
+{
+    // Loop over dimensions
+    for (int dampdir = 0; dampdir < AMREX_SPACEDIM; dampdir++)
+    {
+        // Loop over the lower and upper guards
+        for (int iside = 0; iside < 2; iside++)
+        {
+            // Only apply to damped boundaries
+            if (iside == 0 && WarpX::field_boundary_lo[dampdir] != FieldBoundaryType::Damped) continue;
+            if (iside == 1 && WarpX::field_boundary_hi[dampdir] != FieldBoundaryType::Damped) continue;
+
+            for (amrex::MFIter mfi(*mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+            {
+                amrex::Array4<amrex::Real> const& mf_arr = mf->array(mfi);
+
+                // Get the tilebox from mf so that it includes the guard cells
+                // and takes the staggering of mf into account
+                const amrex::Box tx = amrex::convert((*mf)[mfi].box(), mf->ixType().toIntVect());
+
+                // Get smallEnd of tilebox
+                const int tx_smallEnd_d = tx.smallEnd(dampdir);
+
+                // Get bigEnd of tilebox
+                const int tx_bigEnd_d = tx.bigEnd(dampdir);
+
+                // Box for the whole simulation domain
+                amrex::Box const& domain = Geom(lev).Domain();
+                int const nn_domain = domain.bigEnd(dampdir);
+
+                // Set the tilebox so that it only covers the lower/upper half of the guard cells
+                amrex::Box tx_guard = constrain_tilebox_to_guards(tx, dampdir, iside, nn_domain, tx_smallEnd_d, tx_bigEnd_d);
+
+                // Do the damping
+                amrex::ParallelFor(
+                    tx_guard, mf->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+                    {
+                        damp_field_in_guards(mf_arr, i, j, k, icomp, dampdir, nn_domain, tx_smallEnd_d, tx_bigEnd_d);
+                    }
+                );
             }
         }
     }

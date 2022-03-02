@@ -25,6 +25,7 @@
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
+#       include "BoundaryConditions/PML_RZ_fwd.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
@@ -62,12 +63,9 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
-
-#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
-static_assert(false, "Embedded boundaries are not supported in RZ mode.");
-#endif
 
 enum struct PatchType : int
 {
@@ -402,9 +400,8 @@ public:
     static int do_subcycling;
     static int do_multi_J;
     static int do_multi_J_n_depositions;
-    static int J_linear_in_time;
 
-    static int do_device_synchronize;
+    static bool do_device_synchronize;
     static bool safe_guard_cells;
 
     // buffers
@@ -491,6 +488,9 @@ public:
     amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
     amrex::MultiFab * get_pointer_G_cp  (int lev) const { return G_cp[lev].get(); }
 
+    amrex::MultiFab * get_pointer_edge_lengths  (int lev, int direction) const { return m_edge_lengths[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_face_areas  (int lev, int direction) const { return m_face_areas[lev][direction].get(); }
+
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
     const amrex::MultiFab& getBfield  (int lev, int direction) {return *Bfield_aux[lev][direction];}
@@ -530,6 +530,9 @@ public:
     const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
+#endif
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
@@ -563,11 +566,11 @@ public:
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_exeybz;
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
 
-    amrex::Real time_of_last_gal_shift  = 0;
-    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
+    amrex::Real time_of_last_gal_shift = 0;
+    amrex::Vector<amrex::Real> m_v_galilean = amrex::Vector<amrex::Real>(3, amrex::Real(0.));
     amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
 
-    amrex::Vector<amrex::Real> m_v_comoving{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
+    amrex::Vector<amrex::Real> m_v_comoving = amrex::Vector<amrex::Real>(3, amrex::Real(0.));
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -674,10 +677,20 @@ public:
      * Applies a damping factor in the guards cells that extend
      * beyond the extent of the domain, reducing fluctuations that
      * can appear in parallel simulations. This will be called
-     * when FieldBoundaryType is set to damped.
+     * when FieldBoundaryType is set to damped. Vector version.
      */
-    void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+    void DampFieldsInGuards (const int lev,
+                             std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
+
+    /**
+     * \brief Private function for spectral solver
+     * Applies a damping factor in the guards cells that extend
+     * beyond the extent of the domain, reducing fluctuations that
+     * can appear in parallel simulations. This will be called
+     * when FieldBoundaryType is set to damped. Scalar version.
+     */
+    void DampFieldsInGuards (const int lev, std::unique_ptr<amrex::MultiFab>& mf);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -693,8 +706,9 @@ public:
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
     void DampPML ();
-    void DampPML (int lev);
-    void DampPML (int lev, PatchType patch_type);
+    void DampPML (const int lev);
+    void DampPML (const int lev, PatchType patch_type);
+    void DampPML_Cartesian (const int lev, PatchType patch_type);
 
     void DampJPML ();
     void DampJPML (int lev);
@@ -719,6 +733,9 @@ public:
     void NodalSyncPML (int lev, PatchType patch_type);
 
     PML* GetPML (int lev);
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    PML_RZ* GetPML_RZ (int lev);
+#endif
 
     /** Run the ionization module on all species */
     void doFieldIonization ();
@@ -870,7 +887,7 @@ public:
 
     void ComputeDivE(amrex::MultiFab& divE, const int lev);
 
-    const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; }
+    const amrex::IntVect getngEB() const { return guard_cells.ng_alloc_EB; }
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
@@ -894,23 +911,9 @@ public:
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
-                     amrex::Real const absolute_tolerance=amrex::Real(0.0),
+                     amrex::Real absolute_tolerance=amrex::Real(0.0),
                      const int max_iters=200,
                      const int verbosity=2) const;
-    void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
-    void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
@@ -947,6 +950,16 @@ public:
          amrex::ParserExecutor<3> const& yfield_parser,
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data, const int lev);
+
+    /**
+     * \brief
+     * This function initializes and calculates grid quantities used along with
+     * EBs such as edge lengths, face areas, distance to EB, etc. It also
+     * appropriately communicates EB data to guard cells.
+     *
+     * \param[in] lev, level of the Multifabs that is initialized
+     */
+    void InitializeEBGridData(int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -1081,11 +1094,11 @@ private:
     ///
     void EvolveEM(int numsteps);
 
-    void FillBoundaryB (int lev, PatchType patch_type, amrex::IntVect ng);
-    void FillBoundaryE (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng);
+    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng);
 #ifdef WARPX_MAG_LLG
-    void FillBoundaryM (int lev, PatchType patch_type, amrex::IntVect ng);
-    void FillBoundaryH (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryM (const int lev, const PatchType patch_type, const amrex::IntVect ng);
+    void FillBoundaryH (const int lev, const PatchType patch_type, const amrex::IntVect ng);
 #endif
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng);
@@ -1229,7 +1242,7 @@ private:
 #endif
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                        const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
+                        const amrex::IntVect& ngEB, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
 #ifdef WARPX_USE_PSATD
@@ -1253,6 +1266,8 @@ private:
     std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
     // Flag to control if WarpX has to emit a warning message as soon as a warning is recorded
     bool m_always_warn_immediately = false;
+    // Threshold to abort immediately on a warning message
+    std::optional<WarnPriority> m_abort_on_warning_threshold = std::nullopt;
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?
@@ -1387,11 +1402,15 @@ private:
     int pml_has_particles = 0;
     int do_pml_j_damping = 0;
     int do_pml_in_domain = 0;
+    static int do_similar_dm_pml;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
     amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
     amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
+#endif
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
     amrex::Real current_injection_position = 0;
@@ -1526,20 +1545,26 @@ public:
     */
 
 public:
-    void ComputeEdgeLengths ();
+#ifdef AMREX_USE_EB
+    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                                    const amrex::EBFArrayBoxFactory& eb_fact);
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
     *        An edge of area 0 is fully covered.
     */
-    void ComputeFaceAreas ();
+    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                                  const amrex::EBFArrayBoxFactory& eb_fact);
+
     /**
     * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
     */
-    void ScaleEdges ();
+    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.
     */
-    void ScaleAreas ();
+    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Initialize information for cell extensions.
     *        The flags convention for m_flag_info_face is as follows
@@ -1552,6 +1577,7 @@ public:
     /**
     * \brief Compute the level set function used for particle-boundary interaction.
     */
+#endif
     void ComputeDistanceToEB ();
     /**
     * \brief Auxiliary function to count the amount of faces which still need to be extended

@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <array>
 
-IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
+IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
                                             amrex::FArrayBox const& exfab,
                                             amrex::FArrayBox const& eyfab,
                                             amrex::FArrayBox const& ezfab,
@@ -41,8 +41,7 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
     m_atomic_number = a_atomic_number;
 
     m_get_position  = GetParticlePosition(a_pti, a_offset);
-    m_get_externalE = GetExternalEField  (a_pti, a_offset);
-    m_get_externalB = GetExternalBField  (a_pti, a_offset);
+    m_get_externalEB = GetExternalEBField(a_pti, a_offset);
 
     m_ex_arr = exfab.array();
     m_ey_arr = eyfab.array();
@@ -59,7 +58,7 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
     m_bz_type = bzfab.box().ixType();
 
     amrex::Box box = a_pti.tilebox();
-    box.grow(ngE);
+    box.grow(ngEB);
 
     const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
     m_dx_arr = {dx[0], dx[1], dx[2]};
