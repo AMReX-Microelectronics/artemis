@@ -733,6 +733,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         current_fp[lev][i]->setVal(0.0);
         if (lev > 0)
            current_cp[lev][i]->setVal(0.0);
+        Bfield_sc_fp[lev][i]->setVal(0.0);
 
         // Initialize aux MultiFabs on level 0
         if (lev == 0) {

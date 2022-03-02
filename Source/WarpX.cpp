@@ -366,6 +366,7 @@ WarpX::WarpX ()
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
+    Bfield_sc_fp.resize(nlevs_max);
 #ifdef WARPX_MAG_LLG
     Mfield_fp.resize(nlevs_max);
     Hfield_fp.resize(nlevs_max);
@@ -1713,6 +1714,7 @@ WarpX::ClearLevel (int lev)
         current_fp[lev][i].reset();
         Efield_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
+        Bfield_sc_fp [lev][i].reset();
 #ifdef WARPX_MAG_LLG
         Mfield_fp [lev][i].reset();
         Hfield_fp [lev][i].reset();
@@ -1989,6 +1991,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Bfield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp[x]"));
     Bfield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp[y]"));
     Bfield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp[z]"));
+    Bfield_sc_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_sc_fp[x]"));
+    Bfield_sc_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_sc_fp[y]"));
+    Bfield_sc_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_sc_fp[z]"));
 
 #ifdef WARPX_MAG_LLG
     // each Mfield[] is three components
