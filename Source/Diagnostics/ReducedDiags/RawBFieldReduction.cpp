@@ -83,11 +83,16 @@ RawBFieldReduction::RawBFieldReduction (std::string rd_name)
         m_surface_normal[2] = 1;
     }
 #endif
-    Vector<amrex::Real> sign_vector(AMREX_SPACEDIM);
-    pp_rd_name.queryarr("sign_vector", m_sign_vector, 0, AMREX_SPACEDIM);
-    AMREX_ASSERT(m_sign_vector.size() == AMREX_SPACEDIM);
+    for (int i=0; i < AMREX_SPACEDIM; ++i) {
+        m_sign_vec[i] = 1;
+    }
+    pp_rd_name.queryarr("m_sign_vec", m_sign_vec, 0, AMREX_SPACEDIM);
+    AMREX_ASSERT(m_sign_vec.size() == AMREX_SPACEDIM);
 
-    amrex::Print() << "specified sign vector: " << m_sign_vector[0] << " " << m_sign_vector[1] << " " << m_sign_vector[2] << '\n';
+    amrex::Print() << "Specified sign array: \n";
+    for (int i=0; i < AMREX_SPACEDIM; ++i) {
+        amrex::Print() << " index " << i << " " << m_sign_vec[i] << "\n";
+    }
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {

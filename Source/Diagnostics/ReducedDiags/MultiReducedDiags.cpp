@@ -64,7 +64,7 @@ MultiReducedDiags::MultiReducedDiags ()
             {"ParticleHistogram",     [](CS s){return std::make_unique<ParticleHistogram>(s);}},
             {"ParticleNumber",        [](CS s){return std::make_unique<ParticleNumber>(s);}},
             {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}},
-            {"RawEFieldReduction",    [](CS s){return std::make_unique<RawEFieldReduction>(s);}}
+            {"RawEFieldReduction",    [](CS s){return std::make_unique<RawEFieldReduction>(s);}},
             {"RawBFieldReduction",    [](CS s){return std::make_unique<RawBFieldReduction>(s);}}
         };
     // loop over all reduced diags and fill m_multi_rd with requested reduced diags

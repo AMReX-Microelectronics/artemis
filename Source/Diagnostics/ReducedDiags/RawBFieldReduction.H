@@ -28,6 +28,8 @@
 #include <AMReX_RealBox.H>
 #include <AMReX_Reduce.H>
 #include <AMReX_Tuple.H>
+#include <AMReX_Print.H>
+#include <AMReX_SPACE.H>
 
 #include <memory>
 #include <string>
@@ -65,15 +67,11 @@ private:
     // The direction of the surface for surface integration. (e.g. X, Y, or Z)
 #if (AMREX_SPACEDIM==2)
     int m_surface_normal[2]={0,0};
+    std::vector<int> m_sign_vec={1,1};
 #else
     int m_surface_normal[3]={0,0,0};
+    std::vector<int> m_sign_vec={1,1,1};
 #endif
-    amrex::Vector<int> m_sign_vector(AMREX_SPACEDIM);
-    for (int i=0; i < AMREX_SPACEDIM; ++i)
-        m_sign_vector.push_back(1);
-
-    amrex::Print() << "initialized sign vector: " << m_sign_vector[0] << " " << m_sign_vector[1] << " " << m_sign_vector[2];
-
 public:
 
     /**
@@ -186,7 +184,7 @@ public:
                     // face-nodes that are on the faces of the box by 0.5
 		    // Face-nodes for By computation can lie on ymin and ymax box faces.
                     amrex::Real weight = 1.0;
-                    if (j == lx[1] || j == hx[1]) {
+                    if (j == ly[1] || j == hy[1]) {
                         weight *= 0.5;
                     }
                     return weight*reduction_function_parser(x,y,z)*By_arr(i,j,k);
@@ -211,7 +209,7 @@ public:
                     // face-nodes that are on the faces of the box by 0.5
 		    // Face-nodes for Bz computation can lie on zmin and zmax box faces.
                     amrex::Real weight = 1.0;
-                    if (k == lx[2] || j == hx[2]) {
+                    if (k == lz[2] || j == hz[2]) {
                         weight *= 0.5;
                     }
                     return weight*reduction_function_parser(x,y,z)*Bz_arr(i,j,k);
@@ -259,14 +257,14 @@ public:
                 } else {
 #if (AMREX_SPACEDIM==2)
                 amrex::Real length = surface_normal[0]*dx[1] + surface_normal[1]*dx[0];
-                reducedBx_value *= m_sign_vector[0]*length;
+                reducedBx_value *= m_sign_vec[0]*length;
                 reducedBy_value *= length;
-                reducedBz_value *= m_sign_vector[1]*length;
+                reducedBz_value *= m_sign_vec[1]*length;
 #else
                 amrex::Real area = surface_normal[0]*dx[1]*dx[2] + surface_normal[1]*dx[2]*dx[0] + surface_normal[2]*dx[0]*dx[1];
-                reducedBx_value *= m_sign_vector[0]*area;
-                reducedBy_value *= m_sign_vector[1]*area;
-                reducedBz_value *= m_sign_vector[2]*area;
+                reducedBx_value *= m_sign_vec[0]*area;
+                reducedBy_value *= m_sign_vec[1]*area;
+                reducedBz_value *= m_sign_vec[2]*area;
 #endif
                 }
             }
