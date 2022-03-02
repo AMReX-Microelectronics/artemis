@@ -708,6 +708,12 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 #endif
         } else if ( m_varnames[comp] == "superconductor") {
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getLondon().m_superconductor_mf.get(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "Bx_sc" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_sc_fp(lev, 0), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "By_sc" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_sc_fp(lev, 1), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "Bz_sc" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_sc_fp(lev, 2), lev, m_crse_ratio);
         }
         else {
             amrex::Abort(Utils::TextMsg::Err(m_varnames[comp] + " is not a known field output type"));
