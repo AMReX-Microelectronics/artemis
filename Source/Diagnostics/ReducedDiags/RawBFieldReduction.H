@@ -67,10 +67,10 @@ private:
     // The direction of the surface for surface integration. (e.g. X, Y, or Z)
 #if (AMREX_SPACEDIM==2)
     int m_surface_normal[2]={0,0};
-    std::vector<int> m_sign_vec={1,1};
+    std::vector<int> m_multiplier_vector={1,1};
 #else
     int m_surface_normal[3]={0,0,0};
-    std::vector<int> m_sign_vec={1,1,1};
+    std::vector<int> m_multiplier_vector={1,1,1};
 #endif
 public:
 
@@ -257,14 +257,14 @@ public:
                 } else {
 #if (AMREX_SPACEDIM==2)
                 amrex::Real length = surface_normal[0]*dx[1] + surface_normal[1]*dx[0];
-                reducedBx_value *= m_sign_vec[0]*length;
+                reducedBx_value *= m_multiplier_vector[0]*length;
                 reducedBy_value *= length;
-                reducedBz_value *= m_sign_vec[1]*length;
+                reducedBz_value *= m_multiplier_vector[1]*length;
 #else
                 amrex::Real area = surface_normal[0]*dx[1]*dx[2] + surface_normal[1]*dx[2]*dx[0] + surface_normal[2]*dx[0]*dx[1];
-                reducedBx_value *= m_sign_vec[0]*area;
-                reducedBy_value *= m_sign_vec[1]*area;
-                reducedBz_value *= m_sign_vec[2]*area;
+                reducedBx_value *= m_multiplier_vector[0]*area;
+                reducedBy_value *= m_multiplier_vector[1]*area;
+                reducedBz_value *= m_multiplier_vector[2]*area;
 #endif
                 }
             }

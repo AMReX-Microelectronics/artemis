@@ -85,15 +85,10 @@ RawBFieldReduction::RawBFieldReduction (std::string rd_name)
         }
 #endif
         for (int i=0; i < AMREX_SPACEDIM; ++i) {
-            m_sign_vec[i] = 1;
+            m_multiplier_vector[i] = 1;
         }
-        pp_rd_name.queryarr("sign_vector", m_sign_vec, 0, AMREX_SPACEDIM);
-        AMREX_ASSERT(m_sign_vec.size() == AMREX_SPACEDIM);
-    
-        amrex::Print() << "Specified sign array: \n";
-        for (int i=0; i < AMREX_SPACEDIM; ++i) {
-            amrex::Print() << " index " << i << " " << m_sign_vec[i] << "\n";
-        }
+        pp_rd_name.queryarr("multiplier_vector", m_multiplier_vector, 0, AMREX_SPACEDIM);
+        AMREX_ASSERT(m_multiplier_vector.size() == AMREX_SPACEDIM);
     }
 
     if (amrex::ParallelDescriptor::IOProcessor())
