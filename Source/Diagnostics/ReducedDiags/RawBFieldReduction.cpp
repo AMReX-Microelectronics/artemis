@@ -62,8 +62,8 @@ RawBFieldReduction::RawBFieldReduction (std::string rd_name)
     if (m_reduction_type == 2) {
         m_integral_type = GetAlgorithmInteger (pp_rd_name, "integration_type");
     }
-    if (m_integral_type == 1)  // if surface integral 
-    { 
+    if (m_integral_type == 1)  // if surface integral
+    {
         std::string surface_normal_string;
         pp_rd_name.get("surface_normal", surface_normal_string);
         if (surface_normal_string == "x" || surface_normal_string == "X") {

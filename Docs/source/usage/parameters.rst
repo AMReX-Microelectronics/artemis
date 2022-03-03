@@ -2529,7 +2529,7 @@ Reduced Diagnostics
 
            ``<reduced_diags_name>.reduced_function(x,y,z) = " (y > y_plane_location - dy/2. - epsilon) * (y < y_plane_location + epsilon) * (z > -Lz/2.) * (z < 0. + epsilon) * 1 "``
 
-           In this example, epsilon is very small number which is larger than machine precision. 
+           In this example, epsilon is very small number which is larger than machine precision.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
            This parameter is only required when the ``integration_type`` is ``surface``.
@@ -2543,7 +2543,7 @@ Reduced Diagnostics
            This parameter can be used in the following two scenarios:
            Let's say, we require the surface integral of Bx on a surface having normal pointing in the negative x-direction.
            In that case, we would specify the value of this parameter as ``-1. 1. 1.`` so that Bx is multiplied by ``-1``.
-           As another example, we may require surface integral of H-field, which can be obtained, say, by dividing Bx, By, and Bz by a constant value of permeability, ``mu``, 
+           As another example, we may require surface integral of H-field, which can be obtained, say, by dividing Bx, By, and Bz by a constant value of permeability, ``mu``,
            in which case we would specify the value of this parameter as ``1./mu, 1./mu, 1./mu``.
 
 
