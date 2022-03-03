@@ -65,13 +65,13 @@ private:
 #if (AMREX_SPACEDIM==2)
     // The direction of the surface for surface integration. (e.g. X or Z)
     int m_surface_normal[2]={0,0};
-    // Multipliers for Ex and Ez surface integrals; default 1, 1
-    std::vector<int> m_multiplier_vector={1,1};
+    // Multipliers for Ex and Ez surface integrals; default 1.0
+    std::vector<amrex::Real> m_multiplier_vector={1.0,1.0};
 #else
     // The direction of the surface for surface integration. (e.g. X, Y, or Z)
     int m_surface_normal[3]={0,0,0};
-    // Multipliers for Ex, Ey, and Ez surface integrals; default 1, 1, 1
-    std::vector<int> m_multiplier_vector={1,1,1};
+    // Multipliers for Ex, Ey, and Ez surface integrals; default 1.0
+    std::vector<amrex::Real> m_multiplier_vector={1.0,1.0,1.0};
 #endif
 public:
 

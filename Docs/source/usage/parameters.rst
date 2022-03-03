@@ -2539,10 +2539,10 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.multiplier_vector`` (`string`)
            This parameter is optional, is only used when the ``integration_type`` is ``surface``, and takes three values which are
-           multiplied to Bx, By, and Bz, respectively, before outputting the their surface integral. The default values are ``1 1 1``.
+           multiplied to Bx, By, and Bz, respectively, before outputting the their surface integral. The default values are ``1. 1. 1.``.
            This parameter can be used in the following two scenarios:
            Let's say, we require the surface integral of Bx on a surface having normal pointing in the negative x-direction.
-           In that case, we would specify the value of this parameter as ``-1 1 1`` so that Bx is multiplied by ``-1``.
+           In that case, we would specify the value of this parameter as ``-1. 1. 1.`` so that Bx is multiplied by ``-1``.
            As another example, we may require surface integral of H-field, which can be obtained, say, by dividing Bx, By, and Bz by a constant value of permeability, ``mu``, 
            in which case we would specify the value of this parameter as ``1./mu, 1./mu, 1./mu``.
 
