@@ -59,30 +59,32 @@ RawEFieldReduction::RawEFieldReduction (std::string rd_name)
     std::string reduction_type_string;
     pp_rd_name.get("reduction_type", reduction_type_string);
     m_reduction_type = GetAlgorithmInteger (pp_rd_name, "reduction_type");
-    if (m_reduction_type == 2) {
+    if (m_reduction_type == 2) { //if integral
         m_integral_type = GetAlgorithmInteger (pp_rd_name, "integration_type");
     }
 
-    std::string surface_normal_string;
-    pp_rd_name.get("surface_normal", surface_normal_string);
-    if (surface_normal_string == "x" || surface_normal_string == "X") {
-        m_surface_normal[0] = 1;
+    if (m_integral_type == 1) { //if surface integral
+        std::string surface_normal_string;
+        pp_rd_name.get("surface_normal", surface_normal_string);
+        if (surface_normal_string == "x" || surface_normal_string == "X") {
+            m_surface_normal[0] = 1;
+        }
+    #if (AMREX_SPACEDIM==2)
+        else if (surface_normal_string == "y" || surface_normal_string == "Y") {
+            amrex::Abort("In 2-D, we compute over an X-Z plane. So the plane of interest for the surface integral is Z.");
+        }
+        else if (surface_normal_string == "z" || surface_normal_string == "Z") {
+            m_surface_normal[1] = 1;
+        }
+    #else
+        else if (surface_normal_string == "y" || surface_normal_string == "Y") {
+            m_surface_normal[1] = 1;
+        }
+        else if (surface_normal_string == "z" || surface_normal_string == "Z") {
+            m_surface_normal[2] = 1;
+        }
+    #endif
     }
-#if (AMREX_SPACEDIM==2)
-    else if (surface_normal_string == "y" || surface_normal_string == "Y") {
-        amrex::Abort("In 2-D, we compute over an X-Z plane. So the plane of interest for the surface integral is Z.");
-    }
-    else if (surface_normal_string == "z" || surface_normal_string == "Z") {
-        m_surface_normal[1] = 1;
-    }
-#else
-    else if (surface_normal_string == "y" || surface_normal_string == "Y") {
-        m_surface_normal[1] = 1;
-    }
-    else if (surface_normal_string == "z" || surface_normal_string == "Z") {
-        m_surface_normal[2] = 1;
-    }
-#endif
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
