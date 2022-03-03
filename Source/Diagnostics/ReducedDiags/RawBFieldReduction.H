@@ -156,9 +156,9 @@ public:
                     amrex::Real fac_z = (1._rt - Bx_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
-                    // we want to weight interior face-nodes by 1
-                    // face-nodes that are on the faces of the box by 0.5
-            // Face-nodes for Bx computation can lie on xmin and xmax box faces.
+                    // We want to weight interior faces by 1
+                    // and faces that are on the faces of the box by 0.5
+            // Faces for Bx computation can lie on xmin and xmax box faces.
                     amrex::Real weight = 1.0;
                     if (i == lx[0] || i == hx[0]) {
                         weight *= 0.5;
@@ -181,9 +181,9 @@ public:
                     amrex::Real fac_z = (1._rt - By_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
-                    // we want to weight interior face-nodes by 1
-                    // face-nodes that are on the faces of the box by 0.5
-            // Face-nodes for By computation can lie on ymin and ymax box faces.
+                    // We want to weight interior faces by 1
+                    // and faces that are on the faces of the box by 0.5
+            // Faces for By computation can lie on ymin and ymax box faces.
                     amrex::Real weight = 1.0;
                     if (j == ly[1] || j == hy[1]) {
                         weight *= 0.5;
@@ -206,9 +206,9 @@ public:
                     amrex::Real fac_z = (1._rt - Bz_nodalType[2]) * dx[2] * 0.5_rt;
                     amrex::Real z = k * dx[2] + real_box.lo(2) + fac_z;
 #endif
-                    // we want to weight interior face-nodes by 1
-                    // face-nodes that are on the faces of the box by 0.5
-            // Face-nodes for Bz computation can lie on zmin and zmax box faces.
+                    // We want to weight interior faces by 1
+                    // and faces that are on the faces of the box by 0.5
+            // Faces for Bz computation can lie on zmin and zmax box faces.
                     amrex::Real weight = 1.0;
                     if (k == lz[2] || k == hz[2]) {
                         weight *= 0.5;
