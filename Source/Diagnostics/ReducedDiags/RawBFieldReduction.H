@@ -28,8 +28,6 @@
 #include <AMReX_RealBox.H>
 #include <AMReX_Reduce.H>
 #include <AMReX_Tuple.H>
-#include <AMReX_Print.H>
-#include <AMReX_SPACE.H>
 
 #include <memory>
 #include <string>
@@ -64,12 +62,15 @@ private:
     int m_reduction_type;
     // Type of integration (e.g. volume or surface)
     int m_integral_type;
-    // The direction of the surface for surface integration. (e.g. X, Y, or Z)
 #if (AMREX_SPACEDIM==2)
+    // The direction of the surface for surface integration. (e.g. X or Z)
     int m_surface_normal[2]={0,0};
+    // Multipliers for Ex and Ez surface integrals; default 1, 1
     std::vector<int> m_multiplier_vector={1,1};
 #else
+    // The direction of the surface for surface integration. (e.g. X, Y, or Z)
     int m_surface_normal[3]={0,0,0};
+    // Multipliers for Ex, Ey, and Ez surface integrals; default 1, 1, 1
     std::vector<int> m_multiplier_vector={1,1,1};
 #endif
 public:
