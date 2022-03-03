@@ -69,21 +69,21 @@ RawEFieldReduction::RawEFieldReduction (std::string rd_name)
         if (surface_normal_string == "x" || surface_normal_string == "X") {
             m_surface_normal[0] = 1;
         }
-    #if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==2)
         else if (surface_normal_string == "y" || surface_normal_string == "Y") {
             amrex::Abort("In 2-D, we compute over an X-Z plane. So the plane of interest for the surface integral is Z.");
         }
         else if (surface_normal_string == "z" || surface_normal_string == "Z") {
             m_surface_normal[1] = 1;
         }
-    #else
+#else
         else if (surface_normal_string == "y" || surface_normal_string == "Y") {
             m_surface_normal[1] = 1;
         }
         else if (surface_normal_string == "z" || surface_normal_string == "Z") {
             m_surface_normal[2] = 1;
         }
-    #endif
+#endif
         pp_rd_name.queryarr("multiplier_vector", m_multiplier_vector, 0, AMREX_SPACEDIM);
         AMREX_ASSERT(m_multiplier_vector.size() == AMREX_SPACEDIM);
     }

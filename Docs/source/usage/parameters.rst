@@ -2488,7 +2488,9 @@ Reduced Diagnostics
            For example, we can define a surface on a y-plane at a location, `y_plane_location`, having a half cross-section
            from z=-Lz/2 to 0, where Lz is the length of the domain in the z-direction spanning from -Lz/2 to Lz/2, as follows:
 
-           ``<reduced_diags_name>.reduced_function(x,y,z) = " (y >= y_plane_location - dy/2.) * (y <= y_plane_location) * (z > -Lz/2.) * (z <= 0.) * 1 "``
+           ``<reduced_diags_name>.reduced_function(x,y,z) = " (y > y_plane_location - dy/2.-epsilon) * (y < y_plane_location+epsilon) * (z > -Lz/2.) * (z < 0.+epsilon) * 1 "``
+           
+           In this example, epsilon is very small number which is larger than machine precision.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
            The surface on which the surface integration is required. It must be either ``x``, ``y`` or ``z``.
