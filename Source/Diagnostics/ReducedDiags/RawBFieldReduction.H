@@ -209,7 +209,7 @@ public:
                     // face-nodes that are on the faces of the box by 0.5
 		    // Face-nodes for Bz computation can lie on zmin and zmax box faces.
                     amrex::Real weight = 1.0;
-                    if (k == lz[2] || j == hz[2]) {
+                    if (k == lz[2] || k == hz[2]) {
                         weight *= 0.5;
                     }
                     return weight*reduction_function_parser(x,y,z)*Bz_arr(i,j,k);
