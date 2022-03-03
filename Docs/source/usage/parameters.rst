@@ -2500,7 +2500,7 @@ Reduced Diagnostics
            This parameter can be used in the following two scenarios:
            Let's say, we require the surface integral of Ex on a surface having normal pointing in the negative x-direction.
            In that case, we would specify the value of this parameter as ``-1 1 1`` so that the surface integral of Ex is multiplied by ``-1``.
-           As another example, we may require a line integral which is obtained by first taking surface integral 
+           As another example, we may require a line integral which is obtained by first taking surface integral
            over a surface of height h and width w and then dividing by the width.
            In this case we may specify the value of these parameters as ``1./w 1./w, 1./w``.
 
