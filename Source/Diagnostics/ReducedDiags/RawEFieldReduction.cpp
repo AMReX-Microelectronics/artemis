@@ -59,7 +59,7 @@ RawEFieldReduction::RawEFieldReduction (std::string rd_name)
     std::string reduction_type_string;
     pp_rd_name.get("reduction_type", reduction_type_string);
     m_reduction_type = GetAlgorithmInteger (pp_rd_name, "reduction_type");
-    if (m_reduction_type == 2) { //if integral
+    if (m_reduction_type == 2) { //if reduction_type=Integral (ReductionType::Sum)
         m_integral_type = GetAlgorithmInteger (pp_rd_name, "integration_type");
     }
 
