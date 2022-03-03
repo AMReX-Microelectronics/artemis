@@ -1,4 +1,5 @@
 #include "WarpX.H"
+#include "BoundaryConditions/PML.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include <AMReX_MultiFab.H>
@@ -30,6 +31,23 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype)
                                                    Eyfield_flag_parser->compile<3>(),
                                                    Ezfield_flag_parser->compile<3>(),
                                                    lev );
+            }
+        }
+        // The excitation, especially when used to set an internal PEC, will be extended
+        // to the PML region with user-defined parser.
+        // As clarified in the documentation, it is important that the parser is valid in the pml region
+        if (WarpX::isAnyBoundaryPML() and externalfieldtype == ExternalFieldType::EfieldExternalPML) {
+            if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
+                    ApplyExternalFieldExcitationOnGrid(pml[lev]->GetE_fp(0),
+                                                       pml[lev]->GetE_fp(1),
+                                                       pml[lev]->GetE_fp(2),
+                                                       Exfield_xt_grid_parser->compile<4>(),
+                                                       Eyfield_xt_grid_parser->compile<4>(),
+                                                       Ezfield_xt_grid_parser->compile<4>(),
+                                                       Exfield_flag_parser->compile<3>(),
+                                                       Eyfield_flag_parser->compile<3>(),
+                                                       Ezfield_flag_parser->compile<3>(),
+                                                       lev );
             }
         }
         if (externalfieldtype == ExternalFieldType::AllExternal || externalfieldtype == ExternalFieldType::BfieldExternal) {
@@ -109,6 +127,12 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
     amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
     amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
+    // For each multifab, apply excitation to ncomponents
+    // If not split pml fields, the excitation is applied to the regular Efield used in Maxwell's eq.
+    // If pml field, then the excitation is applied to all the split field components.
+    const int nComp_x = mfx->nComp();
+    const int nComp_y = mfy->nComp();
+    const int nComp_z = mfz->nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -124,8 +148,8 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
         const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
 
         // Loop over the cells and update the fields
-        amrex::ParallelFor(tbx, tby, tbz,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+        amrex::ParallelFor(tbx, nComp_x,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 amrex::Real x, y, z;
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag,
                                                   problo, dx, x, y, z);
@@ -133,10 +157,11 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
                     amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
                 } else if ( flag_type > 0._rt ) {
-                    Fx(i, j, k) = Fx(i,j,k)*(flag_type-1.0_rt) + xfield_parser(x,y,z,t);
+                    Fx(i, j, k, n) = Fx(i,j,k,n)*(flag_type-1.0_rt) + xfield_parser(x,y,z,t);
                 }
             },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+            tby, nComp_y,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 amrex::Real x, y, z;
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfy_stag,
                                                   problo, dx, x, y, z);
@@ -144,10 +169,11 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
                     amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
                 } else if ( flag_type > 0._rt ) {
-                    Fy(i, j, k) = Fy(i,j,k)*(flag_type-1.0_rt) + yfield_parser(x,y,z,t);
+                    Fy(i, j, k, n) = Fy(i,j,k,n)*(flag_type-1.0_rt) + yfield_parser(x,y,z,t);
                 }
             },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+            tbz, nComp_z,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 amrex::Real x, y, z;
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfz_stag,
                                                   problo, dx, x, y, z);
@@ -155,10 +181,9 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
                     amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
                 } else if ( flag_type > 0._rt ) {
-                    Fz(i, j, k) = Fz(i,j,k)*(flag_type-1.0_rt) + zfield_parser(x,y,z,t);
+                    Fz(i, j, k,n) = Fz(i,j,k,n)*(flag_type-1.0_rt) + zfield_parser(x,y,z,t);
                 }
             }
         );
     }
-
 }

@@ -1433,7 +1433,21 @@ External fields
     field component is updated with the contribution from the `excitation_grid_function`
     of the corresponding field component.
     Constants required in the mathematical expression can be set using ``my_constants``.
-    This function is currently supported only for 3D simulations.
+    This function is currently supported only for 3D simulations and only for single-level simulations.
+    Note that by default the parser applies these functions to the electric fields only in the valid region
+    or in the regions specified by the user-defined parser.
+    The same function can also be applied to the fields in the pml region by setting
+    ``warpx.Apply_E_excitation_in_pml_region``.
+
+* ``Apply_E_excitation_in_pml_region`` (integer `0` or `1`) optional (default is `0`)
+    This parameter is used only if `E_excitation_on_grid_style` is set in the input.
+    If set to `1`, the excitation function for Ex, Ey, Ez set using
+    ``warpx.Ex_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Ey_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Ez_excitation_grid_function(x,y,z,t)`` will be applied to the electric fields defined
+    in the pml region. Note that, the pml region is set outside the domain boundary.
+    So for this feature to work as intended, it is essential that the parser function covers the pml
+    region.
 
 * ``H_excitation_on_grid_style`` (string) optional (default is "default")
     This parameter is used to set the type of external magnetic field excitation
