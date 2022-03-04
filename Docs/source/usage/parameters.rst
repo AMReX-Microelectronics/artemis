@@ -2497,14 +2497,15 @@ Reduced Diagnostics
            The direction of the normal is positive in the Cartesian directions.
 
         * ``<reduced_diags_name>.multiplier_vector`` (`string`)
-           This parameter is optional, is only used when the ``integration_type`` is ``surface``, and takes three values which are
-           multiplied to Ex, Ey, and Ez, respectively, before outputting the their surface integral. The default values are ``1 1 1``.
+           This parameter is used when the ``integration_type`` is set to ``surface``. The parser takes three values to scale                      
+           the reduced field quantities, namely, the surface integral of Ex, Ey, and Ez. 
            This parameter can be used in the following two scenarios:
-           Let's say, we require the surface integral of Ex on a surface having normal pointing in the negative x-direction.
+           Let's say, we require the surface integral of Ex on a surface, with the surface normal in the negative x-direction.
            In that case, we would specify the value of this parameter as ``-1 1 1`` so that the surface integral of Ex is multiplied by ``-1``.
            As another example, we may require a line integral which is obtained by first taking surface integral
            over a surface of height h and width w and then dividing by the width.
-           In this case we may specify the value of these parameters as ``1./w 1./w, 1./w``.
+           In this case, we may specify the value of these parameters as ``1./w 1./w, 1./w``. Note that this can only be done
+           for a uniform grid simulation.
 
 
     * ``ParticleNumber``
