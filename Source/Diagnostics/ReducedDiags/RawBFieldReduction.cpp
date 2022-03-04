@@ -84,8 +84,8 @@ RawBFieldReduction::RawBFieldReduction (std::string rd_name)
             m_surface_normal[2] = 1;
         }
 #endif
-        pp_rd_name.queryarr("multiplier_vector", m_multiplier_vector, 0, AMREX_SPACEDIM);
-        AMREX_ASSERT(m_multiplier_vector.size() == AMREX_SPACEDIM);
+        pp_rd_name.queryarr("scaling_factor", m_scaling_factor, 0, AMREX_SPACEDIM);
+        AMREX_ASSERT(m_scaling_factor.size() == AMREX_SPACEDIM);
     }
 
     if (amrex::ParallelDescriptor::IOProcessor())

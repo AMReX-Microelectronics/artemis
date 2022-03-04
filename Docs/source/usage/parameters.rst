@@ -2529,7 +2529,7 @@ Reduced Diagnostics
 
            ``<reduced_diags_name>.reduced_function(x,y,z) = " (y > y_plane_location - dy/2. - epsilon) * (y < y_plane_location + epsilon) * (z > -Lz/2.) * (z < 0. + epsilon) * 1 "``
 
-           In this example, epsilon is very small number which is larger than machine precision.
+           In this example, epsilon is a very small number which is larger than machine precision.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
            This parameter is only required when the ``integration_type`` is ``surface``.
@@ -2537,14 +2537,14 @@ Reduced Diagnostics
            The direction of the normal is positive in the Cartesian directions.
            in the negative direction.
 
-        * ``<reduced_diags_name>.multiplier_vector`` (`string`)
-           This parameter is optional, is only used when the ``integration_type`` is ``surface``, and takes three values which are
-           multiplied to Bx, By, and Bz, respectively, before outputting the their surface integral. The default values are ``1. 1. 1.``.
+        * ``<reduced_diags_name>.scaling_factor`` (`string`)  optional (default `1 1 1`)
+           This parameter is used when the ``integration_type`` is set to ``surface``. The parser takes three values to scale
+           the reduced field quantities, namely, the surface integral of Bx, By, and Bz.
            This parameter can be used in the following two scenarios:
-           Let's say, we require the surface integral of Bx on a surface having normal pointing in the negative x-direction.
-           In that case, we would specify the value of this parameter as ``-1. 1. 1.`` so that Bx is multiplied by ``-1``.
-           As another example, we may require surface integral of H-field, which can be obtained, say, by dividing Bx, By, and Bz by a constant value of permeability, ``mu``,
-           in which case we would specify the value of this parameter as ``1./mu, 1./mu, 1./mu``.
+           Let's say, we require the surface integral of Bx on a surface, with the surface normal in the negative x direction.
+           In this case, we would specify the value of this parameter as ``-1. 1. 1.`` so that the surface integral of Bx is multiplied by ``-1``.
+           As another example, we may require surface integral of H-field, which can be obtained, say, by dividing the surface integrals of Bx, By, and Bz 
+           by a constant value of permeability, ``mu``. In this case, we would specify the value of this parameter as ``1./mu, 1./mu, 1./mu``.
 
 
     * ``ParticleNumber``
