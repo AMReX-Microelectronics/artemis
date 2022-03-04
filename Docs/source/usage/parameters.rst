@@ -2489,7 +2489,7 @@ Reduced Diagnostics
            from z=-Lz/2 to 0, where Lz is the length of the domain in the z-direction spanning from -Lz/2 to Lz/2, as follows:
 
            ``<reduced_diags_name>.reduced_function(x,y,z) = " (y > y_plane_location - dy/2.-epsilon) * (y < y_plane_location+epsilon) * (z > -Lz/2.) * (z < 0.+epsilon) * 1 "``
-           
+
            In this example, epsilon is a very small number which is larger than machine precision.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
@@ -2497,8 +2497,8 @@ Reduced Diagnostics
            The direction of the normal is positive in the Cartesian directions.
 
         * ``<reduced_diags_name>.scaling_factor`` (`string`) optional (default `1 1 1`)
-           This parameter is used when the ``integration_type`` is set to ``surface``. The parser takes three values to scale                      
-           the reduced field quantities, namely, the surface integral of Ex, Ey, and Ez. 
+           This parameter is used when the ``integration_type`` is set to ``surface``. The parser takes three values to scale
+           the reduced field quantities, namely, the surface integral of Ex, Ey, and Ez.
            This parameter can be used in the following two scenarios:
            Let's say, we require the surface integral of Ex on a surface, with the surface normal in the negative x-direction.
            In that case, we would specify the value of this parameter as ``-1 1 1`` so that the surface integral of Ex is multiplied by ``-1``.
