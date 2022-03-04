@@ -2496,7 +2496,7 @@ Reduced Diagnostics
            The surface on which the surface integration is required. It must be either ``x``, ``y`` or ``z``.
            The direction of the normal is positive in the Cartesian directions.
 
-        * ``<reduced_diags_name>.multiplier_vector`` (`string`) optional (default `1 1 1`)
+        * ``<reduced_diags_name>.scaling_factor`` (`string`) optional (default `1 1 1`)
            This parameter is used when the ``integration_type`` is set to ``surface``. The parser takes three values to scale                      
            the reduced field quantities, namely, the surface integral of Ex, Ey, and Ez. 
            This parameter can be used in the following two scenarios:
