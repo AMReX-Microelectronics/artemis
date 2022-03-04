@@ -2490,7 +2490,7 @@ Reduced Diagnostics
 
            ``<reduced_diags_name>.reduced_function(x,y,z) = " (y > y_plane_location - dy/2.-epsilon) * (y < y_plane_location+epsilon) * (z > -Lz/2.) * (z < 0.+epsilon) * 1 "``
            
-           In this example, epsilon is very small number which is larger than machine precision.
+           In this example, epsilon is a very small number which is larger than machine precision.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
            The surface on which the surface integration is required. It must be either ``x``, ``y`` or ``z``.
