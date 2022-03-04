@@ -66,12 +66,12 @@ private:
     // The direction of the surface for surface integration. (e.g. X or Z)
     int m_surface_normal[2]={0,0};
     // Multipliers for Ex and Ez surface integrals; default values of 1.0
-    std::vector<amrex::Real> m_multiplier_vector={1.0,1.0};
+    std::vector<amrex::Real> m_scaling_factor={1.0,1.0};
 #else
     // The direction of the surface for surface integration. (e.g. X, Y, or Z)
     int m_surface_normal[3]={0,0,0};
     // Multipliers for Ex, Ey, and Ez surface integrals; default values of 1.0
-    std::vector<amrex::Real> m_multiplier_vector={1.0,1.0,1.0};
+    std::vector<amrex::Real> m_scaling_factor={1.0,1.0,1.0};
 #endif
 
 public:
@@ -266,14 +266,14 @@ public:
                 } else {
 #if (AMREX_SPACEDIM==2)
                 amrex::Real length = surface_normal[0]*dx[1] + surface_normal[1]*dx[0];
-                reducedEx_value *= m_multiplier_vector[0]*length;
+                reducedEx_value *= m_scaling_factor[0]*length;
                 reducedEy_value *= length;
-                reducedEz_value *= m_multiplier_vector[1]*length;
+                reducedEz_value *= m_scaling_factor[1]*length;
 #else
                 amrex::Real area = surface_normal[0]*dx[1]*dx[2] + surface_normal[1]*dx[2]*dx[0] + surface_normal[2]*dx[0]*dx[1];
-                reducedEx_value *= m_multiplier_vector[0]*area;
-                reducedEy_value *= m_multiplier_vector[1]*area;
-                reducedEz_value *= m_multiplier_vector[2]*area;
+                reducedEx_value *= m_scaling_factor[0]*area;
+                reducedEy_value *= m_scaling_factor[1]*area;
+                reducedEz_value *= m_scaling_factor[2]*area;
 #endif
                 }
             }
