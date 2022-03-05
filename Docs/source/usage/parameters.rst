@@ -2543,7 +2543,7 @@ Reduced Diagnostics
            This parameter can be used in the following two scenarios:
            Let's say, we require the surface integral of Bx on a surface, with the surface normal in the negative x direction.
            In this case, we would specify the value of this parameter as ``-1. 1. 1.`` so that the surface integral of Bx is multiplied by ``-1``.
-           As another example, we may require surface integral of H-field, which can be obtained, say, by dividing the surface integrals of Bx, By, and Bz 
+           As another example, we may require surface integral of H-field, which can be obtained, say, by dividing the surface integrals of Bx, By, and Bz
            by a constant value of permeability, ``mu``. In this case, we would specify the value of this parameter as ``1./mu, 1./mu, 1./mu``.
 
 
