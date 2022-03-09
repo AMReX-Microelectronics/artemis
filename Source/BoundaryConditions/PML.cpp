@@ -1114,6 +1114,12 @@ PML::GetE_fp ()
     return {pml_E_fp[0].get(), pml_E_fp[1].get(), pml_E_fp[2].get()};
 }
 
+amrex::MultiFab*
+PML::GetE_fp (int comp)
+{
+    return pml_E_fp[comp].get();
+}
+
 std::array<MultiFab*,3>
 PML::GetB_fp ()
 {

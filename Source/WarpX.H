@@ -186,7 +186,7 @@ public:
     static std::string M_ext_grid_s; // added for M;
     static std::string H_bias_ext_grid_s;
 #endif
-
+    static int ApplyExcitationInPML;
     // Parser for B_external on the grid
     static std::string str_Bx_ext_grid_function;
     static std::string str_By_ext_grid_function;

@@ -1433,7 +1433,21 @@ External fields
     field component is updated with the contribution from the `excitation_grid_function`
     of the corresponding field component.
     Constants required in the mathematical expression can be set using ``my_constants``.
-    This function is currently supported only for 3D simulations.
+    This function is currently supported only for 3D simulations and only for single-level simulations.
+    Note that by default the parser applies these functions to the electric fields only in the valid region
+    or in the regions specified by the user-defined parser.
+    The same function can also be applied to the fields in the pml region by setting
+    ``warpx.Apply_E_excitation_in_pml_region``.
+
+* ``Apply_E_excitation_in_pml_region`` (integer `0` or `1`) optional (default is `0`)
+    This parameter is used only if `E_excitation_on_grid_style` is set in the input.
+    If set to `1`, the excitation function for Ex, Ey, Ez set using
+    ``warpx.Ex_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Ey_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Ez_excitation_grid_function(x,y,z,t)`` will be applied to the electric fields defined
+    in the pml region. Note that, the pml region is set outside the domain boundary.
+    So for this feature to work as intended, it is essential that the parser function covers the pml
+    region.
 
 * ``H_excitation_on_grid_style`` (string) optional (default is "default")
     This parameter is used to set the type of external magnetic field excitation
@@ -2488,13 +2502,25 @@ Reduced Diagnostics
            For example, we can define a surface on a y-plane at a location, `y_plane_location`, having a half cross-section
            from z=-Lz/2 to 0, where Lz is the length of the domain in the z-direction spanning from -Lz/2 to Lz/2, as follows:
 
-           ``<reduced_diags_name>.reduced_function(x,y,z) = " (y >= y_plane_location - dy/2.) * (y <= y_plane_location) * (z > -Lz/2.) * (z <= 0.) * 1 "``
+           ``<reduced_diags_name>.reduced_function(x,y,z) = " (y > y_plane_location - dy/2.-epsilon) * (y < y_plane_location+epsilon) * (z > -Lz/2.) * (z < 0.+epsilon) * 1 "``
+
+           In this example, epsilon is a very small number which is larger than machine precision.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
            The surface on which the surface integration is required. It must be either ``x``, ``y`` or ``z``.
            The direction of the normal is positive in the Cartesian directions.
-           Note that the user must account for the sign, if the outward normal of the defined surface is
-           in the negative direction.
+
+        * ``<reduced_diags_name>.scaling_factor`` (`string`) optional (default `1 1 1`)
+           This parameter is used when the ``integration_type`` is set to ``surface``. The parser takes three values to scale
+           the reduced field quantities, namely, the surface integral of Ex, Ey, and Ez.
+           This parameter can be used in the following two scenarios:
+           Let's say, we require the surface integral of Ex on a surface, with the surface normal in the negative x-direction.
+           In that case, we would specify the value of this parameter as ``-1 1 1`` so that the surface integral of Ex is multiplied by ``-1``.
+           As another example, we may require a line integral which is obtained by first taking surface integral
+           over a surface of height h and width w and then dividing by the width.
+           In this case, we may specify the value of these parameters as ``1./w 1./w, 1./w``. Note that this can only be done
+           for a uniform grid simulation.
+
 
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the

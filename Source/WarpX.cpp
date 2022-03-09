@@ -91,6 +91,7 @@ Vector<Real> WarpX::H_bias_external_grid(3, 0.0);
 std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
+int WarpX::ApplyExcitationInPML = 0; // default is 0
 
 // default type is constant
 std::string WarpX::B_excitation_grid_s = "default";
