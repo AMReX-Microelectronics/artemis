@@ -109,10 +109,15 @@ public:
      amrex::GpuArray<amrex::Real, 3> mag_LLG_anisotropy_axis;
 
      amrex::MultiFab& getmag_Ms_mf        (int dir) {return (*m_mag_Ms_mf[dir]);}
+     amrex::MultiFab * getmag_pointer_Ms (int dir) {return m_mag_Ms_mf[dir].get();}
      amrex::MultiFab& getmag_alpha_mf     (int dir) {return (*m_mag_alpha_mf[dir]);}
+     amrex::MultiFab * getmag_pointer_alpha (int dir) {return m_mag_alpha_mf[dir].get();}
      amrex::MultiFab& getmag_gamma_mf     (int dir) {return (*m_mag_gamma_mf[dir]);}
+     amrex::MultiFab * getmag_pointer_gamma (int dir) {return m_mag_gamma_mf[dir].get();}
      amrex::MultiFab& getmag_exchange_mf  (int dir) {return (*m_mag_exchange_mf[dir]);}
+     amrex::MultiFab * getmag_pointer_exchange (int dir) {return m_mag_exchange_mf[dir].get();}
      amrex::MultiFab& getmag_anisotropy_mf(int dir) {return (*m_mag_anisotropy_mf[dir]);}
+     amrex::MultiFab * getmag_pointer_anisotropy (int dir) {return m_mag_anisotropy_mf[dir].get();}
 
      amrex::Real getmag_normalized_error () {return m_mag_normalized_error;}
      int getmag_max_iter () {return m_mag_max_iter;}

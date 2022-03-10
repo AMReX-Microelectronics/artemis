@@ -489,8 +489,45 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "mu" ){
             MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.get_pointer_mu(), lev, m_crse_ratio);
-        }
-        else {
+#ifdef WARPX_MAG_LLG
+        } else if (m_varnames[comp] == "mag_Ms_xface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_Ms(0), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_Ms_yface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_Ms(1), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_Ms_zface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_Ms(2), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_alpha_xface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_alpha(0), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_alpha_yface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_alpha(1), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_alpha_zface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_alpha(2), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_exchange_xface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_exchange(0), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_exchange_yface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_exchange(1), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_exchange_zface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_exchange(2), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_anisotropy_xface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_anisotropy(0), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_anisotropy_yface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_anisotropy(1), lev, m_crse_ratio);
+        } else if (m_varnames[comp] == "mag_anisotropy_zface" ){
+            MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_anisotropy(2), lev, m_crse_ratio);
+#endif
+        } else {
             amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
         }
     }
