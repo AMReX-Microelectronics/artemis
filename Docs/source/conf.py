@@ -167,7 +167,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'ARTEMIS', 'ARTEMIS Documentation',
-     author, 'ARTEMIS', 'ARTEMIS is an Adaptive mesh Refinement Time-domain ElectrodynaMIcs Solver for modeling and studying the performance of microelectronics.',
+     author, 'ARTEMIS', 'ARTEMIS is an Adaptive mesh Refinement Time-domain ElectrodynaMIcs Solver for modeling and studying the performance of microelectronics devices.',
      'Miscellaneous'),
 ]
 
