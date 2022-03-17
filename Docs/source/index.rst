@@ -1,9 +1,10 @@
 :orphan:
 
 ARTEMIS
------
+-------
 
-ARTEMIS is an advanced **electromagnetic electrodynamics** code that couples the Maxwell's equations implementation in WarpX with clasical models describing quantum behavior of materials used in microelectronics.
+ARTEMIS is an advanced electrodynamics code based on `WarpX <https://ecp-warpx.github.io>`__.
+It couples Maxwell's equations with classical models describing quantum behavior of materials used in microelectronics.
 
 It supports many features including:
 
@@ -12,10 +13,10 @@ It supports many features including:
     - User-defined excitations
     - Landau-Lifshitz-Gilbert equations for micromagenetics
 
-For details on the algorithms that artemis implements, see the :ref:`theory section <theory>`.
+For details on the algorithms that ARTEMIS implements, see the :ref:`theory section <theory>`.
 
 ARTEMIS is a *highly-parallel and highly-optimized code*, which can run on GPUs and multi-core CPUs, and includes load balancing capabilities.
-In addition, ARTEMIS is also a *multi-platform code* and runs on Linux, macOS and Windows. ARTEMIS has leveraged the ECP-code WarpX, and is built on ECP-code AMReX.
+In addition, ARTEMIS is also a *multi-platform code* and runs on Linux, macOS and Windows. ARTEMIS has leveraged the ECP code WarpX, and is built on the ECP framework AMReX.
 
 .. _contact:
 
