@@ -2108,6 +2108,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``mag_Ms_xface``       ``mag_Ms_yface``       ``mag_Ms_zface`` 
     ``mag_alpha_xface``    ``mag_alpha_yface``    ``mag_alpha_zface`` 
     ``mag_exchange_xface`` ``mag_exchange_yface`` ``mag_exchange_zface`` 
+    ``mag_anisotropy_xface`` ``mag_anisotropy_yface`` ``mag_anisotropy_zface`` 
     requires ``USE_LLG=TRUE``.
     If compiled with ``USE_LLG=TRUE``, additional values include
     ``Hx`` ``Hy`` ``Hz``
