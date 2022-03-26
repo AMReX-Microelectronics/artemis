@@ -147,7 +147,7 @@ Diagnostics::BaseReadParameters ()
             WarpX::GetInstance().RecordWarning("Macroscopic properties",warnMsg.str(), WarnPriority::high);
         }
     }
-    
+
 #endif
 
     // If user requests to plot proc_number for a serial run,
