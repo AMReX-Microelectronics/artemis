@@ -62,9 +62,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'WarpX'
-copyright = '2017-2021, WarpX collaboration'
-author = 'WarpX collaboration'
+project = 'ARTEMIS'
+copyright = '2017-2022, WarpX-ARTEMIS collaboration'
+author = 'WarpX-ARTEMIS collaboration'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -118,7 +118,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'WarpXdoc'
+htmlhelp_basename = 'ARTEMISdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -145,8 +145,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'WarpX.tex', 'WarpX Documentation',
-     'WarpX collaboration', 'manual'),
+    (master_doc, 'ARTEMIS.tex', 'ARTEMIS Documentation',
+     'WarpX-ARTEMIS collaboration', 'manual'),
 ]
 
 
@@ -155,7 +155,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'warpx', 'WarpX Documentation',
+    (master_doc, 'artemis', 'ARTEMIS Documentation',
      [author], 1)
 ]
 
@@ -166,8 +166,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'WarpX', 'WarpX Documentation',
-     author, 'WarpX', 'WarpX is an advanced electromagnetic Particle-In-Cell code.',
+    (master_doc, 'ARTEMIS', 'ARTEMIS Documentation',
+     author, 'ARTEMIS', 'ARTEMIS is an Adaptive mesh Refinement Time-domain ElectrodynaMIcs Solver for modeling and studying the performance of microelectronics devices.',
      'Miscellaneous'),
 ]
 
@@ -179,23 +179,25 @@ intersphinx_mapping = {'https://amrex-codes.github.io/': None}
 
 # Setup the breathe extension
 breathe_projects = {
-    "WarpX": "../doxyxml/"
+    "ARTEMIS": "../doxyxml/"
 }
-breathe_default_project = "WarpX"
+breathe_default_project = "ARTEMIS"
 
 # Tell sphinx what the primary language being documented is.
 primary_domain = 'cpp'
 # Tell sphinx what the pygments highlight language should be.
 highlight_language = 'cpp'
 
-# Download AMReX Doxygen Tagfile to interlink Doxygen docs
+# Download AMReX & WarpX Doxygen Tagfile to interlink Doxygen docs
 url = 'https://amrex-codes.github.io/amrex/docs_xml/doxygen/amrex-doxygen-web.tag.xml'
 urllib.request.urlretrieve(url, '../amrex-doxygen-web.tag.xml')
 
+url = 'https://warpx.readthedocs.io/en/latest/_static/doxyhtml/warpx-doxygen-web.tag.xml'
+urllib.request.urlretrieve(url, '../warpx-doxygen-web.tag.xml')
 
 # Build Doxygen
 subprocess.call('cd ../; doxygen;'
                 'mkdir -p source/_static;'
                 'cp -r doxyhtml source/_static/;'
-                'cp warpx-doxygen-web.tag.xml source/_static/doxyhtml/',
+                'cp artemis-doxygen-web.tag.xml source/_static/doxyhtml/',
                 shell=True)
