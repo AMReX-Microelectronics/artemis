@@ -76,7 +76,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 #ifndef WARPX_MAG_LLG
                        ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
-                       ( Efield, Hfield, Jfield, edge_lenghts, dt, macroscopic_properties);
+                       ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
 
         }
@@ -99,7 +99,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 #ifndef WARPX_MAG_LLG
                        ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
-                       ( Efield, Hfield, Jfield, edge_lenghts, dt, macroscopic_properties);
+                       ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
         }
 
