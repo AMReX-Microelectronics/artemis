@@ -1160,7 +1160,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Hx_biasfield_parser->compile<3>(),
                                                  Hy_biasfield_parser->compile<3>(),
                                                  Hz_biasfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
                                                  m_face_areas[lev],
+                                                 'H',
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(H_biasfield_aux[lev][0].get(),
@@ -1169,7 +1171,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Hx_biasfield_parser->compile<3>(),
                                                     Hy_biasfield_parser->compile<3>(),
                                                     Hz_biasfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'H',
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(H_biasfield_cp[lev][0].get(),
@@ -1178,7 +1182,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Hx_biasfield_parser->compile<3>(),
                                                     Hy_biasfield_parser->compile<3>(),
                                                     Hz_biasfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'H',
                                                     lev);
        }
     }
@@ -1209,7 +1215,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Hxfield_parser->compile<3>(),
                                                  Hyfield_parser->compile<3>(),
                                                  Hzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
                                                  m_face_areas[lev],
+                                                 'H',
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Hfield_aux[lev][0].get(),
@@ -1218,7 +1226,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Hxfield_parser->compile<3>(),
                                                     Hyfield_parser->compile<3>(),
                                                     Hzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'H',
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Hfield_cp[lev][0].get(),
@@ -1227,7 +1237,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Hxfield_parser->compile<3>(),
                                                     Hyfield_parser->compile<3>(),
                                                     Hzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'H',
                                                     lev);
        }
     }
@@ -1257,7 +1269,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Mxfield_parser->compile<3>(),
                                                  Myfield_parser->compile<3>(),
                                                  Mzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
                                                  m_face_areas[lev],
+                                                 'M',
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Mfield_aux[lev][0].get(),
@@ -1266,7 +1280,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Mxfield_parser->compile<3>(),
                                                     Myfield_parser->compile<3>(),
                                                     Mzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'M',
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Mfield_cp[lev][0].get(),
@@ -1275,7 +1291,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Mxfield_parser->compile<3>(),
                                                     Myfield_parser->compile<3>(),
                                                     Mzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'M',
                                                     lev);
        }
     }
