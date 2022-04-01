@@ -2167,9 +2167,9 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``My_xface`` ``My_yface`` ``My_zface``
     ``Mz_xface`` ``Mz_yface`` ``Mz_zface``
     Additional scalar fields components include
-    ``mag_Ms_xface``       ``mag_Ms_yface``       ``mag_Ms_zface`` 
-    ``mag_alpha_xface``    ``mag_alpha_yface``    ``mag_alpha_zface`` 
-    ``mag_exchange_xface`` ``mag_exchange_yface`` ``mag_exchange_zface`` 
+    ``mag_Ms_xface``       ``mag_Ms_yface``       ``mag_Ms_zface``
+    ``mag_alpha_xface``    ``mag_alpha_yface``    ``mag_alpha_zface``
+    ``mag_exchange_xface`` ``mag_exchange_yface`` ``mag_exchange_zface``
     ``mag_anisotropy_xface`` ``mag_anisotropy_yface`` ``mag_anisotropy_zface``
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
     Note that the fields are averaged on the cell centers before they are written to file.
