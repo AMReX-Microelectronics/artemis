@@ -56,8 +56,8 @@ Diagnostics::BaseReadParameters ()
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
 #ifdef WARPX_MAG_LLG
-    int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
-    int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
+    const int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
+    const int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
 #endif
 
     amrex::ParmParse pp_geometry("geometry");
@@ -159,7 +159,7 @@ Diagnostics::BaseReadParameters ()
             WarpX::GetInstance().RecordWarning("Macroscopic properties",warnMsg.str(), WarnPriority::high);
         }
     }
-    
+
 #endif
 
     // If user requests to plot proc_number for a serial run,
