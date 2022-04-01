@@ -147,6 +147,11 @@ public:
     std::array<amrex::MultiFab*,3> GetH_fp ();
     std::array<amrex::MultiFab*,3> GetH_cp ();
 #endif
+    /**
+     * Returns component, 'comp', of the Efield in the pml region.
+     * \param[in] comp component of the Efield (0 for Ex, 1 for Ey, 2 for Ez)
+     */
+    amrex::MultiFab* GetE_fp (int comp);
 
     // Used when WarpX::do_pml_dive_cleaning = true
     amrex::MultiFab* GetF_fp ();

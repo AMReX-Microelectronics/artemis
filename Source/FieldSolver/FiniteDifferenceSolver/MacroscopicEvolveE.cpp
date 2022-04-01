@@ -41,6 +41,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
 #endif
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
 {
@@ -49,9 +50,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
 #    ifndef WARPX_MAG_LLG
-    amrex::ignore_unused(Efield, Bfield, Jfield, dt, macroscopic_properties);
+    amrex::ignore_unused(Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #    else
-    amrex::ignore_unused(Efield, Hfield, Jfield, dt, macroscopic_properties);
+    amrex::ignore_unused(Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
     amrex::Abort("currently macro E-push does not work for RZ");
 #else
@@ -64,18 +65,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
             MacroscopicEvolveECartesian <CartesianYeeAlgorithm, LaxWendroffAlgo>
 #ifndef WARPX_MAG_LLG
-                       ( Efield, Bfield, Jfield, dt, macroscopic_properties);
+                       ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
-                       ( Efield, Hfield, Jfield, dt, macroscopic_properties);
+                       ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
         }
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianYeeAlgorithm, BackwardEulerAlgo>
 #ifndef WARPX_MAG_LLG
-                       ( Efield, Bfield, Jfield, dt, macroscopic_properties);
+                       ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
-                       ( Efield, Hfield, Jfield, dt, macroscopic_properties);
+                       ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
 
         }
@@ -88,17 +89,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo>
 #ifndef WARPX_MAG_LLG
-                       ( Efield, Bfield, Jfield, dt, macroscopic_properties);
+                       ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
-                       ( Efield, Hfield, Jfield, dt, macroscopic_properties);
+                       ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
         } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, BackwardEulerAlgo>
 #ifndef WARPX_MAG_LLG
-                       ( Efield, Bfield, Jfield, dt, macroscopic_properties);
+                       ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
-                       ( Efield, Hfield, Jfield, dt, macroscopic_properties);
+                       ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
         }
 
@@ -121,9 +122,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
 #endif
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
 {
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(edge_lengths);
+#endif
 
     amrex::MultiFab& sigma_mf = macroscopic_properties->getsigma_mf();
     amrex::MultiFab& epsilon_mf = macroscopic_properties->getepsilon_mf();
@@ -158,6 +163,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Array4<Real> const& By = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 #endif
+
+#ifdef AMREX_USE_EB
+        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
+#endif
+
         // material prop //
         amrex::Array4<amrex::Real> const& sigma_arr = sigma_mf.array(mfi);
         amrex::Array4<amrex::Real> const& eps_arr = epsilon_mf.array(mfi);
@@ -195,6 +207,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (lx(i, j, k) <= 0) return;
+#endif
                 // Interpolate conductivity, sigma, to Ex position on the grid
                 amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
                                            Ex_stag, macro_cr, i, j, k, scomp);
@@ -210,6 +226,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (ly(i,j,k) <= 0) return;
+#endif
                 // Interpolate conductivity, sigma, to Ey position on the grid
                 amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
                                            Ey_stag, macro_cr, i, j, k, scomp);
@@ -225,6 +245,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+                if (lz(i,j,k) <= 0) return;
+#endif
                 // Interpolate conductivity, sigma, to Ez position on the grid
                 amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
                                            Ez_stag, macro_cr, i, j, k, scomp);
