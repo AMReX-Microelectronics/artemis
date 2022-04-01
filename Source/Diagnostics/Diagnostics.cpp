@@ -55,8 +55,8 @@ Diagnostics::BaseReadParameters ()
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
 #ifdef WARPX_MAG_LLG
-    int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
-    int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
+    const int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
+    const int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
 #endif
 
     // Query list of grid fields to write to output
