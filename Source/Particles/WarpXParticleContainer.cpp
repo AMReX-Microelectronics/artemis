@@ -17,6 +17,7 @@
 #include "Parallelization/WarpXCommUtil.H"
 #include "ParticleBoundaries_K.H"
 #include "Utils/CoarsenMR.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -305,7 +306,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                         int const thread_num, const int lev, int const depos_lev,
                                         amrex::Real const dt, amrex::Real const relative_time)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
                                      "Deposition buffers only work for lev-1");
 
@@ -414,21 +415,11 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // Note that this includes guard cells since it is after tilebox.ngrow
     const Dim3 lo = lbound(tilebox);
     // Take into account Galilean shift
-    Real cur_time = warpx.gett_new(lev);
-    const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
-    Real time_shift = (cur_time + 0.5_rt*dt - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = {
-        m_v_galilean[0]* time_shift,
-        m_v_galilean[1]*time_shift,
-        m_v_galilean[2]*time_shift };
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
+    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, 0.5_rt*dt);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if (WarpX::do_nodal==1) {
           amrex::Abort("The Esirkepov algorithm cannot be used with a nodal grid.");
-        }
-        if ( (m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)){
-            amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
         }
         if ( relative_time != -0.5_rt ) {
             amrex::Abort("The Esirkepov deposition cannot be performed at another time then -0.5 dt.");
@@ -554,7 +545,7 @@ WarpXParticleContainer::DepositCurrent (
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization)
             {
-                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             }
 
             DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
@@ -594,7 +585,11 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 {
     if (!do_not_deposit) {
         WarpX& warpx = WarpX::GetInstance();
+
+        // deposition guards
+        //   note: this is smaller than rho->nGrowVect() for PSATD
         const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
+
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
         amrex::IntVect ref_ratio;
         if (lev == depos_lev) {
@@ -618,35 +613,26 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         // Lower corner of tile box physical domain
         // Note that this includes guard cells since it is after tilebox.ngrow
         // Take into account Galilean shift
-        const amrex::Real cur_time = warpx.gett_new(lev);
         const amrex::Real dt = warpx.getdt(lev);
-        const amrex::Real time_of_last_gal_shift = warpx.time_of_last_gal_shift;
-        const amrex::Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
-        const amrex::Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
-        amrex::Array<amrex::Real,3> galilean_shift;
-        if (icomp==0){
-            galilean_shift = {
-                m_v_galilean[0]*time_shift_rho_old,
-                m_v_galilean[1]*time_shift_rho_old,
-                m_v_galilean[2]*time_shift_rho_old };
-        } else{
-            galilean_shift = {
-                m_v_galilean[0]*time_shift_rho_new,
-                m_v_galilean[1]*time_shift_rho_new,
-                m_v_galilean[2]*time_shift_rho_new };
-        }
-        const auto& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
+        const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
+        const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, time_shift_delta);
 
         // pointer to costs data
         amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
         amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
-        ablastr::particles::deposit_charge<WarpXParticleContainer>
-            (pti, wp, ion_lev, rho, icomp, nc, offset, np_to_depose,
-             local_rho[thread_num], lev, depos_lev, this->charge,
-             WarpX::nox, WarpX::noy, WarpX::noz, ng_rho, dx, xyzmin, ref_ratio,
-             cost, WarpX::n_rz_azimuthal_modes, WarpX::load_balance_costs_update_algo,
-             WarpX::do_device_synchronize);
+        AMREX_ALWAYS_ASSERT(WarpX::nox == WarpX::noy);
+        AMREX_ALWAYS_ASSERT(WarpX::nox == WarpX::noz);
+
+        ablastr::particles::deposit_charge<WarpXParticleContainer>(
+            pti, wp, this->charge, ion_lev,
+            rho, local_rho[thread_num],
+            WarpX::noz, dx, xyzmin, WarpX::n_rz_azimuthal_modes,
+            ng_rho, depos_lev, ref_ratio,
+            offset, np_to_depose,
+            icomp, nc,
+            cost, WarpX::load_balance_costs_update_algo, WarpX::do_device_synchronize
+        );
     }
 }
 
@@ -686,7 +672,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization)
             {
-                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             }
 
             DepositCharge(pti, wp, ion_lev, rho[lev].get(), icomp, 0, np, thread_num, lev, lev);
@@ -718,12 +704,11 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
             BoxArray coarsened_fine_BA = rho[lev+1]->boxArray();
             coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
-            MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), 0);
+            const IntVect ngrow = (rho[lev+1]->nGrowVect()+1)/m_gdb->refRatio(lev);
+            MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), ngrow );
             coarsened_fine_data.setVal(0.0);
 
-            int const refinement_ratio = 2;
-
-            CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
+            CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], m_gdb->refRatio(lev) );
             WarpXCommUtil::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0, rho[lev]->nComp(),
                                        amrex::IntVect::TheZeroVector(),
                                        amrex::IntVect::TheZeroVector(),
@@ -772,7 +757,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 
             int* AMREX_RESTRICT ion_lev;
             if (do_field_ionization){
-                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             } else {
                 ion_lev = nullptr;
             }
