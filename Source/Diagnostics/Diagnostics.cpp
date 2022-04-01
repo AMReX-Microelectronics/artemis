@@ -55,6 +55,11 @@ Diagnostics::BaseReadParameters ()
     pp_diag_name.query("format", m_format);
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
+#ifdef WARPX_MAG_LLG
+    const int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
+    const int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
+#endif
+
     amrex::ParmParse pp_geometry("geometry");
     std::string dims;
     pp_geometry.get("dims", dims);
@@ -114,6 +119,48 @@ Diagnostics::BaseReadParameters ()
             WarpX::em_solver_medium == MediumForEM::Macroscopic,
             "mu in plotfiles only works with algo.em_solver_medium=macroscopic");
     }
+
+#ifdef WARPX_MAG_LLG
+    // mag_Ms can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "mag_Ms_xface") || WarpXUtilStr::is_in(m_varnames, "mag_Ms_yface") || WarpXUtilStr::is_in(m_varnames, "mag_Ms_zface"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "mag_Ms in plotfiles only works with algo.em_solver_medium=macroscopic");
+    }
+    // mag_alpha can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "mag_alpha_xface") || WarpXUtilStr::is_in(m_varnames, "mag_alpha_yface") || WarpXUtilStr::is_in(m_varnames, "mag_alpha_zface"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "mag_alpha in plotfiles only works with algo.em_solver_medium=macroscopic");
+    }
+    // mag_exchange can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "mag_exchange_xface") || WarpXUtilStr::is_in(m_varnames, "mag_exchange_yface") || WarpXUtilStr::is_in(m_varnames, "mag_exchange_zface"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "mag_exchange in plotfiles only works with algo.em_solver_medium=macroscopic");
+        if (mag_exchange_coupling == 0){
+            std::stringstream warnMsg;
+            warnMsg << "Magnetic exchange coupling turned OFF, and exchange constant A is not parsed";
+            WarpX::GetInstance().RecordWarning("Macroscopic properties",warnMsg.str(), WarnPriority::high);
+        }
+    }
+    // mag_anisotropy can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (WarpXUtilStr::is_in(m_varnames, "mag_anisotropy_xface") || WarpXUtilStr::is_in(m_varnames, "mag_anisotropy_yface") || WarpXUtilStr::is_in(m_varnames, "mag_anisotropy_zface"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "mag_anisotropy in plotfiles only works with algo.em_solver_medium=macroscopic");
+        if (mag_anisotropy_coupling == 0){
+            std::stringstream warnMsg;
+            warnMsg << "Magnetic anisotropy field turned OFF, and anisotropy constant Ku is not parsed";
+            WarpX::GetInstance().RecordWarning("Macroscopic properties",warnMsg.str(), WarnPriority::high);
+        }
+    }
+
+#endif
 
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
