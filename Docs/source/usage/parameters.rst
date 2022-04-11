@@ -2166,6 +2166,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``Mx_xface`` ``Mx_yface`` ``Mx_zface``
     ``My_xface`` ``My_yface`` ``My_zface``
     ``Mz_xface`` ``Mz_yface`` ``Mz_zface``
+    Additional scalar fields components include
+    ``mag_Ms_xface``       ``mag_Ms_yface``       ``mag_Ms_zface``
+    ``mag_alpha_xface``    ``mag_alpha_yface``    ``mag_alpha_zface``
+    ``mag_exchange_xface`` ``mag_exchange_yface`` ``mag_exchange_zface``
+    ``mag_anisotropy_xface`` ``mag_anisotropy_yface`` ``mag_anisotropy_zface``
+
     Possible vector field components in RZ geometry: ``Er`` ``Et`` ``Ez`` ``Br`` ``Bt`` ``Bz`` ``jr`` ``jt`` ``jz``.
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
     unless in RZ geometry with ``<diag_name>.format == openpmd``,
