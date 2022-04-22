@@ -717,7 +717,7 @@ WarpX::FillBoundaryH (int lev, PatchType patch_type, IntVect ng)
                 (patch_type == PatchType::fine) ? pml[lev]->GetH_fp() : pml[lev]->GetH_cp();
 
             pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
-            pml[lev]->FillBoundaryB(patch_type);
+            pml[lev]->FillBoundaryH(patch_type);
         }
     }
 
