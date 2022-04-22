@@ -514,8 +514,40 @@ WarpX::OneStep_nosub (Real cur_time)
         // Synchronize E and B fields on nodal points
         NodalSync(Efield_fp, Efield_cp);
         NodalSync(Bfield_fp, Bfield_cp);
+        // E and B are up-to-date in the domain, but all guard cells are
+        // outdated.
+        if (safe_guard_cells) {
+            FillBoundaryB(guard_cells.ng_alloc_EB);
+        }
+        // ApplyExternalFieldExcitation
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // redundant for hs; need to fix the way to increment ss
 #endif
 
+#ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
+        if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+            if (mag_time_scheme_order==1){
+                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
+            } else if (mag_time_scheme_order==2){
+                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
+            } else {
+                amrex::Abort("unsupported mag_time_scheme_order for M field");
+            }
+            // H and M are up-to-date in the domain, but all guard cells are
+            // outdated.
+            if ( safe_guard_cells ){
+                FillBoundaryH(guard_cells.ng_alloc_EB);
+                FillBoundaryM(guard_cells.ng_alloc_EB);
+            }
+            // ApplyExternalFieldExcitation
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
+        }
+        else {
+            amrex::Abort("unsupported em_solver_medium for M field");
+        }
+#endif // ifndef WARPX_DIM_RZ
+#endif
         if (do_pml) {
             FillBoundaryF(guard_cells.ng_alloc_F);
             DampPML();
@@ -528,39 +560,6 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryH(guard_cells.ng_MovingWindow);
 #endif
             }
-            // E and B are up-to-date in the domain, but all guard cells are
-            // outdated.
-            if (safe_guard_cells) {
-                FillBoundaryB(guard_cells.ng_alloc_EB);
-                // ApplyExternalFieldExcitation
-                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // redundant for hs; need to fix the way to increment ss
-            }
-#ifdef WARPX_MAG_LLG
-#ifndef WARPX_DIM_RZ
-            if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
-                if (mag_time_scheme_order==1){
-                    MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
-                } else if (mag_time_scheme_order==2){
-                    MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
-                } else {
-                    amrex::Abort("unsupported mag_time_scheme_order for M field");
-                }
-            }
-            else {
-                    amrex::Abort("unsupported em_solver_medium for M field");
-            }
-#endif // ifndef WARPX_DIM_RZ
-            // H and M are up-to-date in the domain, but all guard cells are
-            // outdated.
-            if ( safe_guard_cells ){
-                FillBoundaryH(guard_cells.ng_alloc_EB);
-                FillBoundaryM(guard_cells.ng_alloc_EB);
-               // ApplyExternalFieldExcitation
-               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
-               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
-
-            }
-#endif //
     } // !PSATD
 
     ExecutePythonCallback("afterEsolve");
