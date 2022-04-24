@@ -183,7 +183,7 @@ public:
 #endif
                     // We want to weight interior faces by 1
                     // and faces that are on the faces of the box by 0.5
-            // Faces for By computation can lie on ymin and ymax box faces.
+                    // Faces for By computation can lie on ymin and ymax box faces.
                     amrex::Real weight = 1.0;
                     if (j == ly[1] || j == hy[1]) {
                         weight *= 0.5;
