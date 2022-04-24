@@ -208,7 +208,7 @@ public:
 #endif
                     // We want to weight interior faces by 1
                     // and faces that are on the faces of the box by 0.5
-            // Faces for Bz computation can lie on zmin and zmax box faces.
+                    // Faces for Bz computation can lie on zmin and zmax box faces.
                     amrex::Real weight = 1.0;
                     if (k == lz[2] || k == hz[2]) {
                         weight *= 0.5;
