@@ -158,7 +158,7 @@ public:
 #endif
                     // We want to weight interior faces by 1
                     // and faces that are on the faces of the box by 0.5
-            // Faces for Bx computation can lie on xmin and xmax box faces.
+                    // Faces for Bx computation can lie on xmin and xmax box faces.
                     amrex::Real weight = 1.0;
                     if (i == lx[0] || i == hx[0]) {
                         weight *= 0.5;
