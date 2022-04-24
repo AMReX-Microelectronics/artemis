@@ -14,6 +14,7 @@
 #endif
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
@@ -79,11 +80,13 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
 int
 WarpX::MoveWindow (const int step, bool move_j)
 {
+    WARPX_PROFILE("WarpX::MoveWindow");
+
     if (step == start_moving_window_step) {
-        amrex::Print() << "Starting moving window\n";
+        amrex::Print() << Utils::TextMsg::Info("Starting moving window");
     }
     if (step == end_moving_window_step) {
-        amrex::Print() << "Stopping moving window\n";
+        amrex::Print() << Utils::TextMsg::Info("Stopping moving window");
     }
     if (moving_window_active(step) == false) return 0;
 
