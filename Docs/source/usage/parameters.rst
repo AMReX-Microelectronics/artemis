@@ -2625,6 +2625,57 @@ Reduced Diagnostics
            for a uniform grid simulation.
 
 
+    * ``RawBFieldReduction``
+        This type is ONLY for the B-field at their respective staggering on the Yee-grid (or the type of grid used in the
+        simulation) and executes the ``reduced_function`` which is a user-defined analytic function as given below.
+
+        * ``<reduced_diags_name>.reduced_function(x,y,z)`` (`string`)
+              An analytic function used to select the region over which the B-fields will be reduced using
+              the ``reduction_type`` described below.
+
+        * ``<reduced_diags_name>.reduction_type`` (`string`)
+            The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
+            ``Integral``.
+            ``Integral`` computes the spatial surface or volume integral, depending on the choice
+            of the ``integration_type``, of the function defined in the parser by summing its value on
+            all grid points and multiplying the result by the area or volume of a cell.
+            Please be also aware that measuring maximum quantities might be very noisy in PIC
+            simulations.
+
+        The output columns correspond to the timestep counter, physical time, and reduced values of Bx, By, Bz components.
+
+        * ``<reduced_diags_name>.integration_type`` (`string`)
+           The type of integration to be performed. It must be either ``surface`` or ``volume``.
+           Note that the surface integral provides the integrated normal as well as the
+           traverse fields over the surface. For the surface integral, the user-defined parser
+           for the plane should be less than one cell size in thickness in the direction of the surface normal.
+           Also, if the surface to be defined has an edge that overlaps with the domain boundary but the edge parallel
+           to it does not overlap with the domain boundary, e.g. a half cross-section of a plane, then exclude the
+           edge that overlaps with the domain boundary while defining the surface.
+
+           For example, we can define a surface on a y-plane at a location, `y_plane_location`, having a half cross-section
+           from z=-Lz/2 to 0, where Lz is the length of the domain in the z-direction spanning from -Lz/2 to Lz/2, as follows:
+
+           ``<reduced_diags_name>.reduced_function(x,y,z) = " (y > y_plane_location - dy/2. - epsilon) * (y < y_plane_location + epsilon) * (z > -Lz/2.) * (z < 0. + epsilon) * 1 "``
+
+           In this example, epsilon is a very small number which is larger than machine precision.
+
+        * ``<reduced_diags_name>.surface_normal`` (`string`)
+           This parameter is only required when the ``integration_type`` is ``surface``.
+           It specifies the surface on which the surface integration is required, which must be either ``x``, ``y`` or ``z``.
+           The direction of the normal is positive in the Cartesian directions.
+           in the negative direction.
+
+        * ``<reduced_diags_name>.scaling_factor`` (`string`)  optional (default `1 1 1`)
+           This parameter is used when the ``integration_type`` is set to ``surface``. The parser takes three values to scale
+           the reduced field quantities, namely, the surface integral of Bx, By, and Bz.
+           This parameter can be used in the following two scenarios:
+           Let's say, we require the surface integral of Bx on a surface, with the surface normal in the negative x direction.
+           In this case, we would specify the value of this parameter as ``-1. 1. 1.`` so that the surface integral of Bx is multiplied by ``-1``.
+           As another example, we may require surface integral of H-field, which can be obtained by dividing the surface integrals of Bx, By, and Bz
+           by permeability, ``mu``, if ``mu`` is constant. In this case, we would specify the value of this parameter as ``1./mu,    1./mu, 1./mu``.
+
+
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the
         sum of their weights) in the whole simulation domain (for each species and summed over all
