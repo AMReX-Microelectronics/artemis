@@ -17,5 +17,6 @@ CEXE_sources += RhoMaximum.cpp
 CEXE_sources += ParticleNumber.cpp
 CEXE_sources += FieldReduction.cpp
 CEXE_sources += RawEFieldReduction.cpp
+CEXE_sources += RawBFieldReduction.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics/ReducedDiags
