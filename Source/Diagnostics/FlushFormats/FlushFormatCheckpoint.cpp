@@ -1,8 +1,12 @@
 #include "FlushFormatCheckpoint.H"
 
 #include "BoundaryConditions/PML.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -44,7 +48,8 @@ FlushFormatCheckpoint::WriteToFile (
 
     const std::string& checkpointname = amrex::Concatenate(prefix, iteration[0], file_min_digits);
 
-    amrex::Print() << "  Writing checkpoint " << checkpointname << "\n";
+    amrex::Print() << Utils::TextMsg::Info(
+        "Writing checkpoint " + checkpointname);
 
     // const int nlevels = finestLevel()+1;
     amrex::PreBuildDirectorHierarchy(checkpointname, default_level_prefix, nlev, true);
@@ -81,6 +86,12 @@ FlushFormatCheckpoint::WriteToFile (
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "My_fp"));
         VisMF::Write(warpx.getMfield_fp(lev, 2),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Mz_fp"));
+        VisMF::Write(warpx.getH_biasfield_fp(lev, 0),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hxbias_fp"));
+        VisMF::Write(warpx.getH_biasfield_fp(lev, 1),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hybias_fp"));
+        VisMF::Write(warpx.getH_biasfield_fp(lev, 2),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hzbias_fp"));
 #endif
 
         if (WarpX::fft_do_time_averaging)
@@ -138,6 +149,12 @@ FlushFormatCheckpoint::WriteToFile (
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "My_cp"));
             VisMF::Write(warpx.getMfield_cp(lev, 2),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Mz_cp"));
+            VisMF::Write(warpx.getH_biasfield_cp(lev, 0),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hxbias_fp"));
+            VisMF::Write(warpx.getH_biasfield_cp(lev, 1),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hybias_fp"));
+            VisMF::Write(warpx.getH_biasfield_cp(lev, 2),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hzbias_fp"));
 #endif
 
             if (WarpX::fft_do_time_averaging)
@@ -168,9 +185,17 @@ FlushFormatCheckpoint::WriteToFile (
             }
         }
 
-        if (warpx.DoPML() && warpx.GetPML(lev)) {
-            warpx.GetPML(lev)->CheckPoint(
-                amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml"));
+        if (warpx.DoPML()) {
+            if (warpx.GetPML(lev)) {
+                warpx.GetPML(lev)->CheckPoint(
+                    amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml"));
+            }
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+            if (warpx.GetPML_RZ(lev)) {
+                warpx.GetPML_RZ(lev)->CheckPoint(
+                    amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml_rz"));
+            }
+#endif
         }
     }
 

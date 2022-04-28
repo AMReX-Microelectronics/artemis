@@ -11,7 +11,7 @@ ARTEMIS (Adaptive Refinement Time-domain ElectrodynaMIcs Solver) is a developmen
 [![yt-project](https://img.shields.io/static/v1?label="works%20with"&message="yt"&color="blueviolet")](https://yt-project.org)
 
 In order to learn how to install and run the code, please see the online documentation:
-https://warpx.readthedocs.io
+https://artemis-em.readthedocs.io
 
 To contact the developers, feel free to open an issue on this repo.
 

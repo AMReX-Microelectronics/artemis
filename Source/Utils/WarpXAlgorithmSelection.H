@@ -128,8 +128,9 @@ struct ExternalFieldType {
         BfieldExternal = 2,
 #ifdef WARPX_MAG_LLG
         HfieldExternal = 3,
-        HbiasfieldExternal = 4
+        HbiasfieldExternal = 4,
 #endif
+        EfieldExternalPML = 5
     };
 };
 
@@ -140,6 +141,13 @@ struct ReductionType {
         Maximum = 0,
         Minimum = 1,
         Sum = 2
+    };
+};
+
+struct IntegrationType {
+    enum {
+        Volume = 0,
+        Surface = 1
     };
 };
 

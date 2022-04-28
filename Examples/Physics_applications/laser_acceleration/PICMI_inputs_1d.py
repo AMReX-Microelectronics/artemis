@@ -29,7 +29,7 @@ grid = picmi.Cartesian1DGrid(
     upper_boundary_conditions = ['dirichlet'],
     lower_boundary_conditions_particles = ['absorbing'],
     upper_boundary_conditions_particles = ['absorbing'],
-    moving_window_velocity = [0., 0., c],
+    moving_window_velocity = [c],
     warpx_max_grid_size = max_grid_size,
     warpx_blocking_factor = blocking_factor)
 
@@ -94,7 +94,7 @@ sim = picmi.Simulation(
     verbose = 1,
     particle_shape = 'cubic',
     warpx_use_filter = 1,
-    warpx_serialize_ics = 1,
+    warpx_serialize_initial_conditions = 1,
     warpx_do_dynamic_scheduling = 0)
 
 # Add plasma electrons
