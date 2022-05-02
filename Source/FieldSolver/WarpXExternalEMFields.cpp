@@ -164,7 +164,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 amrex::Real dt_type_factor = 1._rt;
                 // For soft source and FirstHalf/SecondHalf evolve
                 // the excitation is split with a prefector of 0.5
-                if (flag_type == 2._rt and dt_flag_type == 1) {
+                if (flag_type == 2._rt and dt_type_flag == 1) {
                     dt_type_factor = 0.5_rt;
                 }
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
@@ -180,10 +180,10 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfy_stag,
                                                   problo, dx, x, y, z);
                 auto flag_type = yflag_parser(x,y,z);
-                amrex::dt_type_factor = 1._rt;
+                amrex::Real dt_type_factor = 1._rt;
                 // For soft source and FirstHalf/SecondHalf evolve
                 // the excitation is split with a prefector of 0.5
-                if (flag_type == 2._rt and dt_flag_type == 1) {
+                if (flag_type == 2._rt and dt_type_flag == 1) {
                     dt_type_factor = 0.5_rt;
                 }
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
@@ -199,10 +199,10 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfz_stag,
                                                   problo, dx, x, y, z);
                 auto flag_type = zflag_parser(x,y,z);
-                amrex::dt_type_factor = 1._rt;
+                amrex::Real dt_type_factor = 1._rt;
                 // For soft source and FirstHalf/SecondHalf evolve
                 // the excitation is split with a prefector of 0.5
-                if (flag_type == 2._rt and dt_flag_type == 1) {
+                if (flag_type == 2._rt and dt_type_flag == 1) {
                     dt_type_factor = 0.5_rt;
                 }
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
