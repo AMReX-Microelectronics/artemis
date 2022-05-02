@@ -161,7 +161,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag,
                                                   problo, dx, x, y, z);
                 auto flag_type = xflag_parser(x,y,z);
-                amrex::dt_type_factor = 1._rt;
+                amrex::Real dt_type_factor = 1._rt;
                 // For soft source and FirstHalf/SecondHalf evolve
                 // the excitation is split with a prefector of 0.5
                 if (flag_type == 2._rt and dt_flag_type == 1) {
