@@ -136,9 +136,9 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
     const int nComp_z = mfz->nComp();
     // Multiplication factor for field parser depending on dt_type
     // If Full, then 1 (default), if FirstHalf or SecondHalf then 0.5
-    amrex::Real dt_type_factor = 1._rt;
+    int dt_type_flag = 0;
     if (a_dt_type == DtType::FirstHalf or a_dt_type == DtType::SecondHalf ) {
-        dt_type_factor = 0.5_rt;
+        dt_type_flag = 1;
     }
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -161,6 +161,12 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag,
                                                   problo, dx, x, y, z);
                 auto flag_type = xflag_parser(x,y,z);
+                amrex::dt_type_factor = 1._rt;
+                // For soft source and FirstHalf/SecondHalf evolve
+                // the excitation is split with a prefector of 0.5
+                if (flag_type == 2._rt and dt_flag_type == 1) {
+                    dt_type_factor = 0.5_rt;
+                }
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
                     amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
                 } else if ( flag_type > 0._rt ) {
@@ -174,6 +180,12 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfy_stag,
                                                   problo, dx, x, y, z);
                 auto flag_type = yflag_parser(x,y,z);
+                amrex::dt_type_factor = 1._rt;
+                // For soft source and FirstHalf/SecondHalf evolve
+                // the excitation is split with a prefector of 0.5
+                if (flag_type == 2._rt and dt_flag_type == 1) {
+                    dt_type_factor = 0.5_rt;
+                }
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
                     amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
                 } else if ( flag_type > 0._rt ) {
@@ -187,6 +199,12 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, mfz_stag,
                                                   problo, dx, x, y, z);
                 auto flag_type = zflag_parser(x,y,z);
+                amrex::dt_type_factor = 1._rt;
+                // For soft source and FirstHalf/SecondHalf evolve
+                // the excitation is split with a prefector of 0.5
+                if (flag_type == 2._rt and dt_flag_type == 1) {
+                    dt_type_factor = 0.5_rt;
+                }
                 if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
                     amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
                 } else if ( flag_type > 0._rt ) {
