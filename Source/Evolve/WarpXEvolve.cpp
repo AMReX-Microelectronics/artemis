@@ -481,7 +481,7 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver);
         // ApplyExternalFieldExcitation
-        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // apply B external excitation; soft source to be fixed
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal, DtType::FirstHalf); // apply B external excitation; soft source to be fixed
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -497,8 +497,8 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryH(guard_cells.ng_FieldSolver);
             FillBoundaryM(guard_cells.ng_FieldSolver);
             // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation; soft source to be fixed
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal, DtType::FirstHalf); // apply H external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal, DtType::FirstHalf); // apply H external excitation; soft source to be fixed
 
         } else {
             amrex::Abort("unsupported em_solver_medium for M field");
@@ -537,7 +537,7 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryB(guard_cells.ng_alloc_EB);
         }
         // ApplyExternalFieldExcitation
-        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal); // redundant for hs; need to fix the way to increment ss
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal, DtType::SecondHalf); // redundant for hs; need to fix the way to increment ss
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -557,8 +557,8 @@ WarpX::OneStep_nosub (Real cur_time)
                 FillBoundaryM(guard_cells.ng_alloc_EB);
             }
             // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal, DtType::SecondHalf); // redundant for hs; need to fix the way to increment ss
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal, DtType::SecondHalf); // apply H external excitation; soft source to be fixed
         }
         else {
             amrex::Abort("unsupported em_solver_medium for M field");
