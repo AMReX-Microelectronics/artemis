@@ -1106,7 +1106,7 @@ public:
      *   \param[in] zflag_parser  : Type zfield excitation (hard source=0/soft source=1)
      *   \param[in] lev           : level on which the excitation is applied.
      */
-    void ApplyExternalFieldExcitationOnGrid (int const externalfieldtype);
+    void ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a_dt_type = DtType::Full);
     void ApplyExternalFieldExcitationOnGrid ( amrex::MultiFab *mfx,
          amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          amrex::ParserExecutor<4> const& xfield_parser,
@@ -1114,7 +1114,8 @@ public:
          amrex::ParserExecutor<4> const& zfield_parser,
          amrex::ParserExecutor<3> const& xflag_parser,
          amrex::ParserExecutor<3> const& yflag_parser,
-         amrex::ParserExecutor<3> const& zflag_parser, const int lev );
+         amrex::ParserExecutor<3> const& zflag_parser, const int lev,
+         DtType a_dt_type );
 
 #ifdef WARPX_MAG_LLG
     void AverageParsedMtoFaces(amrex::MultiFab& Mx_cc,
