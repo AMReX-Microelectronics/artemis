@@ -1150,6 +1150,8 @@ WarpX::ReadParameters ()
         if (em_solver_medium == MediumForEM::Macroscopic ) {
             macroscopic_solver_algo = GetAlgorithmInteger(pp_algo,"macroscopic_sigma_method");
         }
+        // Read field excitation flags and parsers
+        ReadExcitationParser();  
 
         // Load balancing parameters
         std::vector<std::string> load_balance_intervals_string_vec = {"0"};
