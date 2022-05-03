@@ -1117,6 +1117,17 @@ public:
          amrex::ParserExecutor<3> const& zflag_parser, const int lev,
          DtType a_dt_type );
 
+    void ExternalFieldSanity ();
+    void ExternalFieldSanity ( amrex::MultiFab *mfx,
+         amrex::MultiFab *mfy, amrex::MultiFab *mfz,
+         amrex::ParserExecutor<4> const& xfield_parser,
+         amrex::ParserExecutor<4> const& yfield_parser,
+         amrex::ParserExecutor<4> const& zfield_parser,
+         amrex::ParserExecutor<3> const& xflag_parser,
+         amrex::ParserExecutor<3> const& yflag_parser,
+         amrex::ParserExecutor<3> const& zflag_parser, const int lev,
+         DtType a_dt_type );
+
 #ifdef WARPX_MAG_LLG
     void AverageParsedMtoFaces(amrex::MultiFab& Mx_cc,
                                amrex::MultiFab& My_cc,
