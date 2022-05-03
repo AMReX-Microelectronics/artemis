@@ -348,6 +348,7 @@ WarpX::InitData ()
         ComputeDt();
         WarpX::PrintDtDxDyDz();
         InitFromScratch();
+        ExternalFieldSanity();
     }
     else
     {
