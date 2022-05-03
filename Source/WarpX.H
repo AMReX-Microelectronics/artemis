@@ -1116,6 +1116,7 @@ public:
          amrex::ParserExecutor<3> const& yflag_parser,
          amrex::ParserExecutor<3> const& zflag_parser, const int lev,
          DtType a_dt_type );
+    /** Parse field excitation functions and flags*/
     void ReadExcitationParser ();
 
 #ifdef WARPX_MAG_LLG
