@@ -275,6 +275,7 @@ WarpX::ExternalFieldSanity ()
             allowed_values[0] = 0;
             allowed_values[1] = 1;
             allowed_values[2] = 2;
+
             ExternalFieldSanity(Hfield_fp[lev][0].get(),
                                 Hfield_fp[lev][1].get(),
                                 Hfield_fp[lev][2].get(),
