@@ -214,7 +214,7 @@ void
 WarpX::ExternalFieldSanity ()
 {
     amrex::GpuArray<amrex::Real,10> allowed_values;
-    
+
     for (int lev = 0; lev <= finest_level; ++lev) {
         if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
 
@@ -222,7 +222,7 @@ WarpX::ExternalFieldSanity ()
             allowed_values[0] = 0;
             allowed_values[1] = 1;
             allowed_values[2] = 2;
-            
+
             ExternalFieldSanity(Efield_fp[lev][0].get(),
                                 Efield_fp[lev][1].get(),
                                 Efield_fp[lev][2].get(),
@@ -242,7 +242,7 @@ WarpX::ExternalFieldSanity ()
                 allowed_values[0] = 0;
                 allowed_values[1] = 1;
                 allowed_values[2] = 2;
-                
+
                 ExternalFieldSanity(pml[lev]->GetE_fp(0),
                                     pml[lev]->GetE_fp(1),
                                     pml[lev]->GetE_fp(2),
