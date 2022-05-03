@@ -215,3 +215,198 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
         );
     }
 }
+
+void
+WarpX::ReadExcitationParser ()
+{
+
+    ParmParse pp_warpx("warpx");
+
+    // Query for type of external space-time (xt) varying excitation
+    pp_warpx.query("B_excitation_on_grid_style", B_excitation_grid_s);
+    std::transform(B_excitation_grid_s.begin(),
+               B_excitation_grid_s.end(),
+               B_excitation_grid_s.begin(),
+               ::tolower);
+
+#ifdef WARPX_MAG_LLG
+    if (pp_warpx.query("B_excitation_on_grid_style", B_excitation_grid_s)) {
+        amrex::Abort("ERROR: Excitation of B field is not allowed in the LLG simulation! \nThe excited magnetic field must be H field! \n");
+    }
+#endif
+
+    pp_warpx.query("E_excitation_on_grid_style", E_excitation_grid_s);
+    std::transform(E_excitation_grid_s.begin(),
+                   E_excitation_grid_s.end(),
+                   E_excitation_grid_s.begin(),
+                   ::tolower);
+
+#ifdef WARPX_MAG_LLG
+    pp_warpx.query("H_excitation_on_grid_style", H_excitation_grid_s);
+    std::transform(H_excitation_grid_s.begin(),
+                   H_excitation_grid_s.end(),
+                   H_excitation_grid_s.begin(),
+                   ::tolower);
+    pp_warpx.query("H_bias_excitation_on_grid_style", H_bias_excitation_grid_s);
+    std::transform(H_bias_excitation_grid_s.begin(),
+                   H_bias_excitation_grid_s.end(),
+                   H_bias_excitation_grid_s.begin(),
+                   ::tolower);
+#endif
+
+    if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
+        // if E excitation type is set to parser then the corresponding
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
+        // the field with the excitation.
+        Store_parserString(pp_warpx, "Ex_excitation_flag_function(x,y,z)",
+                                str_Ex_excitation_flag_function);
+        Store_parserString(pp_warpx, "Ey_excitation_flag_function(x,y,z)",
+                                str_Ey_excitation_flag_function);
+        Store_parserString(pp_warpx, "Ez_excitation_flag_function(x,y,z)",
+                                str_Ez_excitation_flag_function);
+        Exfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ex_excitation_flag_function,{"x","y","z"}));
+        Eyfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ey_excitation_flag_function,{"x","y","z"}));
+        Ezfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ez_excitation_flag_function,{"x","y","z"}));
+
+        pp_warpx.query("Apply_E_excitation_in_pml_region", ApplyExcitationInPML);
+    }
+    if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
+        // if B excitation type is set to parser then the corresponding
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
+        // the field with the excitation.
+        Store_parserString(pp_warpx, "Bx_excitation_flag_function(x,y,z)",
+                                str_Bx_excitation_flag_function);
+        Store_parserString(pp_warpx, "By_excitation_flag_function(x,y,z)",
+                                str_By_excitation_flag_function);
+        Store_parserString(pp_warpx, "Bz_excitation_flag_function(x,y,z)",
+                                str_Bz_excitation_flag_function);
+        Bxfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Bx_excitation_flag_function,{"x","y","z"}));
+        Byfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_By_excitation_flag_function,{"x","y","z"}));
+        Bzfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Bz_excitation_flag_function,{"x","y","z"}));
+    }
+
+
+#ifdef WARPX_MAG_LLG
+    if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
+        // if H excitation type is set to parser then the corresponding
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
+        // the field with the excitation.
+        Store_parserString(pp_warpx, "Hx_excitation_flag_function(x,y,z)",
+                                str_Hx_excitation_flag_function);
+        Store_parserString(pp_warpx, "Hy_excitation_flag_function(x,y,z)",
+                                str_Hy_excitation_flag_function);
+        Store_parserString(pp_warpx, "Hz_excitation_flag_function(x,y,z)",
+                                str_Hz_excitation_flag_function);
+        Hxfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hx_excitation_flag_function,{"x","y","z"}));
+        Hyfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hy_excitation_flag_function,{"x","y","z"}));
+        Hzfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hz_excitation_flag_function,{"x","y","z"}));
+    }
+    if (H_bias_excitation_grid_s == "parse_h_bias_excitation_grid_function") {
+        // if H bias_excitation type is set to parser then the corresponding
+        // source type (hard=1, soft=2) must be specified for all components
+        // using the flag function. Note that a flag value of 0 will not update
+        // the field with the excitation.
+        Store_parserString(pp_warpx, "Hx_bias_excitation_flag_function(x,y,z)",
+                                str_Hx_bias_excitation_flag_function);
+        Store_parserString(pp_warpx, "Hy_bias_excitation_flag_function(x,y,z)",
+                                str_Hy_bias_excitation_flag_function);
+        Store_parserString(pp_warpx, "Hz_bias_excitation_flag_function(x,y,z)",
+                                str_Hz_bias_excitation_flag_function);
+        Hx_biasfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hx_bias_excitation_flag_function,{"x","y","z"}));
+        Hy_biasfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hy_bias_excitation_flag_function,{"x","y","z"}));
+        Hz_biasfield_flag_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hz_bias_excitation_flag_function,{"x","y","z"}));
+    }
+#endif
+
+    // make parser for the external B-excitation in space-time
+    if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
+#ifdef WARPX_DIM_RZ
+       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
+#endif
+       Store_parserString(pp_warpx, "Bx_excitation_grid_function(x,y,z,t)",
+                                                    str_Bx_excitation_grid_function);
+       Store_parserString(pp_warpx, "By_excitation_grid_function(x,y,z,t)",
+                                                    str_By_excitation_grid_function);
+       Store_parserString(pp_warpx, "Bz_excitation_grid_function(x,y,z,t)",
+                                                    str_Bz_excitation_grid_function);
+       Bxfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Bx_excitation_grid_function,{"x","y","z","t"}));
+       Byfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_By_excitation_grid_function,{"x","y","z","t"}));
+       Bzfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Bz_excitation_grid_function,{"x","y","z","t"}));
+    }
+
+    // make parser for the external E-excitation in space-time
+    if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
+#ifdef WARPX_DIM_RZ
+       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
+#endif
+       Store_parserString(pp_warpx, "Ex_excitation_grid_function(x,y,z,t)",
+                                                    str_Ex_excitation_grid_function);
+       Store_parserString(pp_warpx, "Ey_excitation_grid_function(x,y,z,t)",
+                                                    str_Ey_excitation_grid_function);
+       Store_parserString(pp_warpx, "Ez_excitation_grid_function(x,y,z,t)",
+                                                    str_Ez_excitation_grid_function);
+       Exfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ex_excitation_grid_function,{"x","y","z","t"}));
+       Eyfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ey_excitation_grid_function,{"x","y","z","t"}));
+       Ezfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Ez_excitation_grid_function,{"x","y","z","t"}));
+    }
+
+#ifdef WARPX_MAG_LLG
+    // make parser for the external H-excitation in space-time
+    if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
+#ifdef WARPX_DIM_RZ
+       amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
+#endif
+       Store_parserString(pp_warpx, "Hx_excitation_grid_function(x,y,z,t)",
+                                                    str_Hx_excitation_grid_function);
+       Store_parserString(pp_warpx, "Hy_excitation_grid_function(x,y,z,t)",
+                                                    str_Hy_excitation_grid_function);
+       Store_parserString(pp_warpx, "Hz_excitation_grid_function(x,y,z,t)",
+                                                    str_Hz_excitation_grid_function);
+       Hxfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hx_excitation_grid_function,{"x","y","z","t"}));
+       Hyfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hy_excitation_grid_function,{"x","y","z","t"}));
+       Hzfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hz_excitation_grid_function,{"x","y","z","t"}));
+    }
+    // make parser for the external H-biasexcitation in space-time
+    if (H_bias_excitation_grid_s == "parse_h_bias_excitation_grid_function") {
+#ifdef WARPX_DIM_RZ
+       amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
+#endif
+       Store_parserString(pp_warpx, "Hx_bias_excitation_grid_function(x,y,z,t)",
+                                                    str_Hx_bias_excitation_grid_function);
+       Store_parserString(pp_warpx, "Hy_bias_excitation_grid_function(x,y,z,t)",
+                                                    str_Hy_bias_excitation_grid_function);
+       Store_parserString(pp_warpx, "Hz_bias_excitation_grid_function(x,y,z,t)",
+                                                    str_Hz_bias_excitation_grid_function);
+       Hx_biasfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hx_bias_excitation_grid_function,{"x","y","z","t"}));
+       Hy_biasfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hy_bias_excitation_grid_function,{"x","y","z","t"}));
+       Hz_biasfield_xt_grid_parser = std::make_unique<amrex::Parser>(
+                   makeParser(str_Hz_bias_excitation_grid_function,{"x","y","z","t"}));
+    }
+#endif
+}
