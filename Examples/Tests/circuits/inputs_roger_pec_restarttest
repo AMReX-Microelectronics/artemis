@@ -81,8 +81,6 @@ warpx.use_filter = 0
 warpx.cfl = 0.8
 boundary.field_lo = periodic pec pec   # unrealistic boundary conditions in x and z just for restart test
 boundary.field_hi = periodic pml pml
-boundary.field_lo = periodic periodic periodic
-boundary.field_hi = periodic periodic periodic
 particles.nspecies = 0
 
 algo.em_solver_medium = macroscopic           # vacuum/macroscopic
