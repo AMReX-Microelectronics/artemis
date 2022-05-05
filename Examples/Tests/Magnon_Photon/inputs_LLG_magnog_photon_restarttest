@@ -65,8 +65,8 @@ my_constants.TP = 4.0e-11 # Gaussian pulse width, 3 x time period of excitation
 
 # my_constants.w_port = w_line + 2*w_gap + 0.5*w_gnd
 # my_constants.h_port = th_si + th_nb + th_si/2
-my_constants.w_port = w_line 
-my_constants.h_port = th_si + th_nb 
+my_constants.w_port = w_line
+my_constants.h_port = th_si + th_nb
 
 my_constants.sigma_0 = 0.0
 my_constants.sigma_nb = 1.e7
@@ -85,8 +85,8 @@ my_constants.epsilon_r_ferrite = 13.0
 my_constants.sigma_ferrite = 0. # start with insulating magnetic materials
 my_constants.alpha_ferrite = 0.003
 my_constants.exchange_ferrite = 3.1e-12 # A_exchange constant
-# my_constants.anisotropy_ferrite = -139.26 # Ku constant 
-my_constants.anisotropy_ferrite = 0. # Ku constant 
+# my_constants.anisotropy_ferrite = -139.26 # Ku constant
+my_constants.anisotropy_ferrite = 0. # Ku constant
 my_constants.Ms_ga = 1.2e4 # Gauss
 # my_constants.Hzero = 0.008 # magnitude of RF excitation
 my_constants.Hbias = 2.15e4 # in Gause, T = 10000 Oersted; validated by Kittel law of FMR frequency at 75GHz
@@ -126,32 +126,32 @@ algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
 # NOTE: the "tiny_excitations" can go away once we parse to cell-centers and average to faces/edges
 
 # macroscopic.sigma_function(x,y,z) = "sigma_0
-# + (sigma_si - sigma_0) * (z < th_si ) 
+# + (sigma_si - sigma_0) * (z < th_si )
 # + (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 ) * (y > -Ly/2 + l_feeding ) * (y > Ly/2 - l_feeding )
 # + (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 - w_gap - w_gnd ) * (x < -w_line/2 - w_gap )
 # + (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x < +w_line/2 + w_gap + w_gnd ) * (x > +w_line/2 + w_gap )"
 
 macroscopic.sigma_function(x,y,z) = "sigma_0
-+ (sigma_si - sigma_0) * (z < th_si ) 
-+ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 ) 
-+ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > l_line/2+l_gap ) 
-+ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y < -l_line/2-l_gap ) 
++ (sigma_si - sigma_0) * (z < th_si )
++ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 )
++ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > l_line/2+l_gap )
++ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y < -l_line/2-l_gap )
 + (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 - w_gap - w_gnd ) * (x < -w_line/2 - w_gap )
 + (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x < +w_line/2 + w_gap + w_gnd ) * (x > +w_line/2 + w_gap )"
 
 macroscopic.epsilon_function(x,y,z) = "eps_0
-+ eps_0 * (eps_r_si - 1) * (z < th_si ) 
-+ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 ) 
-+ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > l_line/2+l_gap ) 
-+ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y < -l_line/2-l_gap ) 
++ eps_0 * (eps_r_si - 1) * (z < th_si )
++ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 )
++ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > l_line/2+l_gap )
++ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y < -l_line/2-l_gap )
 + eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 - w_gap - w_gnd ) * (x < -w_line/2 - w_gap )
 + eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x < +w_line/2 + w_gap + w_gnd ) * (x > +w_line/2 + w_gap )"
 
 macroscopic.mu_function(x,y,z) = "mu_0
-+ mu_0 * (mu_r_si - 1) * (z < th_si ) 
-+ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 ) 
-+ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > l_line/2+l_gap ) 
-+ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y < -l_line/2-l_gap ) 
++ mu_0 * (mu_r_si - 1) * (z < th_si )
++ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 )
++ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > l_line/2+l_gap )
++ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y < -l_line/2-l_gap )
 + mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 - w_gap - w_gnd ) * (x < -w_line/2 - w_gap )
 + mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x < +w_line/2 + w_gap + w_gnd ) * (x > +w_line/2 + w_gap )"
 
@@ -228,13 +228,13 @@ warpx.Mz_external_grid_function(x,y,z)= "0.0"
 # #plt.diag_lo = 0.0 0.0 -Lz/2.0
 # #plt.diag_hi = 0.0 0.0  Lz/2.0
 # plt.diag_type = Full
-# # plt.fields_to_plot = Ex Ey Ez Mx_xface My_yface Mz_zface epsilon sigma mu mag_alpha_xface mag_Ms_xface mag_exchange_xface mag_anisotropy_xface mag_anisotropy_yface mag_anisotropy_zface 
+# # plt.fields_to_plot = Ex Ey Ez Mx_xface My_yface Mz_zface epsilon sigma mu mag_alpha_xface mag_Ms_xface mag_exchange_xface mag_anisotropy_xface mag_anisotropy_yface mag_anisotropy_zface
 
 diagnostics.diags_names = plt chk
 plt.intervals = 5
 plt.diag_type = Full
 #plt.fields_to_plot = Ex Ey Ez Hx Hy Hz Mx_xface My_yface Mz_zface
- plt.fields_to_plot = Ex Ey Ez Mx_xface My_yface Mz_zface epsilon sigma mu mag_alpha_xface mag_Ms_xface mag_exchange_xface mag_anisotropy_xface mag_anisotropy_yface mag_anisotropy_zface 
+ plt.fields_to_plot = Ex Ey Ez Mx_xface My_yface Mz_zface epsilon sigma mu mag_alpha_xface mag_Ms_xface mag_exchange_xface mag_anisotropy_xface mag_anisotropy_yface mag_anisotropy_zface
 plt.plot_raw_fields = 0
 
 chk.intervals = 5
