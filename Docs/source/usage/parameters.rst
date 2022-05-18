@@ -1785,6 +1785,16 @@ Numerics and algorithms
 
     If ``algo.em_solver_medium`` is not specified, ``vacuum`` is the default.
 
+* ``algo.yee_coupled_solver`` (`string` optional)
+    If Maxwell is coupled with another solver.
+    Options are :
+
+    - ``MaxwellLondon``: Couple London with Maxwell yee-scheme. If this option is selected, then
+                         ``london.penetration_depth`` must be specified and
+                          ``london.superconductor_function(x,y,z)`` must be provided to specify the superconducting region with an analytical function.
+    - ``None``: pure FDTD with yee-scheme
+    If ``algo.yee_coupled_solver`` is not specified, ``None`` is the default
+
 * ``algo.macroscopic_sigma_method`` (`string`, optional)
     The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
 
