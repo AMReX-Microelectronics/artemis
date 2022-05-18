@@ -12,7 +12,7 @@
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 
-enum ExternalFieldInitType { None, Constant, ParserType, RepeatedPlasmaLens, Unknown };
+enum ExternalFieldInitType { None, Constant, Parser, RepeatedPlasmaLens, Unknown };
 
 /** \brief Functor class that assigns external
  *         field values (E and B) to particles.
