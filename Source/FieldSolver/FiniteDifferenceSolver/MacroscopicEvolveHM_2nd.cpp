@@ -68,6 +68,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
 
     // build temporary vector<multifab,3> Mfield_prev, Mfield_error, a_temp, a_temp_static, b_temp_static
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Hfield_old;    // H^(old_time) before the current time step
+    std::array<std::unique_ptr<amrex::MultiFab>, 3> H_biasfield_old;    // H_bias^(old_time) before the current time step
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Mfield_old;    // M^(old_time) before the current time step
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Mfield_prev;   // M^(new_time) of the (r-1)th iteration
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Mfield_error;  // The error of the M field between the two consecutive iterations
@@ -85,14 +86,16 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     amrex::GpuArray<int, 3> const& macro_cr = macroscopic_properties->macro_cr_ratio;
     amrex::GpuArray<amrex::Real, 3> const& anisotropy_axis = macroscopic_properties->mag_LLG_anisotropy_axis;
 
-    // Initialize Hfield_old (H^(old_time)), Mfield_old (M^(old_time)), Mfield_prev (M^[(new_time),r-1]), Mfield_error
+    // Initialize Hfield_old (H^(old_time)), H_biasfield_old (H^(old_time)), Mfield_old (M^(old_time)), Mfield_prev (M^[(new_time),r-1]), Mfield_error
     for (int i = 0; i < 3; i++){
         Hfield_old[i].reset(new MultiFab(Hfield[i]->boxArray(), Hfield[i]->DistributionMap(), 1, Hfield[i]->nGrow()));
+        H_biasfield_old[i].reset(new MultiFab(H_biasfield[i]->boxArray(), H_biasfield[i]->DistributionMap(), 1, H_biasfield[i]->nGrow()));
         Mfield_old[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
         Mfield_prev[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
         Mfield_error[i].reset(new MultiFab(Mfield[i]->boxArray(), Mfield[i]->DistributionMap(), 3, Mfield[i]->nGrow()));
         Mfield_error[i]->setVal(0.); // reset Mfield_error to zero
         MultiFab::Copy(*Hfield_old[i], *Hfield[i], 0, 0, 1, Hfield[i]->nGrow());
+        MultiFab::Copy(*H_biasfield_old[i], *H_biasfield[i], 0, 0, 1, H_biasfield[i]->nGrow());
         MultiFab::Copy(*Mfield_old[i], *Mfield[i], 0, 0, 3, Mfield[i]->nGrow());
         MultiFab::Copy(*Mfield_prev[i], *Mfield[i], 0, 0, 3, Mfield[i]->nGrow());
     }
@@ -142,12 +145,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Array4<Real> const& mag_anisotropy_zface_arr = mag_anisotropy_zface_mf.array(mfi);
 
         // extract field data
-        Array4<Real> const &M_xface = Mfield[0]->array(mfi);      // note M_xface include x,y,z components at |_x faces
-        Array4<Real> const &M_yface = Mfield[1]->array(mfi);      // note M_yface include x,y,z components at |_y faces
-        Array4<Real> const &M_zface = Mfield[2]->array(mfi);      // note M_zface include x,y,z components at |_z faces
-        Array4<Real> const &Hx_bias = H_biasfield[0]->array(mfi); // Hx_bias is the x component at |_x faces
-        Array4<Real> const &Hy_bias = H_biasfield[1]->array(mfi); // Hy_bias is the y component at |_y faces
-        Array4<Real> const &Hz_bias = H_biasfield[2]->array(mfi); // Hz_bias is the z component at |_z faces
+        Array4<Real> const &M_xface_old = Mfield_old[0]->array(mfi);      // note M_xface_old include x,y,z components at |_x faces
+        Array4<Real> const &M_yface_old = Mfield_old[1]->array(mfi);      // note M_yface_old include x,y,z components at |_y faces
+        Array4<Real> const &M_zface_old = Mfield_old[2]->array(mfi);      // note M_zface_old include x,y,z components at |_z faces
+        Array4<Real> const &Hx_bias_old = H_biasfield_old[0]->array(mfi); // Hx_bias_old is the x component at |_x faces
+        Array4<Real> const &Hy_bias_old = H_biasfield_old[1]->array(mfi); // Hy_bias_old is the y component at |_y faces
+        Array4<Real> const &Hz_bias_old = H_biasfield_old[2]->array(mfi); // Hz_bias_old is the z component at |_z faces
         Array4<Real> const &Hx_old = Hfield_old[0]->array(mfi);   // Hx_old is the x component at |_x faces
         Array4<Real> const &Hy_old = Hfield_old[1]->array(mfi);   // Hy_old is the y component at |_y faces
         Array4<Real> const &Hz_old = Hfield_old[2]->array(mfi);   // Hz_old is the z component at |_z faces
@@ -161,12 +164,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         Array4<Real> const &b_temp_static_zface = b_temp_static[2]->array(mfi);
 
         // extract tileboxes for which to loop
-        amrex::IntVect Mxface_stag = Mfield[0]->ixType().toIntVect();
-        amrex::IntVect Myface_stag = Mfield[1]->ixType().toIntVect();
-        amrex::IntVect Mzface_stag = Mfield[2]->ixType().toIntVect();
-        Box const &tbx = mfi.tilebox(Mxface_stag); /* just define which grid type */
-        Box const &tby = mfi.tilebox(Myface_stag);
-        Box const &tbz = mfi.tilebox(Mzface_stag);
+        amrex::IntVect Mxface_stag_old = Mfield_old[0]->ixType().toIntVect();
+        amrex::IntVect Myface_stag_old = Mfield_old[1]->ixType().toIntVect();
+        amrex::IntVect Mzface_stag_old = Mfield_old[2]->ixType().toIntVect();
+        Box const &tbx = mfi.tilebox(Mxface_stag_old); /* just define which grid type */
+        Box const &tby = mfi.tilebox(Myface_stag_old);
+        Box const &tbz = mfi.tilebox(Mzface_stag_old);
 
         // Extract stencil coefficients for calculating the exchange field H_exchange and the anisotropy field H_anisotropy
         amrex::Real const *const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
@@ -187,17 +190,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // Hy and Hz can be acquired by interpolation
 
                     // H_bias
-                    amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mxface_stag, Hx_bias);
-                    amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mxface_stag, Hy_bias);
-                    amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mxface_stag, Hz_bias);
+                    amrex::Real Hx_eff_old = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag_old, Mxface_stag_old, Hx_bias_old);
+                    amrex::Real Hy_eff_old = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag_old, Mxface_stag_old, Hy_bias_old);
+                    amrex::Real Hz_eff_old = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag_old, Mxface_stag_old, Hz_bias_old);
 
                     if (coupling == 1){
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
                         // H_maxwell - use H^(old_time)
-                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mxface_stag, Hx_old);
-                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mxface_stag, Hy_old);
-                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mxface_stag, Hz_old);
+                        Hx_eff_old += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag_old, Mxface_stag_old, Hx_old);
+                        Hy_eff_old += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag_old, Mxface_stag_old, Hy_old);
+                        Hz_eff_old += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag_old, Mxface_stag_old, Hz_old);
                     }
 
                     if (mag_exchange_coupling == 1){
@@ -214,9 +217,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         amrex::Real Ms_lo_z = mag_Ms_xface_arr(i, j, k-1);
                         amrex::Real Ms_hi_z = mag_Ms_xface_arr(i, j, k+1);
 
-                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 0); //Last argument is nodality -- xface = 0
-                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 0); //Last argument is nodality -- xface = 0
-                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 0); //Last argument is nodality -- xface = 0
+                        Hx_eff_old += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface_old, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 0); //Last argument is nodality -- xface = 0
+                        Hy_eff_old += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface_old, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 0); //Last argument is nodality -- xface = 0
+                        Hz_eff_old += H_exchange_coeff * T_Algo::Laplacian_Mag(M_xface_old, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 0); //Last argument is nodality -- xface = 0
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -226,19 +229,19 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // H_anisotropy - use M^(old_time)
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
-                            M_dot_anisotropy_axis += M_xface(i, j, k, comp) * anisotropy_axis[comp];
+                            M_dot_anisotropy_axis += M_xface_old(i, j, k, comp) * anisotropy_axis[comp];
                         }
                         amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
-                        Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
-                        Hy_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
-                        Hz_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
+                        Hx_eff_old += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
+                        Hy_eff_old += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
+                        Hz_eff_old += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
                     }
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
-                    amrex::Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_xface(i, j, k, 0), 2._rt) + std::pow(M_xface(i, j, k, 1), 2._rt) + std::pow(M_xface(i, j, k, 2), 2._rt))
+                    amrex::Real M_magnitude_old = (M_normalization == 0) ? std::sqrt(std::pow(M_xface_old(i, j, k, 0), 2._rt) + std::pow(M_xface_old(i, j, k, 1), 2._rt) + std::pow(M_xface_old(i, j, k, 2), 2._rt))
                                                               : mag_Ms_xface_arr(i,j,k);
                     // a_temp_static_coeff does not change in the current step for SATURATED materials; but it does change for UNSATURATED ones
-                    amrex::Real a_temp_static_coeff = mag_alpha_xface_arr(i,j,k) / M_magnitude;
+                    amrex::Real a_temp_static_coeff = mag_alpha_xface_arr(i,j,k) / M_magnitude_old;
 
                     // calculate the b_temp_static_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                     // while in real simulations, the input dt is actually dt/2.0)
@@ -247,18 +250,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     for (int comp=0; comp<3; ++comp) {
                         // calculate a_temp_static_xface
                         // all components on x-faces of grid
-                        a_temp_static_xface(i, j, k, comp) = a_temp_static_coeff * M_xface(i, j, k, comp);
+                        a_temp_static_xface(i, j, k, comp) = a_temp_static_coeff * M_xface_old(i, j, k, comp);
                     }
 
                     // calculate b_temp_static_xface
                     // x component on x-faces of grid
-                    b_temp_static_xface(i, j, k, 0) = M_xface(i, j, k, 0) + dt * b_temp_static_coeff * (M_xface(i, j, k, 1) * Hz_eff - M_xface(i, j, k, 2) * Hy_eff);
+                    b_temp_static_xface(i, j, k, 0) = M_xface_old(i, j, k, 0) + dt * b_temp_static_coeff * (M_xface_old(i, j, k, 1) * Hz_eff_old - M_xface_old(i, j, k, 2) * Hy_eff_old);
 
                     // y component on x-faces of grid
-                    b_temp_static_xface(i, j, k, 1) = M_xface(i, j, k, 1) + dt * b_temp_static_coeff * (M_xface(i, j, k, 2) * Hx_eff - M_xface(i, j, k, 0) * Hz_eff);
+                    b_temp_static_xface(i, j, k, 1) = M_xface_old(i, j, k, 1) + dt * b_temp_static_coeff * (M_xface_old(i, j, k, 2) * Hx_eff_old - M_xface_old(i, j, k, 0) * Hz_eff_old);
 
                     // z component on x-faces of grid
-                    b_temp_static_xface(i, j, k, 2) = M_xface(i, j, k, 2) + dt * b_temp_static_coeff * (M_xface(i, j, k, 0) * Hy_eff - M_xface(i, j, k, 1) * Hx_eff);
+                    b_temp_static_xface(i, j, k, 2) = M_xface_old(i, j, k, 2) + dt * b_temp_static_coeff * (M_xface_old(i, j, k, 0) * Hy_eff_old - M_xface_old(i, j, k, 1) * Hx_eff_old);
                 }
             });
 
@@ -272,17 +275,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // Hy and Hz can be acquired by interpolation
 
                     // H_bias
-                    amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Myface_stag, Hx_bias);
-                    amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Myface_stag, Hy_bias);
-                    amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Myface_stag, Hz_bias);
+                    amrex::Real Hx_eff_old = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag_old, Myface_stag_old, Hx_bias_old);
+                    amrex::Real Hy_eff_old = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag_old, Myface_stag_old, Hy_bias_old);
+                    amrex::Real Hz_eff_old = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag_old, Myface_stag_old, Hz_bias_old);
 
                     if (coupling == 1){
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
                         // H_maxwell - use H^(old_time)
-                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Myface_stag, Hx_old);
-                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Myface_stag, Hy_old);
-                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Myface_stag, Hz_old);
+                        Hx_eff_old += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag_old, Myface_stag_old, Hx_old);
+                        Hy_eff_old += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag_old, Myface_stag_old, Hy_old);
+                        Hz_eff_old += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag_old, Myface_stag_old, Hz_old);
                     }
 
                     if (mag_exchange_coupling == 1){
@@ -299,9 +302,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         amrex::Real Ms_lo_z = mag_Ms_yface_arr(i, j, k-1);
                         amrex::Real Ms_hi_z = mag_Ms_yface_arr(i, j, k+1);
 
-                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 1); //Last argument is nodality -- yface = 1
-                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 1); //Last argument is nodality -- yface = 1
-                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 1); //Last argument is nodality -- yface = 1
+                        Hx_eff_old += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface_old, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 1); //Last argument is nodality -- yface = 1
+                        Hy_eff_old += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface_old, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 1); //Last argument is nodality -- yface = 1
+                        Hz_eff_old += H_exchange_coeff * T_Algo::Laplacian_Mag(M_yface_old, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 1); //Last argument is nodality -- yface = 1
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -311,19 +314,19 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // H_anisotropy - use M^(old_time)
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
-                            M_dot_anisotropy_axis += M_yface(i, j, k, comp) * anisotropy_axis[comp];
+                            M_dot_anisotropy_axis += M_yface_old(i, j, k, comp) * anisotropy_axis[comp];
                         }
                         amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
-                        Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
-                        Hy_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
-                        Hz_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
+                        Hx_eff_old += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
+                        Hy_eff_old += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
+                        Hz_eff_old += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
                     }
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
                     // note the unsaturated case is less usefull in real devices
-                    amrex::Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_yface(i, j, k, 0), 2._rt) + std::pow(M_yface(i, j, k, 1), 2._rt) + std::pow(M_yface(i, j, k, 2), 2._rt))
+                    amrex::Real M_magnitude_old = (M_normalization == 0) ? std::sqrt(std::pow(M_yface_old(i, j, k, 0), 2._rt) + std::pow(M_yface_old(i, j, k, 1), 2._rt) + std::pow(M_yface_old(i, j, k, 2), 2._rt))
                                                               : mag_Ms_yface_arr(i,j,k);
-                    amrex::Real a_temp_static_coeff = mag_alpha_yface_arr(i,j,k) / M_magnitude;
+                    amrex::Real a_temp_static_coeff = mag_alpha_yface_arr(i,j,k) / M_magnitude_old;
 
                     // calculate the b_temp_static_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                     // while in real simulations, the input dt is actually dt/2.0)
@@ -332,18 +335,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     for (int comp=0; comp<3; ++comp) {
                         // calculate a_temp_static_yface
                         // all component on y-faces of grid
-                        a_temp_static_yface(i, j, k, comp) = a_temp_static_coeff * M_yface(i, j, k, comp);
+                        a_temp_static_yface(i, j, k, comp) = a_temp_static_coeff * M_yface_old(i, j, k, comp);
                     }
 
                     // calculate b_temp_static_yface
                     // x component on y-faces of grid
-                    b_temp_static_yface(i, j, k, 0) = M_yface(i, j, k, 0) + dt * b_temp_static_coeff * (M_yface(i, j, k, 1) * Hz_eff - M_yface(i, j, k, 2) * Hy_eff);
+                    b_temp_static_yface(i, j, k, 0) = M_yface_old(i, j, k, 0) + dt * b_temp_static_coeff * (M_yface_old(i, j, k, 1) * Hz_eff_old - M_yface_old(i, j, k, 2) * Hy_eff_old);
 
                     // y component on y-faces of grid
-                    b_temp_static_yface(i, j, k, 1) = M_yface(i, j, k, 1) + dt * b_temp_static_coeff * (M_yface(i, j, k, 2) * Hx_eff - M_yface(i, j, k, 0) * Hz_eff);
+                    b_temp_static_yface(i, j, k, 1) = M_yface_old(i, j, k, 1) + dt * b_temp_static_coeff * (M_yface_old(i, j, k, 2) * Hx_eff_old - M_yface_old(i, j, k, 0) * Hz_eff_old);
 
                     // z component on y-faces of grid
-                    b_temp_static_yface(i, j, k, 2) = M_yface(i, j, k, 2) + dt * b_temp_static_coeff * (M_yface(i, j, k, 0) * Hy_eff - M_yface(i, j, k, 1) * Hx_eff);
+                    b_temp_static_yface(i, j, k, 2) = M_yface_old(i, j, k, 2) + dt * b_temp_static_coeff * (M_yface_old(i, j, k, 0) * Hy_eff_old - M_yface_old(i, j, k, 1) * Hx_eff_old);
                 }
             });
 
@@ -357,17 +360,17 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     // Hy and Hz can be acquired by interpolation
 
                     // H_bias
-                    amrex::Real Hx_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mzface_stag, Hx_bias);
-                    amrex::Real Hy_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mzface_stag, Hy_bias);
-                    amrex::Real Hz_eff = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mzface_stag, Hz_bias);
+                    amrex::Real Hx_eff_old = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag_old, Mzface_stag_old, Hx_bias_old);
+                    amrex::Real Hy_eff_old = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag_old, Mzface_stag_old, Hy_bias_old);
+                    amrex::Real Hz_eff_old = MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag_old, Mzface_stag_old, Hz_bias_old);
 
                     if (coupling == 1){
                         // H_eff = H_maxwell + H_bias + H_exchange + H_anisotropy
 
                         // H_maxwell - use H^(old_time)
-                        Hx_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag, Mzface_stag, Hx_old);
-                        Hy_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag, Mzface_stag, Hy_old);
-                        Hz_eff += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag, Mzface_stag, Hz_old);
+                        Hx_eff_old += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mxface_stag_old, Mzface_stag_old, Hx_old);
+                        Hy_eff_old += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Myface_stag_old, Mzface_stag_old, Hy_old);
+                        Hz_eff_old += MacroscopicProperties::face_avg_to_face(i, j, k, 0, Mzface_stag_old, Mzface_stag_old, Hz_old);
                     }
 
                     if (mag_exchange_coupling == 1){
@@ -384,9 +387,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         amrex::Real Ms_lo_z = mag_Ms_zface_arr(i, j, k-1);
                         amrex::Real Ms_hi_z = mag_Ms_zface_arr(i, j, k+1);
 
-                        Hx_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 2); //Last argument is nodality -- zface = 2
-                        Hy_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 2); //Last argument is nodality -- zface = 2
-                        Hz_eff += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 2); //Last argument is nodality -- zface = 2
+                        Hx_eff_old += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface_old, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 0, 2); //Last argument is nodality -- zface = 2
+                        Hy_eff_old += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface_old, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 1, 2); //Last argument is nodality -- zface = 2
+                        Hz_eff_old += H_exchange_coeff * T_Algo::Laplacian_Mag(M_zface_old, coefs_x, coefs_y, coefs_z, n_coefs_x, n_coefs_y, n_coefs_z, Ms_lo_x, Ms_hi_x, Ms_lo_y, Ms_hi_y, Ms_lo_z, Ms_hi_z, i, j, k, 2, 2); //Last argument is nodality -- zface = 2
                     }
 
                     if (mag_anisotropy_coupling == 1){
@@ -396,18 +399,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                         // H_anisotropy - use M^(old_time)
                         amrex::Real M_dot_anisotropy_axis = 0.0;
                         for (int comp=0; comp<3; ++comp) {
-                            M_dot_anisotropy_axis += M_zface(i, j, k, comp) * anisotropy_axis[comp];
+                            M_dot_anisotropy_axis += M_zface_old(i, j, k, comp) * anisotropy_axis[comp];
                         }
                         amrex::Real const H_anisotropy_coeff = - 2.0 * mag_anisotropy_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
-                        Hx_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
-                        Hy_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
-                        Hz_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
+                        Hx_eff_old += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[0];
+                        Hy_eff_old += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
+                        Hz_eff_old += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
                     }
 
                     // 0 = unsaturated; compute |M| locally.  1 = saturated; use M_s
-                    amrex::Real M_magnitude = (M_normalization == 0) ? std::sqrt(std::pow(M_zface(i, j, k, 0), 2._rt) + std::pow(M_zface(i, j, k, 1), 2._rt) + std::pow(M_zface(i, j, k, 2), 2._rt))
+                    amrex::Real M_magnitude_old = (M_normalization == 0) ? std::sqrt(std::pow(M_zface_old(i, j, k, 0), 2._rt) + std::pow(M_zface_old(i, j, k, 1), 2._rt) + std::pow(M_zface_old(i, j, k, 2), 2._rt))
                                                               : mag_Ms_zface_arr(i,j,k);
-                    amrex::Real a_temp_static_coeff = mag_alpha_zface_arr(i,j,k) / M_magnitude;
+                    amrex::Real a_temp_static_coeff = mag_alpha_zface_arr(i,j,k) / M_magnitude_old;
 
                     // calculate the b_temp_static_coeff (it is divided by 2.0 because the derivation is based on an interger dt,
                     // while in real simulations, the input dt is actually dt/2.0)
@@ -416,18 +419,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                     for (int comp=0; comp<3; ++comp) {
                         // calculate a_temp_static_zface
                         // all components on z-faces of grid
-                        a_temp_static_zface(i, j, k, comp) = a_temp_static_coeff * M_zface(i, j, k, comp);
+                        a_temp_static_zface(i, j, k, comp) = a_temp_static_coeff * M_zface_old(i, j, k, comp);
                     }
 
                     // calculate b_temp_static_zface
                     // x component on z-faces of grid
-                    b_temp_static_zface(i, j, k, 0) = M_zface(i, j, k, 0) + dt * b_temp_static_coeff * (M_zface(i, j, k, 1) * Hz_eff - M_zface(i, j, k, 2) * Hy_eff);
+                    b_temp_static_zface(i, j, k, 0) = M_zface_old(i, j, k, 0) + dt * b_temp_static_coeff * (M_zface_old(i, j, k, 1) * Hz_eff_old - M_zface_old(i, j, k, 2) * Hy_eff_old);
 
                     // y component on z-faces of grid
-                    b_temp_static_zface(i, j, k, 1) = M_zface(i, j, k, 1) + dt * b_temp_static_coeff * (M_zface(i, j, k, 2) * Hx_eff - M_zface(i, j, k, 0) * Hz_eff);
+                    b_temp_static_zface(i, j, k, 1) = M_zface_old(i, j, k, 1) + dt * b_temp_static_coeff * (M_zface_old(i, j, k, 2) * Hx_eff_old - M_zface_old(i, j, k, 0) * Hz_eff_old);
 
                     // z component on z-faces of grid
-                    b_temp_static_zface(i, j, k, 2) = M_zface(i, j, k, 2) + dt * b_temp_static_coeff * (M_zface(i, j, k, 0) * Hy_eff - M_zface(i, j, k, 1) * Hx_eff);
+                    b_temp_static_zface(i, j, k, 2) = M_zface_old(i, j, k, 2) + dt * b_temp_static_coeff * (M_zface_old(i, j, k, 0) * Hy_eff_old - M_zface_old(i, j, k, 1) * Hx_eff_old);
                 }
             });
     }
