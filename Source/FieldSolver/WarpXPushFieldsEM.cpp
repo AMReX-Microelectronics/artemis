@@ -573,7 +573,7 @@ WarpX::EvolveBLondon (int lev, amrex::Real a_dt, DtType a_dt_type)
 void
 WarpX::EvolveBLondon (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
 {
-
+    amrex::ignore_unused(a_dt_type);
     // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveBLondon(Bfield_sc_fp[lev], current_fp[lev], G_fp[lev],

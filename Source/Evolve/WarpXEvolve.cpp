@@ -410,11 +410,13 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("beforedeposition");
 
     PushParticlesandDepose(cur_time);
+#ifndef WARPX_MAG_LLG
     if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
         amrex::Print() << " in evolve london j\n";
         m_london->EvolveLondonJ(dt[0]); // J^(n-1/2) to J^(n+1/2) using E^(n)
         EvolveBLondon(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
     }
+#endif
 
     ExecutePythonCallback("afterdeposition");
 
