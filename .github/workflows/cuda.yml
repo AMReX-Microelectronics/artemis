@@ -69,6 +69,7 @@ jobs:
           -DWarpX_PSATD=ON             \
           -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
           -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
+          -DWarpX_MAG_LLG=OFF
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
@@ -163,6 +164,7 @@ jobs:
           -DWarpX_PSATD=ON             \
           -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
           -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
+          -DWarpX_MAG_LLG=OFF
         cmake --build build -j 2
 
         # work-around for mpi4py 3.1.1 build system issue with using
