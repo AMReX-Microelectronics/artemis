@@ -46,7 +46,7 @@ jobs:
           -DWarpX_LIB=ON              \
           -DWarpX_MPI=OFF             \
           -DWarpX_OPENPMD=ON          \
-          -DWarpX_openpmd_internal=OFF
+          -DWarpX_openpmd_internal=OFF \
           -DWarpX_MAG_LLG=OFF
         cmake --build build_dp -j 2
 
@@ -56,7 +56,7 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
-          -DWarpX_PRECISION=SINGLE
+          -DWarpX_PRECISION=SINGLE \
           -DWarpX_MAG_LLG=OFF
         cmake --build build_sp -j 2
 
@@ -105,7 +105,7 @@ jobs:
           -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
-          -DWarpX_PRECISION=SINGLE
+          -DWarpX_PRECISION=SINGLE  \
           -DWarpX_MAG_LLG=OFF
         cmake --build build_sp -j 2
 
@@ -153,7 +153,7 @@ jobs:
           -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
-          -DWarpX_PRECISION=SINGLE
+          -DWarpX_PRECISION=SINGLE  \
           -DWarpX_MAG_LLG=OFF
         cmake --build build_sp -j 2
      # TODO: re-enable -DWarpX_LIB=ON as soon as "dpcpp -fPIC" segfaults are

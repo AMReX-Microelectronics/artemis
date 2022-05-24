@@ -68,7 +68,7 @@ jobs:
           -DWarpX_PRECISION=SINGLE     \
           -DWarpX_PSATD=ON             \
           -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
-          -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
+          -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON  \
           -DWarpX_MAG_LLG=OFF
         cmake --build build_sp -j 2
 
@@ -163,7 +163,7 @@ jobs:
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PSATD=ON             \
           -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
-          -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
+          -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON  \
           -DWarpX_MAG_LLG=OFF
         cmake --build build -j 2
 
