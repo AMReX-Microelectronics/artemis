@@ -35,6 +35,7 @@ jobs:
               -DWarpX_MPI=OFF             `
               -DWarpX_MAG_LLG=OFF         `
               -DWarpX_LIB=ON
+              -DWarpX_MAG_LLG=OFF
         cmake --build build --config Debug --parallel 2
 
         python3 -m pip install --upgrade pip setuptools wheel
