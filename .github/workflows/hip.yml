@@ -55,7 +55,7 @@ jobs:
           -DWarpX_MPI=ON              \
           -DWarpX_OPENPMD=ON          \
           -DWarpX_PRECISION=SINGLE    \
-          -DWarpX_PSATD=ON
+          -DWarpX_PSATD=ON            \
           -DWarpX_MAG_LLG=OFF
         cmake --build build_sp -j 2
 
@@ -112,7 +112,7 @@ jobs:
           -DWarpX_MPI=ON              \
           -DWarpX_OPENPMD=ON          \
           -DWarpX_PRECISION=DOUBLE    \
-          -DWarpX_PSATD=ON
+          -DWarpX_PSATD=ON            \
           -DWarpX_MAG_LLG=OFF
         cmake --build build_2d -j 2
 

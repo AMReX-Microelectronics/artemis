@@ -36,7 +36,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_EB=OFF               \
           -DWarpX_MPI=OFF              \
-          -DWarpX_QED=OFF
+          -DWarpX_QED=OFF              \
           -DWarpX_MAG_LLG=OFF
         cmake --build build_3D -j 2
         cmake -S . -B build_3D_EM      \
@@ -50,7 +50,7 @@ jobs:
           -DWarpX_DIMS=RZ              \
           -DWarpX_EB=OFF               \
           -DWarpX_MPI=OFF              \
-          -DWarpX_QED=OFF
+          -DWarpX_QED=OFF              \
           -DWarpX_MAG_LLG=OFF
         cmake --build build_RZ -j 2
 
@@ -84,7 +84,7 @@ jobs:
         cmake -S . -B build            \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_APP=OFF              \
-          -DWarpX_LIB=OFF
+          -DWarpX_LIB=OFF              \
           -DWarpX_MAG_LLG=OFF
         cmake --build build -j 2
 
