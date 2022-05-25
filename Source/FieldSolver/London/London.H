@@ -18,7 +18,6 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_Parser.H>
 
-using namespace amrex;
 
 class London {
 
