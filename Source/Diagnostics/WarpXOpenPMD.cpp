@@ -50,7 +50,7 @@
 #include <tuple>
 #include <utility>
 
-namespace ajn_detail
+namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
 #   ifdef _WIN32
@@ -416,7 +416,7 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     m_OpenPMDFileType = "json";
 #endif
 
-    m_OpenPMDoptions = ajn_detail::getSeriesOptions(operator_type, operator_parameters,
+    m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
 }
 
@@ -435,7 +435,7 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
   filepath.append("/");
   // transform paths for Windows
 #ifdef _WIN32
-  filepath = ajn_detail::replace_all(filepath, "/", "\\");
+  filepath = detail::replace_all(filepath, "/", "\\");
 #endif
 
   std::string filename = "openpmd";
@@ -582,7 +582,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     auto runtime_rnames = pc->getParticleRuntimeComps();
     for (auto const& x : runtime_rnames)
     {
-        real_names[x.second+PIdx::nattribs] = ajn_detail::snakeToCamel(x.first);
+        real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
     }
 
     // plot any "extra" fields by default
@@ -594,7 +594,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     auto runtime_inames = pc->getParticleRuntimeiComps();
     for (auto const& x : runtime_inames)
     {
-        int_names[x.second+0] = ajn_detail::snakeToCamel(x.first);
+        int_names[x.second+0] = detail::snakeToCamel(x.first);
     }
 
     // plot by default
@@ -752,7 +752,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
             const auto &aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
             {
                 // Save positions
-                auto const positionComponents = ajn_detail::getParticlePositionComponentLabels();
+                auto const positionComponents = detail::getParticlePositionComponentLabels();
 #if defined(WARPX_DIM_RZ)
                 {
                    std::shared_ptr<amrex::ParticleReal> z(
@@ -847,7 +847,7 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
     //
     auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
         // handle scalar and non-scalar records by name
-        const auto [record_name, component_name] = ajn_detail::name2openPMD(comp_name);
+        const auto [record_name, component_name] = detail::name2openPMD(comp_name);
         return currSpecies[record_name][component_name];
     };
     auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
@@ -868,13 +868,13 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
         auto ii = ParticleContainer::NStructReal + idx; // jump over extra AoS names
         if (write_real_comp[ii]) {
             // handle scalar and non-scalar records by name
-            const auto [record_name, component_name] = ajn_detail::name2openPMD(real_comp_names[ii]);
+            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[ii]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
             [[maybe_unused]] const auto [_, newRecord] = addedRecords.insert(record_name);
             if( newRecord ) {
-                currRecord.setUnitDimension( ajn_detail::getUnitDimension(record_name) );
+                currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
                 if( record_name == "weighting" )
                     currRecord.setAttribute( "macroWeighted", 1u );
                 else
@@ -890,13 +890,13 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
         auto ii = ParticleContainer::NStructInt + idx; // jump over extra AoS names
         if (write_int_comp[ii]) {
             // handle scalar and non-scalar records by name
-            const auto [record_name, component_name] = ajn_detail::name2openPMD(int_comp_names[ii]);
+            const auto [record_name, component_name] = detail::name2openPMD(int_comp_names[ii]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
             [[maybe_unused]] const auto [_, newRecord] = addedRecords.insert(record_name);
             if( newRecord ) {
-                currRecord.setUnitDimension( ajn_detail::getUnitDimension(record_name) );
+                currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
                 currRecord.setAttribute( "macroWeighted", 0u );
                 if( record_name == "momentum" || record_name == "weighting" )
                     currRecord.setAttribute( "weightingPower", 1.0 );
@@ -927,7 +927,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     for( auto idx=0; idx<ParticleIter::ContainerType::NStructReal; idx++ ) {  // lgtm [cpp/constant-comparison]
       if( write_real_comp[idx] ) {
           // handle scalar and non-scalar records by name
-          const auto [record_name, component_name] = ajn_detail::name2openPMD(real_comp_names[idx]);
+          const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
           auto currRecord = currSpecies[record_name];
           auto currRecordComp = currRecord[component_name];
 
@@ -947,7 +947,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 
   auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
     // handle scalar and non-scalar records by name
-    const auto [record_name, component_name] = ajn_detail::name2openPMD(comp_name);
+    const auto [record_name, component_name] = detail::name2openPMD(comp_name);
     return currSpecies[record_name][component_name];
   };
 
@@ -987,7 +987,7 @@ WarpXOpenPMDPlot::SetupPos (
   auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
   auto idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np}, options);
 
-  auto const positionComponents = ajn_detail::getParticlePositionComponentLabels();
+  auto const positionComponents = detail::getParticlePositionComponentLabels();
   for( auto const& comp : positionComponents ) {
       currSpecies["position"][comp].resetDataset( realType );
   }
@@ -1005,7 +1005,7 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
 {
     auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
 
-    auto const positionComponents = ajn_detail::getParticlePositionComponentLabels();
+    auto const positionComponents = detail::getParticlePositionComponentLabels();
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].resetDataset( realType );
     }
@@ -1020,10 +1020,10 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
     currSpecies["mass"][scalar].makeConstant( mass );
 
     // meta data
-    currSpecies["position"].setUnitDimension( ajn_detail::getUnitDimension("position") );
-    currSpecies["positionOffset"].setUnitDimension( ajn_detail::getUnitDimension("positionOffset") );
-    currSpecies["charge"].setUnitDimension( ajn_detail::getUnitDimension("charge") );
-    currSpecies["mass"].setUnitDimension( ajn_detail::getUnitDimension("mass") );
+    currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
+    currSpecies["positionOffset"].setUnitDimension( detail::getUnitDimension("positionOffset") );
+    currSpecies["charge"].setUnitDimension( detail::getUnitDimension("charge") );
+    currSpecies["mass"].setUnitDimension( detail::getUnitDimension("mass") );
 
     // meta data for ED-PIC extension
     currSpecies["position"].setAttribute( "macroWeighted", 0u );
@@ -1190,7 +1190,7 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     }
 #endif
     // - AxisLabels
-    std::vector<std::string> axis_labels = ajn_detail::getFieldAxisLabels(var_in_theta_mode);
+    std::vector<std::string> axis_labels = detail::getFieldAxisLabels(var_in_theta_mode);
 
     // Prepare the type of dataset that will be written
     openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
@@ -1206,7 +1206,7 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     mesh.setAttribute("fieldSmoothing", "none");
     mesh_comp.resetDataset(dataset);
 
-    ajn_detail::setOpenPMDUnit( mesh, field_name );
+    detail::setOpenPMDUnit( mesh, field_name );
     auto relative_cell_pos = utils::getRelativeCellPosition(mf);     // AMReX Fortran index order
     std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
     mesh_comp.setPosition( relative_cell_pos );
@@ -1225,7 +1225,7 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
 
         // Check if this field is a vector. If so, then extract the field name
         std::vector< std::string > const vector_fields = {"E", "B", "j"};
-        std::vector< std::string > const field_components = ajn_detail::getFieldComponentLabels(var_in_theta_mode);
+        std::vector< std::string > const field_components = detail::getFieldComponentLabels(var_in_theta_mode);
         for( std::string const& vector_field : vector_fields ) {
             for( std::string const& component : field_components ) {
                 if( vector_field.compare( varname_1st ) == 0 &&
