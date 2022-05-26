@@ -79,10 +79,10 @@ void FiniteDifferenceSolver::EvolveBLondon (
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         EvolveBLondonCartesian <CartesianCKCAlgorithm> ( Bfield, current, Gfield, lev, dt, penetration_depth );
-#endif
     } else {
         amrex::Abort("EvolveBLondon: Unknown algorithm");
     }
+#endif
 }
 
 
