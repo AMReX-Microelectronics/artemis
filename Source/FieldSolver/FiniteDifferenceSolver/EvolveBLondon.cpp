@@ -50,20 +50,19 @@ void FiniteDifferenceSolver::EvolveBLondon (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& current,
     std::unique_ptr<amrex::MultiFab> const& Gfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
-    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
-    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& /* area_mod */,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& /* ECTRhofield */,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& /* Venl */,
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& /* flag_info_cell */,
+    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& /* borrowing */,
     int lev, amrex::Real const dt, amrex::Real const penetration_depth ) {
-
-#ifndef AMREX_USE_EB
-    amrex::ignore_unused(area_mod, ECTRhofield, Venl, flag_info_cell, borrowing);
-#endif
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
+    amrex::ignore_unused(Bfield, current, Gfield, face_areas,
+                         lev, dt, penetration_depth);
+    amrex::Abort("EvolveBLondon: RZ not implemented");
 #else
     if(m_do_nodal or m_fdtd_algo != MaxwellSolverAlgo::ECT){
         amrex::ignore_unused(face_areas);
@@ -82,7 +81,7 @@ void FiniteDifferenceSolver::EvolveBLondon (
         EvolveBLondonCartesian <CartesianCKCAlgorithm> ( Bfield, current, Gfield, lev, dt, penetration_depth );
 #endif
     } else {
-        amrex::Abort("EvolveB: Unknown algorithm");
+        amrex::Abort("EvolveBLondon: Unknown algorithm");
     }
 }
 
