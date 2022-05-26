@@ -144,7 +144,7 @@ London::InitializeSuperconductorMultiFabUsingParser (
     const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = warpx.Geom(lev).CellSizeArray();
     const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
     amrex::IntVect iv = sc_mf->ixType().toIntVect();
-    for ( amrex::MFIter mfi(*sc_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+    for ( amrex::MFIter mfi(*sc_mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
 
         const amrex::Box& tb = mfi.tilebox( iv, sc_mf->nGrowVect());
