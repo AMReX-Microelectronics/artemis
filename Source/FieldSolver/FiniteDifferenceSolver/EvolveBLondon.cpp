@@ -93,8 +93,8 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBLondonCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& current,
-    std::unique_ptr<amrex::MultiFab> const& Gfield,
-    int lev, amrex::Real const dt, amrex::Real const penetration_depth ) {
+    std::unique_ptr<amrex::MultiFab> const& /* Gfield */,
+    int lev, amrex::Real const /* dt */, amrex::Real const penetration_depth ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     amrex::Real const lambdasq_mu0_fac = penetration_depth * penetration_depth * PhysConst::mu0;
