@@ -26,7 +26,7 @@ London::London ()
 void
 London::ReadParameters ()
 {
-    ParmParse pp_london("london");
+    amrex::ParmParse pp_london("london");
     pp_london.get("penetration_depth", m_penetration_depth);
 
     Store_parserString(pp_london, "superconductor_function(x,y,z)", m_str_superconductor_function);
@@ -138,6 +138,8 @@ London::InitializeSuperconductorMultiFabUsingParser (
                        amrex::ParserExecutor<3> const& sc_parser,
                        const int lev)
 {
+    using namespace amrex::literals;
+
     WarpX& warpx = WarpX::GetInstance();
     const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = warpx.Geom(lev).CellSizeArray();
     const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
