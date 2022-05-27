@@ -51,8 +51,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_EB=ON                \
           -DWarpX_OPENPMD=ON           \
-          -DWarpX_openpmd_internal=OFF \
-          -DWarpX_MAG_LLG=OFF
+          -DWarpX_openpmd_internal=OFF
         cmake --build build_dp -j 2
 
         cmake -S . -B build_sp         \
@@ -61,6 +60,5 @@ jobs:
           -DWarpX_LIB=ON               \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
-          -DWarpX_PRECISION=SINGLE     \
-          -DWarpX_MAG_LLG=OFF
+          -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2

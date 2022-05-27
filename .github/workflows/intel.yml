@@ -46,8 +46,7 @@ jobs:
           -DWarpX_LIB=ON              \
           -DWarpX_MPI=OFF             \
           -DWarpX_OPENPMD=ON          \
-          -DWarpX_openpmd_internal=OFF \
-          -DWarpX_MAG_LLG=OFF
+          -DWarpX_openpmd_internal=OFF
         cmake --build build_dp -j 2
 
         cmake -S . -B build_sp \
@@ -56,8 +55,7 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
-          -DWarpX_PRECISION=SINGLE \
-          -DWarpX_MAG_LLG=OFF
+          -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
@@ -105,8 +103,7 @@ jobs:
           -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
-          -DWarpX_PRECISION=SINGLE  \
-          -DWarpX_MAG_LLG=OFF
+          -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
   build_dpcc:
@@ -153,8 +150,7 @@ jobs:
           -DWarpX_LIB=ON               \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
-          -DWarpX_PRECISION=SINGLE  \
-          -DWarpX_MAG_LLG=OFF
+          -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
      # TODO: re-enable -DWarpX_LIB=ON as soon as "dpcpp -fPIC" segfaults are
      #       fixed
