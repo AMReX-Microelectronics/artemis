@@ -1,0 +1,242 @@
+####################################################################################################
+## This input file simulates the simplified TRL
+## Superconducting metal is simplified to PEC
+## The plane wave excitation is the time-dependent modified Gaussian pulse
+## This input file requires USE_LLG=FALSE in the GNUMakefile.
+####################################################################################################
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 50
+
+amr.n_cell = nx ny nz                  # number of cells spanning the domain in each coordinate direction at level 0
+amr.max_grid_size = max_grid_size      # maximum size of each AMReX box, used to decompose the domain
+amr.blocking_factor = blocking_factor  # box lengths must be integer multiples of this
+amr.max_level = 0
+
+# total dimention in x is summation: 2*my_constants.w_gap + my_constants.width_line + 2*my_constants.width_gnd
+# total dimension in y is CPW length
+# total dimenion in z has no direct relation with the geometries, z dimension needs to be large enough to encompass all leackage fields
+# x,y,z dimension must be consistent w/ my_constants.Lx; Ly; Lz
+geometry.dims = 3
+geometry.prob_lo = -Lx/2 -Ly/2  0
+geometry.prob_hi =  Lx/2  Ly/2  Lz
+
+my_constants.pi = 3.14159265359
+my_constants.c = 299792458.
+
+# domain sizes and cell numbers separately defined for easier excitation function definition
+# CPW circuit size
+my_constants.Lx = 64.0e-6  # total x-dimension of entire simulation domain
+my_constants.Ly = 1024.0e-6  # hack short domain
+my_constants.Lz = 32.0e-6 # total z-dimension of entire simulation domain
+my_constants.nx = 64
+my_constants.ny = 1024   # total number of cells in y direction
+my_constants.nz = 64
+my_constants.max_grid_size = 64
+my_constants.blocking_factor = 32
+
+my_constants.dx = Lx / nx
+my_constants.dy = Ly / ny
+my_constants.dz = Lz / nz
+
+my_constants.tiny_excitation = 1.0e-9
+
+my_constants.th_si = 10.0e-6 # thickness of the silicon substrate is 3.2um
+my_constants.th_nb = 1.0e-6 # 200 nm metal on CPW
+
+my_constants.w_gap = 10.0e-6 # air gap of CPW
+my_constants.w_line = 20.0e-6 # line width of CPW
+my_constants.w_gnd = 12.0e-6 # width of each ground patch
+
+my_constants.l_line = 800.0e-6 # length of the central signal line
+my_constants.l_gap = 32.0e-6 # gap length in propagation direction
+my_constants.l_feeding = 80.0e-6  # length of feeding patches
+# ferrite sample size
+my_constants.w_ferrite  = 14.0e-6
+my_constants.th_ferrite = 5.0e-6
+my_constants.l_ferrite  = 800.0e-6
+
+my_constants.frequency = 75.0e9 # input signal frequency
+my_constants.TP = 4.0e-11 # Gaussian pulse width, 3 x time period of excitation
+
+# my_constants.w_port = w_line + 2*w_gap + 0.5*w_gnd
+# my_constants.h_port = th_si + th_nb + th_si/2
+my_constants.w_port = w_line
+my_constants.h_port = th_si + th_nb
+
+my_constants.sigma_0 = 0.0
+my_constants.sigma_nb = 1.e7
+my_constants.sigma_si = 0.0
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_nb = 1.0
+my_constants.eps_r_si = 11.7 # dielectric substrate relative permittivity
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_nb = 1.0
+my_constants.mu_r_si = 1.0
+
+# ferrite sample properties
+my_constants.epsilon_r_ferrite = 13.0
+my_constants.sigma_ferrite = 0. # start with insulating magnetic materials
+my_constants.alpha_ferrite = 0.003
+my_constants.exchange_ferrite = 3.1e-12 # A_exchange constant
+# my_constants.anisotropy_ferrite = -139.26 # Ku constant
+my_constants.anisotropy_ferrite = 0. # Ku constant
+my_constants.Ms_ga = 1.2e4 # Gauss
+# my_constants.Hzero = 0.008 # magnitude of RF excitation
+my_constants.Hbias = 2.15e4 # in Gause, T = 10000 Oersted; validated by Kittel law of FMR frequency at 75GHz
+
+my_constants.flag_none = 0 # no source flag
+my_constants.flag_hs = 1 # hard source flag
+my_constants.flag_ss = 2 # soft source flag
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+warpx.use_filter = 0
+warpx.cfl = 0.9
+boundary.field_lo = pml pml pml   # PML at -x to extend GND patches; PEC at -y end to superimpose waveguide port; PML at -z end to extend Si substrate;
+boundary.field_hi = pml pml pml   # PML at +x to extend GND patches; PML at +y end to extend the TRL; PML at -z end to extend Si substrate;
+
+warpx.mag_time_scheme_order = 2 # default 1
+warpx.mag_M_normalization = 1
+warpx.mag_LLG_coupling = 1
+warpx.mag_LLG_exchange_coupling = 0 # zero_th order FMR, no exchange
+warpx.mag_LLG_anisotropy_coupling = 0
+
+algo.em_solver_medium = macroscopic           # vacuum/macroscopic
+algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
+
+###############
+# geometry
+# each row represents a different part of the circuit
+# 1. vacuum everywhere, then add in si and nb sections
+# 2. si substrate
+# 3. transmission line in center
+# 4. left ground
+# 5. right ground
+###############
+
+# NOTE: the "tiny_excitations" can go away once we parse to cell-centers and average to faces/edges
+
+# macroscopic.sigma_function(x,y,z) = "sigma_0
+# + (sigma_si - sigma_0) * (z < th_si )
+# + (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 ) * (y > -Ly/2 + l_feeding ) * (y > Ly/2 - l_feeding )
+# + (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 - w_gap - w_gnd ) * (x < -w_line/2 - w_gap )
+# + (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x < +w_line/2 + w_gap + w_gnd ) * (x > +w_line/2 + w_gap )"
+
+macroscopic.sigma_function(x,y,z) = "sigma_0
++ (sigma_si - sigma_0) * (z < th_si )
++ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 )
++ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > l_line/2+l_gap )
++ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y < -l_line/2-l_gap )
++ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 - w_gap - w_gnd ) * (x < -w_line/2 - w_gap )
++ (sigma_nb - sigma_0) * (z > th_si ) * (z < th_si + th_nb ) * (x < +w_line/2 + w_gap + w_gnd ) * (x > +w_line/2 + w_gap )"
+
+macroscopic.epsilon_function(x,y,z) = "eps_0
++ eps_0 * (eps_r_si - 1) * (z < th_si )
++ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 )
++ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > l_line/2+l_gap )
++ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y < -l_line/2-l_gap )
++ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 - w_gap - w_gnd ) * (x < -w_line/2 - w_gap )
++ eps_0 * (eps_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x < +w_line/2 + w_gap + w_gnd ) * (x > +w_line/2 + w_gap )"
+
+macroscopic.mu_function(x,y,z) = "mu_0
++ mu_0 * (mu_r_si - 1) * (z < th_si )
++ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > -l_line/2 ) * (y < l_line/2 )
++ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y > l_line/2+l_gap )
++ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 ) * (x < w_line/2 ) * (y < -l_line/2-l_gap )
++ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x > -w_line/2 - w_gap - w_gnd ) * (x < -w_line/2 - w_gap )
++ mu_0 * (mu_r_nb - 1) * (z > th_si ) * (z < th_si + th_nb ) * (x < +w_line/2 + w_gap + w_gnd ) * (x > +w_line/2 + w_gap )"
+
+# ferrite sample magnetic material setup
+#unit conversion: 1 T = 10000 Gauss
+#unit conversion: 1 Gauss = (1000/4pi) A/m
+macroscopic.mag_Ms_init_style = "parse_mag_Ms_function" # parse or "constant"
+macroscopic.mag_Ms_function(x,y,z) = "0.0 + Ms_ga*1000/4/pi * (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (y > -l_ferrite/2.0) * (y < l_ferrite/2.0) * (z < th_ferrite + th_nb + th_si) * (z > th_nb + th_si)"
+macroscopic.mag_alpha_init_style = "parse_mag_alpha_function" # parse or "constant"
+macroscopic.mag_alpha_function(x,y,z) = "0.0 + alpha_ferrite* (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (y > -l_ferrite/2.0) * (y < l_ferrite/2.0) * (z < th_ferrite + th_nb + th_si) * (z > th_nb + th_si)" # alpha is unitless, typical values range from 1e-3 ~ 1e-5
+macroscopic.mag_gamma_init_style = "parse_mag_gamma_function" # parse or "constant"
+macroscopic.mag_gamma_function(x,y,z) = " -1.759e11 " # gyromagnetic ratio is constant for electrons in all materials
+macroscopic.mag_exchange_init_style = "parse_mag_exchange_function" # parse or "constant"
+macroscopic.mag_exchange_function(x,y,z) = "0.0 + exchange_ferrite* (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (y > -l_ferrite/2.0) * (y < l_ferrite/2.0) * (z < th_ferrite + th_nb + th_si) * (z > th_nb + th_si)"
+macroscopic.mag_anisotropy_init_style = "parse_mag_anisotropy_function" # parse or "constant"
+macroscopic.mag_anisotropy_function(x,y,z) = "0.0 + anisotropy_ferrite* (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (y > -l_ferrite/2.0) * (y < l_ferrite/2.0) * (z < th_ferrite + th_nb + th_si) * (z > th_nb + th_si)"
+macroscopic.mag_LLG_anisotropy_axis = 0.0 1.0 0.0
+
+macroscopic.mag_max_iter = 100 # maximum number of M iteration in each time step
+macroscopic.mag_tol = 1.e-6 # M magnitude relative error tolerance compared to previous iteration
+macroscopic.mag_normalized_error = 0.1 # if M magnitude relatively changes more than this value, raise a red flag
+
+#################################
+############ FIELDS #############
+#################################
+
+# vertical electric voltage excitation superimposed with PEC at one end of CPW
+# in the waveform of modified Gaussian pulse
+warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+
+# warpx.Ex_excitation_flag_function(x,y,z) = "0."
+# warpx.Ey_excitation_flag_function(x,y,z) = "0."
+# warpx.Ez_excitation_flag_function(x,y,z) = "flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < h_port) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation)"
+
+# warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+# warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+# warpx.Ez_excitation_grid_function(x,y,z,t) = "1.0e-3 * exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t) "
+# # warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*frequency*t) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation)"
+
+
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_ss * ( (x > w_line/2) * (x < w_line/2 + w_gap) + (x < -w_line/2) * (x > -w_line/2 - w_gap)) * (z < th_si + th_nb) * (z > th_si) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation) "
+#warpx.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_hs * ( (x > w_line/2) * (x < w_line/2 + w_gap) ) * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation) "
+#warpx.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation)"
+
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+#warpx.Ez_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
+# warpx.Ex_excitation_grid_function(x,y,z,t) = "1.0e-3 * exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t) * ((x > w_line/2) * (x < w_line/2 + w_gap) +  (-1.) * (x < -w_line/2) * (x > -w_line/2 - w_gap))"
+warpx.Ex_excitation_grid_function(x,y,z,t) = "1.0e-3 * sin(2*pi*frequency*t) * ((x > w_line/2) * (x < w_line/2 + w_gap) +  (-1.) * (x < -w_line/2) * (x > -w_line/2 - w_gap))"
+
+# set up magnetic sample fields
+warpx.H_bias_excitation_on_grid_style = "parse_H_bias_excitation_grid_function"
+warpx.Hx_bias_excitation_grid_function(x,y,z,t)= "0.0" # in A/m
+warpx.Hy_bias_excitation_grid_function(x,y,z,t)= "0.0 + Hbias*1000/4/pi"
+#warpx.Hz_bias_excitation_grid_function(x,y,z,t)= "0.0 + Hbias*10000*1000/4/pi * (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (z > -length/2.0) * (z < length/2.0) * (y < th_ferrite)" # in A/m
+warpx.Hz_bias_excitation_grid_function(x,y,z,t)= "0.0" # in A/m
+
+warpx.Hx_bias_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Hy_bias_excitation_flag_function(x,y,z) = "flag_hs"
+warpx.Hz_bias_excitation_flag_function(x,y,z) = "flag_none"
+
+warpx.M_ext_grid_init_style = parse_M_ext_grid_function
+warpx.Mx_external_grid_function(x,y,z)= "0.0"
+warpx.My_external_grid_function(x,y,z)= "0.0 + Ms_ga*1000/4/pi * (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (y > -l_ferrite/2.0) * (y < l_ferrite/2.0) * (z < th_ferrite + th_nb + th_si) * (z > th_nb + th_si)"
+warpx.Mz_external_grid_function(x,y,z)= "0.0"
+
+# Diagnostics
+
+# diagnostics.diags_names = plt
+
+# plt.intervals = 5
+# #plt.diag_lo = 0.0 0.0 -Lz/2.0
+# #plt.diag_hi = 0.0 0.0  Lz/2.0
+# plt.diag_type = Full
+# # plt.fields_to_plot = Ex Ey Ez Mx_xface My_yface Mz_zface epsilon sigma mu mag_alpha_xface mag_Ms_xface mag_exchange_xface mag_anisotropy_xface mag_anisotropy_yface mag_anisotropy_zface
+
+diagnostics.diags_names = plt chk
+plt.intervals = 5
+plt.diag_type = Full
+#plt.fields_to_plot = Ex Ey Ez Hx Hy Hz Mx_xface My_yface Mz_zface
+ plt.fields_to_plot = Ex Ey Ez Mx_xface My_yface Mz_zface epsilon sigma mu mag_alpha_xface mag_Ms_xface mag_exchange_xface mag_anisotropy_xface mag_anisotropy_yface mag_anisotropy_zface
+plt.plot_raw_fields = 0
+
+chk.intervals = 5
+chk.diag_type = Full
+chk.format = checkpoint
+
+amr.restart = diags/chk000045
