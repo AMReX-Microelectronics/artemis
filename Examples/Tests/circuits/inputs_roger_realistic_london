@@ -51,7 +51,7 @@ my_constants.tiny_excitation_dy = 3.9e-6 # dy/2
 my_constants.th_si = 8.0e-6 # thickness of the silicon substrate is 70um (z thickness lower part of the domain)
 my_constants.th_nb = 150.0e-9 # 150 nm
 
-my_constants.gap_cpw = 6.0e-6 # air gap of CPW 
+my_constants.gap_cpw = 6.0e-6 # air gap of CPW
 my_constants.w_line = 10.0e-6 # line width of CPW
 my_constants.w_gnd = 21.0e-6 # width of each ground patch
 
