@@ -902,6 +902,9 @@ public:
     void FillBoundaryG   (int lev, amrex::IntVect ng);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
+    void FillBoundaryJ (amrex::IntVect ng);
+    void FillBoundaryJ (const int lev, amrex::IntVect ng);
+
     void SyncCurrent ();
     void SyncRho ();
 
@@ -1242,6 +1245,7 @@ private:
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryJ (const int lev, const PatchType patch_type, const amrex::IntVect ng);
 
     /**
      * \brief Synchronize the nodal points of a given vector MultiFab (all mesh refinement levels)
