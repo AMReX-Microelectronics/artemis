@@ -145,7 +145,6 @@ WarpX::Evolve (int numsteps)
             }
             if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
                 m_london->EvolveLondonJ(-0.5_rt*dt[0]); // J^(n) to J^(n-1/2) using E^(n)
-                // Fill Boundary J should come here
                 FillBoundaryJ(guard_cells.ng_alloc_EB);
             }
             is_synchronized = false;
