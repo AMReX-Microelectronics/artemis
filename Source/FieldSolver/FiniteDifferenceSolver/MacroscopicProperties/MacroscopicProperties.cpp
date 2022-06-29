@@ -227,9 +227,6 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(), lev);
 
     }
-    // In the Maxwell solver, `epsilon` is used in the denominator.
-    // Therefore, it needs to be strictly positive
-    bool const local=true;
 
     // Initialize mu
     if (m_mu_s == "constant") {
