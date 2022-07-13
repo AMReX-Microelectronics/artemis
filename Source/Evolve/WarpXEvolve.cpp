@@ -197,7 +197,9 @@ WarpX::Evolve (int numsteps)
         if (do_electrostatic != ElectrostaticSolverAlgo::None)
         {
             const bool skip_deposition = true;
-            PushParticlesandDepose(cur_time, skip_deposition);
+            if (WarpX::yee_coupled_solver_algo != CoupledYeeSolver::MaxwellLondon) {
+                PushParticlesandDepose(cur_time, skip_deposition);
+            }
         }
         // Electromagnetic case: multi-J algorithm
         else if (do_multi_J)
@@ -408,8 +410,9 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("particlescraper");
     ExecutePythonCallback("beforedeposition");
-
-    PushParticlesandDepose(cur_time);
+    if (WarpX::yee_coupled_solver_algo != CoupledYeeSolver::MaxwellLondon) {
+        PushParticlesandDepose(cur_time);
+    }
 #ifndef WARPX_MAG_LLG
     if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
         amrex::Print() << " in evolve london j\n";
@@ -427,11 +430,13 @@ WarpX::OneStep_nosub (Real cur_time)
     // the actual current J. This is computed later in WarpX::PushPSATD, by calling
     // WarpX::PSATDVayDeposition. The function SyncCurrent is called after that,
     // instead of here, so that we synchronize the correct current.
-    if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay)
-    {
-        SyncCurrent();
+    if (WarpX::yee_coupled_solver_algo != CoupledYeeSolver::MaxwellLondon) {
+        if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay)
+        {
+            SyncCurrent();
+        }
+        SyncRho();
     }
-    SyncRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
