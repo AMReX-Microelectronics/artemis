@@ -1,0 +1,113 @@
+####################################################################################################
+## This input file simulates the thin-film ferromagnetic inserted waveguide
+## PEC applied on x, y and +z boundaries
+## PML applied on -z boundary
+## The plane wave excitation is the time-dependent modified Gaussian pulse
+## This input file requires USE_LLG=TRUE in the GNUMakefile.
+####################################################################################################
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 100
+amr.n_cell = 512 4 256 # number of cells spanning the domain in each coordinate direction at level 0
+amr.max_grid_size = 128 # maximum size of each AMReX box, used to decompose the domain
+amr.blocking_factor = 4 # only meaningful for AMR
+geometry.dims = 3
+boundary.field_lo = pec pec pml  # PEC on side walls; PML at -z end
+boundary.field_hi = pec pec pec  # PEC on side walls; PEC at +z end
+
+# waveguide width 14.95mm, height is 11.43mm, and length is 280mm
+# 14.95mm to make the wave guide work on fundamental mode at 10.5GHz
+# 11.43mm < 14.95mm so that the fundamental mode is TE10
+geometry.prob_lo = -7.475e-3 -5.715e-3 -250.0e-3 # must be consistent with my_constants.length and .diag_hi/lo
+geometry.prob_hi =  7.475e-3  5.715e-3  250.0e-3
+
+amr.max_level = 0
+
+my_constants.pi = 3.14159265359
+my_constants.c = 299792458.
+my_constants.thickness = 0.45e-3 # thicness of the film is 0.45mm
+my_constants.width = 14.95e-3 # waveguide width is 14.95mm
+my_constants.height = 11.43e-3 # waveguide height is 10.16mm
+my_constants.length = 500.0e-3 # waveguide length is 400mm
+my_constants.rjx = 1.0e-4 # the x dimension of current source cross-section
+my_constants.rjz = 10.0e-4 # the z dimension of current source cross-section; should be just larger than 2*dz
+my_constants.wavelength = 0.0286 # frequency is 10.5 GHz
+my_constants.TP = 9.5238e-11 # Gaussian pulse width, 1 x time period of excitation
+my_constants.flag_none = 0 # no source flag
+my_constants.flag_hs = 1 # hard source flag
+my_constants.flag_ss = 2 # soft source flag
+my_constants.epr = 13 # relative permittivity of ferrite slab
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+warpx.use_filter = 0
+warpx.cfl = 0.8
+warpx.mag_time_scheme_order = 2 # default 1
+warpx.mag_M_normalization = 1 # 1 is saturated
+warpx.mag_LLG_coupling = 1
+
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+
+macroscopic.sigma_function(x,y,z) = "0.0"
+
+macroscopic.epsilon_function(x,y,z) = "epr * 8.8541878128e-12 * (x<=thickness-width/2) + 8.8541878128e-12 * (x>thickness-width/2)" # EPr is 13 of the ferrite slab
+
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06" # MUr is not predefined in ferrite materials
+
+#unit conversion: 1 Gauss = (1000/4pi) A/m
+macroscopic.mag_Ms_init_style = "parse_mag_Ms_function" # parse or "constant"
+macroscopic.mag_Ms_function(x,y,z) = "1.3926e5 * (x<=thickness-width/2) + 0 * (x>thickness-width/2)" # in unit A/m, equal to 1750 Gauss; Ms=0 triggers off LLG
+
+macroscopic.mag_alpha_init_style = "parse_mag_alpha_function" # parse or "constant"
+macroscopic.mag_alpha_function(x,y,z) = "0.0051 * (x<=thickness-width/2) + 0 * (x>thickness-width/2)" # alpha is unitless, calculated from linewidth Delta_H = 35 Oersted
+
+macroscopic.mag_gamma_init_style = "parse_mag_gamma_function" # parse or "constant"
+macroscopic.mag_gamma_function(x,y,z) = "-1.759e11 * (x<=thickness-width/2) + 0 * (x>thickness-width/2)" # gyromagnetic ratio is constant for electrons in all materials
+
+macroscopic.mag_max_iter = 100 # maximum number of M iteration in each time step
+macroscopic.mag_tol = 1.e-7 # M magnitude relative error tolerance compared to previous iteration
+macroscopic.mag_normalized_error = 0.1 # if M magnitude relatively changes more than this value, raise a red flag
+
+#################################
+############ FIELDS #############
+#################################
+
+warpx.H_excitation_on_grid_style = "parse_H_excitation_grid_function"
+warpx.Hx_excitation_grid_function(x,y,z,t) = "2.5e-5 * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * cos(x/(width/2)*(pi/2)) * (z > - rjz/2 + length/2)" # plane source
+# magnetic current line source at the +z end of waveguide; spanning over entire y dimension
+warpx.Hy_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.Hz_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.Hx_excitation_flag_function(x,y,z) = "flag_ss * (z > - rjz/2 + length/2) + flag_none * (z <= - rjz/2 + length/2)" # plane source
+warpx.Hy_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Hz_excitation_flag_function(x,y,z) = "flag_none"
+
+#unit conversion: 1 Gauss = 1 Oersted = (1000/4pi) A/m
+#calculation of H_bias: H_bias (oe) = frequency / 2.8e6
+
+warpx.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
+warpx.Hx_bias_external_grid_function(x,y,z)= "0."
+warpx.Hy_bias_external_grid_function(x,y,z)= "2.3475e+05 * (x<=thickness-width/2) + 0 * (x>thickness-width/2)" # in A/m, equal to 2950 Oersted
+warpx.Hz_bias_external_grid_function(x,y,z)= "0."
+
+warpx.M_ext_grid_init_style = parse_M_ext_grid_function
+warpx.Mx_external_grid_function(x,y,z)= "0."
+warpx.My_external_grid_function(x,y,z)= "1.3926e5 * (x<=thickness-width/2) + 0 * (x>thickness-width/2)" # in unit A/m, equal to 1750 Gauss; Ms=0 triggers off LLG
+warpx.Mz_external_grid_function(x,y,z) = "0."
+
+# Diagnostics
+diagnostics.diags_names = plt chk
+plt.intervals = 10
+plt.diag_type = Full
+plt.fields_to_plot = Ex Ey Ez Hx Hy Hz Bx By Bz Mx_xface My_xface Mz_xface Mx_yface My_yface Mz_yface Mx_zface My_zface Mz_zface
+
+chk.format = checkpoint
+chk.intervals = 10
+chk.diag_type = Full
+
+#amr.restart = diags/chk000090
