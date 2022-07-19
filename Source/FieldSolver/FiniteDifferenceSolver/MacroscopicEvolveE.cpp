@@ -9,6 +9,7 @@
 #endif
 #include "MacroscopicProperties/MacroscopicProperties.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
@@ -54,12 +55,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 #    else
     amrex::ignore_unused(Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
-    amrex::Abort("currently macro E-push does not work for RZ");
+    amrex::Abort(Utils::TextMsg::Err(
+        "currently macro E-push does not work for RZ"));
 #else
-    if (m_do_nodal) {
-        amrex::Abort(" macro E-push does not work for nodal ");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_do_nodal, "macro E-push does not work for nodal");
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+
+    if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
@@ -104,7 +107,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         }
 
     } else {
-        amrex::Abort("MacroscopicEvolveE: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err(
+            "MacroscopicEvolveE: Unknown algorithm"));
     }
 
 #endif
