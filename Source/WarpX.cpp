@@ -1156,6 +1156,9 @@ WarpX::ReadParameters ()
         // Read field excitation flags and parsers
         ReadExcitationParser();
 
+        // ensure parsed flag values are all legal
+        ExternalFieldSanity();
+
         // Load balancing parameters
         std::vector<std::string> load_balance_intervals_string_vec = {"0"};
         pp_algo.queryarr("load_balance_intervals", load_balance_intervals_string_vec);

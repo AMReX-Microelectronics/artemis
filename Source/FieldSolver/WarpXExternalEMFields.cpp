@@ -167,9 +167,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 if (flag_type == 2._rt and dt_type_flag == 1) {
                     dt_type_factor = 0.5_rt;
                 }
-                if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
-                    amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
-                } else if ( flag_type > 0._rt ) {
+                if ( flag_type > 0._rt ) {
                     Fx(i, j, k, n) = Fx(i,j,k,n)*(flag_type-1.0_rt)
                                    + dt_type_factor * xfield_parser(x,y,z,t);
                 }
@@ -186,9 +184,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 if (flag_type == 2._rt and dt_type_flag == 1) {
                     dt_type_factor = 0.5_rt;
                 }
-                if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
-                    amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
-                } else if ( flag_type > 0._rt ) {
+                if ( flag_type > 0._rt ) {
                     Fy(i, j, k, n) = Fy(i,j,k,n)*(flag_type-1.0_rt)
                                    + dt_type_factor * yfield_parser(x,y,z,t);
                 }
@@ -205,11 +201,177 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 if (flag_type == 2._rt and dt_type_flag == 1) {
                     dt_type_factor = 0.5_rt;
                 }
-                if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
-                    amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
-                } else if ( flag_type > 0._rt ) {
+                if ( flag_type > 0._rt ) {
                     Fz(i, j, k,n) = Fz(i,j,k,n)*(flag_type-1.0_rt)
                                   + dt_type_factor * zfield_parser(x,y,z,t);
+                }
+            }
+        );
+    }
+}
+
+void
+WarpX::ExternalFieldSanity ()
+{
+    amrex::GpuArray<amrex::Real,10> allowed_values;
+
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
+
+            int num_allowed = 3;
+            allowed_values[0] = 0;
+            allowed_values[1] = 1;
+            allowed_values[2] = 2;
+
+            ExternalFieldSanity(Efield_fp[lev][0].get(),
+                                Efield_fp[lev][1].get(),
+                                Efield_fp[lev][2].get(),
+                                Exfield_flag_parser->compile<3>(),
+                                Eyfield_flag_parser->compile<3>(),
+                                Ezfield_flag_parser->compile<3>(),
+                                lev, allowed_values, num_allowed );
+        }
+
+        // The excitation, especially when used to set an internal PEC, will be extended
+        // to the PML region with user-defined parser.
+        // As clarified in the documentation, it is important that the parser is valid in the pml region
+        if (WarpX::isAnyBoundaryPML()) {
+            if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
+
+                int num_allowed = 3;
+                allowed_values[0] = 0;
+                allowed_values[1] = 1;
+                allowed_values[2] = 2;
+
+                ExternalFieldSanity(pml[lev]->GetE_fp(0),
+                                    pml[lev]->GetE_fp(1),
+                                    pml[lev]->GetE_fp(2),
+                                    Exfield_flag_parser->compile<3>(),
+                                    Eyfield_flag_parser->compile<3>(),
+                                    Ezfield_flag_parser->compile<3>(),
+                                    lev, allowed_values, num_allowed );
+            }
+        }
+
+        if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
+
+            int num_allowed = 3;
+            allowed_values[0] = 0;
+            allowed_values[1] = 1;
+            allowed_values[2] = 2;
+
+            ExternalFieldSanity(Bfield_fp[lev][0].get(),
+                                Bfield_fp[lev][1].get(),
+                                Bfield_fp[lev][2].get(),
+                                Bxfield_flag_parser->compile<3>(),
+                                Byfield_flag_parser->compile<3>(),
+                                Bzfield_flag_parser->compile<3>(),
+                                lev, allowed_values, num_allowed );
+        }
+#ifdef WARPX_MAG_LLG
+        if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
+
+            int num_allowed = 3;
+            allowed_values[0] = 0;
+            allowed_values[1] = 1;
+            allowed_values[2] = 2;
+
+            ExternalFieldSanity(Hfield_fp[lev][0].get(),
+                                Hfield_fp[lev][1].get(),
+                                Hfield_fp[lev][2].get(),
+                                Hxfield_flag_parser->compile<3>(),
+                                Hyfield_flag_parser->compile<3>(),
+                                Hzfield_flag_parser->compile<3>(),
+                                lev, allowed_values, num_allowed );
+        }
+        if (H_bias_excitation_grid_s == "parse_h_bias_excitation_grid_function") {
+
+            int num_allowed = 2;
+            allowed_values[0] = 0;
+            allowed_values[1] = 1;
+
+            ExternalFieldSanity(H_biasfield_fp[lev][0].get(),
+                                H_biasfield_fp[lev][1].get(),
+                                H_biasfield_fp[lev][2].get(),
+                                Hx_biasfield_flag_parser->compile<3>(),
+                                Hy_biasfield_flag_parser->compile<3>(),
+                                Hz_biasfield_flag_parser->compile<3>(),
+                                lev, allowed_values, num_allowed );
+        }
+#endif
+    } // for loop over level
+}
+
+void
+WarpX::ExternalFieldSanity (
+       amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
+       ParserExecutor<3> const& xflag_parser,
+       ParserExecutor<3> const& yflag_parser,
+       ParserExecutor<3> const& zflag_parser, const int lev,
+       amrex::GpuArray<amrex::Real,10> allowed_values, const int num_allowed )
+{
+    // This function checks whether the excitation flag is set to a valid value
+
+    // Gpu vector to store Ex-Bz staggering (Hx-Hz for LLG)
+    GpuArray<int,3> mfx_stag, mfy_stag, mfz_stag;
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        mfx_stag[idim] = mfx->ixType()[idim];
+        mfy_stag[idim] = mfy->ixType()[idim];
+        mfz_stag[idim] = mfz->ixType()[idim];
+    }
+    const auto problo = Geom(lev).ProbLoArray();
+    const auto dx = Geom(lev).CellSizeArray();
+    amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
+    amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
+    amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
+        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
+        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
+
+        // Loop over the cells and update the fields
+        amrex::ParallelFor(tbx, tby, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                amrex::Real x, y, z;
+                WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag,
+                                                  problo, dx, x, y, z);
+                auto flag_type = xflag_parser(x,y,z);
+                bool valid = false;
+                for (int n=0; n<num_allowed; ++n) {
+                    if (flag_type == allowed_values[n]) valid = true;
+                }
+                if (!valid) {
+                    amrex::Abort("flag type for excitation is invalid");
+                }
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                amrex::Real x, y, z;
+                WarpXUtilAlgo::getCellCoordinates(i, j, k, mfy_stag,
+                                                  problo, dx, x, y, z);
+                auto flag_type = yflag_parser(x,y,z);
+                bool valid = false;
+                for (int n=0; n<num_allowed; ++n) {
+                    if (flag_type == allowed_values[n]) valid = true;
+                }
+                if (!valid) {
+                    amrex::Abort("flag type for excitation is invalid");
+                }
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                amrex::Real x, y, z;
+                WarpXUtilAlgo::getCellCoordinates(i, j, k, mfz_stag,
+                                                  problo, dx, x, y, z);
+                auto flag_type = zflag_parser(x,y,z);
+                bool valid = false;
+                for (int n=0; n<num_allowed; ++n) {
+                    if (flag_type == allowed_values[n]) valid = true;
+                }
+                if (!valid) {
+                    amrex::Abort("flag type for excitation is invalid");
                 }
             }
         );
