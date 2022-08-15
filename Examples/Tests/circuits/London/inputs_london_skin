@@ -44,7 +44,7 @@ algo.current_deposition = esirkepov
 
 my_constants.zo = 0.e-6
 my_constants.z1 = 0.e-6
-my_constants.sigma = 0. 
+my_constants.sigma = 0.
 my_constants.eps_r = 1.0
 my_constants.mu_r = 1.0
 
