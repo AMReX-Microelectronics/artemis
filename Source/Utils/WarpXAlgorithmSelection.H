@@ -23,6 +23,13 @@ struct MediumForEM {
     };
 };
 
+struct CoupledYeeSolver {
+    enum {
+        MaxwellLondon = 0,
+        None = 1
+    };
+};
+
 /**
   * \brief struct to select algorithm for macroscopic Maxwell solver
            LaxWendroff (semi-implicit) represents sigma*E = sigma*0.5*(E^(n) + E^(n+1))

@@ -1785,6 +1785,16 @@ Numerics and algorithms
 
     If ``algo.em_solver_medium`` is not specified, ``vacuum`` is the default.
 
+* ``algo.yee_coupled_solver`` (`string` optional)
+    If Maxwell is coupled with another solver.
+    Options are :
+
+    - ``MaxwellLondon``: Couple London with Maxwell yee-scheme. If this option is selected, then
+                         ``london.penetration_depth`` must be specified and
+                          ``london.superconductor_function(x,y,z)`` must be provided to specify the superconducting region with an analytical function.
+    - ``None``: pure FDTD with yee-scheme
+    If ``algo.yee_coupled_solver`` is not specified, ``None`` is the default
+
 * ``algo.macroscopic_sigma_method`` (`string`, optional)
     The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
 
@@ -2206,6 +2216,9 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``mag_alpha_xface``    ``mag_alpha_yface``    ``mag_alpha_zface``
     ``mag_exchange_xface`` ``mag_exchange_yface`` ``mag_exchange_zface``
     ``mag_anisotropy_xface`` ``mag_anisotropy_yface`` ``mag_anisotropy_zface``
+    For superconducting physics we also include
+    ``superconductor``
+    ``Bx_sc`` ``By_sc`` ``Bz_sc``
 
     Possible vector field components in RZ geometry: ``Er`` ``Et`` ``Ez`` ``Br`` ``Bt`` ``Bz`` ``jr`` ``jt`` ``jz``.
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
