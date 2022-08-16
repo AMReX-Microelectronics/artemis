@@ -1,7 +1,7 @@
 # Maximum number of time steps
 
-my_constants.prob_lo = -8.e-5
-my_constants.prob_hi =  8.e-5
+my_constants.prob_lo = -80.e-6
+my_constants.prob_hi =  80.e-6
 
 ################################
 # Space-Time Convergence
@@ -11,19 +11,19 @@ my_constants.nx = 8
 my_constants.ny = 8
 my_constants.nz = 160
 amr.max_grid_size = 40
-max_step = 150
+max_step = 75
 
 #my_constants.nx = 16
 #my_constants.ny = 16
 #my_constants.nz = 320
 #amr.max_grid_size = 80
-#max_step = 300
+#max_step = 150
 
 #my_constants.nx = 32
 #my_constants.ny = 32
 #my_constants.nz = 640
 #amr.max_grid_size = 160
-#max_step = 600
+#max_step = 300
 
 ################################
 # Time Convergence
@@ -33,21 +33,21 @@ max_step = 150
 #my_constants.ny = 16
 #my_constants.nz = 320
 #amr.max_grid_size = 80
-#max_step = 300
+#max_step = 150
 #warpx.cfl = 0.9
 
 #my_constants.nx = 16
 #my_constants.ny = 16
 #my_constants.nz = 320
 #amr.max_grid_size = 80
-#max_step = 600
+#max_step = 300
 #warpx.cfl = 0.45
 
 #my_constants.nx = 16
 #my_constants.ny = 16
 #my_constants.nz = 320
 #amr.max_grid_size = 80
-#max_step = 1200
+#max_step = 600
 #warpx.cfl = 0.225
 
 ################################
@@ -58,21 +58,21 @@ max_step = 150
 #my_constants.ny = 8
 #my_constants.nz = 160
 #amr.max_grid_size = 40
-#max_step = 600
+#max_step = 300
 #warpx.cfl = 0.225
 
 #my_constants.nx = 16
 #my_constants.ny = 16
 #my_constants.nz = 320
 #amr.max_grid_size = 80
-#max_step = 600
+#max_step = 300
 #warpx.cfl = 0.45
 
 #my_constants.nx = 32
 #my_constants.ny = 32
 #my_constants.nz = 640
 #amr.max_grid_size = 160
-#max_step = 600
+#max_step = 300
 #warpx.cfl = 0.9
 
 # number of grid points
@@ -125,42 +125,36 @@ macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
 algo.yee_coupled_solver = MaxwellLondon
 
 my_constants.min_slab = 0.0
-my_constants.max_slab = 3.e-6
-london.penetration_depth = 3.e-6
+my_constants.max_slab = 4.e-6
+london.penetration_depth = 4.e-6
 
-london.superconductor_function(x,y,z) = " 1.*(z>min_slab)*(z<max_slab)"
+london.superconductor_function(x,y,z) = "1.*(z>min_slab)*(z<max_slab)"
 
 my_constants.pi = 3.14159265359
-my_constants.L = 5.e-6
+my_constants.L = 5.e-5
 my_constants.c = 299792458.
+my_constants.wavelength = 20.e-6
 my_constants.start = -1.e-4
 my_constants.source = -7.e-5
 my_constants.obs = -4.e-5
 
-warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "1.e5*exp(-(z - start - c*t)**2/(2*L*L))"
+warpx.E_ext_grid_init_style = parse_E_ext_grid_function
+warpx.Ez_external_grid_function(x,y,z) = 0.
+warpx.Ex_external_grid_function(x,y,z) = 0.
+warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-(z+30.e-6)**2/(L/4)**2)*cos(2*pi*(z+30.e-6)/wavelength)"
 
-warpx.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
-warpx.Bx_excitation_grid_function(x,y,z,t) = "(-1.e5/c)*exp(-(z - start - c*t)**2/(2*L*L))"
-warpx.By_excitation_grid_function(x,y,z,t)= "0."
-warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
-
-warpx.Ez_excitation_flag_function(x,y,z) = "0."
-warpx.Ex_excitation_flag_function(x,y,z) = "0."
-warpx.Ey_excitation_flag_function(x,y,z) = "0. + 1*(z>(source - dz/2 - ddz))*(z<(source + ddz))"
-
-warpx.By_excitation_flag_function(x,y,z) = "0."
-warpx.Bz_excitation_flag_function(x,y,z) = "0."
-warpx.Bx_excitation_flag_function(x,y,z) = "0. + 1*(z>(source - dz/2 - ddz))*(z<(source + ddz))"
+warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.Bx_external_grid_function(x,y,z) = "-1.e5*exp(-(z+30.e-6)**2/(L/4)**2)*cos(2*pi*(z+30.e-6)/wavelength)/c"
+warpx.By_external_grid_function(x,y,z) = 0.
+warpx.Bz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = plt
 plt.plot_raw_fields = 1
-plt.intervals = 10
+plt.intervals = 15
 plt.diag_type = Full
-plt.fields_to_plot = Ey Bx jy superconductor Bx_sc
+#plt.fields_to_plot = Ey Bx jy superconductor Bx_sc
+plt.fields_to_plot = Ey Bx jy
 
 # Remove species
 particles.nspecies = 0
