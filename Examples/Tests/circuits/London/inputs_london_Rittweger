@@ -1,5 +1,4 @@
 # Maximum number of time steps
-max_step = 150
 
 my_constants.prob_lo = -8.e-5
 my_constants.prob_hi =  8.e-5
@@ -7,13 +6,26 @@ my_constants.prob_hi =  8.e-5
 my_constants.nx = 8
 my_constants.ny = 8
 my_constants.nz = 160
+amr.max_grid_size = 40
+max_step = 150
+
+#my_constants.nx = 16
+#my_constants.ny = 16
+#my_constants.nz = 320
+#amr.max_grid_size = 80
+#max_step = 300
+
+#my_constants.nx = 32
+#my_constants.ny = 32
+#my_constants.nz = 640
+#amr.max_grid_size = 160
+#max_step = 600
 
 # number of grid points
 amr.n_cell = nx ny nz
 
 # Maximum allowable size of each subdomain in the problem domain;
 # this is used to decompose the domain for parallel calculations.
-amr.max_grid_size = 40
 
 # Maximum level in hierarchy (for now must be 0, i.e., one level in total)
 amr.max_level = 0
@@ -93,10 +105,11 @@ warpx.Bz_excitation_flag_function(x,y,z) = "0."
 warpx.Bx_excitation_flag_function(x,y,z) = "0. + 2*(z>(source - dz/2 - ddz))*(z<(source + ddz))"
 
 # Diagnostics
-diagnostics.diags_names = diag1
-diag1.intervals = 10
-diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz superconductor sigma epsilon mu Bx_sc By_sc Bz_sc
+diagnostics.diags_names = plt
+plt.plot_raw_fields = 1
+plt.intervals = 10
+plt.diag_type = Full
+plt.fields_to_plot = Ey Bx jy superconductor Bx_sc
 
 # Remove species
 particles.nspecies = 0
