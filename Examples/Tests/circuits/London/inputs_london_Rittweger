@@ -129,9 +129,10 @@ my_constants.max_slab = 4.e-6
 london.penetration_depth = 4.e-6
 
 london.superconductor_function(x,y,z) = "1.*(z>min_slab)*(z<max_slab)"
+london.superconductor_function(x,y,z) = "0."
 
 my_constants.pi = 3.14159265359
-my_constants.L = 5.e-5
+my_constants.L = 25.e-6
 my_constants.c = 299792458.
 my_constants.wavelength = 20.e-6
 my_constants.start = -1.e-4
@@ -142,9 +143,11 @@ warpx.E_ext_grid_init_style = parse_E_ext_grid_function
 warpx.Ez_external_grid_function(x,y,z) = 0.
 warpx.Ex_external_grid_function(x,y,z) = 0.
 warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-(z+30.e-6)**2/(L/4)**2)*cos(2*pi*(z+30.e-6)/wavelength)"
+warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-(z+30.e-6)**2/(L/4)**2)"
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 warpx.Bx_external_grid_function(x,y,z) = "-1.e5*exp(-(z+30.e-6)**2/(L/4)**2)*cos(2*pi*(z+30.e-6)/wavelength)/c"
+warpx.Bx_external_grid_function(x,y,z) = "-1.e5*exp(-(z+30.e-6)**2/(L/4)**2)"
 warpx.By_external_grid_function(x,y,z) = 0.
 warpx.Bz_external_grid_function(x,y,z) = 0.
 
