@@ -125,10 +125,11 @@ macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
 algo.yee_coupled_solver = MaxwellLondon
 
 my_constants.min_slab = 0.0
-my_constants.max_slab = 4.e-6
+my_constants.max_slab = 8.e-6
 london.penetration_depth = 4.e-6
 
 london.superconductor_function(x,y,z) = "1.*(z>min_slab)*(z<max_slab)"
+#london.superconductor_function(x,y,z) = "1.*(x>min_slab)*(x<max_slab)*(y>min_slab)*(y<max_slab)*(z>min_slab)*(z<max_slab)"
 
 my_constants.pi = 3.14159265359
 my_constants.L = 25.e-6
@@ -145,13 +146,13 @@ warpx.Ez_external_grid_function(x,y,z) = 0.
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 warpx.Bx_external_grid_function(x,y,z) = "-1.e5*exp(-(z+30.e-6)**2/(L/4)**2)/c"
-warpx.By_external_grid_function(x,y,z) = " 1.e5*exp(-(z+30.e-6)**2/(L/4)**2)/c"
+warpx.By_external_grid_function(x,y,z) = "1.e5*exp(-(z+30.e-6)**2/(L/4)**2)/c"
 warpx.Bz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = plt
 plt.plot_raw_fields = 1
-plt.intervals = 75
+plt.intervals = 1
 plt.diag_type = Full
 #plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz Bx_sc By_sc Bz_sc superconductor
 plt.fields_to_plot = Ex Ey Ez Bx By Bz
