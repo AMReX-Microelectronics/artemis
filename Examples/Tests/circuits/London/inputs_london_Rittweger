@@ -12,18 +12,21 @@ my_constants.ny = 8
 my_constants.nz = 128
 amr.max_grid_size = 64
 max_step = 64
+warpx.cfl = 0.9
 
 #my_constants.nx = 16
 #my_constants.ny = 16
 #my_constants.nz = 256
 #amr.max_grid_size = 128
 #max_step = 128
+#warpx.cfl = 0.9
 
 #my_constants.nx = 32
 #my_constants.ny = 32
 #my_constants.nz = 512
-#amr.max_grid_size = 256
+#amr.max_grid_size = 128
 #max_step = 256
+#warpx.cfl = 0.9
 
 ################################
 # Time Convergence
@@ -71,7 +74,7 @@ max_step = 64
 #my_constants.nx = 32
 #my_constants.ny = 32
 #my_constants.nz = 512
-#amr.max_grid_size = 256
+#amr.max_grid_size = 128
 #max_step = 256
 #warpx.cfl = 0.9
 
