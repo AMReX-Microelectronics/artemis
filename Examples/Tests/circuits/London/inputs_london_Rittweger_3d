@@ -107,12 +107,12 @@ warpx.verbose = 1
 # Algorithms
 algo.current_deposition = esirkepov
 
-my_constants.sigma = 0.
+my_constants.sigma = 1.e2
 my_constants.eps_r = 1.0
 my_constants.mu_r = 1.0
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
-algo.macroscopic_sigma_method = backwardeuler # laxwendroff or backwardeuler
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
 macroscopic.sigma_function(x,y,z) = "sigma*(z>min_slab)*(z<max_slab)"
 macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
