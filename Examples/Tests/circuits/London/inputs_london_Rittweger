@@ -11,19 +11,19 @@ my_constants.nx = 8
 my_constants.ny = 8
 my_constants.nz = 128
 amr.max_grid_size = 64
-max_step = 75
+max_step = 64
 
 #my_constants.nx = 16
 #my_constants.ny = 16
 #my_constants.nz = 256
 #amr.max_grid_size = 128
-#max_step = 150
+#max_step = 128
 
 #my_constants.nx = 32
 #my_constants.ny = 32
 #my_constants.nz = 512
 #amr.max_grid_size = 256
-#max_step = 300
+#max_step = 256
 
 ################################
 # Time Convergence
@@ -33,21 +33,21 @@ max_step = 75
 #my_constants.ny = 16
 #my_constants.nz = 256
 #amr.max_grid_size = 128
-#max_step = 150
+#max_step = 128
 #warpx.cfl = 0.9
 
 #my_constants.nx = 16
 #my_constants.ny = 16
 #my_constants.nz = 256
 #amr.max_grid_size = 128
-#max_step = 300
+#max_step = 256
 #warpx.cfl = 0.45
 
 #my_constants.nx = 16
 #my_constants.ny = 16
 #my_constants.nz = 256
 #amr.max_grid_size = 128
-#max_step = 600
+#max_step = 512
 #warpx.cfl = 0.225
 
 ################################
@@ -58,21 +58,21 @@ max_step = 75
 #my_constants.ny = 8
 #my_constants.nz = 128
 #amr.max_grid_size = 64
-#max_step = 300
+#max_step = 256
 #warpx.cfl = 0.225
 
 #my_constants.nx = 16
 #my_constants.ny = 16
 #my_constants.nz = 256
 #amr.max_grid_size = 128
-#max_step = 300
+#max_step = 256
 #warpx.cfl = 0.45
 
 #my_constants.nx = 32
 #my_constants.ny = 32
 #my_constants.nz = 512
 #amr.max_grid_size = 256
-#max_step = 300
+#max_step = 256
 #warpx.cfl = 0.9
 
 # number of grid points
@@ -97,7 +97,6 @@ geometry.prob_hi = prob_hi prob_hi prob_hi
 my_constants.dx = (prob_hi-prob_lo) / nx
 my_constants.dy = (prob_hi-prob_lo) / ny
 my_constants.dz = (prob_hi-prob_lo) / nz
-my_constants.ddz = dz / 100
 
 # Verbosity
 warpx.verbose = 1
@@ -112,13 +111,8 @@ my_constants.mu_r = 1.0
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = backwardeuler # laxwendroff or backwardeuler
 
-macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
 macroscopic.sigma_function(x,y,z) = "sigma*(z>min_slab)*(z<max_slab)"
-
-macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
 macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
-
-macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
 macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
 
 #London
@@ -130,25 +124,24 @@ london.penetration_depth = 4.e-6
 
 london.superconductor_function(x,y,z) = "1.*(z>min_slab)*(z<max_slab)"
 
-my_constants.pi = 3.14159265359
-my_constants.L = 25.e-6
+my_constants.L = 8.e-6
 my_constants.c = 299792458.
 my_constants.obs = -4.e-5
 
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(z+30.e-6)**2/(L/4)**2)"
-warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-(z+30.e-6)**2/(L/4)**2)"
+warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(z+32.e-6)**2/L**2)"
+warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-(z+32.e-6)**2/L**2)"
 warpx.Ez_external_grid_function(x,y,z) = 0.
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z) = "-1.e5*exp(-(z+30.e-6)**2/(L/4)**2)/c"
-warpx.By_external_grid_function(x,y,z) = " 1.e5*exp(-(z+30.e-6)**2/(L/4)**2)/c"
+warpx.Bx_external_grid_function(x,y,z) = "-1.e5*exp(-(z+32.e-6)**2/L**2)/c"
+warpx.By_external_grid_function(x,y,z) = " 1.e5*exp(-(z+32.e-6)**2/L**2)/c"
 warpx.Bz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = plt
 plt.plot_raw_fields = 1
-plt.intervals = 75
+plt.intervals = 64
 plt.diag_type = Full
 #plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz Bx_sc By_sc Bz_sc superconductor
 plt.fields_to_plot = Ex Ey Ez Bx By Bz
