@@ -8,20 +8,20 @@
 ####### GENERAL PARAMETERS ######
 #################################
 my_constants.nx = 64
-my_constants.ny = 2000    
+my_constants.ny = 2000
 my_constants.nz = 320
 
-amr.n_cell = nx ny nz        
+amr.n_cell = nx ny nz
 
-amr.max_grid_size_x = 64   
-amr.max_grid_size_y = 250    
+amr.max_grid_size_x = 64
+amr.max_grid_size_y = 250
 amr.max_grid_size_z = 160
 amr.blocking_factor = 1
 amr.max_level = 0
 
 # domain sizes and cell numbers separately defined for easier excitation function definition
 my_constants.Lx = 64.0e-6
-my_constants.Ly = 2000.0e-6     
+my_constants.Ly = 2000.0e-6
 my_constants.Lz = 16.0e-6
 
 geometry.dims = 3
@@ -37,34 +37,34 @@ my_constants.dz = Lz / nz
 my_constants.ddz = dz / 100
 my_constants.ddy = dy / 100
 
-my_constants.th_si = 8.0e-6  
+my_constants.th_si = 8.0e-6
 my_constants.th_nb = 200.0e-9    # dimensions in z direction
 
-my_constants.gap_cap = 150.0e-6   
-my_constants.strip_c = 1500.0e-6    
+my_constants.gap_cap = 150.0e-6
+my_constants.strip_c = 1500.0e-6
 my_constants.strip_edge = 100.0e-6     # dimensions in y direction
 
-my_constants.gap_cpw = 6.0e-6 
-my_constants.w_line = 10.0e-6 
+my_constants.gap_cpw = 6.0e-6
+my_constants.w_line = 10.0e-6
 my_constants.w_gnd = 21.0e-6      # dimensions in x direction
 
 my_constants.obsx = w_line/2 + gap_cpw/2
-my_constants.obsy1 = -strip_c/2 + dy  
-my_constants.obsy2 = -strip_c/4 
+my_constants.obsy1 = -strip_c/2 + dy
+my_constants.obsy2 = -strip_c/4
 my_constants.obsy3 = 0.0
 my_constants.obsy4 = strip_c/4
 my_constants.obsy5 = strip_c/2 - dy
-my_constants.obsz = -Lz/2 + th_si + dz 
+my_constants.obsz = -Lz/2 + th_si + dz
 
 my_constants.frequency = 86.7e9
 my_constants.TP = 1./frequency
 
 my_constants.sigma_nb = 1.e10
 my_constants.sigma_0 = 0.0
-my_constants.sigma_si = 0.0 
+my_constants.sigma_si = 0.0
 
 my_constants.eps_0 = 8.8541878128e-12
-my_constants.eps_r_nb = 1.0 
+my_constants.eps_r_nb = 1.0
 my_constants.eps_r_si = 11.7
 
 my_constants.mu_0 = 1.25663706212e-06
@@ -81,8 +81,8 @@ my_constants.flag_ss = 2 # soft source flag
 warpx.verbose = 1
 warpx.use_filter = 0
 warpx.cfl = 0.95
-boundary.field_lo = pml pml pml   
-boundary.field_hi = pml pml pml 
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
 particles.nspecies = 0
 
 algo.em_solver_medium = macroscopic           # vacuum/macroscopic
@@ -94,26 +94,26 @@ algo.macroscopic_sigma_method = backwardeuler   # laxwendroff or backwardeuler
 
 macroscopic.sigma_function(x,y,z) = "sigma_0
 + (sigma_si - sigma_0) * (z < -Lz/2 + th_si)
-+ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2) 
-+ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) 
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > strip_c/2 + gap_cap)
-+ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) 
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw)"
 
 macroscopic.epsilon_function(x,y,z) = "eps_0
 + eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si)
-+ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2) 
-+ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) 
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap)
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > strip_c/2 + gap_cap)
-+ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) 
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw)
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw)"
 
 macroscopic.mu_function(x,y,z) = "mu_0
 + mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si)
-+ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2) 
-+ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) 
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > strip_c/2 + gap_cap)
-+ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) 
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw)"
 
 #################################
@@ -176,7 +176,7 @@ Eobs2b.surface_normal = Z
 Eobs3b.surface_normal = Z
 Eobs4b.surface_normal = Z
 Eobs5b.surface_normal = Z
-   
+
 Eobs1b.reduced_function(x,y,z) = (y >  obsy1 - ddy) * (y < obsy1 + ddy) * (x > obsx) * (x < obsx + dx) * (z > obsz - ddz) * (z < obsz + ddz)
 Eobs2b.reduced_function(x,y,z) = (y >  obsy2 - ddy) * (y < obsy2 + ddy) * (x > obsx) * (x < obsx + dx) * (z > obsz - ddz) * (z < obsz + ddz)
 Eobs3b.reduced_function(x,y,z) = (y >  obsy3 - ddy) * (y < obsy3 + ddy) * (x > obsx) * (x < obsx + dx) * (z > obsz - ddz) * (z < obsz + ddz)

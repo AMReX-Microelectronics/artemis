@@ -33,7 +33,7 @@ warpx.verbose = 1
 algo.current_deposition = esirkepov
 
 
-my_constants.sigma = 0.0 
+my_constants.sigma = 0.0
 my_constants.eps_r = 1.0
 my_constants.mu_r = 1.0
 my_constants.min_box = -8.e-6
