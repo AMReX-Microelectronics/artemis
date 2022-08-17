@@ -1,7 +1,7 @@
 # Maximum number of time steps
 
-my_constants.prob_lo = -80.e-6
-my_constants.prob_hi =  80.e-6
+my_constants.prob_lo = -64.e-6
+my_constants.prob_hi =  64.e-6
 
 ################################
 # Space-Time Convergence
@@ -9,20 +9,20 @@ my_constants.prob_hi =  80.e-6
 
 my_constants.nx = 8
 my_constants.ny = 8
-my_constants.nz = 160
-amr.max_grid_size = 40
+my_constants.nz = 128
+amr.max_grid_size = 64
 max_step = 75
 
 #my_constants.nx = 16
 #my_constants.ny = 16
-#my_constants.nz = 320
-#amr.max_grid_size = 80
+#my_constants.nz = 256
+#amr.max_grid_size = 128
 #max_step = 150
 
 #my_constants.nx = 32
 #my_constants.ny = 32
-#my_constants.nz = 640
-#amr.max_grid_size = 160
+#my_constants.nz = 512
+#amr.max_grid_size = 256
 #max_step = 300
 
 ################################
@@ -31,22 +31,22 @@ max_step = 75
 
 #my_constants.nx = 16
 #my_constants.ny = 16
-#my_constants.nz = 320
-#amr.max_grid_size = 80
+#my_constants.nz = 256
+#amr.max_grid_size = 128
 #max_step = 150
 #warpx.cfl = 0.9
 
 #my_constants.nx = 16
 #my_constants.ny = 16
-#my_constants.nz = 320
-#amr.max_grid_size = 80
+#my_constants.nz = 256
+#amr.max_grid_size = 128
 #max_step = 300
 #warpx.cfl = 0.45
 
 #my_constants.nx = 16
 #my_constants.ny = 16
-#my_constants.nz = 320
-#amr.max_grid_size = 80
+#my_constants.nz = 256
+#amr.max_grid_size = 128
 #max_step = 600
 #warpx.cfl = 0.225
 
@@ -56,22 +56,22 @@ max_step = 75
 
 #my_constants.nx = 8
 #my_constants.ny = 8
-#my_constants.nz = 160
-#amr.max_grid_size = 40
+#my_constants.nz = 128
+#amr.max_grid_size = 64
 #max_step = 300
 #warpx.cfl = 0.225
 
 #my_constants.nx = 16
 #my_constants.ny = 16
-#my_constants.nz = 320
-#amr.max_grid_size = 80
+#my_constants.nz = 256
+#amr.max_grid_size = 128
 #max_step = 300
 #warpx.cfl = 0.45
 
 #my_constants.nx = 32
 #my_constants.ny = 32
-#my_constants.nz = 640
-#amr.max_grid_size = 160
+#my_constants.nz = 512
+#amr.max_grid_size = 256
 #max_step = 300
 #warpx.cfl = 0.9
 
@@ -133,9 +133,6 @@ london.superconductor_function(x,y,z) = "1.*(z>min_slab)*(z<max_slab)"
 my_constants.pi = 3.14159265359
 my_constants.L = 25.e-6
 my_constants.c = 299792458.
-my_constants.wavelength = 20.e-6
-my_constants.start = -1.e-4
-my_constants.source = -7.e-5
 my_constants.obs = -4.e-5
 
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function
