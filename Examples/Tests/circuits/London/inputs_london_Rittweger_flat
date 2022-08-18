@@ -121,7 +121,7 @@ warpx.Bz_external_grid_function(x,y,z) = 0.
 # Diagnostics
 diagnostics.diags_names = plt
 plt.plot_raw_fields = 1
-plt.intervals = 64
+plt.intervals = 200
 plt.diag_type = Full
 #plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz Bx_sc By_sc Bz_sc superconductor
 plt.fields_to_plot = Ex Ey Ez Bx By Bz superconductor
