@@ -114,7 +114,7 @@ my_constants.mu_r = 1.0
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.sigma_function(x,y,z) = "sigma*(x<max_slab)*(y>min_slab)*(y<max_slab)*(z>min_slab)*(z<max_slab)"
+macroscopic.sigma_function(x,y,z) = "sigma*(x>min_slab)*(x<max_slab)*(y>min_slab)*(y<max_slab)*(z>min_slab)*(z<max_slab)"
 macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
 macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
 
