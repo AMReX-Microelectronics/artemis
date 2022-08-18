@@ -32,12 +32,12 @@ warpx.cfl = 0.9
 # Space Convergence
 ################################
 
-my_constants.nx = 128
-my_constants.ny = 128
-my_constants.nz = 128
-amr.max_grid_size = 64
-max_step = 400
-warpx.cfl = 0.225
+#my_constants.nx = 128
+#my_constants.ny = 128
+#my_constants.nz = 128
+#amr.max_grid_size = 64
+#max_step = 400
+#warpx.cfl = 0.225
 
 #my_constants.nx = 256
 #my_constants.ny = 256
