@@ -8,7 +8,7 @@
 ####### GENERAL PARAMETERS ######
 #################################
 my_constants.nx = 64
-my_constants.ny = 2000
+my_constants.ny = 1000
 my_constants.nz = 320
 
 amr.n_cell = nx ny nz
@@ -21,7 +21,7 @@ amr.max_level = 0
 
 # domain sizes and cell numbers separately defined for easier excitation function definition
 my_constants.Lx = 64.0e-6
-my_constants.Ly = 2000.0e-6
+my_constants.Ly = 2000.0e-7
 my_constants.Lz = 16.0e-6
 
 geometry.dims = 3
@@ -40,9 +40,9 @@ my_constants.ddy = dy / 100
 my_constants.th_si = 8.0e-6
 my_constants.th_nb = 200.0e-9    # dimensions in z direction
 
-my_constants.gap_cap = 150.0e-6
-my_constants.strip_c = 1500.0e-6
-my_constants.strip_edge = 100.0e-6     # dimensions in y direction
+my_constants.gap_cap = 150.0e-7
+my_constants.strip_c = 1500.0e-7
+my_constants.strip_edge = 100.0e-7     # dimensions in y direction
 
 my_constants.gap_cpw = 6.0e-6
 my_constants.w_line = 10.0e-6
@@ -142,7 +142,7 @@ chk.format = checkpoint
 chk.intervals = 100000
 chk.diag_type = Full
 
-max_step = 1800000
+max_step = 900000
 #amr.restart = diags/chk900000
 
 warpx.reduced_diags_names = Eobs1b Eobs2b Eobs3b Eobs4b Eobs5b
