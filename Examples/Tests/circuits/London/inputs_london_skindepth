@@ -1,8 +1,8 @@
 # Maximum number of time steps
 max_step = 3000
 
-my_constants.nx = 4
-my_constants.ny = 4
+my_constants.nx = 2
+my_constants.ny = 2
 my_constants.nz = 6400
 amr.max_grid_size = 1600
 
@@ -17,7 +17,7 @@ my_constants.prob_hi_z = 32.e-6
 # number of grid points
 amr.n_cell = nx ny nz
 
-amr.blocking_factor = 4
+amr.blocking_factor = 2
 
 # Maximum level in hierarchy (for now must be 0, i.e., one level in total)
 amr.max_level = 0
