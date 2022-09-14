@@ -1,12 +1,23 @@
 # Maximum number of time steps
-max_step = 10000
+max_step = 30000
+
+my_constants.nx = 4
+my_constants.ny = 4
+my_constants.nz = 64000
+amr.max_grid_size = 16000
+
+my_constants.prob_lo_x = -8.e-6
+my_constants.prob_lo_y = -8.e-6
+my_constants.prob_lo_z = -320.e-6
+
+my_constants.prob_hi_x = 8.e-6
+my_constants.prob_hi_y = 8.e-6
+my_constants.prob_hi_z = 320.e-6
 
 # number of grid points
-amr.n_cell =  32 32 1600
+amr.n_cell = nx ny nz
 
-# Maximum allowable size of each subdomain in the problem domain;
-#    this is used to decompose the domain for parallel calculations.
-amr.max_grid_size = 400
+amr.blocking_factor = 4
 
 # Maximum level in hierarchy (for now must be 0, i.e., one level in total)
 amr.max_level = 0
@@ -16,35 +27,34 @@ geometry.coord_sys   = 0                     # 0: Cartesian
 geometry.dims = 3
 boundary.field_lo = periodic periodic pml
 boundary.field_hi = periodic periodic pml
-geometry.prob_lo     =  -8.e-6 -8.e-6 -8.e-6
-geometry.prob_hi     =   8.e-6  8.e-6  8.e-6
+geometry.prob_lo = prob_lo_x prob_lo_y prob_lo_z
+geometry.prob_hi = prob_hi_x prob_hi_y prob_hi_z
 amr.max_level = 0
 
-my_constants.dx = 16.e-6 / 32
-my_constants.dy = 16.e-6 / 32
-my_constants.dz = 16.e-6 / 1600
-my_constants.ddz = dz / 100
+my_constants.dx = (prob_hi_x-prob_lo_x) / nx
+my_constants.dy = (prob_hi_y-prob_lo_y) / ny
+my_constants.dz = (prob_hi_z-prob_lo_z) / nz
+
 my_constants.ddx = dx / 100
+my_constants.ddz = dz / 100
 
 # Verbosity
 warpx.verbose = 1
 
-# Algorithms
-algo.current_deposition = esirkepov
-
-
-my_constants.sigma = 0.0
+my_constants.sigma = 1.e7
 my_constants.eps_r = 1.0
 my_constants.mu_r = 1.0
-my_constants.min_box = -8.e-6
-my_constants.max_box = 8.e-6
+
 algo.em_solver_medium = Macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = backwardeuler # laxwendroff or backwardeuler
+
 macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
-macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
-macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
 macroscopic.sigma_function(x,y,z) = "sigma"
+
+macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
 macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
+
+macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
 macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
 
 # CFL
@@ -52,24 +62,29 @@ warpx.cfl = 0.9
 
 #London
 algo.yee_coupled_solver = MaxwellLondon
-london.penetration_depth = 4.e-6
+london.penetration_depth = 400.e-9
 london.superconductor_function(x,y,z) = "1."
-#london.superconductor_function(x,y,z) = "0.0"
 
 my_constants.pi = 3.14159265359
 my_constants.c = 299792458.
-#my_constants.wavelength = 3.e-6
+
+my_constants.wavelength = 3.e-2 # 10 GHz  (~3M time steps per period)
+my_constants.wavelength = 3.e-3 # 100 GHz (~300k time steps per period)
+my_constants.wavelength = 3.e-4 # 1 THz   (~30k time steps per period)
+#my_constants.wavelength = 3.e-6 # 100 THz (~300 time steps per period)
+
 my_constants.obs = 0.0
-my_constants.len = 3.e-6
+my_constants.len = 150.e-9
 
 warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-#warpx.Ey_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength)"
-warpx.Ey_excitation_grid_function(x,y,z,t) = "1."
-#warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength)"
+#arpx.Ey_excitation_grid_function(x,y,z,t) = "1."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 warpx.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
+
 #warpx.Bx_excitation_grid_function(x,y,z,t)= "-sin(2*pi*c*t/wavelength)/c"
 #warpx.Bx_excitation_grid_function(x,y,z,t)= "1."
 warpx.Bx_excitation_grid_function(x,y,z,t)= "0."
@@ -85,11 +100,11 @@ warpx.Bz_excitation_flag_function(x,y,z) = "0."
 warpx.Bx_excitation_flag_function(x,y,z) = "0. + 2*(z>(obs-dz/2-ddz))*(z<(obs+ddz))"
 
 # Diagnostics
-diagnostics.diags_names = diag1
-diag1.intervals = 100
-diag1.diag_type = Full
-#diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz sigma epsilon mu
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz superconductor sigma epsilon mu Bx_sc By_sc Bz_sc
+diagnostics.diags_names = plt
+plt.intervals = 100
+plt.diag_type = Full
+#plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz superconductor sigma epsilon mu Bx_sc By_sc Bz_sc
+plt.fields_to_plot = Ey Bx
 
 # Remove species
 particles.nspecies = 0
