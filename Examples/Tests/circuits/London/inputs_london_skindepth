@@ -1,5 +1,5 @@
 # Maximum number of time steps
-max_step = 3000
+max_step = 1500
 
 my_constants.nx = 2
 my_constants.ny = 2
@@ -100,11 +100,14 @@ warpx.Bz_excitation_flag_function(x,y,z) = "0."
 warpx.Bx_excitation_flag_function(x,y,z) = "0. + 2*(z>(obs-dz/2-ddz))*(z<(obs+ddz))"
 
 # Diagnostics
-diagnostics.diags_names = plt
+diagnostics.diags_names = plt chk
 plt.intervals = 100
 plt.diag_type = Full
 #plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz superconductor sigma epsilon mu Bx_sc By_sc Bz_sc
 plt.fields_to_plot = Ey Bx
+
+chk.format = checkpoint
+chk.intervals = 500000
 
 # Remove species
 particles.nspecies = 0
