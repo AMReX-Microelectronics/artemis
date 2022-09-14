@@ -1,18 +1,18 @@
 # Maximum number of time steps
-max_step = 30000
+max_step = 3000
 
 my_constants.nx = 4
 my_constants.ny = 4
-my_constants.nz = 64000
-amr.max_grid_size = 16000
+my_constants.nz = 6400
+amr.max_grid_size = 1600
 
 my_constants.prob_lo_x = -8.e-6
 my_constants.prob_lo_y = -8.e-6
-my_constants.prob_lo_z = -320.e-6
+my_constants.prob_lo_z = -32.e-6
 
 my_constants.prob_hi_x = 8.e-6
 my_constants.prob_hi_y = 8.e-6
-my_constants.prob_hi_z = 320.e-6
+my_constants.prob_hi_z = 32.e-6
 
 # number of grid points
 amr.n_cell = nx ny nz
@@ -71,7 +71,7 @@ my_constants.c = 299792458.
 my_constants.wavelength = 3.e-2 # 10 GHz  (~3M time steps per period)
 my_constants.wavelength = 3.e-3 # 100 GHz (~300k time steps per period)
 my_constants.wavelength = 3.e-4 # 1 THz   (~30k time steps per period)
-#my_constants.wavelength = 3.e-6 # 100 THz (~300 time steps per period)
+my_constants.wavelength = 3.e-6 # 100 THz (~300 time steps per period)
 
 my_constants.obs = 0.0
 my_constants.len = 150.e-9
