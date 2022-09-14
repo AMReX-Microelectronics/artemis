@@ -552,6 +552,45 @@ WarpX::PushPSATD ()
 }
 
 void
+WarpX::EvolveBLondon (amrex::Real a_dt, DtType a_dt_type)
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        EvolveBLondon(lev, a_dt, a_dt_type);
+    }
+}
+
+void
+WarpX::EvolveBLondon (int lev, amrex::Real a_dt, DtType a_dt_type)
+{
+    WARPX_PROFILE("WarpX::EvolveBLondon()");
+    EvolveBLondon(lev, PatchType::fine, a_dt, a_dt_type);
+    if (lev > 0)
+    {
+        EvolveBLondon(lev, PatchType::coarse, a_dt, a_dt_type);
+    }
+}
+
+void
+WarpX::EvolveBLondon (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
+{
+    amrex::ignore_unused(a_dt_type);
+    // Evolve B field in regular cells
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->EvolveBLondon(Bfield_sc_fp[lev], current_fp[lev], G_fp[lev],
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt,
+                                       m_london->m_penetration_depth);
+    } else {
+        m_fdtd_solver_cp[lev]->EvolveBLondon(Bfield_sc_fp[lev], current_cp[lev], G_cp[lev],
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt,
+                                       m_london->m_penetration_depth);
+    }
+
+}
+
+
+void
 WarpX::EvolveB (amrex::Real a_dt, DtType a_dt_type)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {

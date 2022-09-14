@@ -509,6 +509,61 @@ WarpX::FillBoundaryE_avg (IntVect ng)
     }
 }
 
+void
+WarpX::FillBoundaryJ (amrex::IntVect ng)
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        FillBoundaryJ(lev, ng);
+    }
+}
+
+void
+WarpX::FillBoundaryJ (int lev, amrex::IntVect ng)
+{
+    FillBoundaryJ (lev, PatchType::fine, ng);
+    if (lev > 0) FillBoundaryJ (lev, PatchType::coarse, ng);
+}
+
+void
+WarpX::FillBoundaryJ (const int lev, const PatchType patch_type, const amrex::IntVect ng)
+{
+    std::array<amrex::MultiFab*, 3> mf;
+    amrex::Periodicity period;
+
+    if (patch_type == PatchType::fine)
+    {
+        mf     = {current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get()};
+        period = Geom(lev).periodicity();
+    } else {
+        mf     = {current_cp[lev][0].get(), current_cp[lev][1].get(), current_cp[lev][2].get()};
+        period = Geom(lev-1).periodicity();
+    }
+
+    if (do_pml)
+    {
+        if (pml[lev] && pml[lev]->ok())
+        {
+            std::array<amrex::MultiFab*,3> mf_pml =
+                (patch_type == PatchType::fine) ? pml[lev]->Getj_fp() : pml[lev]->Getj_cp();
+
+            pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
+            pml[lev]->FillBoundaryE(patch_type);
+        }
+    // note that fillBoundaryJ is not done in RZ as it is used only in 3D for london module.
+    }
+
+    // Fill guard cells in valid domain
+    for (int i = 0; i < 3; ++i)
+    {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ng <= mf[i]->nGrowVect(),
+            "Error: in FillBoundaryJ, requested more guard cells than allocated");
+
+        const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        WarpXCommUtil::FillBoundary(*mf[i], nghost, period);
+    }
+
+}
 
 void
 WarpX::FillBoundaryE(int lev, IntVect ng)
