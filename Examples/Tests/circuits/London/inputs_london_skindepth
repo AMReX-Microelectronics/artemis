@@ -4,7 +4,7 @@ max_step = 1500
 my_constants.nx = 2
 my_constants.ny = 2
 my_constants.nz = 6400
-amr.max_grid_size = 1600
+amr.max_grid_size = 6400  # GPU sweet spot is ~160000
 
 my_constants.prob_lo_x = -8.e-6
 my_constants.prob_lo_y = -8.e-6
@@ -80,7 +80,7 @@ warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength)"
-#arpx.Ey_excitation_grid_function(x,y,z,t) = "1."
+#warpx.Ey_excitation_grid_function(x,y,z,t) = "1."
 warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 warpx.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
@@ -108,6 +108,7 @@ plt.fields_to_plot = Ey Bx
 
 chk.format = checkpoint
 chk.intervals = 500000
+chk.diag_type = Full
 
 # Remove species
 particles.nspecies = 0
