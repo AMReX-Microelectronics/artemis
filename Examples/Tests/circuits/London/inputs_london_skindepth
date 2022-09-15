@@ -1,18 +1,47 @@
-# Maximum number of time steps
-max_step = 1500
+my_constants.wavelength = 3.e-2 # 10 GHz  (~3M time steps per period)
+max_step = 20000000
+my_constants.prob_lo_z = -32.e-2
+my_constants.prob_hi_z = 32.e-2
+my_constants.nz = 64000000
+amr.max_grid_size = 160000
+plt.intervals = 1000000
+
+my_constants.wavelength = 3.e-3 # 100 GHz (~300k time steps per period)
+max_step = 2000000
+my_constants.prob_lo_z = -32.e-3
+my_constants.prob_hi_z = 32.e-3
+my_constants.nz = 6400000
+amr.max_grid_size = 160000
+plt.intervals = 100000
+
+my_constants.wavelength = 3.e-4 # 1 THz   (~30k time steps per period)
+max_step = 200000
+my_constants.prob_lo_z = -32.e-4
+my_constants.prob_hi_z = 32.e-4
+my_constants.nz = 640000
+amr.max_grid_size = 160000
+plt.intervals = 10000
+
+my_constants.wavelength = 3.e-6 # 100 THz (~300 time steps per period)
+max_step = 2000
+my_constants.prob_lo_z = -32.e-6
+my_constants.prob_hi_z = 32.e-6
+my_constants.nz = 6400
+amr.max_grid_size = 6400
+plt.intervals = 100
+
+my_constants.sigma = 0.0
+my_constants.obs = 0.0
+my_constants.len = 400.e-9    # modify this (increments on 10nm) based on the choice of wavelength and sigma
 
 my_constants.nx = 2
 my_constants.ny = 2
-my_constants.nz = 6400
-amr.max_grid_size = 6400  # GPU sweet spot is ~160000
 
 my_constants.prob_lo_x = -8.e-6
-my_constants.prob_lo_y = -8.e-6
-my_constants.prob_lo_z = -32.e-6
-
 my_constants.prob_hi_x = 8.e-6
+
+my_constants.prob_lo_y = -8.e-6
 my_constants.prob_hi_y = 8.e-6
-my_constants.prob_hi_z = 32.e-6
 
 # number of grid points
 amr.n_cell = nx ny nz
@@ -41,7 +70,6 @@ my_constants.ddz = dz / 100
 # Verbosity
 warpx.verbose = 1
 
-my_constants.sigma = 1.e7
 my_constants.eps_r = 1.0
 my_constants.mu_r = 1.0
 
@@ -68,14 +96,6 @@ london.superconductor_function(x,y,z) = "1."
 my_constants.pi = 3.14159265359
 my_constants.c = 299792458.
 
-my_constants.wavelength = 3.e-2 # 10 GHz  (~3M time steps per period)
-my_constants.wavelength = 3.e-3 # 100 GHz (~300k time steps per period)
-my_constants.wavelength = 3.e-4 # 1 THz   (~30k time steps per period)
-my_constants.wavelength = 3.e-6 # 100 THz (~300 time steps per period)
-
-my_constants.obs = 0.0
-my_constants.len = 150.e-9
-
 warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
@@ -86,24 +106,22 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 warpx.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
 
 #warpx.Bx_excitation_grid_function(x,y,z,t)= "-sin(2*pi*c*t/wavelength)/c"
-#warpx.Bx_excitation_grid_function(x,y,z,t)= "1."
-warpx.Bx_excitation_grid_function(x,y,z,t)= "0."
-warpx.By_excitation_grid_function(x,y,z,t)= "0."
+#warpx.Bx_excitation_grid_function(x,y,z,t) = "1."
+warpx.Bx_excitation_grid_function(x,y,z,t) = "0."
+warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
-warpx.Ez_excitation_flag_function(x,y,z) = "0."
 warpx.Ex_excitation_flag_function(x,y,z) = "0."
 warpx.Ey_excitation_flag_function(x,y,z) = "0. + 2*(z>(obs-dz/2-ddz))*(z<(obs+ddz))"
+warpx.Ez_excitation_flag_function(x,y,z) = "0."
 
+warpx.Bx_excitation_flag_function(x,y,z) = "0. + 2*(z>(obs-dz/2-ddz))*(z<(obs+ddz))"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
-warpx.Bx_excitation_flag_function(x,y,z) = "0. + 2*(z>(obs-dz/2-ddz))*(z<(obs+ddz))"
 
 # Diagnostics
 diagnostics.diags_names = plt chk
-plt.intervals = 100
 plt.diag_type = Full
-#plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz superconductor sigma epsilon mu Bx_sc By_sc Bz_sc
 plt.fields_to_plot = Ey Bx
 
 chk.format = checkpoint
