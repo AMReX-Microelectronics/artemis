@@ -23,6 +23,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
 #include "Utils/MPIInitHelpers.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -112,6 +113,226 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
 }
 
 void
+WarpX::PrintMainPICparameters ()
+{
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
+    amrex::Print() << "--------------------------- MAIN EM PIC PARAMETERS ----------------------------\n";
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
+
+    // Print geometry dimensionality
+    amrex::ParmParse pp_geometry("geometry");
+    std::string dims;
+    pp_geometry.query( "dims", dims );
+    if (dims=="1") {
+      amrex::Print() << "Geometry:             | 1D (Z)" << "\n";
+    }
+    else if (dims=="2") {
+      amrex::Print() << "Geometry:             | 2D (XZ)" << "\n";
+    }
+    else if (dims=="3") {
+      amrex::Print() << "Geometry:             | 3D (XYZ)" << "\n";
+    }
+    else if (dims=="RZ") {
+      amrex::Print() << "Geometry:             | 2D (RZ)" << "\n";
+    }
+
+    #ifdef WARPX_DIM_RZ
+      amrex::Print() << "                      | - n_rz_azimuthal_modes = " <<
+                     WarpX::n_rz_azimuthal_modes << "\n";
+    #endif // WARPX_USE_RZ
+    //Print solver's operation mode (e.g., EM or electrostatic)
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - laboratory frame" << "\n";
+    }
+    else if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - relativistic" << "\n";
+    }
+    else{
+      amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
+    }
+    if (em_solver_medium == MediumForEM::Vacuum ){
+      amrex::Print() << "                      | - vacuum" << "\n";
+    }
+    else if (em_solver_medium == MediumForEM::Macroscopic ){
+      amrex::Print() << "                      | - macroscopic" << "\n";
+    }
+    if ( (em_solver_medium == MediumForEM::Macroscopic) &&
+       (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff)){
+      amrex::Print() << "                      |  - Lax-Wendroff algorithm\n";
+      }
+    else if ((em_solver_medium == MediumForEM::Macroscopic) &&
+            (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler)){
+      amrex::Print() << "                      |  - Backward Euler algorithm\n";
+      }
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
+    // Print type of current deposition
+    if (current_deposition_algo == CurrentDepositionAlgo::Direct){
+      amrex::Print() << "Current Deposition:   | direct \n";
+    }
+    else if (current_deposition_algo == CurrentDepositionAlgo::Vay){
+      amrex::Print() << "Current Deposition:   | Vay \n";
+    }
+    else if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov){
+      amrex::Print() << "Current Deposition:   | Esirkepov \n";
+    }
+    // Print type of particle pusher
+    if (particle_pusher_algo == ParticlePusherAlgo::Vay){
+      amrex::Print() << "Particle Pusher:      | Vay \n";
+    }
+    else if (particle_pusher_algo == ParticlePusherAlgo::HigueraCary){
+      amrex::Print() << "Particle Pusher:      | Higuera-Cary \n";
+    }
+    else if (particle_pusher_algo == ParticlePusherAlgo::Boris){
+      amrex::Print() << "Particle Pusher:      | Boris \n";
+    }
+    // Print type of charge deposition
+    if (charge_deposition_algo == ChargeDepositionAlgo::Standard){
+      amrex::Print() << "Charge Deposition:    | standard \n";
+    }
+    // Print field gathering algorithm
+    if (field_gathering_algo == GatheringAlgo::MomentumConserving){
+      amrex::Print() << "Field Gathering:      | momentum-conserving \n";
+    }
+    else{
+      amrex::Print() << "Field Gathering:      | energy-conserving \n";
+    }
+    // Print particle's shape factors
+    amrex::Print() << "Particle Shape Factor:| " << WarpX::nox << "\n";
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
+    // Print solver's type: Yee, CKC, ECT
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee){
+      amrex::Print() << "Maxwell Solver:       | Yee \n";
+      }
+    else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
+      amrex::Print() << "Maxwell Solver:       | CKC \n";
+    }
+    else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+      amrex::Print() << "Maxwell Solver:       | ECT \n";
+    }
+  #ifdef WARPX_USE_PSATD
+    // Print PSATD solver's configuration
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+      amrex::Print() << "Maxwell Solver:       | PSATD \n";
+      }
+    if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
+      amrex::Print() << "                      | - Galilean \n" <<
+      "                      |  - v_galilean = (" << m_v_galilean[0] << "," <<
+                              m_v_galilean[1] << "," << m_v_galilean[2] << ")\n";
+      }
+    if ((m_v_comoving[0]!=0) or (m_v_comoving[1]!=0) or (m_v_comoving[2]!=0)) {
+      amrex::Print() << "                      | - comoving \n" <<
+      "                      |  - v_comoving = (" << m_v_comoving[0] << "," <<
+                              m_v_comoving[1] << "," << m_v_comoving[2] << ")\n";
+      }
+    if (WarpX::update_with_rho==1) {
+      amrex::Print() << "                      | - update with rho is ON \n";
+      }
+    if (current_correction==1) {
+      amrex::Print() << "                      | - current correction is ON \n";
+        }
+    if (WarpX::do_dive_cleaning==1) {
+      amrex::Print() << "                      | - div(E) cleaning is ON \n";
+      }
+    if (WarpX::do_divb_cleaning==1) {
+      amrex::Print() << "                      | - div(B) cleaning is ON \n";
+      }
+    if (do_multi_J == 1){
+      amrex::Print() << "                      | - multi-J deposition is ON \n";
+      amrex::Print() << "                      |   - do_multi_J_n_depositions = "
+                                        << WarpX::do_multi_J_n_depositions << "\n";
+    }
+    if (fft_do_time_averaging == 1){
+      amrex::Print()<<"                      | - time-averaged is ON \n";
+    }
+  #endif // WARPX_USE_PSATD
+
+  if (do_nodal==1){
+    amrex::Print() << "                      | - nodal mode \n";
+  }
+  #ifdef WARPX_USE_PSATD
+    if ( (do_nodal==0) && (field_gathering_algo == GatheringAlgo::EnergyConserving) ){
+      amrex::Print()<<"                      | - staggered mode " << "\n";
+    }
+    else if ( (do_nodal==0) && (field_gathering_algo == GatheringAlgo::MomentumConserving) ){
+    if (dims=="3"){
+      amrex::Print() << "                      |   - field_centering_nox = " << WarpX::field_centering_nox << "\n";
+      amrex::Print() << "                      |   - field_centering_noy = " << WarpX::field_centering_noy << "\n";
+      amrex::Print() << "                      |   - field_centering_noz = " << WarpX::field_centering_noz << "\n";
+      amrex::Print() << "                      |   - current_centering_nox = " << WarpX::current_centering_nox << "\n";
+      amrex::Print() << "                      |   - current_centering_noy = " << WarpX::current_centering_noy << "\n";
+      amrex::Print() << "                      |   - current_centering_noz = " << WarpX::current_centering_noz << "\n";
+    }
+    else if (dims=="2"){
+      amrex::Print() << "                      |   - field_centering_nox = " << WarpX::field_centering_nox << "\n";
+      amrex::Print() << "                      |   - field_centering_noz = " << WarpX::field_centering_noz << "\n";
+      amrex::Print() << "                      |   - current_centering_nox = " << WarpX::current_centering_nox << "\n";
+      amrex::Print() << "                      |   - current_centering_noz = " << WarpX::current_centering_noz << "\n";
+     }
+    else if (dims=="1"){
+      amrex::Print() << "                      |   - field_centering_noz = " << WarpX::field_centering_noz << "\n";
+      amrex::Print() << "                      |   - current_centering_noz = " << WarpX::current_centering_noz << "\n";
+     }
+    }
+    if (WarpX::use_hybrid_QED == true){
+      amrex::Print() << "                      | - use_hybrid_QED = true \n";
+    }
+
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+    // Print solver's order
+      std::string psatd_nox_fft, psatd_noy_fft, psatd_noz_fft;
+      psatd_nox_fft = (nox_fft == -1) ? "inf" : std::to_string(nox_fft);
+      psatd_noy_fft = (noy_fft == -1) ? "inf" : std::to_string(noy_fft);
+      psatd_noz_fft = (noz_fft == -1) ? "inf" : std::to_string(noz_fft);
+
+      if (dims=="3" ){
+        amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
+        amrex::Print() << "                      | - psatd.noy = " << psatd_noy_fft << "\n";
+        amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
+      }
+      else if (dims=="2" and WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+        amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
+        amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
+      }
+      else if (dims=="1" and WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+        amrex::Print() << "Spectral order:       | - psatd.noz = " << psatd_noz_fft << "\n";
+      }
+    }
+    // Print guard cells number
+    amrex::Print() << "Guard cells           | - ng_alloc_EB = " << guard_cells.ng_alloc_EB << "\n";
+    amrex::Print() << " (allocated for E/B)  | \n";
+
+    #endif // WARPX_USE_PSATD
+    amrex::Print() << "-------------------------------------------------------------------------------" << "\n";
+    //Print main boosted frame algorithm's parameters
+    if (WarpX::gamma_boost!=1){
+    amrex::Print() << "Boosted Frame:        |    ON  \n";
+    amrex::Print() << "                      |  - gamma_boost = " << WarpX::gamma_boost << "\n";
+    amrex::Print() << "                      |  - boost_direction = (" << WarpX::boost_direction[0] <<
+                             "," << WarpX::boost_direction[1] << "," << WarpX::boost_direction[2] << ")\n";
+    amrex::Print() << "------------------------------------------------------------------------------- \n";
+    }
+    //Print moving window details
+    if (WarpX::do_moving_window == 1){
+      amrex::Print() << "Moving window:        |    ON  \n";
+      if (WarpX::moving_window_dir == 0){
+        amrex::Print() << "                      |  - moving_window_dir = x \n";
+      }
+      #if defined(WARPX_DIM_3D)
+      else if (WarpX::moving_window_dir == 1){
+        amrex::Print() << "                      |  - moving_window_dir = y \n";
+      }
+      #endif
+      else if (WarpX::moving_window_dir == WARPX_ZINDEX) {
+        amrex::Print() << "                      |  - moving_window_dir = z \n";
+      }
+      amrex::Print() << "                      |  - moving_window_v = " << WarpX::moving_window_v << "\n";
+      amrex::Print() << "------------------------------------------------------------------------------- \n";
+    }
+}
+
+void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
@@ -153,6 +374,11 @@ WarpX::InitData ()
         m_macroscopic_properties->InitData();
     }
 
+    if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+        amrex::Print() << " calling london \n";
+        m_london->InitData();
+    }
+
     InitDiagnostics();
 
     if (ParallelDescriptor::IOProcessor()) {
@@ -163,6 +389,8 @@ WarpX::InitData ()
     // Check that the number of guard cells is smaller than the number of valid cells for all MultiFabs
     // (example: a box with 16 valid cells and 32 guard cells in z will not be considered valid)
     CheckGuardCells();
+
+    PrintMainPICparameters();
 
     if (restart_chkfile.empty())
     {
@@ -228,24 +456,21 @@ WarpX::InitFromScratch ()
 void
 WarpX::InitPML ()
 {
-
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
             do_pml = 1;
-            do_pml_Lo[idim] = 1;
+            do_pml_Lo[0][idim] = 1; // on level 0
         }
         if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) {
             do_pml = 1;
-            do_pml_Hi[idim] = 1;
+            do_pml_Hi[0][idim] = 1; // on level 0
         }
     }
     if (finest_level > 0) do_pml = 1;
     if (do_pml)
     {
-        amrex::IntVect do_pml_Lo_corrected = do_pml_Lo;
-
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-        do_pml_Lo_corrected[0] = 0; // no PML at r=0, in cylindrical geometry
+        do_pml_Lo[0][0] = 0; // no PML at r=0, in cylindrical geometry
         pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell, do_pml_in_domain);
 #else
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
@@ -255,28 +480,29 @@ WarpX::InitPML ()
                              do_multi_J,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
                              guard_cells.ng_FieldSolver.max(),
-                             do_pml_Lo_corrected, do_pml_Hi);
+                             v_particle_pml,
+                             do_pml_Lo[0], do_pml_Hi[0]);
 #endif
 
         for (int lev = 1; lev <= finest_level; ++lev)
         {
-            amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
-            amrex::IntVect do_pml_Hi_MR = amrex::IntVect::TheUnitVector();
+            do_pml_Lo[lev] = amrex::IntVect::TheUnitVector();
+            do_pml_Hi[lev] = amrex::IntVect::TheUnitVector();
             // check if fine patch edges co-incide with domain boundary
             amrex::Box levelBox = boxArray(lev).minimalBox();
             // Domain box at level, lev
             amrex::Box DomainBox = Geom(lev).Domain();
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 if (levelBox.smallEnd(idim) == DomainBox.smallEnd(idim))
-                    do_pml_Lo_MR[idim] = do_pml_Lo[idim];
+                    do_pml_Lo[lev][idim] = do_pml_Lo[0][idim];
                 if (levelBox.bigEnd(idim) == DomainBox.bigEnd(idim))
-                    do_pml_Hi_MR[idim] = do_pml_Hi[idim];
+                    do_pml_Hi[lev][idim] = do_pml_Hi[0][idim];
             }
 
 #ifdef WARPX_DIM_RZ
             //In cylindrical geometry, if the edge of the patch is at r=0, do not add PML
             if ((max_level > 0) && (fine_tag_lo[0]==0.)) {
-                do_pml_Lo_MR[0] = 0;
+                do_pml_Lo[lev][0] = 0;
             }
 #endif
             pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
@@ -286,7 +512,8 @@ WarpX::InitPML ()
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
                                    do_multi_J, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    guard_cells.ng_FieldSolver.max(),
-                                   do_pml_Lo_MR, do_pml_Hi_MR);
+                                   v_particle_pml,
+                                   do_pml_Lo[lev], do_pml_Hi[lev]);
         }
     }
 }
@@ -334,16 +561,16 @@ void
 WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
     // Sanity checks: can use zmax_plasma_to_compute_max_step only if
     // the moving window and the boost are all in z direction.
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         WarpX::moving_window_dir == WARPX_ZINDEX,
-        "Can use zmax_plasma_to_compute_max_step only if " +
+        "Can use zmax_plasma_to_compute_max_step only if "
         "moving window along z. TODO: all directions.");
     if (gamma_boost > 1){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (WarpX::boost_direction[0]-0)*(WarpX::boost_direction[0]-0) +
             (WarpX::boost_direction[1]-0)*(WarpX::boost_direction[1]-0) +
             (WarpX::boost_direction[2]-1)*(WarpX::boost_direction[2]-1) < 1.e-12,
-            "Can use zmax_plasma_to_compute_max_step in boosted frame only if " +
+            "Can use zmax_plasma_to_compute_max_step in boosted frame only if "
             "warpx.boost_direction = z. TODO: all directions.");
     }
 
@@ -469,112 +696,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    ::tolower);
 #endif
 
-    // Query for type of external space-time (xt) varying excitation
-    pp_warpx.query("B_excitation_on_grid_style", B_excitation_grid_s);
-    std::transform(B_excitation_grid_s.begin(),
-               B_excitation_grid_s.end(),
-               B_excitation_grid_s.begin(),
-               ::tolower);
-
-#ifdef WARPX_MAG_LLG
-    if (pp_warpx.query("B_excitation_on_grid_style", B_excitation_grid_s)) {
-        amrex::Abort("ERROR: Excitation of B field is not allowed in the LLG simulation! \nThe excited magnetic field must be H field! \n");
-    }
-#endif
-
-    pp_warpx.query("E_excitation_on_grid_style", E_excitation_grid_s);
-    std::transform(E_excitation_grid_s.begin(),
-                   E_excitation_grid_s.end(),
-                   E_excitation_grid_s.begin(),
-                   ::tolower);
-
-#ifdef WARPX_MAG_LLG
-    pp_warpx.query("H_excitation_on_grid_style", H_excitation_grid_s);
-    std::transform(H_excitation_grid_s.begin(),
-                   H_excitation_grid_s.end(),
-                   H_excitation_grid_s.begin(),
-                   ::tolower);
-    pp_warpx.query("H_bias_excitation_on_grid_style", H_bias_excitation_grid_s);
-    std::transform(H_bias_excitation_grid_s.begin(),
-                   H_bias_excitation_grid_s.end(),
-                   H_bias_excitation_grid_s.begin(),
-                   ::tolower);
-#endif
-    if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
-        // if E excitation type is set to parser then the corresponding
-        // source type (hard=1, soft=2) must be specified for all components
-        // using the flag function. Note that a flag value of 0 will not update
-        // the field with the excitation.
-        Store_parserString(pp_warpx, "Ex_excitation_flag_function(x,y,z)",
-                                str_Ex_excitation_flag_function);
-        Store_parserString(pp_warpx, "Ey_excitation_flag_function(x,y,z)",
-                                str_Ey_excitation_flag_function);
-        Store_parserString(pp_warpx, "Ez_excitation_flag_function(x,y,z)",
-                                str_Ez_excitation_flag_function);
-        Exfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Ex_excitation_flag_function,{"x","y","z"}));
-        Eyfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Ey_excitation_flag_function,{"x","y","z"}));
-        Ezfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Ez_excitation_flag_function,{"x","y","z"}));
-    }
-    if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
-        // if B excitation type is set to parser then the corresponding
-        // source type (hard=1, soft=2) must be specified for all components
-        // using the flag function. Note that a flag value of 0 will not update
-        // the field with the excitation.
-        Store_parserString(pp_warpx, "Bx_excitation_flag_function(x,y,z)",
-                                str_Bx_excitation_flag_function);
-        Store_parserString(pp_warpx, "By_excitation_flag_function(x,y,z)",
-                                str_By_excitation_flag_function);
-        Store_parserString(pp_warpx, "Bz_excitation_flag_function(x,y,z)",
-                                str_Bz_excitation_flag_function);
-        Bxfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Bx_excitation_flag_function,{"x","y","z"}));
-        Byfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_By_excitation_flag_function,{"x","y","z"}));
-        Bzfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Bz_excitation_flag_function,{"x","y","z"}));
-    }
-
-#ifdef WARPX_MAG_LLG
-    if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
-        // if H excitation type is set to parser then the corresponding
-        // source type (hard=1, soft=2) must be specified for all components
-        // using the flag function. Note that a flag value of 0 will not update
-        // the field with the excitation.
-        Store_parserString(pp_warpx, "Hx_excitation_flag_function(x,y,z)",
-                                str_Hx_excitation_flag_function);
-        Store_parserString(pp_warpx, "Hy_excitation_flag_function(x,y,z)",
-                                str_Hy_excitation_flag_function);
-        Store_parserString(pp_warpx, "Hz_excitation_flag_function(x,y,z)",
-                                str_Hz_excitation_flag_function);
-        Hxfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hx_excitation_flag_function,{"x","y","z"}));
-        Hyfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hy_excitation_flag_function,{"x","y","z"}));
-        Hzfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hz_excitation_flag_function,{"x","y","z"}));
-    }
-    if (H_bias_excitation_grid_s == "parse_h_bias_excitation_grid_function") {
-        // if H bias_excitation type is set to parser then the corresponding
-        // source type (hard=1, soft=2) must be specified for all components
-        // using the flag function. Note that a flag value of 0 will not update
-        // the field with the excitation.
-        Store_parserString(pp_warpx, "Hx_bias_excitation_flag_function(x,y,z)",
-                                str_Hx_bias_excitation_flag_function);
-        Store_parserString(pp_warpx, "Hy_bias_excitation_flag_function(x,y,z)",
-                                str_Hy_bias_excitation_flag_function);
-        Store_parserString(pp_warpx, "Hz_bias_excitation_flag_function(x,y,z)",
-                                str_Hz_bias_excitation_flag_function);
-        Hx_biasfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hx_bias_excitation_flag_function,{"x","y","z"}));
-        Hy_biasfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hy_bias_excitation_flag_function,{"x","y","z"}));
-        Hz_biasfield_flag_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hz_bias_excitation_flag_function,{"x","y","z"}));
-    }
-#endif
     // * Functions with the string "arr" in their names get an Array of
     //   values from the given entry in the table.  The array argument is
     //   resized (if necessary) to hold all the values requested.
@@ -592,82 +713,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (E_ext_grid_s == "constant")
         getArrWithParser(pp_warpx, "E_external_grid", E_external_grid);
 
-    // make parser for the external B-excitation in space-time
-    if (B_excitation_grid_s == "parse_b_excitation_grid_function") {
-#ifdef WARPX_DIM_RZ
-       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
-#endif
-       Store_parserString(pp_warpx, "Bx_excitation_grid_function(x,y,z,t)",
-                                                    str_Bx_excitation_grid_function);
-       Store_parserString(pp_warpx, "By_excitation_grid_function(x,y,z,t)",
-                                                    str_By_excitation_grid_function);
-       Store_parserString(pp_warpx, "Bz_excitation_grid_function(x,y,z,t)",
-                                                    str_Bz_excitation_grid_function);
-       Bxfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Bx_excitation_grid_function,{"x","y","z","t"}));
-       Byfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_By_excitation_grid_function,{"x","y","z","t"}));
-       Bzfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Bz_excitation_grid_function,{"x","y","z","t"}));
-    }
-
-    // make parser for the external E-excitation in space-time
-    if (E_excitation_grid_s == "parse_e_excitation_grid_function") {
-#ifdef WARPX_DIM_RZ
-       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
-#endif
-       Store_parserString(pp_warpx, "Ex_excitation_grid_function(x,y,z,t)",
-                                                    str_Ex_excitation_grid_function);
-       Store_parserString(pp_warpx, "Ey_excitation_grid_function(x,y,z,t)",
-                                                    str_Ey_excitation_grid_function);
-       Store_parserString(pp_warpx, "Ez_excitation_grid_function(x,y,z,t)",
-                                                    str_Ez_excitation_grid_function);
-       Exfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Ex_excitation_grid_function,{"x","y","z","t"}));
-       Eyfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Ey_excitation_grid_function,{"x","y","z","t"}));
-       Ezfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Ez_excitation_grid_function,{"x","y","z","t"}));
-    }
-
-#ifdef WARPX_MAG_LLG
-    // make parser for the external H-excitation in space-time
-    if (H_excitation_grid_s == "parse_h_excitation_grid_function") {
-#ifdef WARPX_DIM_RZ
-       amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
-#endif
-       Store_parserString(pp_warpx, "Hx_excitation_grid_function(x,y,z,t)",
-                                                    str_Hx_excitation_grid_function);
-       Store_parserString(pp_warpx, "Hy_excitation_grid_function(x,y,z,t)",
-                                                    str_Hy_excitation_grid_function);
-       Store_parserString(pp_warpx, "Hz_excitation_grid_function(x,y,z,t)",
-                                                    str_Hz_excitation_grid_function);
-       Hxfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hx_excitation_grid_function,{"x","y","z","t"}));
-       Hyfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hy_excitation_grid_function,{"x","y","z","t"}));
-       Hzfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hz_excitation_grid_function,{"x","y","z","t"}));
-    }
-    // make parser for the external H-biasexcitation in space-time
-    if (H_bias_excitation_grid_s == "parse_h_bias_excitation_grid_function") {
-#ifdef WARPX_DIM_RZ
-       amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
-#endif
-       Store_parserString(pp_warpx, "Hx_bias_excitation_grid_function(x,y,z,t)",
-                                                    str_Hx_bias_excitation_grid_function);
-       Store_parserString(pp_warpx, "Hy_bias_excitation_grid_function(x,y,z,t)",
-                                                    str_Hy_bias_excitation_grid_function);
-       Store_parserString(pp_warpx, "Hz_bias_excitation_grid_function(x,y,z,t)",
-                                                    str_Hz_bias_excitation_grid_function);
-       Hx_biasfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hx_bias_excitation_grid_function,{"x","y","z","t"}));
-       Hy_biasfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hy_bias_excitation_grid_function,{"x","y","z","t"}));
-       Hz_biasfield_xt_grid_parser = std::make_unique<amrex::Parser>(
-                   makeParser(str_Hz_bias_excitation_grid_function,{"x","y","z","t"}));
-    }
-#endif
 
 #ifdef WARPX_MAG_LLG
     if (M_ext_grid_s == "constant")
@@ -688,6 +733,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         current_fp[lev][i]->setVal(0.0);
         if (lev > 0)
            current_cp[lev][i]->setVal(0.0);
+        Bfield_sc_fp[lev][i]->setVal(0.0);
 
         // Initialize aux MultiFabs on level 0
         if (lev == 0) {
@@ -698,6 +744,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if (WarpX::do_current_centering)
         {
             current_fp_nodal[lev][i]->setVal(0.0);
+        }
+
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            current_fp_vay[lev][i]->setVal(0.0);
         }
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
@@ -800,7 +851,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Bxfield_parser->compile<3>(),
                                                  Byfield_parser->compile<3>(),
                                                  Bzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
                                                  m_face_areas[lev],
+                                                 'B',
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
@@ -809,7 +862,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Bxfield_parser->compile<3>(),
                                                     Byfield_parser->compile<3>(),
                                                     Bzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'B',
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
@@ -818,7 +873,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Bxfield_parser->compile<3>(),
                                                     Byfield_parser->compile<3>(),
                                                     Bzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'B',
                                                     lev);
        }
     }
@@ -853,6 +910,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Eyfield_parser->compile<3>(),
                                                  Ezfield_parser->compile<3>(),
                                                  m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'E',
                                                  lev);
 
 #ifdef AMREX_USE_EB
@@ -865,23 +924,27 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
 
        if (lev > 0) {
-            InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
-                                                      Efield_aux[lev][1].get(),
-                                                      Efield_aux[lev][2].get(),
-                                                      Exfield_parser->compile<3>(),
-                                                      Eyfield_parser->compile<3>(),
-                                                      Ezfield_parser->compile<3>(),
-                                                      m_edge_lengths[lev],
-                                                      lev);
+          InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
+                                                    Efield_aux[lev][1].get(),
+                                                    Efield_aux[lev][2].get(),
+                                                    Exfield_parser->compile<3>(),
+                                                    Eyfield_parser->compile<3>(),
+                                                    Ezfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'E',
+                                                    lev);
 
-            InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
-                                                      Efield_cp[lev][1].get(),
-                                                      Efield_cp[lev][2].get(),
-                                                      Exfield_parser->compile<3>(),
-                                                      Eyfield_parser->compile<3>(),
-                                                      Ezfield_parser->compile<3>(),
-                                                      m_edge_lengths[lev],
-                                                      lev);
+          InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
+                                                    Efield_cp[lev][1].get(),
+                                                    Efield_cp[lev][2].get(),
+                                                    Exfield_parser->compile<3>(),
+                                                    Eyfield_parser->compile<3>(),
+                                                    Ezfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'E',
+                                                    lev);
 #ifdef AMREX_USE_EB
            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
                // We initialize ECTRhofield consistently with the Efield
@@ -923,7 +986,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Hx_biasfield_parser->compile<3>(),
                                                  Hy_biasfield_parser->compile<3>(),
                                                  Hz_biasfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
                                                  m_face_areas[lev],
+                                                 'H',
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(H_biasfield_aux[lev][0].get(),
@@ -932,7 +997,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Hx_biasfield_parser->compile<3>(),
                                                     Hy_biasfield_parser->compile<3>(),
                                                     Hz_biasfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'H',
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(H_biasfield_cp[lev][0].get(),
@@ -941,7 +1008,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Hx_biasfield_parser->compile<3>(),
                                                     Hy_biasfield_parser->compile<3>(),
                                                     Hz_biasfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'H',
                                                     lev);
        }
     }
@@ -972,7 +1041,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Hxfield_parser->compile<3>(),
                                                  Hyfield_parser->compile<3>(),
                                                  Hzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
                                                  m_face_areas[lev],
+                                                 'H',
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Hfield_aux[lev][0].get(),
@@ -981,7 +1052,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Hxfield_parser->compile<3>(),
                                                     Hyfield_parser->compile<3>(),
                                                     Hzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'H',
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Hfield_cp[lev][0].get(),
@@ -990,7 +1063,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Hxfield_parser->compile<3>(),
                                                     Hyfield_parser->compile<3>(),
                                                     Hzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'H',
                                                     lev);
        }
     }
@@ -1020,7 +1095,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Mxfield_parser->compile<3>(),
                                                  Myfield_parser->compile<3>(),
                                                  Mzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
                                                  m_face_areas[lev],
+                                                 'M',
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Mfield_aux[lev][0].get(),
@@ -1029,7 +1106,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Mxfield_parser->compile<3>(),
                                                     Myfield_parser->compile<3>(),
                                                     Mzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'M',
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Mfield_cp[lev][0].get(),
@@ -1038,7 +1117,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Mxfield_parser->compile<3>(),
                                                     Myfield_parser->compile<3>(),
                                                     Mzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'M',
                                                     lev);
        }
     }
@@ -1128,7 +1209,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
        ParserExecutor<3> const& xfield_parser, ParserExecutor<3> const& yfield_parser,
        ParserExecutor<3> const& zfield_parser,
-       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data,
+       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+       const char field,
        const int lev)
 {
     const auto dx_lev = geom[lev].CellSizeArray();
@@ -1155,17 +1238,32 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        auto const& mfzfab = mfz->array(mfi);
 
 #ifdef AMREX_USE_EB
-       amrex::Array4<amrex::Real> const& geom_data_x = geom_data[0]->array(mfi);
-       amrex::Array4<amrex::Real> const& geom_data_y = geom_data[1]->array(mfi);
-       amrex::Array4<amrex::Real> const& geom_data_z = geom_data[2]->array(mfi);
-#else
-       amrex::ignore_unused(geom_data);
+       amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+       amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
+       amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
+       amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
+       amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
+       amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        amrex::ignore_unused(ly, Sx, Sz);
+#elif defined(WARPX_DIM_1D_Z)
+        amrex::ignore_unused(lx, ly, lz, Sx, Sy, Sz);
 #endif
 
-       amrex::ParallelFor (tbx, tby, tbz,
+#else
+       amrex::ignore_unused(edge_lengths, face_areas, field);
+#endif
+
+        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-                if(geom_data_x(i, j, k)<=0) return;
+#ifdef WARPX_DIM_3D
+                if((field=='E' and lx(i, j, k)<=0) or (field=='B' and Sx(i, j, k)<=0))  return;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                //In XZ and RZ Ex is associated with a x-edge, while Bx is associated with a z-edge
+                if((field=='E' and lx(i, j, k)<=0) or (field=='B' and lz(i, j, k)<=0)) return;
+#endif
 #endif
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
@@ -1203,7 +1301,13 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-                if(geom_data_y(i, j, k)<=0) return;
+#ifdef WARPX_DIM_3D
+                if((field=='E' and ly(i, j, k)<=0) or (field=='B' and Sy(i, j, k)<=0))  return;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                //In XZ and RZ Ey is associated with a mesh node, so we need to check if  the mesh node is covered
+                if((field=='E' and (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j-1, k)<=0)) or
+                   (field=='B' and Sy(i,j,k)<=0)) return;
+#endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
@@ -1239,7 +1343,12 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-                if(geom_data_z(i, j, k)<=0) return;
+#ifdef WARPX_DIM_3D
+                if((field=='E' and lz(i, j, k)<=0) or (field=='B' and Sz(i, j, k)<=0))  return;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                //In XZ and RZ Ez is associated with a z-edge, while Bz is associated with a x-edge
+                if((field=='E' and lz(i, j, k)<=0) or (field=='B' and lx(i, j, k)<=0)) return;
+#endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
@@ -1388,6 +1497,7 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
                << ",\nplease reduce the number of guard cells"
                << " or increase the grid size by changing domain decomposition";
             amrex::Abort(ss.str());
+
         }
     }
 }

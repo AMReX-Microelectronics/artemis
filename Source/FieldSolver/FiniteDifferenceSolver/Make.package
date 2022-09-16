@@ -18,6 +18,7 @@ CEXE_sources += EvolveEPML.cpp
 CEXE_sources += EvolveFPML.cpp
 CEXE_sources += MacroscopicEvolveEPML.cpp
 CEXE_sources += ApplySilverMuellerBoundary.cpp
+CEXE_sources += EvolveBLondon.cpp
 
 include $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/Make.package
 

@@ -46,6 +46,17 @@ class FiniteDifferenceSolver
             std::array<amrex::Real,3> cell_size,
             bool const do_nodal );
 
+        void EvolveBLondon ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& current,
+                       std::unique_ptr<amrex::MultiFab> const& Gfield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+                       std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
+                       std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+                       int lev, amrex::Real const dt, amrex::Real const penetration_depth );
+
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
                        std::unique_ptr<amrex::MultiFab> const& Gfield,
@@ -112,6 +123,7 @@ class FiniteDifferenceSolver
                             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Hfield,
 #endif
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                             amrex::Real const dt,
                             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 #ifndef WARPX_DIM_RZ
@@ -252,6 +264,13 @@ class FiniteDifferenceSolver
             amrex::MultiFab& divE );
 #else
         template< typename T_Algo >
+        void EvolveBLondonCartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& current,
+            std::unique_ptr<amrex::MultiFab> const& Gfield,
+            int lev, amrex::Real const dt, amrex::Real const penetration_depth );
+
+        template< typename T_Algo >
         void EvolveBCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -312,6 +331,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Hfield,
 #endif
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 

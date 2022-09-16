@@ -1,0 +1,119 @@
+# Maximum number of time steps
+max_step = 4000
+
+my_constants.nx = 8
+my_constants.ny = 8
+my_constants.nz = 640
+
+my_constants.prob_lo_x = -8.e-6
+my_constants.prob_hi_x =  8.e-6
+my_constants.prob_lo_y = -8.e-6
+my_constants.prob_hi_y =  8.e-6
+my_constants.prob_lo_z =  0.
+my_constants.prob_hi_z =  8.e-6
+
+# number of grid points
+amr.n_cell =  8 8 640
+
+# Maximum allowable size of each subdomain in the problem domain;
+#    this is used to decompose the domain for parallel calculations.
+amr.max_grid_size = 160
+
+# Maximum level in hierarchy (for now must be 0, i.e., one level in total)
+amr.max_level = 0
+
+# Geometry
+geometry.coord_sys   = 0                     # 0: Cartesian
+geometry.dims = 3
+boundary.field_lo = periodic periodic pml
+boundary.field_hi = periodic periodic pml
+geometry.prob_lo = prob_lo_x prob_lo_y prob_lo_z
+geometry.prob_hi = prob_hi_x prob_hi_y prob_hi_z
+amr.max_level = 0
+
+my_constants.dx = (prob_hi_x - prob_lo_x) / nx
+my_constants.dy = (prob_hi_y - prob_lo_y) / ny
+my_constants.dz = (prob_hi_z - prob_lo_z) / nz
+my_constants.ddz = dz / 100
+
+# Verbosity
+warpx.verbose = 1
+
+# Algorithms
+algo.current_deposition = esirkepov
+
+my_constants.zo = 0.e-6
+my_constants.z1 = 0.e-6
+my_constants.sigma = 0.
+my_constants.eps_r = 1.0
+my_constants.mu_r = 1.0
+
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+algo.macroscopic_sigma_method = backwardeuler # laxwendroff or backwardeuler
+
+macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
+macroscopic.sigma_function(x,y,z) = "sigma"
+
+macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
+macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
+
+macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
+
+# CFL
+warpx.cfl = 0.9
+
+#London
+algo.yee_coupled_solver = MaxwellLondon
+
+london.penetration_depth = 5.e-6
+london.superconductor_function(x,y,z) = "1."
+
+my_constants.pi = 3.14159265359
+my_constants.L = 2.0e-6
+my_constants.c = 299792458.
+my_constants.wavelength = 3.e-5
+my_constants.skdp = 1.0e-6
+
+warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "1.e5*sin(2*pi*c*t/wavelength)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+warpx.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
+warpx.Bx_excitation_grid_function(x,y,z,t) = "(-1.e5/c)*sin(2*pi*c*t/wavelength)"
+warpx.By_excitation_grid_function(x,y,z,t) = "0."
+warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
+
+warpx.Ez_excitation_flag_function(x,y,z) = "0."
+warpx.Ey_excitation_flag_function(x,y,z) = "0. + 1*(z>(4.e-6-dz/2-ddz))*(z<(4.e-6+ddz))"
+warpx.Ex_excitation_flag_function(x,y,z) = "0."
+
+warpx.Bx_excitation_flag_function(x,y,z) = "0. + 1*(z>(4.e-6-dz/2-ddz))*(z<(4.e-6+ddz))"
+warpx.By_excitation_flag_function(x,y,z) = "0."
+warpx.Bz_excitation_flag_function(x,y,z) = "0."
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.intervals = 10
+diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz superconductor sigma epsilon mu Bx_sc By_sc Bz_sc
+
+# Remove species
+particles.nspecies = 0
+
+warpx.reduced_diags_names = Bdepth1_int Bdepth2_int
+
+Bdepth1_int.type = RawBFieldReduction
+Bdepth1_int.reduction_type = integral
+Bdepth1_int.integration_type = surface
+Bdepth1_int.intervals = 1
+Bdepth1_int.surface_normal = X
+Bdepth1_int.reduced_function(x,y,z) = (y > 0) * (y < dy) * (z > (4.e-6+dz/2-ddz)) * (z < (4.e-6+dz+ddz)) * (x > -dx/100) * (x < dx/100)
+
+Bdepth2_int.type = RawBFieldReduction
+Bdepth2_int.reduction_type = integral
+Bdepth2_int.integration_type = surface
+Bdepth2_int.intervals = 1
+Bdepth2_int.surface_normal = X
+Bdepth2_int.reduced_function(x,y,z) = (y > 0) * (y < dy) * (z > (skdp+4.e-6+dz/2-ddz)) * (z < (skdp+4.e-6+dz+ddz)) * (x > -dx/100) * (x < dx/100)

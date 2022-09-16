@@ -13,8 +13,9 @@
 #endif
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Utils/CoarsenIO.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -93,7 +94,8 @@ WarpX::InitFromCheckpoint ()
 {
     WARPX_PROFILE("WarpX::InitFromCheckpoint()");
 
-    amrex::Print() << "  Restart from checkpoint " << restart_chkfile << "\n";
+    amrex::Print()<< Utils::TextMsg::Info(
+        "restart from checkpoint " + restart_chkfile);
 
     // Header
     {
@@ -274,13 +276,18 @@ WarpX::InitFromCheckpoint ()
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hy_fp"));
         VisMF::Read(*Hfield_fp[lev][2],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hz_fp"));
-
         VisMF::Read(*Mfield_fp[lev][0],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mx_fp"));
         VisMF::Read(*Mfield_fp[lev][1],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "My_fp"));
         VisMF::Read(*Mfield_fp[lev][2],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mz_fp"));
+        VisMF::Read(*H_biasfield_fp[lev][0],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hxbias_fp"));
+        VisMF::Read(*H_biasfield_fp[lev][1],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hybias_fp"));
+        VisMF::Read(*H_biasfield_fp[lev][2],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hzbias_fp"));
 #endif
         if (WarpX::fft_do_time_averaging)
         {
@@ -338,6 +345,13 @@ WarpX::InitFromCheckpoint ()
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "My_cp"));
             VisMF::Read(*Mfield_cp[lev][2],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Mz_cp"));
+
+            VisMF::Read(*H_biasfield_cp[lev][0],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hxbias_cp"));
+            VisMF::Read(*H_biasfield_cp[lev][1],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hybias_cp"));
+            VisMF::Read(*H_biasfield_cp[lev][2],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hzbias_cp"));
 #endif
             if (WarpX::fft_do_time_averaging)
             {

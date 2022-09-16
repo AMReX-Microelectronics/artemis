@@ -76,29 +76,6 @@ namespace WarpXUtilIO{
  */
 bool WriteBinaryDataOnFile(std::string filename, const amrex::Vector<char>& data);
 
-/** A helper function to derive a globally unique particle ID
- *
- * @param[in] id  AMReX particle ID (on local cpu/rank), AoS .id
- * @param[in] cpu AMReX particle CPU (rank) at creation of the particle, AoS .cpu
- * @return global particle ID that is unique and permanent in the whole simulation
- */
-constexpr uint64_t
-localIDtoGlobal(int const id, int const cpu)
-{
-    static_assert(sizeof(int) * 2u <= sizeof(uint64_t),
-                  "int size might cause collisions in global IDs");
-    // implementation:
-    //   - we cast both 32-bit (or smaller) ints to a 64bit unsigned int
-    //   - this will leave half of the "upper range" bits in the 64bit unsigned int zeroed out
-    //     because the corresponding (extended) value range was not part of the value range in
-    //     the int representation
-    //   - we bit-shift the cpu into the upper half of zero bits in the 64 bit unsigned int
-    //     (imagine this step as "adding a per-cpu/rank offset to the local integers")
-    //   - then we add this offset
-    //     note: the add is expressed as bitwise OR (|) since this saves us from writing
-    //           brackets for operator precedence between + and <<
-    return uint64_t(id) | uint64_t(cpu) << 32u;
-}
 }
 
 namespace WarpXUtilAlgo{
@@ -333,17 +310,6 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
                        const int start_ix = amrex::ParmParse::FIRST,
                        const int num_val = amrex::ParmParse::LAST);
 
-namespace WarpXUtilMsg{
-
-/** \brief If is_expression_true is false, this function prints msg and calls amrex::abort()
- *
- * @param[in] is_expression_true
- * @param[in] msg the string to be printed if is_expression_true is false (default value is "ERROR!")
- */
-void AlwaysAssert(bool is_expression_true, const std::string& msg);
-
-}
-
 namespace WarpXUtilStr
 {
     /** Return true if elem is in vect, false otherwise
@@ -397,6 +363,17 @@ namespace WarpXUtilStr
             cont.push_back(instr.substr(previous, current - previous));}
         return cont;
     }
+
+    /** \brief This function performs automatic text wrapping on a string,
+     *  returning an array of strings each not exceeding the maximum line length
+     *  (unless the text contains a word exceeding the maximum line length).
+     *
+     * @param[in] text the string containing the text to be wrapped
+     * @param[in] max_line_length the maximum line length
+     * @return an std::vector containing the lines of the wrapped text
+     */
+    std::vector<std::string> automatic_text_wrap(
+        const std::string& text, const int max_line_length);
 
 }
 

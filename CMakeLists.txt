@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.18.0)
-project(WarpX VERSION 22.02)
+project(WarpX VERSION 22.05)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -106,6 +106,13 @@ set_default_build_type("Release")
 # (also know as "link-time optimization" or "whole program optimization")
 option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
 
+# note: we could skip this if we solely build WarpX_APP, but if we build a
+# shared WarpX library or a third party, like ImpactX, uses ablastr in a
+# shared library (e.g., for Python bindings), then we need relocatable code.
+option(ABLASTR_POSITION_INDEPENDENT_CODE
+    "Build ABLASTR with position independent code" ${WarpX_LIB})
+mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
+
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
 
@@ -143,7 +150,7 @@ endif()
 #
 # collect all objects for compilation
 add_library(WarpX OBJECT)
-add_library(ablastr OBJECT)
+add_library(ablastr)
 
 # ABLASTR library
 set(_BUILDINFO_SRC ablastr)
@@ -169,15 +176,28 @@ if(WarpX_LIB)
     set(_BUILDINFO_SRC shared)
     list(APPEND _ALL_TARGETS shared)
 
-    set_target_properties(WarpX ablastr shared PROPERTIES
+    set_target_properties(WarpX shared PROPERTIES
         POSITION_INDEPENDENT_CODE ON
         WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+    set(ABLASTR_POSITION_INDEPENDENT_CODE ON CACHE BOOL
+        "Build ABLASTR with position independent code" FORCE)
+endif()
+
+# ABLASTR library (static or shared)
+set_target_properties(ablastr PROPERTIES
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
+if(ABLASTR_POSITION_INDEPENDENT_CODE)
+    set_target_properties(ablastr PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
     )
 endif()
 
 # own headers
 target_include_directories(WarpX PUBLIC
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
+    $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
 )
 target_include_directories(ablastr PUBLIC
     # future: own directory root
@@ -196,7 +216,7 @@ if(WarpX_APP)
     target_sources(app PRIVATE Source/main.cpp)
 endif()
 
-#add_subdirectory(Source/ablastr)
+add_subdirectory(Source/ablastr)
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
 add_subdirectory(Source/EmbeddedBoundary)
@@ -281,12 +301,6 @@ set_warpx_binary_name()
 
 # Defines #####################################################################
 #
-get_source_version(WarpX ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(ablastr PUBLIC WARPX_GIT_VERSION="${WarpX_GIT_VERSION}")
-if(WarpX_QED)
-    target_compile_definitions(ablastr PUBLIC PICSAR_GIT_VERSION="${PXRMP_QED_GIT_VERSION}")
-endif()
-
 if(WarpX_DIMS STREQUAL 3)
     target_compile_definitions(ablastr PUBLIC WARPX_DIM_3D WARPX_ZINDEX=2)
 elseif(WarpX_DIMS STREQUAL 2)
@@ -333,6 +347,13 @@ set_cxx_warnings()
 
 # Generate Configuration and .pc Files ########################################
 #
+get_source_version(WarpX ${WarpX_SOURCE_DIR})
+configure_file(
+    ${WarpX_SOURCE_DIR}/Source/Utils/WarpXVersion.H.in
+    ${WarpX_BINARY_DIR}/Source/Utils/WarpXVersion.H
+    @ONLY
+)
+
 # these files are used if WarpX is installed and picked up by a downstream
 # project (not needed yet)
 
@@ -411,7 +432,7 @@ if(WarpX_LIB)
         ${CMAKE_COMMAND} -E rm -f ${WarpX_BINARY_DIR}/pywarpx*whl
         COMMAND
             ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-                python3 -m pip wheel -v --no-build-isolation --use-feature=in-tree-build ${WarpX_SOURCE_DIR}
+                python3 -m pip wheel -v --no-build-isolation ${WarpX_SOURCE_DIR}
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -420,7 +441,7 @@ if(WarpX_LIB)
 
     # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
     add_custom_target(pip_install_requirements
-        python3 -m pip install -r ${WarpX_SOURCE_DIR}/requirements.txt
+        python3 -m pip install ${PYINSTALLOPTIONS} -r ${WarpX_SOURCE_DIR}/requirements.txt
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
     )
@@ -429,7 +450,8 @@ if(WarpX_LIB)
     # the package does not change, but the code did change. We need --no-deps,
     # because otherwise pip would also force reinstall all dependencies.
     add_custom_target(pip_install
-        python3 -m pip install --force-reinstall --no-deps ${PYINSTALLOPTIONS} ${WarpX_BINARY_DIR}/pywarpx*whl
+        ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
+            python3 -m pip install --force-reinstall --no-deps ${PYINSTALLOPTIONS} ${WarpX_BINARY_DIR}/pywarpx*whl
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS

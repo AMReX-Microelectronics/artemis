@@ -5,6 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmGalileanRZ.H"
+
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -290,22 +292,12 @@ void PsatdAlgorithmGalileanRZ::InitializeSpectralCoefficients (SpectralFieldData
 }
 
 void
-PsatdAlgorithmGalileanRZ::CurrentCorrection (const int lev,
-                                             SpectralFieldDataRZ& field_data,
-                                             std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                             const std::unique_ptr<amrex::MultiFab>& rho )
+PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 {
     // Profiling
     WARPX_PROFILE( "PsatdAlgorithmGalileanRZ::CurrentCorrection" );
 
     const SpectralFieldIndex& Idx = m_spectral_index;
-
-    // Forward Fourier transform of J and rho
-    field_data.ForwardTransform( lev, *current[0], Idx.Jx,
-                                 *current[1], Idx.Jy);
-    field_data.ForwardTransform( lev, *current[2], Idx.Jz, 0);
-    field_data.ForwardTransform( lev, *rho, Idx.rho_old, 0 );
-    field_data.ForwardTransform( lev, *rho, Idx.rho_new, 1 );
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -367,19 +359,11 @@ PsatdAlgorithmGalileanRZ::CurrentCorrection (const int lev,
             }
         });
     }
-
-    // Backward Fourier transform of J
-    field_data.BackwardTransform( lev,
-                                  *current[0], Idx.Jx,
-                                  *current[1], Idx.Jy);
-    field_data.BackwardTransform( lev, *current[2], Idx.Jz, 0 );
-
 }
 
 void
-PsatdAlgorithmGalileanRZ::VayDeposition (const int /*lev*/,
-                                         SpectralFieldDataRZ& /*field_data*/,
-                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
+PsatdAlgorithmGalileanRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort("Vay deposition not implemented in RZ geometry");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented in RZ geometry"));
 }

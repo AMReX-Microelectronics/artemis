@@ -139,6 +139,37 @@ Overall simulation parameters
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
 
+Signal Handling
+^^^^^^^^^^^^^^^
+
+WarpX can handle Unix (Linux/macOS) `process signals <https://en.wikipedia.org/wiki/Signal_(IPC)>`__.
+This can be useful to configure jobs on HPC and cloud systems to shut down cleanly when they are close to reaching their allocated walltime or to steer the simulation behavior interactively.
+
+Allowed signal names are documented in the `C++ standard <https://en.cppreference.com/w/cpp/utility/program/SIG_types>`__ and `POSIX <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html>`__.
+We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal configuration name for ``SIGINT`` is ``INT``.
+
+* ``warpx.break_signals`` (array of `string`, separated by spaces) optional
+    A list of signal names or numbers that the simulation should
+    handle by cleanly terminating at the next timestep
+
+* ``warpx.checkpoint_signals`` (array of `string`, separated by spaces) optional
+    A list of signal names or numbers that the simulation should
+    handle by outputting a checkpoint at the next timestep. A
+    diagnostic of type `checkpoint` must be configured.
+
+.. note::
+
+   Certain signals are only available on specific platforms, please see the links above for details.
+   Typically supported on Linux and macOS are ``HUP``, ``INT``, ``QUIT``, ``ABRT``, ``USR1``, ``USR2``, ``TERM``, ``TSTP``, ``URG``, and ``IO`` among others.
+
+   Signals to think about twice before overwriting in *interactive simulations*:
+   Note that ``INT`` (interupt) is the signal that ``Ctrl+C`` sends on the terminal, which most people use to abort a process; once overwritten you need to abort interactive jobs with, e.g., ``Ctrl+\`` (``QUIT``) or sending the ``KILL`` signal.
+   The ``TSTP`` (terminal stop) command is sent interactively from ``Ctrl+Z`` to temporarily send a process to sleep (until send in the background with commands such as ``bg`` or continued with ``fg``), overwriting it would thus disable that functionality.
+   The signals ``KILL`` and ``STOP`` cannot be used.
+
+   The ``FPE`` signal should not be overwritten in WarpX, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
+
+
 .. _running-cpp-parameters-box:
 
 Setting up the field mesh
@@ -264,7 +295,7 @@ Domain Boundary Conditions
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
 
     * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. See the :ref:`PML theory section <theory-bc>` for more details.
-      Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
+      Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.pml_has_particles``, and ``warpx.do_pml_j_damping``.
 
     * ``absorbing_silver_mueller``: This option can be used to set the Silver-Mueller absorbing boundary conditions. These boundary conditions are simpler and less computationally expensive than the pml, but are also less effective at absorbing the field. They only work with the Yee Maxwell solver.
 
@@ -313,6 +344,9 @@ Additional PML parameters
 * ``warpx.do_pml_j_damping`` (`int`; default: 0)
     Whether to damp current in PML. Can only be used if particles are propagated in PML,
     i.e. if `warpx.pml_has_particles = 1`.
+
+* ``warpx.v_particle_pml`` (`float`; default: 1)
+    When ``warpx.do_pml_j_damping = 1``, the assumed velocity of the particles to be absorbed in the PML, in units of the speed of light `c`.
 
 * ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
     Whether to use divergence cleaning for E in the PML region.
@@ -603,7 +637,7 @@ Particle initialization
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
-      If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ```<species_name>.charge`` or ```<species_name>.species_type``).
+      If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
       The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
 
@@ -611,9 +645,11 @@ Particle initialization
       The density specified by the density profile is interpreted to have the units of #/m^2/s.
       This requires the additional parameters:
       ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
-      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r` or `z` for RZ)
+      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r`, `t`, or `z` for RZ. When `flux_normal_axis` is `r` or `t`, the `x` and `y` components of the user-specified momentum distribution are interpreted as the `r` and `t` components respectively)
       ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
       ``<species_name>.num_particles_per_cell`` (`double`)
+      ``<species_name>.flux_tmin`` (`double`, Optional time at which the flux will be turned on. Ignored when negative.)
+      ``<species_name>.flux_tmax`` (`double`, Optional time at which the flux will be turned off. Ignored when negative.)
 
     * ``none``: Do not inject macro-particles (for example, in a simulation that starts with neutral, ionizable atoms, one may want to create the electrons species -- where ionized electrons can be stored later on -- without injecting electron macro-particles).
 
@@ -814,7 +850,7 @@ Particle initialization
 
       .. math::
 
-          n = n_0 n(x,y) n(z)
+          n = n_0 n(x,y) n(z-z_0)
 
       with
 
@@ -823,7 +859,7 @@ Particle initialization
           n(x,y) = 1 + 4\frac{x^2+y^2}{k_p^2 R_c^4}
 
       where :math:`k_p` is the plasma wavenumber associated with density :math:`n_0`.
-      Here, :math:`n(z)` is a cosine-like up-ramp from :math:`0` to :math:`L_{ramp,up}`,
+      Here, with :math:`z_0` as the start of the plasma, :math:`n(z-z_0)` is a cosine-like up-ramp from :math:`0` to :math:`L_{ramp,up}`,
       constant to :math:`1` from :math:`L_{ramp,up}` to :math:`L_{ramp,up} + L_{plateau}`
       and a cosine-like down-ramp from :math:`L_{ramp,up} + L_{plateau}` to
       :math:`L_{ramp,up} + L_{plateau}+L_{ramp,down}`. All parameters are given
@@ -834,7 +870,7 @@ Particle initialization
 
     * If ``species_name.predefined_profile_name`` is ``parabolic_channel``,
       ``predefined_profile_params`` contains a space-separated list of the
-      following parameters, in this order: :math:`L_{ramp,up}` :math:`L_{plateau}`
+      following parameters, in this order: :math:`z_0` :math:`L_{ramp,up}` :math:`L_{plateau}`
       :math:`L_{ramp,down}` :math:`R_c` :math:`n_0`
 
 * ``<species_name>.do_backward_propagation`` (`bool`)
@@ -883,13 +919,14 @@ Particle initialization
     when the particles are generated.
     If the user-defined real attribute is ``<real_attrib_name>`` then the
     following required parameter must be specified to initialize the attribute.
-    * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
-    ``t`` represents the physical time in seconds during the simulation.
-    ``x`, ``y``, ``z` represent particle positions in the unit of meter.
-    ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
-    :math:`\gamma v/c`, where
-    :math:`\gamma` is the Lorentz factor,
-    :math:`v/c` is the particle velocity normalized by the speed of light.
+
+   * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
+     ``t`` represents the physical time in seconds during the simulation.
+     ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
+     ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+     :math:`\gamma v/c`, where
+     :math:`\gamma` is the Lorentz factor,
+     :math:`v/c` is the particle velocity normalized by the speed of light.
 
 * ``<species>.save_particles_at_xlo/ylo/zlo``,  ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
     If `1` particles of this species will be copied to the scraped particle
@@ -919,7 +956,7 @@ Particle initialization
     boosted frame, whether or not to plot back-transformed diagnostics for
     this species.
 
-* ``warpx.serialize_ics`` (`0` or `1`) optional (default `0`)
+* ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
     Serialize the initial conditions for reproducible testing.
     Mainly whether or not to use OpenMP threading for particle initialization.
 
@@ -1028,7 +1065,7 @@ Laser initialization
     transversally.
 
     .. note::
-        In 2D, ```<laser_name>`.position`` is still given by 3 numbers,
+        In 2D, ``<laser_name>.position`` is still given by 3 numbers,
         but the second number is ignored.
 
     When running a **boosted-frame simulation**, provide the value of
@@ -1433,7 +1470,21 @@ External fields
     field component is updated with the contribution from the `excitation_grid_function`
     of the corresponding field component.
     Constants required in the mathematical expression can be set using ``my_constants``.
-    This function is currently supported only for 3D simulations.
+    This function is currently supported only for 3D simulations and only for single-level simulations.
+    Note that by default the parser applies these functions to the electric fields only in the valid region
+    or in the regions specified by the user-defined parser.
+    The same function can also be applied to the fields in the pml region by setting
+    ``warpx.Apply_E_excitation_in_pml_region``.
+
+* ``Apply_E_excitation_in_pml_region`` (integer `0` or `1`) optional (default is `0`)
+    This parameter is used only if `E_excitation_on_grid_style` is set in the input.
+    If set to `1`, the excitation function for Ex, Ey, Ez set using
+    ``warpx.Ex_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Ey_excitation_grid_function(x,y,z,t)``,
+    ``warpx.Ez_excitation_grid_function(x,y,z,t)`` will be applied to the electric fields defined
+    in the pml region. Note that, the pml region is set outside the domain boundary.
+    So for this feature to work as intended, it is essential that the parser function covers the pml
+    region.
 
 * ``H_excitation_on_grid_style`` (string) optional (default is "default")
     This parameter is used to set the type of external magnetic field excitation
@@ -1495,14 +1546,7 @@ External fields
 Collision initialization
 ------------------------
 
-WarpX provides a relativistic elastic Monte Carlo binary Coulomb collision model,
-following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
-When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
-since the current implementation of the collision module assumes axisymmetry.
-A non-relativistic Monte Carlo treatment for particles colliding
-with a neutral, uniform background gas is also available. The implementation follows the so-called
-null collision strategy discussed for example in `Birdsall (IEEE Transactions on
-Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
+WarpX provides several particle collions models, using varying degrees of approximation.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
@@ -1510,8 +1554,21 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     in this documentation we use ``<collision_name>`` as a placeholder.
 
 * ``<collision_name>.type`` (`string`) optional
-    The type of collsion. The types implemented are ``pairwisecoulomb`` for pairwise Coulomb collisions and
-    ``background_mcc`` for collisions between particles and a neutral background. If not specified, it defaults to ``pairwisecoulomb``.
+    The type of collsion. The types implemented are:
+
+    - ``pairwisecoulomb`` for pairwise Coulomb collisions, the default if unspecified.
+      This provides a pair-wise relativistic elastic Monte Carlo binary Coulomb collision model,
+      following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+      When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
+      since the current implementation of the collision module assumes axisymmetry.
+    - ``background_mcc`` for collisions between particles and a neutral background.
+      This is a non-relativistic Monte Carlo treatment for particles colliding
+      with a neutral, uniform background gas. The implementation follows the so-called
+      null collision strategy discussed for example in `Birdsall (IEEE Transactions on
+      Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
+    - ``background_stopping`` for slowing of ions due to collisions with electrons or ions.
+      This implements the approximate formulae as derived in Introduction to Plasma Physics,
+      from Goldston and Rutherford, section 14.2.
 
 * ``<collision_name>.species`` (`strings`)
     If using ``pairwisecoulomb`` type this should be the names of two species,
@@ -1537,15 +1594,57 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     Execute collision every # time steps. The default value is 1.
 
 * ``<collision_name>.background_density`` (`float`)
-    Only for ``background_mcc``. The density of the neutral background gas in :math:`m^{-3}`.
+    Only for ``background_mcc`` and ``background_stopping``. The density of the background in :math:`m^{-3}`.
+    Can also provide ``<collision_name>.background_density(x,y,z,t)`` using the parser
+    initialization style for spatially and temporally varying density. With ``background_mcc``, if a function
+    is used for the background density, the input parameter ``<collision_name>.max_background_density``
+    must also be provided to calculate the maximum collision probability.
 
 * ``<collision_name>.background_temperature`` (`float`)
-    Only for ``background_mcc``. The temperature of the neutral background gas in Kelvin.
+    Only for ``background_mcc`` and ``background_stopping``. The temperature of the background in Kelvin.
+    Can also provide ``<collision_name>.background_temperature(x,y,z,t)`` using the parser
+    initialization style for spatially and temporally varying temperature.
 
 * ``<collision_name>.background_mass`` (`float`) optional
-    Only for ``background_mcc``. The mass of the background gas in kg. If not
-    given the mass of the colliding species will be used unless ionization is
+    Only for ``background_mcc`` and ``background_stopping``. The mass of the background gas in kg.
+    With ``background_mcc``, if not given the mass of the colliding species will be used unless ionization is
     included in which case the mass of the product species will be used.
+    With ``background_stopping``, and ``background_type`` set to ``electrons``, if not given defaults to the electron mass. With
+    ``background_type`` set to ``ions``, the mass must be given.
+
+* ``<collision_name>.background_charge_state`` (`float`)
+    Only for ``background_stopping``, where it is required when ``background_type`` is set to ``ions``.
+    This specifies the charge state of the background ions.
+
+* ``<collision_name>.background_type`` (`string`)
+    Only for ``background_stopping``, where it is required, the type of the background.
+    The possible values are ``electrons`` and ``ions``. When ``electrons``, equation 14.12 from Goldston and Rutherford is used.
+    This formula is based on Coulomb collisions with the approximations that :math:`M_b >> m_e` and :math:`V << v_{thermal\_e}`,
+    and the assumption that the electrons have a Maxwellian distribution with temperature :math:`T_e`.
+
+    .. math::
+        \frac{dV}{dt} = - \frac{2^{1/2}n_eZ_b^2e^4m_e^{1/2}\log\Lambda}{12\pi^{3/2}\epsilon_0M_bT_e^{3/2}}V
+
+    where :math:`V` is each velocity component, :math:`n_e` is the background density, :math:`Z_b` is the ion charge state,
+    :math:`e` is the electron charge, :math:`m_e` is the background mass, :math:`\log\Lambda=\log((12\pi/Z_b)(n_e\lambda_{de}^3))`,
+    :math:`\lambda_{de}` is the DeBye length, and :math:`M_b` is the ion mass.
+    The equation is integrated over a time step, giving :math:`V(t+dt) = V(t)*\exp(-\alpha*{dt})`
+    where :math:`\alpha` is the factor multiplying :math:`V`.
+
+    When ``ions``, equation 14.20 is used.
+    This formula is based on Coulomb collisions with the approximations that :math:`M_b >> M` and :math:`V >> v_{thermal\_i}`.
+    The background ion temperature only appears in the :math:`\log\Lambda` term.
+
+    .. math::
+        \frac{dW_b}{dt} = - \frac{2^{1/2}n_iZ^2Z_b^2e^4M_b^{1/2}\log\Lambda}{8\pi\epsilon_0MW_b^{1/2}}
+
+    where :math:`W_b` is the ion energy, :math:`n_i` is the background density,
+    :math:`Z` is the charge state of the background ions, :math:`Z_b` is the ion charge state,
+    :math:`e` is the electron charge, :math:`M_b` is the ion mass, :math:`\log\Lambda=\log((12\pi/Z_b)(n_i\lambda_{di}^3))`,
+    :math:`\lambda_{di}` is the DeBye length, and :math:`M` is the background ion mass.
+    The equation is integrated over a time step, giving :math:`W_b(t+dt) = ((W_b(t)^{3/2}) - 3/2\beta{dt})^{2/3}`
+    where :math:`\beta` is the term on the r.h.s except :math:`W_b`.
+
 
 * ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
     Only for ``background_mcc``. The MCC scattering processes that should be
@@ -1582,7 +1681,7 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
 Numerics and algorithms
 -----------------------
 
-* ``warpx.cfl`` (`float`)
+* ``warpx.cfl`` (`float`) optional (default `0.999`)
     The ratio between the actual timestep that is used in the simulation
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
@@ -1685,6 +1784,16 @@ Numerics and algorithms
     - ``macroscopic``: macroscopic Maxwell equation is evaluated. If this option is selected, then the corresponding properties of the medium must be provided using ``macroscopic.sigma``, ``macroscopic.epsilon``, and ``macroscopic.mu`` for each case where the initialization style is ``constant``.  Otherwise if the initialization style uses the parser, ``macroscopic.sigma_function(x,y,z)``, ``macroscopic.epsilon_function(x,y,z)`` and/or ``macroscopic.mu_function(x,y,z)`` must be provided using the parser initialization style for spatially varying macroscopic properties.
 
     If ``algo.em_solver_medium`` is not specified, ``vacuum`` is the default.
+
+* ``algo.yee_coupled_solver`` (`string` optional)
+    If Maxwell is coupled with another solver.
+    Options are :
+
+    - ``MaxwellLondon``: Couple London with Maxwell yee-scheme. If this option is selected, then
+                         ``london.penetration_depth`` must be specified and
+                          ``london.superconductor_function(x,y,z)`` must be provided to specify the superconducting region with an analytical function.
+    - ``None``: pure FDTD with yee-scheme
+    If ``algo.yee_coupled_solver`` is not specified, ``None`` is the default
 
 * ``algo.macroscopic_sigma_method`` (`string`, optional)
     The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
@@ -1810,7 +1919,7 @@ Numerics and algorithms
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
     If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
 
-* ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
+* ``psatd.nx_guard``, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
     The number of guard cells to use with PSATD solver.
     If not set by users, these values are calculated automatically and determined *empirically* and
     would be equal the order of the solver for nodal grid, and half the order of the solver for staggered.
@@ -2047,7 +2156,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
-    Note that when using ``BackTransformed`` diagnostic type, the openpmd format supports only ``h5`` backend for both species and fields, while ``bp`` backend can be used for visualizing fields, but not particles. The code will abort if ``bp`` is selected for particle output.
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
      openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.14.0/usage/concepts.html#iteration-and-series>`__.
@@ -2079,19 +2187,76 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
         <diag_name>.adios2_operator.type = zfp
         <diag_name>.adios2_operator.parameters.precision = 3
 
+* ``<diag_name>.adios2_engine.type`` (``bp4``, ``sst``, ``ssc``, ``dataman``) optional,
+    `ADIOS2 Engine type <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    See full list of engines at `ADIOS2 readthedocs <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
+
+* ``<diag_name>.adios2_engine.parameters.*`` optional,
+    `ADIOS2 Engine parameters <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+    An example for parameters for the BP engine are setting the number of writers (``NumAggregators``), transparently redirecting data to burst buffers etc.
+    A detailed list of engine-specific parameters are available at the official `ADIOS2 documentation <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
+
+    .. code-block:: text
+
+        <diag_name>.adios2_engine.parameters.NumAggregators = 2048
+        <diag_name>.adios2_engine.parameters.BurstBufferPath="/mnt/bb/username"
+
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
-    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` ``sigma`` ``epsilon`` ``mu`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
-    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
-    Note that the fields are averaged on the cell centers before they are written to file.
-    Also, writing ``sigma`` ``epsilon``, and ``mu`` requires `algo.em_solver_medium = macroscopic`.
-    If compiled with ``USE_LLG=TRUE``, additional values include
+    Possible scalar fields: ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` ``sigma`` ``epsilon`` ``mu`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe. Also ``sigma`` ``epsilon``, and ``mu`` will be written when `algo.em_solver_medium = macroscopic`. Also, note that for ``<diag_name>.diag_type = BackTransformed``, the only scalar field currently supported is ``rho``.
+    Possible vector field components in Cartesian geometry: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz``.
+    If compiled with ``USE_LLG=TRUE``, additional vector fields components include
     ``Hx`` ``Hy`` ``Hz``
     ``Mx_xface`` ``Mx_yface`` ``Mx_zface``
     ``My_xface`` ``My_yface`` ``My_zface``
     ``Mz_xface`` ``Mz_yface`` ``Mz_zface``
-    since all components of the M-field are stored at each face.  The
-    cell-centered M-field output is the average of the two faces.
+    Additional scalar fields components include
+    ``mag_Ms_xface``       ``mag_Ms_yface``       ``mag_Ms_zface``
+    ``mag_alpha_xface``    ``mag_alpha_yface``    ``mag_alpha_zface``
+    ``mag_exchange_xface`` ``mag_exchange_yface`` ``mag_exchange_zface``
+    ``mag_anisotropy_xface`` ``mag_anisotropy_yface`` ``mag_anisotropy_zface``
+    For superconducting physics we also include
+    ``superconductor``
+    ``Bx_sc`` ``By_sc`` ``Bz_sc``
+
+    Possible vector field components in RZ geometry: ``Er`` ``Et`` ``Ez`` ``Br`` ``Bt`` ``Bz`` ``jr`` ``jt`` ``jz``.
+    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
+    unless in RZ geometry with ``<diag_name>.format == openpmd``,
+    then default is ``<diag_name>.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz``.
+    Note that the fields are averaged on the cell centers before they are written to file.
+    Also, when ``<diag_name>.format = openpmd``, the RZ modes for all fields are written.
+    Otherwise, we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
+
+* ``<diag_name>.dump_rz_modes`` (`0` or `1`) optional (default `0`)
+    Whether to save all modes when in RZ.  When ``openpmd_backend = openpmd``, this parameter is ignored and all modes are saved.
+
+* ``<diag_name>.particle_fields_to_plot`` (list of `strings`, optional)
+   Names of per-cell averages of particle properties to calculate and output as additional fields.
+   Note that these averages do not respect the particle shape factor, and instead use nearest-grid point interpolation.
+   Default is none.
+   Parser functions for these field names are specified by ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)``.
+   Also, note that this option is only available for ``<diag_name>.diag_type = Full``
+
+* ``<diag_name>.particle_fields_species`` (list of `strings`, optional)
+         Species for which to calculate ``particle_fields_to_plot``.
+         Fields will be calculated separately for each specified species.
+         The default is a list of all of the available particle species.
+
+* ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)`` (parser `string`)
+   Parser function to be calculated for each particle and averaged per cell. The field written is
+
+        .. math::
+
+            \texttt{<field_name>_<species>} = \frac{\sum_{i=1}^N w_i \, f(x_i,y_i,z_i,u_{x,i},u_{y,i},u_{z,i})}{\sum_{i=1}^N w_i}
+
+   where :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter. The sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor) that satisfy ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
+   In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
+
+* ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)`` (parser `string`, optional)
+    Parser function returning a boolean for whether to include a particle in the average.
+    If not specified, all particles will be included (see above).
+    The function arguments are the same as above.
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
@@ -2125,7 +2290,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.file_prefix`` (`string`) optional (default `diags/<diag_name>`)
     Root for output file names. Supports sub-directories.
 
-* ``<diag_name>.file_min_digits`` (`int`) optional (default `5`)
+* ``<diag_name>.file_min_digits`` (`int`) optional (default `6`)
     The minimum number of digits used for the iteration number appended to the diagnostic file names.
 
 * ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
@@ -2156,7 +2321,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     The value provided should be an integer greater than or equal to 0.
 
 * ``<diag_name>.<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
-    Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
+    Users can provide an expression returning a boolean for whether a particle is dumped.
     `t` represents the physical time in seconds during the simulation.
     `x, y, z` represent particle positions in the unit of meter.
     `ux, uy, uz` represent particle velocities in the unit of
@@ -2178,12 +2343,18 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     WarpX must be configured with ``-DWarpX_MPI_THREAD_MULTIPLE=ON``.
     Please see the :ref:`data analysis section <dataanalysis-formats>` for more information.
 
+* ``warpx.field_io_nfiles`` and ``warpx.particle_io_nfiles`` (`int`) optional (default `1024`)
+    The maximum number of files to use when writing field and particle data to plotfile directories.
+
+* ``warpx.mffile_nstreams`` (`int`) optional (default `4`)
+    Limit the number of concurrent readers per file.
+
 .. _running-cpp-parameters-diagnostics-btd:
 
 BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Additional options for this diagnostic include:
+``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Note that this diagnostic is not currently supported for RZ.  Additional options for this diagnostic include:
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
@@ -2401,6 +2572,7 @@ Reduced Diagnostics
         **Plane**: probe a 2 dimensional plane of points to create a square plane detector.
         Initial input parameters ``x_probe``, ``y_probe``, and ``z_probe`` designate the center of the detector.
         The detector plane is normal to a vector specified by ``<reduced_diags_name>.target_normal_x``, ``<reduced_diags_name>.target_normal_y``, and ``<reduced_diags_name>.target_normal_z``.
+        Note that it is not necessary to specify the ``target_normal`` vector in a 2D simulation (the only supported normal is in ``y``).
         The top of the plane is perpendicular to an "up" vector denoted by ``<reduced_diags_name>.target_up_x``, ``<reduced_diags_name>.target_up_y``, and ``<reduced_diags_name>.target_up_z``.
         The detector has a square radius to be determined by ``<reduced_diags_name>.detector_radius``.
         Similarly to the line detector, the plane detector requires a resolution ``<reduced_diags_name>.resolution``, which denotes the number of detector particles along each side of the square detector.
@@ -2424,6 +2596,12 @@ Reduced Diagnostics
         otherwise it is set to ``1``.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
+        In a *moving window* simulation, the FieldProbe can be set to follow the moving frame by specifying ``<reduced_diags_name>.do_moving_window_FP = 1`` (default 0).
+
+        .. warning::
+
+           The FieldProbe reduced diagnostic does not yet add a Lorentz back transformation for boosted frame simulations.
+           Thus, it records field data in the boosted frame, not (yet) in the lab frame.
 
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as
@@ -2488,13 +2666,76 @@ Reduced Diagnostics
            For example, we can define a surface on a y-plane at a location, `y_plane_location`, having a half cross-section
            from z=-Lz/2 to 0, where Lz is the length of the domain in the z-direction spanning from -Lz/2 to Lz/2, as follows:
 
-           ``<reduced_diags_name>.reduced_function(x,y,z) = " (y >= y_plane_location - dy/2.) * (y <= y_plane_location) * (z > -Lz/2.) * (z <= 0.) * 1 "``
+           ``<reduced_diags_name>.reduced_function(x,y,z) = " (y > y_plane_location - dy/2.-epsilon) * (y < y_plane_location+epsilon) * (z > -Lz/2.) * (z < 0.+epsilon) * 1 "``
+
+           In this example, epsilon is a very small number which is larger than machine precision.
 
         * ``<reduced_diags_name>.surface_normal`` (`string`)
            The surface on which the surface integration is required. It must be either ``x``, ``y`` or ``z``.
            The direction of the normal is positive in the Cartesian directions.
-           Note that the user must account for the sign, if the outward normal of the defined surface is
+
+        * ``<reduced_diags_name>.scaling_factor`` (`string`) optional (default `1 1 1`)
+           This parameter is used when the ``integration_type`` is set to ``surface``. The parser takes three values to scale
+           the reduced field quantities, namely, the surface integral of Ex, Ey, and Ez.
+           This parameter can be used in the following two scenarios:
+           Let's say, we require the surface integral of Ex on a surface, with the surface normal in the negative x-direction.
+           In that case, we would specify the value of this parameter as ``-1 1 1`` so that the surface integral of Ex is multiplied by ``-1``.
+           As another example, we may require a line integral which is obtained by first taking surface integral
+           over a surface of height h and width w and then dividing by the width.
+           In this case, we may specify the value of these parameters as ``1./w 1./w, 1./w``. Note that this can only be done
+           for a uniform grid simulation.
+
+
+    * ``RawBFieldReduction``
+        This type is ONLY for the B-field at their respective staggering on the Yee-grid (or the type of grid used in the
+        simulation) and executes the ``reduced_function`` which is a user-defined analytic function as given below.
+
+        * ``<reduced_diags_name>.reduced_function(x,y,z)`` (`string`)
+              An analytic function used to select the region over which the B-fields will be reduced using
+              the ``reduction_type`` described below.
+
+        * ``<reduced_diags_name>.reduction_type`` (`string`)
+            The type of reduction to be performed. It must be either ``Maximum``, ``Minimum`` or
+            ``Integral``.
+            ``Integral`` computes the spatial surface or volume integral, depending on the choice
+            of the ``integration_type``, of the function defined in the parser by summing its value on
+            all grid points and multiplying the result by the area or volume of a cell.
+            Please be also aware that measuring maximum quantities might be very noisy in PIC
+            simulations.
+
+        The output columns correspond to the timestep counter, physical time, and reduced values of Bx, By, Bz components.
+
+        * ``<reduced_diags_name>.integration_type`` (`string`)
+           The type of integration to be performed. It must be either ``surface`` or ``volume``.
+           Note that the surface integral provides the integrated normal as well as the
+           traverse fields over the surface. For the surface integral, the user-defined parser
+           for the plane should be less than one cell size in thickness in the direction of the surface normal.
+           Also, if the surface to be defined has an edge that overlaps with the domain boundary but the edge parallel
+           to it does not overlap with the domain boundary, e.g. a half cross-section of a plane, then exclude the
+           edge that overlaps with the domain boundary while defining the surface.
+
+           For example, we can define a surface on a y-plane at a location, `y_plane_location`, having a half cross-section
+           from z=-Lz/2 to 0, where Lz is the length of the domain in the z-direction spanning from -Lz/2 to Lz/2, as follows:
+
+           ``<reduced_diags_name>.reduced_function(x,y,z) = " (y > y_plane_location - dy/2. - epsilon) * (y < y_plane_location + epsilon) * (z > -Lz/2.) * (z < 0. + epsilon) * 1 "``
+
+           In this example, epsilon is a very small number which is larger than machine precision.
+
+        * ``<reduced_diags_name>.surface_normal`` (`string`)
+           This parameter is only required when the ``integration_type`` is ``surface``.
+           It specifies the surface on which the surface integration is required, which must be either ``x``, ``y`` or ``z``.
+           The direction of the normal is positive in the Cartesian directions.
            in the negative direction.
+
+        * ``<reduced_diags_name>.scaling_factor`` (`string`)  optional (default `1 1 1`)
+           This parameter is used when the ``integration_type`` is set to ``surface``. The parser takes three values to scale
+           the reduced field quantities, namely, the surface integral of Bx, By, and Bz.
+           This parameter can be used in the following two scenarios:
+           Let's say, we require the surface integral of Bx on a surface, with the surface normal in the negative x direction.
+           In this case, we would specify the value of this parameter as ``-1. 1. 1.`` so that the surface integral of Bx is multiplied by ``-1``.
+           As another example, we may require surface integral of H-field, which can be obtained by dividing the surface integrals of Bx, By, and Bz
+           by permeability, ``mu``, if ``mu`` is constant. In this case, we would specify the value of this parameter as ``1./mu,    1./mu, 1./mu``.
+
 
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the
@@ -2635,8 +2876,7 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
             Users can provide an expression returning a boolean for whether a particle is taken
-            into account when calculating the histogram (the exact test is whether the return
-            value is `> 0.5`).
+            into account when calculating the histogram.
             `t` represents the physical time in seconds during the simulation.
             `x, y, z` represent particle positions in the unit of meter.
             `ux, uy, uz` represent particle velocities in the unit of
