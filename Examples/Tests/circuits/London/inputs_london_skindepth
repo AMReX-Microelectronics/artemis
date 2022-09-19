@@ -5,6 +5,15 @@ my_constants.prob_hi_z = 32.e-2
 my_constants.nz = 64000000
 amr.max_grid_size = 160000
 plt.intervals = 1000000
+plt.intervals = 1000000
+
+my_constants.wavelength = 1.2e-2 # 25 GHz (~1.2M time steps per period)
+max_step = 8000000
+my_constants.prob_lo_z = -128.e-3
+my_constants.prob_hi_z = 128.e-3
+my_constants.nz = 25600000
+amr.max_grid_size = 160000
+plt.intervals = 400000
 
 my_constants.wavelength = 3.e-3 # 100 GHz (~300k time steps per period)
 max_step = 2000000
@@ -14,7 +23,7 @@ my_constants.nz = 6400000
 amr.max_grid_size = 160000
 plt.intervals = 100000
 
-my_constants.wavelength = 3.e-4 # 1 THz   (~30k time steps per period)
+my_constants.wavelength = 3.e-4 # 1 THz (~30k time steps per period)
 max_step = 200000
 my_constants.prob_lo_z = -32.e-4
 my_constants.prob_hi_z = 32.e-4
