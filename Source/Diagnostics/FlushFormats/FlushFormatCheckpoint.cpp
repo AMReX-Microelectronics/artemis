@@ -111,7 +111,7 @@ FlushFormatCheckpoint::WriteToFile (
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_avg_fp"));
         }
 
-        if (warpx.getis_synchronized()) {
+        if (warpx.getis_synchronized() || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {            
             // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
             VisMF::Write(warpx.getcurrent_fp(lev, 0),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_fp"));
@@ -174,8 +174,8 @@ FlushFormatCheckpoint::WriteToFile (
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_avg_cp"));
             }
 
-            if (warpx.getis_synchronized()) {
-                // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
+            if (warpx.getis_synchronized() || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+                // Need to save j if synchronized because after restart we need j to evolve E by dt/2.                
                 VisMF::Write(warpx.getcurrent_cp(lev, 0),
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_cp"));
                 VisMF::Write(warpx.getcurrent_cp(lev, 1),
