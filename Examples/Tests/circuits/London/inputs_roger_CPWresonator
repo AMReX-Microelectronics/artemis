@@ -145,7 +145,9 @@ london.superconductor_function(x,y,z) = "0
 warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
 warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_ss * ((x > w_line/2) * (x < w_line/2 + gap_cpw) + (x < -w_line/2) * (x > -w_line/2 - gap_cpw)) * (z < -Lz/2 + th_si + th_nb + ddz) * (z > -Lz/2 + th_si - ddz) * (y > -Ly/2 - ddy) * (y < -Ly/2 + ddy) "
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_ss * ((x > w_line/2) * (x < w_line/2 + gap_cpw) + (x < -w_line/2) * (x > -w_line/2 - gap_cpw)) 
+					                        * (z < -Lz/2 + th_si + th_nb + ddz) * (z > -Lz/2 + th_si - ddz) 
+					                        * (y > -Ly/2 + dy*vedge - ddy) * (y < -Ly/2 + dy*vedge + ddy) "
 
 warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
