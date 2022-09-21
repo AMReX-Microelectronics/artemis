@@ -102,7 +102,7 @@ macroscopic.sigma_function(x,y,z) = "sigma_0
 + (sigma_si - sigma_0) * (z < -Lz/2 + th_si)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy)
-+ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > strip_c/2 + gap_cap) * (y < strip_c/2 + gap_cap + strip_edge - vedge*dy)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > +strip_c/2 + gap_cap) * (y < +strip_c/2 + gap_cap + strip_edge - vedge*dy)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) * (x > -w_line/2 - gap_cpw - w_gnd + vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)"
 
@@ -110,7 +110,7 @@ macroscopic.epsilon_function(x,y,z) = "eps_0
 + eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si)
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy)
-+ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > strip_c/2 + gap_cap) * (y < strip_c/2 + gap_cap + strip_edge - vedge*dy)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > +strip_c/2 + gap_cap) * (y < +strip_c/2 + gap_cap + strip_edge - vedge*dy)
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) * (x > -w_line/2 - gap_cpw - w_gnd + vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)"
 
@@ -118,7 +118,7 @@ macroscopic.mu_function(x,y,z) = "mu_0
 + mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy)
-+ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > strip_c/2 + gap_cap) * (y < strip_c/2 + gap_cap + strip_edge - vedge*dy)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > +strip_c/2 + gap_cap) * (y < +strip_c/2 + gap_cap + strip_edge - vedge*dy)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) * (x > -w_line/2 - gap_cpw - w_gnd + vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)"
 
@@ -128,11 +128,11 @@ macroscopic.mu_function(x,y,z) = "mu_0
 algo.yee_coupled_solver = MaxwellLondon
 london.penetration_depth = 100e-9
 london.superconductor_function(x,y,z) = "0
-+ (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
-+ (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy)
-+ (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > strip_c/2 + gap_cap) * (y < strip_c/2 + gap_cap + strip_edge - vedge*dy)
-+ (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) * (x > -w_line/2 - gap_cpw - w_gnd + vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)
-+ (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)"
++ (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x > -w_line/2 - ddx) * (x < w_line/2 + ddx) * (y > -strip_c/2 - ddy) * (y < strip_c/2 + ddy)
++ (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x > -w_line/2 - ddx) * (x < w_line/2 + ddx) * (y < -strip_c/2 - gap_cap + ddy) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy - ddy)
++ (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x > -w_line/2 - ddx) * (x < w_line/2 + ddx) * (y > +strip_c/2 + gap_cap - ddy) * (y < +strip_c/2 + gap_cap + strip_edge - vedge*dy + ddy)
++ (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x < -w_line/2 - gap_cpw + ddx) * (x > -w_line/2 - gap_cpw - w_gnd + vedge*dx - ddx) * (y < Ly/2 - vedge*dy + ddy) * (y > -Ly/2 + vedge*dy - ddy)
++ (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x > +w_line/2 + gap_cpw - ddx) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx + ddx) * (y < Ly/2 - vedge*dy - ddy) * (y > -Ly/2 + vedge*dy + ddy)"
 
 
 #################################
