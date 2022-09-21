@@ -12,7 +12,7 @@ my_constants.nx = 64
 my_constants.ny = 2000
 my_constants.nz = 320
 amr.n_cell = nx ny nz       
-my_constants.blocking_factor = 32
+my_constants.blocking_factor = 2
 
 
 amr.max_grid_size_x = 64
@@ -23,8 +23,8 @@ amr.max_level = 0
 
 # domain sizes and cell numbers separately defined for easier excitation function definition
 my_constants.Lx = 64.0e-6
-my_constants.Ly = 2000.0e-6     
-my_constants.Lz = 16.0e-6 
+my_constants.Ly = 2000.0e-6
+my_constants.Lz = 16.0e-6
 
 geometry.dims = 3
 geometry.prob_lo = -Lx/2 -Ly/2 -Lz/2
@@ -40,15 +40,15 @@ my_constants.ddz = dz / 100
 my_constants.ddy = dy / 100
 my_constants.ddx = dx / 100
 
-my_constants.th_si = 8.0e-6  
+my_constants.th_si = 8.0e-6
 my_constants.th_nb = 200.0e-9    # dimensions in z direction (nb thickness has 4 cells) 
 
 my_constants.gap_cap = 150.0e-6   
-my_constants.strip_c = 1500.0e-6    
+my_constants.strip_c = 1500.0e-6
 my_constants.strip_edge = 100.0e-6     # dimensions in y direction
 
-my_constants.gap_cpw = 6.0e-6 
-my_constants.w_line = 10.0e-6 
+my_constants.gap_cpw = 6.0e-6
+my_constants.w_line = 10.0e-6
 my_constants.w_gnd = 21.0e-6      # dimensions in x direction
 
 my_constants.obsx = w_line/2 + gap_cpw/2
