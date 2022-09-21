@@ -11,7 +11,7 @@
 my_constants.nx = 64
 my_constants.ny = 2000
 my_constants.nz = 320
-amr.n_cell = nx ny nz       
+amr.n_cell = nx ny nz
 my_constants.blocking_factor = 2
 
 
@@ -41,9 +41,9 @@ my_constants.ddy = dy / 100
 my_constants.ddx = dx / 100
 
 my_constants.th_si = 8.0e-6
-my_constants.th_nb = 200.0e-9    # dimensions in z direction (nb thickness has 4 cells) 
+my_constants.th_nb = 200.0e-9    # dimensions in z direction (nb thickness has 4 cells)
 
-my_constants.gap_cap = 150.0e-6   
+my_constants.gap_cap = 150.0e-6
 my_constants.strip_c = 1500.0e-6
 my_constants.strip_edge = 100.0e-6     # dimensions in y direction
 
@@ -81,7 +81,7 @@ my_constants.mu_0 = 1.25663706212e-06
 my_constants.mu_r_nb = 1.0
 my_constants.mu_r_si = 1.0
 
-my_constants.vedge = 2    # number of cells that contain vacuum at edges to buffer conductor/superconductor material (only need in x and y dimensions) 
+my_constants.vedge = 2    # number of cells that contain vacuum at edges to buffer conductor/superconductor material (only need in x and y dimensions)
 
 my_constants.flag_none = 0 # no source flag
 my_constants.flag_hs = 1 # hard source flag
@@ -100,7 +100,7 @@ particles.nspecies = 0
 
 algo.em_solver_medium = macroscopic           # vacuum/macroscopic
 algo.macroscopic_sigma_method = backwardeuler   # laxwendroff or backwardeuler
-  
+
 macroscopic.sigma_function(x,y,z) = "sigma_0
 + (sigma_si - sigma_0) * (z < -Lz/2 + th_si)
 + (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
@@ -118,7 +118,7 @@ macroscopic.epsilon_function(x,y,z) = "eps_0
 + eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)"
 
 macroscopic.mu_function(x,y,z) = "mu_0
-+ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si) 
++ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy)
 + mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > strip_c/2 + gap_cap) * (y < strip_c/2 + gap_cap + strip_edge - vedge*dy)
@@ -166,7 +166,7 @@ chk.diag_type = Full
 max_step = 900000
 #amr.restart = diags/chk900000
 
-warpx.reduced_diags_names = Eobs1 Eobs2 Eobs3 Eobs4 Eobs5 Eobs_out_s Eobs_in_s Eobs_out_m Eobs_in_m Eobs_gap_out Eobs_gap_in 
+warpx.reduced_diags_names = Eobs1 Eobs2 Eobs3 Eobs4 Eobs5 Eobs_out_s Eobs_in_s Eobs_out_m Eobs_in_m Eobs_gap_out Eobs_gap_in
 Eobs1.type = RawEFieldReduction
 Eobs2.type = RawEFieldReduction
 Eobs3.type = RawEFieldReduction
@@ -214,7 +214,7 @@ Eobs_out_m.intervals = 1
 Eobs_in_m.intervals = 1
 Eobs_gap_out.intervals = 1
 Eobs_gap_in.intervals = 1
-   
+
 Eobs1.reduced_function(x,y,z) = (y > obsy1 - ddy)*(y < obsy1 + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
 Eobs2.reduced_function(x,y,z) = (y > obsy2 - ddy)*(y < obsy2 + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
 Eobs3.reduced_function(x,y,z) = (y > obsy3 - ddy)*(y < obsy3 + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
