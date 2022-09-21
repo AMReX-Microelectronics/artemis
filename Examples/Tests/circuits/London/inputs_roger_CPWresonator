@@ -12,13 +12,11 @@ my_constants.nx = 64
 my_constants.ny = 2000
 my_constants.nz = 320
 amr.n_cell = nx ny nz
-my_constants.blocking_factor = 2
-
 
 amr.max_grid_size_x = 64
 amr.max_grid_size_y = 250
 amr.max_grid_size_z = 160
-amr.blocking_factor = blocking_factor  # box lengths must be integer multiples of this
+amr.blocking_factor = 2  # box lengths must be integer multiples of this
 amr.max_level = 0
 
 # domain sizes and cell numbers separately defined for easier excitation function definition
