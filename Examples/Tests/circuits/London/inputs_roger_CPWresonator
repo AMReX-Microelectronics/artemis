@@ -87,7 +87,6 @@ my_constants.flag_none = 0 # no source flag
 my_constants.flag_hs = 1 # hard source flag
 my_constants.flag_ss = 2 # soft source flag
 
-
 #################################
 ############ NUMERICS ###########
 #################################
