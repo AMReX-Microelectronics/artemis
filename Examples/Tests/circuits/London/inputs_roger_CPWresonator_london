@@ -9,7 +9,7 @@
 ####### GENERAL PARAMETERS ######
 #################################
 my_constants.nx = 64
-my_constants.ny = 2000
+my_constants.ny = 1000
 my_constants.nz = 320
 amr.n_cell = nx ny nz
 
@@ -21,7 +21,7 @@ amr.max_level = 0
 
 # domain sizes and cell numbers separately defined for easier excitation function definition
 my_constants.Lx = 64.0e-6
-my_constants.Ly = 2000.0e-6
+my_constants.Ly = 1000.0e-6
 my_constants.Lz = 16.0e-6
 
 geometry.dims = 3
@@ -42,7 +42,7 @@ my_constants.th_si = 8.0e-6
 my_constants.th_nb = 200.0e-9    # dimensions in z direction (nb thickness has 4 cells)
 
 my_constants.gap_cap = 150.0e-6
-my_constants.strip_c = 1500.0e-6
+my_constants.strip_c = 500.0e-6
 my_constants.strip_edge = 100.0e-6     # dimensions in y direction
 
 my_constants.gap_cpw = 6.0e-6
@@ -153,18 +153,20 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 # Diagnostics
 
-diagnostics.diags_names = diag1 chk
-diag1.intervals = 1000
-diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz sigma epsilon mu
-#diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz superconductor sigma epsilon mu Bx_sc By_sc Bz_sc
+diagnostics.diags_names = plt chk
+plt.file_min_digits = 8
+plt.intervals = 1000
+plt.diag_type = Full
+plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz sigma epsilon mu
+#plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz superconductor sigma epsilon mu Bx_sc By_sc Bz_sc
 
+chk.file_min_digits = 8
 chk.format = checkpoint
 chk.intervals = 100000
 chk.diag_type = Full
 
-max_step = 900000
-#amr.restart = diags/chk900000
+max_step = 4000000
+#amr.restart = diags/chk01000000
 
 warpx.reduced_diags_names = Eobs1 Eobs2 Eobs3 Eobs4 Eobs5 Eobs_out_s Eobs_in_s Eobs_out_m Eobs_in_m Eobs_gap_out Eobs_gap_in
 Eobs1.type = RawEFieldReduction
