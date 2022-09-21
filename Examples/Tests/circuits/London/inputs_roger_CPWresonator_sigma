@@ -128,8 +128,8 @@ macroscopic.mu_function(x,y,z) = "mu_0
 
 warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_ss * ((x > w_line/2 + ddx) * (x < w_line/2 + gap_cpw - ddx) + (x < -w_line/2 - ddx) * (x > -w_line/2 - gap_cpw + ddx)) 
-                                                    * (z < -Lz/2 + th_si + th_nb + ddz) * (z > -Lz/2 + th_si - ddz) 
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_ss * ((x > w_line/2 + ddx) * (x < w_line/2 + gap_cpw - ddx) + (x < -w_line/2 - ddx) * (x > -w_line/2 - gap_cpw + ddx))
+                                                    * (z < -Lz/2 + th_si + th_nb + ddz) * (z > -Lz/2 + th_si - ddz)
                                                     * (y > -Ly/2 + dy*vedge - ddy) * (y < -Ly/2 + dy*vedge + ddy)"
 warpx.Ex_excitation_grid_function(x,y,z,t) = "exp(-(t - 2.*TP)**2/(2*TP*TP))*sin(2*pi*t*frequency) * ((x > w_line/2) * (x < w_line/2 + gap_cpw) + (-1.) * (x < -w_line/2) * (x > -w_line/2 - gap_cpw))"
 
