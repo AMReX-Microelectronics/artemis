@@ -9,20 +9,20 @@
 ####### GENERAL PARAMETERS ######
 #################################
 my_constants.nx = 128
-my_constants.ny = 1000
+my_constants.ny = 1100
 my_constants.nz = 1280
 amr.n_cell = nx ny nz
 
 amr.max_grid_size_x = 128
-amr.max_grid_size_y = 250
-amr.max_grid_size_z = 160
+amr.max_grid_size_y = 550
+amr.max_grid_size_z = 80
 amr.blocking_factor = 2  # box lengths must be integer multiples of this
 amr.refine_grid_layout = 0
 amr.max_level = 0
 
 # domain sizes and cell numbers separately defined for easier excitation function definition
 my_constants.Lx = 128.0e-6
-my_constants.Ly = 1000.0e-6
+my_constants.Ly = 1100.0e-6
 my_constants.Lz = 64.0e-6
 
 geometry.dims = 3
@@ -43,7 +43,7 @@ my_constants.th_si = 32.0e-6
 my_constants.th_nb = 200.0e-9    # dimensions in z direction (nb thickness has 4 cells)
 
 my_constants.gap_cap = 150.0e-6
-my_constants.strip_c = 500.0e-6
+my_constants.strip_c = 600.0e-6
 my_constants.strip_edge = 100.0e-6     # dimensions in y direction
 
 my_constants.gap_cpw = 6.0e-6
@@ -65,10 +65,10 @@ my_constants.obsy_gap_in = -strip_c/2 - gap_cap/2
 my_constants.obsz_s = -Lz/2 + th_si + dz  # above silicon surface
 my_constants.obsz_m = -Lz/2 + th_si + th_nb + dz  # above metal surface
 
-my_constants.frequency = 86.7e9
+my_constants.frequency = 100.e9
 my_constants.TP = 1./frequency
 
-my_constants.sigma_nb = 6.7e6
+my_constants.sigma_nb = 6.e7
 my_constants.sigma_0 = 0.0
 my_constants.sigma_si = 0.0
 
