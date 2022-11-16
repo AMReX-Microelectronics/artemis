@@ -133,7 +133,7 @@ london.superconductor_function(x,y,z) = "0
 + (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x > -w_line/2 - ddx) * (x < w_line/2 + ddx) * (y < -strip_c/2 - gap_cap + ddy) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy - ddy)
 + (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x > -w_line/2 - ddx) * (x < w_line/2 + ddx) * (y > +strip_c/2 + gap_cap - ddy) * (y < +strip_c/2 + gap_cap + strip_edge - vedge*dy + ddy)
 + (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x < -w_line/2 - gap_cpw + ddx) * (x > -w_line/2 - gap_cpw - w_gnd + vedge*dx - ddx) * (y < Ly/2 - vedge*dy + ddy) * (y > -Ly/2 + vedge*dy - ddy)
-+ (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x > +w_line/2 + gap_cpw - ddx) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx + ddx) * (y < Ly/2 - vedge*dy - ddy) * (y > -Ly/2 + vedge*dy + ddy)"
++ (z > -Lz/2 + th_si - ddz) * (z < -Lz/2 + th_si + th_nb + ddz) * (x > +w_line/2 + gap_cpw - ddx) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx + ddx) * (y < Ly/2 - vedge*dy + ddy) * (y > -Ly/2 + vedge*dy - ddy)"
 
 #################################
 ############ FIELDS #############
