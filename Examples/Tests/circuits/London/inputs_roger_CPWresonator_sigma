@@ -8,21 +8,21 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-my_constants.nx = 128
-my_constants.ny = 1100
+my_constants.nx = 130
+my_constants.ny = 1008
 my_constants.nz = 1280
 amr.n_cell = nx ny nz
 
-amr.max_grid_size_x = 128
-amr.max_grid_size_y = 550
+amr.max_grid_size_x = 130
+amr.max_grid_size_y = 504
 amr.max_grid_size_z = 80
 amr.blocking_factor = 2  # box lengths must be integer multiples of this
 amr.refine_grid_layout = 0
 amr.max_level = 0
 
 # domain sizes and cell numbers separately defined for easier excitation function definition
-my_constants.Lx = 128.0e-6
-my_constants.Ly = 1100.0e-6
+my_constants.Lx = 130.0e-6
+my_constants.Ly = 1008.0e-6
 my_constants.Lz = 64.0e-6
 
 geometry.dims = 3
@@ -42,13 +42,13 @@ my_constants.ddx = dx / 100
 my_constants.th_si = 32.0e-6
 my_constants.th_nb = 200.0e-9    # dimensions in z direction (nb thickness has 4 cells)
 
-my_constants.gap_cap = 150.0e-6
+my_constants.gap_cap = 100.0e-6
 my_constants.strip_c = 600.0e-6
-my_constants.strip_edge = 100.0e-6     # dimensions in y direction
+my_constants.strip_edge = 104.0e-6     # dimensions in y direction
 
 my_constants.gap_cpw = 6.0e-6
 my_constants.w_line = 10.0e-6
-my_constants.w_gnd = 53.0e-6      # dimensions in x direction
+my_constants.w_gnd = 54.0e-6      # dimensions in x direction
 
 my_constants.obsx = w_line/2 + gap_cpw/2
 
@@ -151,7 +151,7 @@ plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz sigma epsilon mu
 
 chk.file_min_digits = 8
 chk.format = checkpoint
-chk.intervals = 100000
+chk.intervals = 50000
 chk.diag_type = Full
 
 max_step = 2000000
