@@ -158,7 +158,7 @@ diagnostics.diags_names = plt chk
 plt.file_min_digits = 8
 plt.intervals = 10000
 plt.diag_type = Full
-plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz sigma epsilon mu
+plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz sigma epsilon mu superconductor
 #plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz superconductor sigma epsilon mu Bx_sc By_sc Bz_sc
 
 chk.file_min_digits = 8
