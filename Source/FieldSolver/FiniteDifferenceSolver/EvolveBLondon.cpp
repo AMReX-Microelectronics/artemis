@@ -97,7 +97,6 @@ void FiniteDifferenceSolver::EvolveBLondonCartesian (
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     amrex::Real const lambdasq_mu0_fac = penetration_depth * penetration_depth * PhysConst::mu0;
-    amrex::Print() << lambdasq_mu0_fac << "\n";
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
