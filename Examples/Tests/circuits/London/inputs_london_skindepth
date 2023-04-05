@@ -1,0 +1,157 @@
+my_constants.wavelength = 3.e-2 # 10 GHz  (~3M time steps per period)
+max_step = 20000000
+my_constants.prob_lo_z = -32.e-2
+my_constants.prob_hi_z = 32.e-2
+my_constants.nz = 64000000
+amr.max_grid_size = 160000
+plt.intervals = 1000000
+plt.intervals = 1000000
+
+my_constants.wavelength = 1.2e-2 # 25 GHz (~1.2M time steps per period)
+max_step = 8000000
+my_constants.prob_lo_z = -128.e-3
+my_constants.prob_hi_z = 128.e-3
+my_constants.nz = 25600000
+amr.max_grid_size = 160000
+plt.intervals = 400000
+
+my_constants.wavelength = 3.e-3 # 100 GHz (~300k time steps per period)
+max_step = 2000000
+my_constants.prob_lo_z = -32.e-3
+my_constants.prob_hi_z = 32.e-3
+my_constants.nz = 6400000
+amr.max_grid_size = 160000
+plt.intervals = 100000
+
+my_constants.wavelength = 3.e-4 # 1 THz (~30k time steps per period)
+max_step = 200000
+my_constants.prob_lo_z = -32.e-4
+my_constants.prob_hi_z = 32.e-4
+my_constants.nz = 640000
+amr.max_grid_size = 160000
+plt.intervals = 10000
+
+my_constants.wavelength = 3.e-6 # 100 THz (~300 time steps per period)
+max_step = 2000
+my_constants.prob_lo_z = -32.e-6
+my_constants.prob_hi_z = 32.e-6
+my_constants.nz = 6400
+amr.max_grid_size = 6400
+plt.intervals = 100
+
+my_constants.sigma = 0.0
+my_constants.obs = 0.0
+my_constants.len = 400.e-9    # modify this (increments on 10nm) based on the choice of wavelength and sigma
+
+my_constants.nx = 2
+my_constants.ny = 2
+
+my_constants.prob_lo_x = -8.e-6
+my_constants.prob_hi_x = 8.e-6
+
+my_constants.prob_lo_y = -8.e-6
+my_constants.prob_hi_y = 8.e-6
+
+# number of grid points
+amr.n_cell = nx ny nz
+
+amr.blocking_factor = 2
+
+# Maximum level in hierarchy (for now must be 0, i.e., one level in total)
+amr.max_level = 0
+
+# Geometry
+geometry.coord_sys   = 0                     # 0: Cartesian
+geometry.dims = 3
+boundary.field_lo = periodic periodic pml
+boundary.field_hi = periodic periodic pml
+geometry.prob_lo = prob_lo_x prob_lo_y prob_lo_z
+geometry.prob_hi = prob_hi_x prob_hi_y prob_hi_z
+amr.max_level = 0
+
+my_constants.dx = (prob_hi_x-prob_lo_x) / nx
+my_constants.dy = (prob_hi_y-prob_lo_y) / ny
+my_constants.dz = (prob_hi_z-prob_lo_z) / nz
+
+my_constants.ddx = dx / 100
+my_constants.ddz = dz / 100
+
+# Verbosity
+warpx.verbose = 1
+
+my_constants.eps_r = 1.0
+my_constants.mu_r = 1.0
+
+algo.em_solver_medium = Macroscopic # vacuum/macroscopic
+algo.macroscopic_sigma_method = backwardeuler # laxwendroff or backwardeuler
+
+macroscopic.sigma_init_style = "parse_sigma_function" # parse or "constant"
+macroscopic.sigma_function(x,y,z) = "sigma"
+
+macroscopic.epsilon_init_style = "parse_epsilon_function" # parse or "constant"
+macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
+
+macroscopic.mu_init_style = "parse_mu_function" # parse or "constant"
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
+
+# CFL
+warpx.cfl = 0.9
+
+#London
+algo.yee_coupled_solver = MaxwellLondon
+london.penetration_depth = 400.e-9
+london.superconductor_function(x,y,z) = "1."
+
+my_constants.pi = 3.14159265359
+my_constants.c = 299792458.
+
+warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength)"
+#warpx.Ey_excitation_grid_function(x,y,z,t) = "1."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+warpx.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
+
+#warpx.Bx_excitation_grid_function(x,y,z,t)= "-sin(2*pi*c*t/wavelength)/c"
+#warpx.Bx_excitation_grid_function(x,y,z,t) = "1."
+warpx.Bx_excitation_grid_function(x,y,z,t) = "0."
+warpx.By_excitation_grid_function(x,y,z,t) = "0."
+warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
+
+warpx.Ex_excitation_flag_function(x,y,z) = "0."
+warpx.Ey_excitation_flag_function(x,y,z) = "0. + 2*(z>(obs-dz/2-ddz))*(z<(obs+ddz))"
+warpx.Ez_excitation_flag_function(x,y,z) = "0."
+
+warpx.Bx_excitation_flag_function(x,y,z) = "0. + 2*(z>(obs-dz/2-ddz))*(z<(obs+ddz))"
+warpx.By_excitation_flag_function(x,y,z) = "0."
+warpx.Bz_excitation_flag_function(x,y,z) = "0."
+
+# Diagnostics
+diagnostics.diags_names = plt chk
+plt.diag_type = Full
+plt.fields_to_plot = Ey Bx
+
+chk.format = checkpoint
+chk.intervals = 500000
+chk.diag_type = Full
+
+# Remove species
+particles.nspecies = 0
+
+warpx.reduced_diags_names = Bdepth1_int  Bdepth2_int
+
+Bdepth1_int.type = RawBFieldReduction
+Bdepth1_int.reduction_type = integral
+Bdepth1_int.integration_type = surface
+Bdepth1_int.intervals = 1
+Bdepth1_int.surface_normal = X
+Bdepth1_int.reduced_function(x,y,z) = (y > 0) * (y < dy) * (z > (obs+dz/2-ddz)) * (z < (obs+dz/2+ddz)) * (x > -ddx) * (x < ddx)
+
+Bdepth2_int.type = RawBFieldReduction
+Bdepth2_int.reduction_type = integral
+Bdepth2_int.integration_type = surface
+Bdepth2_int.intervals = 1
+Bdepth2_int.surface_normal = X
+Bdepth2_int.reduced_function(x,y,z) = (y > 0) * (y < dy) * (z > (obs+len+dz/2-ddz)) * (z < (obs+len+dz/2+ddz)) * (x > -ddx) * (x < ddx)
