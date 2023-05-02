@@ -25,8 +25,8 @@ jobs:
       run: |
         cmake -S . -B build     \
           -DWarpX_SENSEI=ON     \
-          -DWarpX_COMPUTE=NOACC
           -DWarpX_MAG_LLG=OFF   \
+          -DWarpX_COMPUTE=NOACC
     - name: Build
       run: |
         cmake --build build -j 2
@@ -48,6 +48,7 @@ jobs:
         . /ascent_docker_setup_env.sh
         cmake -S . -B build   \
             -DWarpX_ASCENT=ON \
+            -DWarpX_MAG_LLG=OFF \
             -DWarpX_COMPUTE=NOACC
     - name: Build
       run: |
