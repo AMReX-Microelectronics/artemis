@@ -13,7 +13,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #endif
 #include "Utils/WarpXConst.H"
-#include "Utils/CoarsenIO.H"
+#include <ablastr/coarsen/sample.H>
 #include "Utils/WarpXUtil.H"
 #include <AMReX_Gpu.H>
 
@@ -38,7 +38,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM(
     std::unique_ptr<MacroscopicProperties> const &macroscopic_properties)
 {
 
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee)
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee)
     {
         MacroscopicEvolveHMCartesian<CartesianYeeAlgorithm>(Mfield, Hfield, Bfield, H_biasfield, Efield, dt, macroscopic_properties);
     }
@@ -566,7 +566,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 if (mag_Ms_xface_arr(i,j,k) == 0._rt){ // nonmagnetic region
-                    amrex::Real mu_arrx = CoarsenIO::Interp( mu_arr, mu_stag, Hx_stag,
+                    amrex::Real mu_arrx = ablastr::coarsen::sample::Interp( mu_arr, mu_stag, Hx_stag,
                                                              macro_cr, i, j, k, 0);
                     Hx(i, j, k) += 1. / mu_arrx * dt * (T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
                                                       - T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k));
@@ -581,7 +581,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 if (mag_Ms_yface_arr(i,j,k) == 0._rt){ // nonmagnetic region
-                    amrex::Real mu_arry = CoarsenIO::Interp( mu_arr, mu_stag, Hy_stag,
+                    amrex::Real mu_arry = ablastr::coarsen::sample::Interp( mu_arr, mu_stag, Hy_stag,
                                                              macro_cr, i, j, k, 0);
                     Hy(i, j, k) += 1. / mu_arry * dt * (T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
                                                       - T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k));
@@ -596,7 +596,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 if (mag_Ms_zface_arr(i,j,k) == 0._rt){ // nonmagnetic region
-                    amrex::Real mu_arrz = CoarsenIO::Interp( mu_arr, mu_stag, Hz_stag,
+                    amrex::Real mu_arrz = ablastr::coarsen::sample::Interp( mu_arr, mu_stag, Hz_stag,
                                                              macro_cr, i, j, k, 0);
                     Hz(i, j, k) += 1. / mu_arrz * dt * (T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
                                                       - T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k));
@@ -651,7 +651,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 if (mag_Ms_xface_arr(i,j,k) == 0._rt){ // nonmagnetic region
-                    amrex::Real mu_arrx = CoarsenIO::Interp( mu_arr, mu_stag, Bx_stag,
+                    amrex::Real mu_arrx = ablastr::coarsen::sample::Interp( mu_arr, mu_stag, Bx_stag,
                                                              macro_cr, i, j, k, 0);
                     Bx(i, j, k) = mu_arrx * Hx(i, j, k);
                 } else if (mag_Ms_xface_arr(i,j,k) > 0){
@@ -662,7 +662,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 if (mag_Ms_yface_arr(i,j,k) == 0._rt){ // nonmagnetic region
-                    amrex::Real mu_arry = CoarsenIO::Interp( mu_arr, mu_stag, By_stag,
+                    amrex::Real mu_arry = ablastr::coarsen::sample::Interp( mu_arr, mu_stag, By_stag,
                                                              macro_cr, i, j, k, 0);
                     By(i, j, k) =  mu_arry * Hy(i, j, k);
                 } else if (mag_Ms_yface_arr(i,j,k) > 0){
@@ -673,7 +673,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                 if (mag_Ms_zface_arr(i,j,k) == 0._rt){ // nonmagnetic region
-                    amrex::Real mu_arrz = CoarsenIO::Interp( mu_arr, mu_stag, Bz_stag,
+                    amrex::Real mu_arrz = ablastr::coarsen::sample::Interp( mu_arr, mu_stag, Bz_stag,
                                                              macro_cr, i, j, k, 0);
                     Bz(i, j, k) = mu_arrz * Hz(i, j, k);
                 } else if (mag_Ms_zface_arr(i,j,k) > 0){

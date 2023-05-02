@@ -64,19 +64,19 @@ void FiniteDifferenceSolver::EvolveBLondon (
                          lev, dt, penetration_depth);
     amrex::Abort("EvolveBLondon: RZ not implemented");
 #else
-    if(m_do_nodal or m_fdtd_algo != MaxwellSolverAlgo::ECT){
+    if(m_grid_type == GridType::Collocated or m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
         amrex::ignore_unused(face_areas);
     }
 
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveBLondonCartesian <CartesianNodalAlgorithm> ( Bfield, current, Gfield, lev, dt, penetration_depth);
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         EvolveBLondonCartesian <CartesianYeeAlgorithm> ( Bfield, current, Gfield, lev, dt, penetration_depth );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveBLondonCartesian <CartesianCKCAlgorithm> ( Bfield, current, Gfield, lev, dt, penetration_depth );
     } else {

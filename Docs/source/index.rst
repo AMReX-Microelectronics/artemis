@@ -35,13 +35,13 @@ We also have a `discussion page <https://github.com/ECP-WarpX/artemis/discussion
    /* front page: hide chapter titles
     * needed for consistent HTML-PDF-EPUB chapters
     */
-   div#installation.section,
-   div#usage.section,
-   div#theory.section,
-   div#data-analysis.section,
-   div#development.section,
-   div#maintenance.section,
-   div#epilogue.section {
+   section#installation,
+   section#usage,
+   section#theory,
+   section#data-analysis,
+   section#development,
+   section#maintenance,
+   section#epilogue {
        display:none;
    }
    </style>
@@ -51,6 +51,7 @@ We also have a `discussion page <https://github.com/ECP-WarpX/artemis/discussion
 
    coc
    acknowledge_us
+   highlights
 
 Installation
 ------------
@@ -73,6 +74,7 @@ Usage
    :hidden:
 
    usage/how_to_run
+   usage/domain_decomposition
    usage/parameters
    usage/python
    usage/examples
@@ -95,8 +97,8 @@ Data Analysis
    dataanalysis/visit
    dataanalysis/visualpic
    dataanalysis/picviewer
-   dataanalysis/backtransformed_diags
    dataanalysis/reduced_diags
+   dataanalysis/workflows
 
 Theory
 ------
@@ -111,6 +113,7 @@ Theory
    theory/PML
    theory/boosted_frame
    theory/input_output
+   theory/collisions
 
 Development
 -----------

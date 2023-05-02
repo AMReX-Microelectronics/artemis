@@ -11,7 +11,7 @@
 #include "ElasticCollisionPerez.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXUtil.H"
+#include "Utils/Parser/ParserUtils.H"
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_ParmParse.H>
@@ -40,16 +40,20 @@ public:
      * \brief Constructor of the PairWiseCoulombCollisionFunc class
      *
      * @param[in] collision_name the name of the collision
+     * @param[in] mypc the particle container (unused)
+     * @param[in] isSameSpecies true if this is an intra-species colission
      */
     PairWiseCoulombCollisionFunc (const std::string collision_name,
-                                  MultiParticleContainer const * const /*mypc*/,
-                                  const bool /*isSameSpecies*/)
+                                  [[maybe_unused]] MultiParticleContainer const * const mypc,
+                                  const bool isSameSpecies)
     {
         using namespace amrex::literals;
         amrex::ParmParse pp_collision_name(collision_name);
         // default Coulomb log, if < 0, will be computed automatically
-        m_CoulombLog = -1.0_rt;
-        queryWithParser(pp_collision_name, "CoulombLog", m_CoulombLog);
+        m_CoulombLog = -1.0_prt;
+        utils::parser::queryWithParser(
+            pp_collision_name, "CoulombLog", m_CoulombLog);
+        m_isSameSpecies = isSameSpecies;
     }
 
     /**
@@ -74,8 +78,8 @@ public:
         index_type const* AMREX_RESTRICT I2,
         SoaData_type soa_1, SoaData_type soa_2,
         GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
-        amrex::Real const  q1, amrex::Real const  q2,
-        amrex::Real const  m1, amrex::Real const  m2,
+        amrex::ParticleReal const  q1, amrex::ParticleReal const  q2,
+        amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
         amrex::Real const  dt, amrex::Real const dV,
         index_type const /*cell_start_pair*/, index_type* /*p_mask*/,
         index_type* /*p_pair_indices_1*/, index_type* /*p_pair_indices_2*/,
@@ -85,12 +89,13 @@ public:
             ElasticCollisionPerez(
                     I1s, I1e, I2s, I2e, I1, I2,
                     soa_1, soa_2,
-                    q1, q2, m1, m2, amrex::Real(-1.0), amrex::Real(-1.0),
-                    dt, m_CoulombLog, dV, engine );
+                    q1, q2, m1, m2, -1.0_prt, -1.0_prt,
+                    dt, m_CoulombLog, dV, engine, m_isSameSpecies);
         }
 
 private:
-    amrex::Real m_CoulombLog;
+    amrex::ParticleReal m_CoulombLog;
+    bool m_isSameSpecies;
 };
 
 #endif // PAIRWISE_COULOMB_COLLISION_FUNC_H_

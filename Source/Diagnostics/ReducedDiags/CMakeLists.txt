@@ -20,4 +20,5 @@ target_sources(WarpX
     FieldProbe.cpp
     RawEFieldReduction.cpp
     RawBFieldReduction.cpp
+    ChargeOnEB.cpp
 )

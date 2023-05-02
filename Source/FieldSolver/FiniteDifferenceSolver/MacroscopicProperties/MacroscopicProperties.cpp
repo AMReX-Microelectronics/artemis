@@ -1,8 +1,10 @@
 #include "MacroscopicProperties.H"
 
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
+
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Array4.H>
 #include <AMReX_BoxArray.H>
@@ -42,7 +44,7 @@ MacroscopicProperties::ReadParameters ()
 
     // Query input for material conductivity, sigma.
     bool sigma_specified = false;
-    if (queryWithParser(pp_macroscopic, "sigma", m_sigma)) {
+    if (utils::parser::queryWithParser(pp_macroscopic, "sigma", m_sigma)) {
         m_sigma_s = "constant";
         sigma_specified = true;
     }
@@ -54,18 +56,19 @@ MacroscopicProperties::ReadParameters ()
         std::stringstream warnMsg;
         warnMsg << "Material conductivity is not specified. Using default vacuum value of " <<
             m_sigma << " in the simulation.";
-        WarpX::GetInstance().RecordWarning("Macroscopic properties",
+        ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
-        Store_parserString(pp_macroscopic, "sigma_function(x,y,z)", m_str_sigma_function);
+        utils::parser::Store_parserString(
+            pp_macroscopic, "sigma_function(x,y,z)", m_str_sigma_function);
         m_sigma_parser = std::make_unique<amrex::Parser>(
-                                 makeParser(m_str_sigma_function,{"x","y","z"}));
+            utils::parser::makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
     bool epsilon_specified = false;
-    if (queryWithParser(pp_macroscopic, "epsilon", m_epsilon)) {
+    if (utils::parser::queryWithParser(pp_macroscopic, "epsilon", m_epsilon)) {
         m_epsilon_s = "constant";
         epsilon_specified = true;
     }
@@ -77,20 +80,21 @@ MacroscopicProperties::ReadParameters ()
         std::stringstream warnMsg;
         warnMsg << "Material permittivity is not specified. Using default vacuum value of " <<
             m_epsilon << " in the simulation.";
-        WarpX::GetInstance().RecordWarning("Macroscopic properties",
+        ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
 
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
-        Store_parserString(pp_macroscopic, "epsilon_function(x,y,z)", m_str_epsilon_function);
+        utils::parser::Store_parserString(
+            pp_macroscopic, "epsilon_function(x,y,z)", m_str_epsilon_function);
         m_epsilon_parser = std::make_unique<amrex::Parser>(
-                                 makeParser(m_str_epsilon_function,{"x","y","z"}));
+            utils::parser::makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
     // Query input for material permeability, mu
     bool mu_specified = false;
-    if (queryWithParser(pp_macroscopic, "mu", m_mu)) {
+    if (utils::parser::queryWithParser(pp_macroscopic, "mu", m_mu)) {
         m_mu_s = "constant";
         mu_specified = true;
     }
@@ -102,15 +106,16 @@ MacroscopicProperties::ReadParameters ()
         std::stringstream warnMsg;
         warnMsg << "Material permittivity is not specified. Using default vacuum value of " <<
             m_mu << " in the simulation.";
-        WarpX::GetInstance().RecordWarning("Macroscopic properties",
+        ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
 
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
-        Store_parserString(pp_macroscopic, "mu_function(x,y,z)", m_str_mu_function);
+        utils::parser::Store_parserString(
+            pp_macroscopic, "mu_function(x,y,z)", m_str_mu_function);
         m_mu_parser = std::make_unique<amrex::Parser>(
-                                 makeParser(m_str_mu_function,{"x","y","z"}));
+            utils::parser::makeParser(m_str_mu_function,{"x","y","z"}));
     }
 
 #ifdef WARPX_MAG_LLG
@@ -120,9 +125,9 @@ MacroscopicProperties::ReadParameters ()
     // _mag_ such that it's clear the Ms variable is only meaningful for magnetic materials
     //initialization with parser
     if (m_mag_Ms_s == "parse_mag_Ms_function") {
-        Store_parserString(pp_macroscopic, "mag_Ms_function(x,y,z)", m_str_mag_Ms_function);
+        utils::parser::Store_parserString(pp_macroscopic, "mag_Ms_function(x,y,z)", m_str_mag_Ms_function);
         m_mag_Ms_parser = std::make_unique<amrex::Parser>(
-                                  makeParser(m_str_mag_Ms_function,{"x","y","z"}));
+                                  utils::parser::makeParser(m_str_mag_Ms_function,{"x","y","z"}));
     }
 
     pp_macroscopic.get("mag_alpha_init_style", m_mag_alpha_s);
@@ -130,9 +135,9 @@ MacroscopicProperties::ReadParameters ()
     // _mag_ such that it's clear the alpha variable is only meaningful for magnetic materials
     //initialization with parser
     if (m_mag_alpha_s == "parse_mag_alpha_function") {
-        Store_parserString(pp_macroscopic, "mag_alpha_function(x,y,z)", m_str_mag_alpha_function);
+        utils::parser::Store_parserString(pp_macroscopic, "mag_alpha_function(x,y,z)", m_str_mag_alpha_function);
         m_mag_alpha_parser = std::make_unique<amrex::Parser>(
-                                  makeParser(m_str_mag_alpha_function,{"x","y","z"}));
+                                  utils::parser::makeParser(m_str_mag_alpha_function,{"x","y","z"}));
     }
 
     pp_macroscopic.get("mag_gamma_init_style", m_mag_gamma_s);
@@ -140,9 +145,9 @@ MacroscopicProperties::ReadParameters ()
     // _mag_ such that it's clear the gamma variable parsed here is only meaningful for magnetic materials
     //initialization with parser
     if (m_mag_gamma_s == "parse_mag_gamma_function") {
-        Store_parserString(pp_macroscopic, "mag_gamma_function(x,y,z)", m_str_mag_gamma_function);
+        utils::parser::Store_parserString(pp_macroscopic, "mag_gamma_function(x,y,z)", m_str_mag_gamma_function);
         m_mag_gamma_parser = std::make_unique<amrex::Parser>(
-                                  makeParser(m_str_mag_gamma_function,{"x","y","z"}));
+                                  utils::parser::makeParser(m_str_mag_gamma_function,{"x","y","z"}));
     }
 
     if (warpx.mag_LLG_exchange_coupling == 1) { // spin exchange coupling turned off by default
@@ -151,9 +156,9 @@ MacroscopicProperties::ReadParameters ()
         // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
         //initialization with parser
         if (m_mag_exchange_s == "parse_mag_exchange_function") {
-            Store_parserString(pp_macroscopic, "mag_exchange_function(x,y,z)", m_str_mag_exchange_function);
+            utils::parser::Store_parserString(pp_macroscopic, "mag_exchange_function(x,y,z)", m_str_mag_exchange_function);
             m_mag_exchange_parser = std::make_unique<amrex::Parser>(
-                                      makeParser(m_str_mag_exchange_function,{"x","y","z"}));
+                                      utils::parser::makeParser(m_str_mag_exchange_function,{"x","y","z"}));
         }
     }
 
@@ -163,9 +168,9 @@ MacroscopicProperties::ReadParameters ()
         // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
         //initialization with parser
         if (m_mag_anisotropy_s == "parse_mag_anisotropy_function") {
-            Store_parserString(pp_macroscopic, "mag_anisotropy_function(x,y,z)", m_str_mag_anisotropy_function);
+            utils::parser::Store_parserString(pp_macroscopic, "mag_anisotropy_function(x,y,z)", m_str_mag_anisotropy_function);
             m_mag_anisotropy_parser = std::make_unique<amrex::Parser>(
-                                      makeParser(m_str_mag_anisotropy_function,{"x","y","z"}));
+                                      utils::parser::makeParser(m_str_mag_anisotropy_function,{"x","y","z"}));
         }
     }
 
@@ -413,17 +418,25 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift x, y, z position based on index type
-                amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
-                amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                amrex::Real y = 0._rt;
-                amrex::Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
-                amrex::Real z = j * dx_lev[1] + real_box.lo(1) + fac_z;
+
+#if defined(WARPX_DIM_1D_Z)
+                const amrex::Real x = 0._rt;
+                const amrex::Real y = 0._rt;
+                const amrex::Real fac_z = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real z = j * dx_lev[0] + real_box.lo(0) + fac_z;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real y = 0._rt;
+                const amrex::Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                const amrex::Real z = j * dx_lev[1] + real_box.lo(1) + fac_z;
 #else
-                amrex::Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
-                amrex::Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
-                amrex::Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
-                amrex::Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
+                const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                const amrex::Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
+                const amrex::Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
+                const amrex::Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // initialize the macroparameter
                 macro_fab(i,j,k) = macro_parser(x,y,z);
