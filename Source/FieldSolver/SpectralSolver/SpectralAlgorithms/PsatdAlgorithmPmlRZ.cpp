@@ -6,6 +6,7 @@
  */
 #include "PsatdAlgorithmPmlRZ.H"
 #include "FieldSolver/SpectralSolver/SpectralHankelTransform/HankelTransform.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -20,9 +21,9 @@ PsatdAlgorithmPmlRZ::PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspa
                                           amrex::DistributionMapping const & dm,
                                           const SpectralFieldIndex& spectral_index,
                                           int const n_rz_azimuthal_modes, int const norder_z,
-                                          bool const nodal, amrex::Real const dt)
+                                          short const grid_type, amrex::Real const dt)
      // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
+     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
        m_spectral_index(spectral_index),
        m_dt(dt)
 {
@@ -162,11 +163,13 @@ void PsatdAlgorithmPmlRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ co
 void
 PsatdAlgorithmPmlRZ::CurrentCorrection (SpectralFieldDataRZ& /* field_data */)
 {
-    amrex::Abort("Current correction not implemented in RZ geometry PML");
+    WARPX_ABORT_WITH_MESSAGE(
+        "Current correction not implemented in RZ geometry PML");
 }
 
 void
 PsatdAlgorithmPmlRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort("Vay deposition not implemented in RZ geometry PML");
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented in RZ geometry PML");
 }

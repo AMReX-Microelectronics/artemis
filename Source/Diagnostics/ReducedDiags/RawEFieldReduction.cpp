@@ -7,7 +7,8 @@
 
 #include "RawEFieldReduction.H"
 
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
 
@@ -48,8 +49,8 @@ RawEFieldReduction::RawEFieldReduction (std::string rd_name)
 
     // read reduced function with parser
     std::string parser_string = "";
-    Store_parserString(pp_rd_name,"reduced_function(x,y,z)", parser_string);
-    m_parser = std::make_unique<amrex::Parser>(makeParser(parser_string,{"x","y","z"}));
+    utils::parser::Store_parserString(pp_rd_name,"reduced_function(x,y,z)", parser_string);
+    m_parser = std::make_unique<amrex::Parser>(utils::parser::makeParser(parser_string,{"x","y","z"}));
 
     // Replace all newlines and possible following whitespaces with a single whitespace. This
     // should avoid weird formatting when the string is written in the header of the output file.

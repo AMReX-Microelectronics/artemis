@@ -95,6 +95,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
 ``WarpX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
+``WarpX_PARTICLE_PRECISION``  SINGLE/**DOUBLE**                            Particle floating point precision (single/double), defaults to WarpX_PRECISION value if not set
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
@@ -112,6 +113,7 @@ By default, the most important dependencies of WarpX are automatically downloade
 ============================= ============================================== ===========================================================
 CMake Option                  Default & Values                               Description
 ============================= ============================================== ===========================================================
+``BUILD_SHARED_LIBS``         ON/**OFF**                                     Build shared libraries for dependencies
 ``CCACHE_PROGRAM``            First found ``ccache`` executable.             Set to ``-DCCACHE_PROGRAM=NO`` to disable CCache.
 ``AMReX_CUDA_PTX_VERBOSE``    ON/**OFF**                                     Print CUDA code generation statistics from ``ptxas``.
 ``WarpX_amrex_src``           *None*                                         Path to AMReX source directory (preferred if set)
@@ -120,7 +122,7 @@ CMake Option                  Default & Values                               Des
 ``WarpX_amrex_internal``      **ON**/OFF                                     Needs a pre-installed AMReX library if set to ``OFF``
 ``WarpX_openpmd_src``         *None*                                         Path to openPMD-api source directory (preferred if set)
 ``WarpX_openpmd_repo``        ``https://github.com/openPMD/openPMD-api.git`` Repository URI to pull and build openPMD-api from
-``WarpX_openpmd_branch``      ``0.14.3``                                     Repository branch for ``WarpX_openpmd_repo``
+``WarpX_openpmd_branch``      ``0.15.1``                                     Repository branch for ``WarpX_openpmd_repo``
 ``WarpX_openpmd_internal``    **ON**/OFF                                     Needs a pre-installed openPMD-api library if set to ``OFF``
 ``WarpX_picsar_src``          *None*                                         Path to PICSAR source directory (preferred if set)
 ``WarpX_picsar_repo``         ``https://github.com/ECP-WarpX/picsar.git``    Repository URI to pull and build PICSAR from
@@ -266,6 +268,7 @@ Environment Variable          Default & Values                             Descr
 ``WARPX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
 ``WARPX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
 ``WARPX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
+``WARPX_PARTICLE_PRECISION``  SINGLE/**DOUBLE**                            Particle floating point precision (single/double), defaults to WarpX_PRECISION value if not set
 ``WARPX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WARPX_QED``                 **ON**/OFF                                   PICSAR QED (requires PICSAR)
 ``WARPX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation (requires PICSAR and Boost)

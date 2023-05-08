@@ -1,8 +1,10 @@
 #include "London.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "Utils/WarpXUtil.H"
-#include "Utils/CoarsenIO.H"
 #include "WarpX.H"
+#include <ablastr/coarsen/sample.H>
+#include "Utils/Parser/IntervalsParser.H"
+#include "Utils/Parser/ParserUtils.H"
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 #include <AMReX_RealVect.H>
@@ -29,9 +31,9 @@ London::ReadParameters ()
     amrex::ParmParse pp_london("london");
     pp_london.get("penetration_depth", m_penetration_depth);
 
-    Store_parserString(pp_london, "superconductor_function(x,y,z)", m_str_superconductor_function);
+    utils::parser::Store_parserString(pp_london, "superconductor_function(x,y,z)", m_str_superconductor_function);
     m_superconductor_parser = std::make_unique<amrex::Parser>(
-                                   makeParser(m_str_superconductor_function, {"x", "y", "z"}));
+                                   utils::parser::makeParser(m_str_superconductor_function, {"x", "y", "z"}));
 }
 
 void
@@ -108,21 +110,21 @@ London::EvolveLondonJ (amrex::Real dt)
     amrex::ParallelFor(tjx, tjy, tjz,
         [=] AMREX_GPU_DEVICE (int i, int j, int k) {
             if (sc_arr(i,j,k)==1 and sc_arr(i+1,j,k)==1) {
-                amrex::Real const mu_interp = CoarsenIO::Interp(mu_arr, mu_stag, jx_stag,
+                amrex::Real const mu_interp = ablastr::coarsen::sample::Interp(mu_arr, mu_stag, jx_stag,
                                                                 macro_cr, i, j, k, scomp);
                 jx_arr(i,j,k) += dt * lambda_sq_inv/mu_interp * Ex_arr(i,j,k);
             }
         },
         [=] AMREX_GPU_DEVICE (int i, int j, int k) {
             if (sc_arr(i,j,k)==1 and sc_arr(i,j+1,k)==1) {
-                amrex::Real const mu_interp = CoarsenIO::Interp(mu_arr, mu_stag, jy_stag,
+                amrex::Real const mu_interp = ablastr::coarsen::sample::Interp(mu_arr, mu_stag, jy_stag,
                                                                 macro_cr, i, j, k, scomp);
                 jy_arr(i,j,k) += dt * lambda_sq_inv/mu_interp * Ey_arr(i,j,k);
             }
         },
         [=] AMREX_GPU_DEVICE (int i, int j, int k) {
             if (sc_arr(i,j,k)==1 and sc_arr(i,j,k+1)==1) {
-                amrex::Real const mu_interp = CoarsenIO::Interp(mu_arr, mu_stag, jz_stag,
+                amrex::Real const mu_interp = ablastr::coarsen::sample::Interp(mu_arr, mu_stag, jz_stag,
                                                                 macro_cr, i, j, k, scomp);
                 jz_arr(i,j,k) += dt * lambda_sq_inv/mu_interp * Ez_arr(i,j,k);
             }
