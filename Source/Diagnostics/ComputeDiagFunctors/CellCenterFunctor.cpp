@@ -37,14 +37,14 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_
             // All modes > 0
             amrex::MultiFab::Add(mf_dst_stag, *m_mf_src, ic, 0, 1, m_mf_src->nGrowVect());
         }
-        ablastr::coarsen::sample::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, mf_dst_stag, dcomp, m_scomp, nComp(), 0,  m_crse_ratio);
     } else {
-        ablastr::coarsen::sample::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, *m_mf_src, dcomp, m_scomp, nComp(), 0, m_crse_ratio);
     }
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, m_mf_src,
     // to output diagnostic MultiFab, mf_dst.
-    ablastr::coarsen::sample::Coarsen(mf_dst, *m_mf_src, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio);
+    ablastr::coarsen::sample::Coarsen(mf_dst, *m_mf_src, dcomp, m_scomp, nComp(), mf_dst.nGrowVect(), m_crse_ratio);
     amrex::ignore_unused(m_lev, m_convertRZmodes2cartesian);
 #endif
 }
