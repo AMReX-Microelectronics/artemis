@@ -8,12 +8,14 @@
 #ifndef SINGLE_NUCLEAR_FUSION_EVENT_H_
 #define SINGLE_NUCLEAR_FUSION_EVENT_H_
 
+#include "BoschHaleFusionCrossSection.H"
 #include "ProtonBoronFusionCrossSection.H"
 
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Algorithm.H>
+#include <AMReX_Math.H>
 #include <AMReX_Random.H>
 #include <AMReX_REAL.H>
 
@@ -55,13 +57,13 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
                                const amrex::ParticleReal& u2y, const amrex::ParticleReal& u2z,
                                const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
                                amrex::ParticleReal w1, amrex::ParticleReal w2,
-                               const amrex::Real& dt, const amrex::Real& dV, const int& pair_index,
+                               const amrex::Real& dt, const amrex::ParticleReal& dV, const int& pair_index,
                                index_type* AMREX_RESTRICT p_mask,
                                amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
-                               const amrex::Real& fusion_multiplier,
+                               const amrex::ParticleReal& fusion_multiplier,
                                const int& multiplier_ratio,
-                               const amrex::Real& probability_threshold,
-                               const amrex::Real& probability_target_value,
+                               const amrex::ParticleReal& probability_threshold,
+                               const amrex::ParticleReal& probability_target_value,
                                const NuclearFusionType& fusion_type,
                                const amrex::RandomEngine& engine)
 {
@@ -70,12 +72,12 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
     //     x_star denotes the value of x in the center of mass frame
 
     using namespace amrex::literals;
+    using namespace amrex::Math;
 
     const amrex::ParticleReal w_min = amrex::min(w1, w2);
     const amrex::ParticleReal w_max = amrex::max(w1, w2);
 
     constexpr auto one_pr = amrex::ParticleReal(1.);
-    constexpr auto inv_two_pr = amrex::ParticleReal(1./2.);
     constexpr auto inv_four_pr = amrex::ParticleReal(1./4.);
     constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
     constexpr amrex::ParticleReal inv_csq = one_pr / ( c_sq );
@@ -95,10 +97,9 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
     const amrex::ParticleReal p2y = u2y * m2;
     const amrex::ParticleReal p2z = u2z * m2;
     // Square norm of the total (sum between the two particles) momenta in the lab frame
-    auto constexpr pow2 = [](double const x) { return x*x; };
-    const amrex::ParticleReal p_total_sq = pow2(p1x + p2x) +
-                                           pow2(p1y+p2y) +
-                                           pow2(p1z+p2z);
+    const amrex::ParticleReal p_total_sq = powi<2>(p1x + p2x) +
+                                           powi<2>(p1y+p2y) +
+                                           powi<2>(p1z+p2z);
 
     // Total energy in the lab frame
     const amrex::ParticleReal E_lab = (m1 * g1 + m2 * g2) * c_sq;
@@ -107,25 +108,33 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
     const amrex::ParticleReal E_star_sq = E_lab*E_lab - c_sq*p_total_sq;
 
     // Kinetic energy in the center of mass frame
-    const amrex::ParticleReal E_kin_star = std::sqrt(E_star_sq) - (m1 + m2)*c_sq;
+    const amrex::ParticleReal E_star = std::sqrt(E_star_sq);
+    const amrex::ParticleReal E_kin_star = E_star - (m1 + m2)*c_sq;
 
     // Compute fusion cross section as a function of kinetic energy in the center of mass frame
     auto fusion_cross_section = amrex::ParticleReal(0.);
-    if (fusion_type == NuclearFusionType::ProtonBoron)
+    if (fusion_type == NuclearFusionType::ProtonBoronToAlphas)
     {
         fusion_cross_section = ProtonBoronFusionCrossSection(E_kin_star);
+    }
+    else if ((fusion_type == NuclearFusionType::DeuteriumTritiumToNeutronHelium)
+          || (fusion_type == NuclearFusionType::DeuteriumDeuteriumToProtonTritium)
+          || (fusion_type == NuclearFusionType::DeuteriumDeuteriumToNeutronHelium))
+    {
+        fusion_cross_section = BoschHaleFusionCrossSection(E_kin_star, fusion_type, m1, m2);
     }
 
     // Square of the norm of the momentum of one of the particles in the center of mass frame
     // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle
-    auto constexpr pow3 = [](double const x) { return x*x*x; };
-    const amrex::ParticleReal p_star_sq =
-            E_star_sq*inv_four_pr*inv_csq - (m1_sq + m2_sq)*c_sq*inv_two_pr +
-            pow3(c_sq) * inv_four_pr * pow2(m1_sq - m2_sq) / E_star_sq;
+    // The expression below is specifically written in a form that avoids returning
+    // small negative numbers due to machine precision errors, for low-energy particles
+    const amrex::ParticleReal E_ratio = E_star/((m1 + m2)*c_sq);
+    const amrex::ParticleReal p_star_sq = m1*m2*c_sq * ( powi<2>(E_ratio) - one_pr )
+            + powi<2>(m1 - m2)*c_sq*inv_four_pr * powi<2>( E_ratio - 1._prt/E_ratio );
 
     // Lorentz factors in the center of mass frame
-    const amrex::ParticleReal g1_star = std::sqrt(1._prt + p_star_sq / (m1_sq*c_sq));
-    const amrex::ParticleReal g2_star = std::sqrt(1._prt + p_star_sq / (m2_sq*c_sq));
+    const amrex::ParticleReal g1_star = std::sqrt(one_pr + p_star_sq / (m1_sq*c_sq));
+    const amrex::ParticleReal g2_star = std::sqrt(one_pr + p_star_sq / (m2_sq*c_sq));
 
     // relative velocity in the center of mass frame
     const amrex::ParticleReal v_rel = std::sqrt(p_star_sq) * (one_pr/(m1*g1_star) +

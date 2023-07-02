@@ -46,13 +46,6 @@ class PhysicalParticleContainer
 {
 public:
 
-    enum PhysicalParticleType{
-        electron,
-        positron,
-        photon,
-        other
-    };
-
     PhysicalParticleContainer (amrex::AmrCore* amr_core,
                                int ispecies,
                                const std::string& name);
@@ -71,7 +64,7 @@ public:
 
     virtual void WriteHeader (std::ostream& os) const override;
 
-    void InitIonizationModule ();
+    virtual void InitIonizationModule () override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
@@ -200,14 +193,14 @@ public:
     */
     void AddPlasmaFlux (amrex::Real dt);
 
-    void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z,
-                                    amrex::Real& ux, amrex::Real& uy, amrex::Real& uz);
+    void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
+                                    amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz);
 
     void AddGaussianBeam (
         const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
         const amrex::Real x_rms, const amrex::Real y_rms, const amrex::Real z_rms,
         const amrex::Real x_cut, const amrex::Real y_cut, const amrex::Real z_cut,
-        const amrex::Real q_tot, long npart, const int do_symmetrize);
+        const amrex::Real q_tot, long npart, const int do_symmetrize, const int symmetrization_order);
 
     /** Load a particle beam from an external file
      * @param[in] q_tot total charge of the particle species to be initialized
@@ -217,9 +210,9 @@ public:
                             amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
-        amrex::Real x, amrex::Real y, amrex::Real z,
-        amrex::Real ux, amrex::Real uy, amrex::Real uz,
-        amrex::Real weight,
+        amrex::ParticleReal x, amrex::ParticleReal y, amrex::ParticleReal z,
+        amrex::ParticleReal ux, amrex::ParticleReal uy, amrex::ParticleReal uz,
+        amrex::ParticleReal weight,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_x,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_y,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_z,
@@ -228,19 +221,25 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w);
 
-    virtual void GetParticleSlice (
-        const int direction, const amrex::Real z_old,
-        const amrex::Real z_new, const amrex::Real t_boost,
-        const amrex::Real t_lab, const amrex::Real dt,
-        DiagnosticParticles& diagnostic_particles) final;
-
-    /** Convert particle momentum to/from SI
+    /**
+     * \brief Default initialize runtime attributes in a tile. This routine does not initialize the
+     * first n_external_attr_real real attributes and the first n_external_attr_int integer
+     * attributes, which have been in principle externally set elsewhere.
      *
-     * @see particlesConvertUnits
-     *
-     * @param convert_dir convert to or from SI
+     * @param[inout] pinned_tile the tile in which attributes are initialized
+     * @param[in] n_external_attr_real The number of real attributes that have been externally set.
+     * These are NOT initialized by this function.
+     * @param[in] n_external_attr_int The number of integer attributes that have been externally set.
+     * These are NOT initialized by this function.
+     * @param[in] engine the random engine, used in initialization of QED optical depths
      */
-    virtual void ConvertUnits (ConvertDirection convert_dir) override;
+    virtual void DefaultInitializeRuntimeAttributes (
+                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                        NArrayReal, NArrayInt,
+                                        amrex::PinnedArenaAllocator>& pinned_tile,
+                    const int n_external_attr_real,
+                    const int n_external_attr_int,
+                    const amrex::RandomEngine& engine) override final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather

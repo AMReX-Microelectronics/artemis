@@ -16,18 +16,17 @@ jobs:
       CC: clang
       CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -Wno-error=pass-failed"
       CMAKE_GENERATOR: Ninja
-      CMAKE_PREFIX_PATH: /root/install/sensei/develop/lib/cmake
+      CMAKE_PREFIX_PATH: /root/install/sensei/v4.0.0/lib64/cmake
     container:
-      image: ryankrattiger/sensei:fedora33-vtk-mpi-20210616
+      image: senseiinsitu/ci:fedora35-amrex-20220613
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Configure
       run: |
         cmake -S . -B build     \
           -DWarpX_SENSEI=ON     \
-          -DWarpX_COMPUTE=NOACC \
           -DWarpX_MAG_LLG=OFF   \
-          -DCMAKE_CXX_STANDARD=14
+          -DWarpX_COMPUTE=NOACC
     - name: Build
       run: |
         cmake --build build -j 2
@@ -41,14 +40,15 @@ jobs:
       CC: gcc
       CMAKE_PREFIX_PATH: /ascent/install/lib/cmake/
     container:
-      image: alpinedav/ascent:0.8.0
+      image: alpinedav/ascent:0.9.1
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Configure
       run: |
         . /ascent_docker_setup_env.sh
         cmake -S . -B build   \
             -DWarpX_ASCENT=ON \
+            -DWarpX_MAG_LLG=OFF \
             -DWarpX_COMPUTE=NOACC
     - name: Build
       run: |
