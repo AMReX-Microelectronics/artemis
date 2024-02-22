@@ -1,0 +1,80 @@
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 250
+amr.n_cell = 32 32 32
+amr.max_grid_size = 32
+amr.blocking_factor = 32
+geometry.dims = 3
+geometry.prob_lo     =  -4.e-6 -4.e-6 -4.e-6
+geometry.prob_hi     =   4.e-6  4.e-6  4.e-6
+amr.max_level = 0
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+warpx.use_filter = 0
+warpx.cfl = 0.9
+
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+
+macroscopic.sigma_function(x,y,z) = "sigma_0"
+
+macroscopic.epsilon_function(x,y,z) = "epsilon_0"
+
+macroscopic.mu_function(x,y,z) = "mu_0 "
+
+#################################
+############ FIELDS #############
+#################################
+
+my_constants.pi = 3.14159265359
+my_constants.L = 50.e-6
+my_constants.c = 299792458.
+my_constants.wavelength = 4.e-6
+
+my_constants.sigma_0 = 0.0
+my_constants.epsilon_0 = 8.8541878128e-12
+my_constants.mu_0 = 1.25663706212e-06
+
+warpx.E_ext_grid_init_style = parse_E_ext_grid_function
+warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)"
+warpx.Ey_external_grid_function(x,y,z) = "0."
+warpx.Ez_external_grid_function(x,y,z) = "0."
+
+warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.Bx_external_grid_function(x,y,z) = "0."
+warpx.By_external_grid_function(x,y,z) = "0."
+warpx.Bz_external_grid_function(x,y,z) = "(-1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)/c)"
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "0."
+warpx.Ey_excitation_flag_function(x,y,z) = "0."
+warpx.Ez_excitation_flag_function(x,y,z) = "0."
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
+
+warpx.Bx_excitation_flag_function(x,y,z) = "0."
+warpx.By_excitation_flag_function(x,y,z) = "0."
+warpx.Bz_excitation_flag_function(x,y,z) = "0."
+
+warpx.Bx_excitation_grid_function(x,y,z,t) = "0."
+warpx.By_excitation_grid_function(x,y,z,t) = "0."
+warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
+
+# Diagnostics
+diagnostics.diags_names = plt
+plt.intervals = 1
+plt.fields_to_plot = Ex Ey Ez Bx By Bz
+plt.diag_type = Full
+plt.plot_raw_fields = 1
