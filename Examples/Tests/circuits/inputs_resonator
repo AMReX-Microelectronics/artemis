@@ -68,7 +68,7 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "flag_ss * (x>0.499e-2) * (x<0.501e-2) * (y>0.499e-2) * (y<0.501e-2)"
+warpx.Bx_excitation_flag_function(x,y,z) = "flag_ss * (x>0.499e-2) * (x<0.501e-2) * (y>0.49e-2) * (y<0.50e-2)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
