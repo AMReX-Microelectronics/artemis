@@ -40,7 +40,7 @@ my_constants.c = 299792458.
 my_constants.wavelength = 1.e-2
 my_constants.f = 2.99792458e10
 my_constants.t0 = 2.e-10
-my_constants.BW = 6.32e-11
+my_constants.BW = 6.67e-11
 
 my_constants.sigma_0 = 0.0
 my_constants.epsilon_0 = 8.8541878128e-12
