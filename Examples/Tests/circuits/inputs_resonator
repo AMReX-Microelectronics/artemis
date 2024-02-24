@@ -81,3 +81,16 @@ diagnostics.diags_names = plt
 plt.intervals = 100
 plt.fields_to_plot = Ex Ey Ez Bx By Bz
 plt.diag_type = Full
+
+
+warpx.reduced_diags_names = Eobs1
+
+Eobs1.type = RawEFieldReduction
+
+Eobs1.reduction_type = integral
+
+Eobs1.integration_type = volume
+
+Eobs1.intervals = 1
+
+Eobs1.reduced_function(x,y,z) = (x>0.754e-2) * (x<0.761e-2) * (y>0.754e-2) * (y<0.761e-2) * (z>0.754e-2) * (z<0.761e-2)
