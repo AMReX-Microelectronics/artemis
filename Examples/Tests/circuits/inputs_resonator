@@ -9,8 +9,8 @@ geometry.dims = 3
 geometry.prob_lo     =  0.   0.   0.
 geometry.prob_hi     =  0.01 0.01 0.01
 amr.max_level = 0
-boundary.field_lo = periodic periodic periodic
-boundary.field_hi = periodic periodic periodic
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
 
 #################################
 ############ NUMERICS ###########
