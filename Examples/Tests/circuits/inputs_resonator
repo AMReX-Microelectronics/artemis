@@ -2,15 +2,26 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 20000
-amr.n_cell = 100 100 100
-amr.max_grid_size = 100
-amr.blocking_factor = 128
+amr.n_cell = 200 200 200
+amr.max_grid_size = 200
+amr.blocking_factor = 256
 geometry.dims = 3
-geometry.prob_lo     =  0.   0.   0.
-geometry.prob_hi     =  0.01 0.01 0.01
+
+# physical domain size in [m]
+geometry.prob_lo = -1.e-2 -1.e-2 -1.e-2
+geometry.prob_hi =  1.e-2  1.e-2  1.e-2
+
+my_constants.dx = 2.e-2/200
+my_constants.dy = 2.e-2/200
+my_constants.dz = 2.e-2/200
+
+my_constants.ddx = dx/100
+my_constants.ddy = dy/100
+my_constants.ddz = dz/100
+
 amr.max_level = 0
-boundary.field_lo = pec pec pec
-boundary.field_hi = pec pec pec
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
 
 #################################
 ############ NUMERICS ###########
@@ -23,11 +34,16 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.sigma_function(x,y,z) = "sigma_0"
-
 macroscopic.epsilon_function(x,y,z) = "epsilon_0"
-
 macroscopic.mu_function(x,y,z) = "mu_0 "
+
+macroscopic.sigma_function(x,y,z) = "sigma * (
+( (x>-L/2-t) * (x<-L/2) * (y>-L/2-t) * (y<L/2+t) * (z>-L/2-t) * (z<L/2+t) ) or
+( (x>L/2) * (x<L/2+t) * (y>-L/2-t) * (y<L/2+t) * (z>-L/2-t) * (z<L/2+t) ) or
+( (x>-L/2-t) * (x<L/2+t) * (y>-L/2-t) * (y<-L/2) * (z>-L/2-t) * (z<L/2+t) ) or
+( (x>-L/2-t) * (x<L/2+t) * (y>L/2) * (y<L/2+t) * (z>-L/2-t) * (z<L/2+t) ) or
+( (x>-L/2-t) * (x<L/2+t) * (y>-L/2-t) * (y<L/2+t) * (z>-L/2-t) * (z<-L/2) ) or
+( (x>-L/2-t) * (x<L/2+t) * (y>-L/2-t) * (y<L/2+t) * (z>L/2) * (z<L/2+t) ) )"
 
 #################################
 ############ FIELDS #############
@@ -37,12 +53,22 @@ my_constants.flag_ss = 2
 
 my_constants.pi = 3.14159265359
 my_constants.c = 299792458.
+
+# length of cubic cavity
+my_constants.L = 1.e-2
+
+# thickness of metal
+my_constants.t = 1.e-3
+
 my_constants.wavelength = 1.e-2
 my_constants.f = 2.99792458e10
 my_constants.t0 = 2.e-10
 my_constants.BW = 6.67e-11
 
-my_constants.sigma_0 = 0.0
+# conductivity of metal
+# 5.8e7 = copper
+my_constants.sigma = 5.8e3
+
 my_constants.epsilon_0 = 8.8541878128e-12
 my_constants.mu_0 = 1.25663706212e-06
 
@@ -68,7 +94,7 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "flag_ss * (x>0.499e-2) * (x<0.501e-2) * (y>0.49e-2) * (y<0.50e-2)"
+warpx.Bx_excitation_flag_function(x,y,z) = "flag_ss * (x>-ddx) * (x<ddx) * (y>0) * (y<dy) * (z>-L/2) * (z<L/2)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
@@ -82,15 +108,10 @@ plt.intervals = 100
 plt.fields_to_plot = Ex Ey Ez Bx By Bz
 plt.diag_type = Full
 
-
 warpx.reduced_diags_names = Eobs1
-
 Eobs1.type = RawEFieldReduction
-
 Eobs1.reduction_type = integral
-
 Eobs1.integration_type = volume
-
 Eobs1.intervals = 1
+Eobs1.reduced_function(x,y,z) = (x>L/4) * (x<L/4+dx/2+ddx) * (y>L/4) * (y<L/4+dy/2+ddy) * (z>L/4) * (z<L/4+dz/2+ddz)
 
-Eobs1.reduced_function(x,y,z) = (x>0.754e-2) * (x<0.761e-2) * (y>0.754e-2) * (y<0.761e-2) * (z>0.754e-2) * (z<0.761e-2)
