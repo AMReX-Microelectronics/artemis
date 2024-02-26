@@ -6,6 +6,7 @@
 geometry.dims = 3
 warpx.verbose = 1
 amr.max_level = 0
+amr.blocking_factor = 1024
 
 max_step = 20000
 warpx.cfl = 0.9
