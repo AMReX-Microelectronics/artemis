@@ -11,22 +11,22 @@ amr.blocking_factor = 1024
 max_step = 20000
 warpx.cfl = 0.9
 
+# number of cells in each direction
 my_constants.ncells = 200
-
-# units [m]
-my_constants.Ldomain = 0.02
-
 amr.n_cell = ncells ncells ncells
 amr.max_grid_size = ncells
 
-# physical domain size in [m]
+# physical size of domain in [m]
+my_constants.Ldomain = 0.02
 geometry.prob_lo = -Ldomain/2 -Ldomain/2 -Ldomain/2
 geometry.prob_hi =  Ldomain/2  Ldomain/2  Ldomain/2
 
+# define grid spacing in each direction
 my_constants.dx = Ldomain/ncells
 my_constants.dy = Ldomain/ncells
 my_constants.dz = Ldomain/ncells
 
+# define a 'small' grid spacing
 my_constants.smalldx = dx/100
 my_constants.smalldy = dy/100
 my_constants.smalldz = dz/100
@@ -42,26 +42,15 @@ algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
-macroscopic.epsilon_function(x,y,z) = "epsilon_0"
-macroscopic.mu_function(x,y,z) = "mu_0 "
-
-macroscopic.sigma_function(x,y,z) = "sigma * (
-( (x>-L/2-t) * (x<-L/2) * (y>-L/2-t) * (y<L/2+t) * (z>-L/2-t) * (z<L/2+t) ) or
-( (x>L/2) * (x<L/2+t) * (y>-L/2-t) * (y<L/2+t) * (z>-L/2-t) * (z<L/2+t) ) or
-( (x>-L/2-t) * (x<L/2+t) * (y>-L/2-t) * (y<-L/2) * (z>-L/2-t) * (z<L/2+t) ) or
-( (x>-L/2-t) * (x<L/2+t) * (y>L/2) * (y<L/2+t) * (z>-L/2-t) * (z<L/2+t) ) or
-( (x>-L/2-t) * (x<L/2+t) * (y>-L/2-t) * (y<L/2+t) * (z>-L/2-t) * (z<-L/2) ) or
-( (x>-L/2-t) * (x<L/2+t) * (y>-L/2-t) * (y<L/2+t) * (z>L/2) * (z<L/2+t) ) )"
-
 #################################
 ############ FIELDS #############
 #################################
 
 # length of cubic cavity
-my_constants.L = 1.e-2
+my_constants.Lcavity = 1.e-2
 
 # thickness of metal
-my_constants.t = 1.e-3
+my_constants.tmetal = 1.e-3
 
 # excitation parameters
 my_constants.wavelength = 1.e-2
@@ -77,6 +66,17 @@ my_constants.pi = 3.14159265359
 my_constants.c = 299792458.
 my_constants.epsilon_0 = 8.8541878128e-12
 my_constants.mu_0 = 1.25663706212e-06
+
+macroscopic.epsilon_function(x,y,z) = "epsilon_0"
+macroscopic.mu_function(x,y,z) = "mu_0"
+
+macroscopic.sigma_function(x,y,z) = "sigma * (
+( (x>-Lcavity/2-tmetal) * (x<-Lcavity/2) * (y>-Lcavity/2-tmetal) * (y<Lcavity/2+tmetal) * (z>-Lcavity/2-tmetal) * (z<Lcavity/2+tmetal) ) or
+( (x>Lcavity/2) * (x<Lcavity/2+tmetal) * (y>-Lcavity/2-tmetal) * (y<Lcavity/2+tmetal) * (z>-Lcavity/2-tmetal) * (z<Lcavity/2+tmetal) ) or
+( (x>-Lcavity/2-tmetal) * (x<Lcavity/2+tmetal) * (y>-Lcavity/2-tmetal) * (y<-Lcavity/2) * (z>-Lcavity/2-tmetal) * (z<Lcavity/2+tmetal) ) or
+( (x>-Lcavity/2-tmetal) * (x<Lcavity/2+tmetal) * (y>Lcavity/2) * (y<Lcavity/2+tmetal) * (z>-Lcavity/2-tmetal) * (z<Lcavity/2+tmetal) ) or
+( (x>-Lcavity/2-tmetal) * (x<Lcavity/2+tmetal) * (y>-Lcavity/2-tmetal) * (y<Lcavity/2+tmetal) * (z>-Lcavity/2-tmetal) * (z<-Lcavity/2) ) or
+( (x>-Lcavity/2-tmetal) * (x<Lcavity/2+tmetal) * (y>-Lcavity/2-tmetal) * (y<Lcavity/2+tmetal) * (z>Lcavity/2) * (z<Lcavity/2+tmetal) ) )"
 
 # initial E field
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function
@@ -105,7 +105,7 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
 # 2 = soft source excitation (increment field as opposed to overwrite with a hard source)
-warpx.Bx_excitation_flag_function(x,y,z) = "2 * (x>-smalldx) * (x<smalldx) * (y>0) * (y<dy) * (z>-L/2) * (z<L/2)"
+warpx.Bx_excitation_flag_function(x,y,z) = "2 * (x>-smalldx) * (x<smalldx) * (y>0) * (y<dy) * (z>-Lcavity/2) * (z<Lcavity/2)"
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
@@ -126,5 +126,5 @@ Eobs1.type = RawEFieldReduction
 Eobs1.reduction_type = integral
 Eobs1.integration_type = volume
 Eobs1.intervals = 1
-Eobs1.reduced_function(x,y,z) = (x>L/4) * (x<L/4+dx/2+smalldx) * (y>L/4) * (y<L/4+dy/2+smalldy) * (z>L/4) * (z<L/4+dz/2+smalldz)
+Eobs1.reduced_function(x,y,z) = (x>Lcavity/4) * (x<Lcavity/4+dx/2+smalldx) * (y>Lcavity/4) * (y<Lcavity/4+dy/2+smalldy) * (z>Lcavity/4) * (z<Lcavity/4+dz/2+smalldz)
 
