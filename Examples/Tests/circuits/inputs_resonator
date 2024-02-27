@@ -8,7 +8,9 @@ warpx.verbose = 1
 amr.max_level = 0
 amr.blocking_factor = 1024
 
-max_step = 20000
+# stop at max_step or 100 periods, whichever occurs first
+max_step = 100000
+stop_time = 100 * wavelength/c
 warpx.cfl = 0.9
 
 # number of cells in each direction
@@ -53,17 +55,18 @@ my_constants.Lcavity = 1.e-2
 my_constants.tmetal = 1.e-3
 
 # excitation parameters
+# speed of light
+my_constants.c = 299792458.
 my_constants.wavelength = 1.e-2
-my_constants.f = 2.99792458e10
+my_constants.f = c/wavelength
+my_constants.BW = 2/f
 my_constants.t0 = 2.e-10
-my_constants.BW = 6.67e-11
 
 # conductivity of metal
 # 5.8e7 = copper
 my_constants.sigma = 5.8e3
 
 my_constants.pi = 3.14159265359
-my_constants.c = 299792458.
 my_constants.epsilon_0 = 8.8541878128e-12
 my_constants.mu_0 = 1.25663706212e-06
 
