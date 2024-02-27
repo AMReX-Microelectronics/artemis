@@ -394,12 +394,18 @@ WarpX::InitData ()
         ComputeDt();
         WarpX::PrintDtDxDyDz();
         InitFromScratch();
+        if (WarpX::em_solver_medium==1) {
+            m_macroscopic_properties->InitData();
+        }
         InitDiagnostics();
     }
     else
     {
         InitFromCheckpoint();
         WarpX::PrintDtDxDyDz();
+        if (WarpX::em_solver_medium==1) {
+            m_macroscopic_properties->InitData();
+        }
         PostRestart();
         reduced_diags->InitData();
     }
@@ -414,9 +420,6 @@ WarpX::InitData ()
 
     BuildBufferMasks();
 
-    if (WarpX::em_solver_medium==1) {
-        m_macroscopic_properties->InitData();
-    }
 
     if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
         amrex::Print() << " calling london \n";
