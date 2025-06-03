@@ -11,7 +11,7 @@
 #################################
 max_step = 300000
 amr.n_cell = 1024 4 512 # number of cells spanning the domain in each coordinate direction at level 0
-amr.max_grid_size = 1024 # maximum size of each AMReX box, used to decompose the domain
+amr.max_grid_size = 256 # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 4 # only meaningful for AMR
 geometry.dims = 3
 boundary.field_lo = pec pec pml  # PEC on side walls; PML at -z end

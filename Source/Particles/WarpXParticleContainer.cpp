@@ -280,8 +280,13 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         }
 
         // Default initialize the other real and integer runtime attributes
+#ifdef AMREX_USE_GPU
+        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int,
+                                           amrex::RandomEngine{nullptr});
+#else
         DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int,
                                            amrex::RandomEngine{});
+#endif
 
         auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();

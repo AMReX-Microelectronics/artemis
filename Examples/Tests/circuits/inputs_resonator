@@ -14,7 +14,7 @@ stop_time = 100 * wavelength/c
 warpx.cfl = 0.9
 
 # number of cells in each direction
-my_constants.ncells = 200
+my_constants.ncells = 40
 amr.n_cell = ncells ncells ncells
 amr.max_grid_size = ncells
 
@@ -112,7 +112,7 @@ warpx.Bx_excitation_flag_function(x,y,z) = "2 * (x>-smalldx) * (x<smalldx) * (y>
 warpx.By_excitation_flag_function(x,y,z) = "0."
 warpx.Bz_excitation_flag_function(x,y,z) = "0."
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "exp(-(t-t0)*(t-t0)/(BW*BW))*cos(2*pi*f*(t-t0))"
+warpx.Bx_excitation_grid_function(x,y,z,t) = "exp(-(t-t0)*(t-t0)/(BW*BW))*sin(2*pi*f*(t-t0))"
 warpx.By_excitation_grid_function(x,y,z,t) = "0."
 warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
 
@@ -121,7 +121,7 @@ diagnostics.diags_names = plt
 plt.intervals = 100
 plt.fields_to_plot = Ex Ey Ez Bx By Bz
 plt.diag_type = Full
-plt.plot_raw_fields = 1
+plt.plot_raw_fields = 0
 
 # output diagnostics
 warpx.reduced_diags_names = Eobs1
@@ -129,5 +129,4 @@ Eobs1.type = RawEFieldReduction
 Eobs1.reduction_type = integral
 Eobs1.integration_type = volume
 Eobs1.intervals = 1
-Eobs1.reduced_function(x,y,z) = (x>Lcavity/4) * (x<Lcavity/4+dx/2+smalldx) * (y>Lcavity/4) * (y<Lcavity/4+dy/2+smalldy) * (z>Lcavity/4) * (z<Lcavity/4+dz/2+smalldz)
-
+Eobs1.reduced_function(x,y,z) = (x>Lcavity/4-smalldx) * (x<Lcavity/4+dx/2+smalldx) * (y>Lcavity/4-smalldy) * (y<Lcavity/4+dy/2+smalldy) * (z>Lcavity/4-smalldz) * (z<Lcavity/4+dz/2+smalldz)

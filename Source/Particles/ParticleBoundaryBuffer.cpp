@@ -251,7 +251,11 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         amrex::ReduceData<int> reduce_data(reduce_op);
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_bounds");
-                          amrex::RandomEngine rng{};
+#ifdef AMREX_USE_GPU
+                          const amrex::RandomEngine rng{nullptr};
+#else
+                          const amrex::RandomEngine rng{};
+#endif
                           reduce_op.eval(np, reduce_data, [=] AMREX_GPU_HOST_DEVICE (int ip)
                                          { return predicate(ptile_data, ip, rng) ? 1 : 0; });
                         }
