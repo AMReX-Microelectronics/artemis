@@ -2,6 +2,7 @@
 
 namespace landau_coefficient{
 
+    // Gradient energy coefficients
     constexpr amrex::Real alpha_1 = -3.7116e7;
     constexpr amrex::Real alpha_11 = -2.097e8;
     constexpr amrex::Real alpha_12 = 7.974e8;
