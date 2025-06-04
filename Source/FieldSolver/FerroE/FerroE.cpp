@@ -167,7 +167,7 @@ FerroE::InitializeFerroelectricMultiFabUsingParser (
 //}
 //
 // RK4 time integrator
-AMREX_GPU_DEVICE
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void update_p(amrex::Real& p, amrex::Real& dp_dt, amrex::Real dt, amrex::Real E_eff, amrex::Real gamma, amrex::Real mu) 
 {
           int use_forward_Euler = 0;
@@ -245,6 +245,13 @@ FerroE::EvolveP (amrex::Real dt)
         amrex::Box const& tpx = mfi.tilebox(Px->ixType().toIntVect());
         amrex::Box const& tpy = mfi.tilebox(Py->ixType().toIntVect());
         amrex::Box const& tpz = mfi.tilebox(Pz->ixType().toIntVect());
+    
+    auto L_include_Landau = include_Landau;
+    auto L_include_grad = include_grad;   
+
+    constexpr amrex::Real mu = 1.35e-18;
+    constexpr amrex::Real gamma = 2.0e-7;
+    constexpr amrex::Real G_11 = 5.1e-10;
 
     amrex::ParallelFor(tpx, tpy, tpz,
         [=] AMREX_GPU_DEVICE (int i, int j, int k) {
@@ -252,11 +259,11 @@ FerroE::EvolveP (amrex::Real dt)
 	        
                 amrex::Real Ex_eff = Ex_arr(i,j,k);
 
-                if (include_Landau == 1){
+                if (L_include_Landau == 1){
                    Ex_eff += compute_ex_Landau(Px_arr(i,j,k,0), Py_arr(i,j,k,0), Pz_arr(i,j,k,0));
                 }
 
-                if (include_grad == 1){
+                if (L_include_grad == 1){
                    Ex_eff += G_11*DoubleDx(Px_arr, i, j, k, dx, fe_arr, 0) + G_11*DoubleDy(Px_arr, i, j, k, dx, fe_arr, 0) + G_11*DoubleDz(Px_arr, i, j, k, dx, fe_arr, 0);
                 }
 
@@ -269,11 +276,11 @@ FerroE::EvolveP (amrex::Real dt)
 
                 amrex::Real Ey_eff = Ey_arr(i,j,k);
 
-                if (include_Landau == 1){
+                if (L_include_Landau == 1){
                    Ey_eff += compute_ey_Landau(Px_arr(i,j,k,0), Py_arr(i,j,k,0), Pz_arr(i,j,k,0));
                 }
                   
-                if (include_grad == 1){
+                if (L_include_grad == 1){
                    Ey_eff += G_11*DoubleDx(Py_arr, i, j, k, dx, fe_arr, 1) + G_11*DoubleDy(Py_arr, i, j, k, dx, fe_arr, 1) + G_11*DoubleDz(Py_arr, i, j, k, dx, fe_arr, 1);
                 }
 
@@ -286,11 +293,11 @@ FerroE::EvolveP (amrex::Real dt)
 
                 amrex::Real Ez_eff = Ez_arr(i,j,k);
 
-                if (include_Landau == 1){
+                if (L_include_Landau == 1){
                    Ez_eff += compute_ez_Landau(Px_arr(i,j,k,0), Py_arr(i,j,k,0), Pz_arr(i,j,k,0));
                 }
                   
-                if (include_grad == 1){
+                if (L_include_grad == 1){
                    Ez_eff += G_11*DoubleDx(Pz_arr, i, j, k, dx, fe_arr, 2) + G_11*DoubleDy(Pz_arr, i, j, k, dx, fe_arr, 2) + G_11*DoubleDz(Pz_arr, i, j, k, dx, fe_arr, 2);
                 }
 
