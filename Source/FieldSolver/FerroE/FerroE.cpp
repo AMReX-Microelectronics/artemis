@@ -249,8 +249,10 @@ FerroE::EvolveP (amrex::Real dt)
     auto L_include_Landau = include_Landau;
     auto L_include_grad = include_grad;   
 
+    // Coefficients in the evolution of the polarization equation
     constexpr amrex::Real mu = 1.35e-18;
     constexpr amrex::Real gamma = 2.0e-7;
+    // Gradient energy coefficient
     constexpr amrex::Real G_11 = 5.1e-10;
 
     amrex::ParallelFor(tpx, tpy, tpz,
