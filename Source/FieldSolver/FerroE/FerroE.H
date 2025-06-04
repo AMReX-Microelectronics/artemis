@@ -40,24 +40,6 @@ public:
     int include_Landau = 1;
     int include_grad = 0;
 
-    //Coefficients in the evolution of the polarization equation
-    // const amrex::Real mu = 1.35e-18;
-    // const amrex::Real gamma = 2.0e-7;
-    //Gradient energy coefficients
-    // const amrex::Real G_11 = 5.1e-10;
-    
-    //Landau free energy coefficients
-    // const amrex::Real alpha_1 = -3.7116e7;
-    // const amrex::Real alpha_11 = -2.097e8;
-    // const amrex::Real alpha_12 = 7.974e8;
-    // const amrex::Real alpha_111 = 1.294e9;
-    // const amrex::Real alpha_112 = -1.95e9;
-    // const amrex::Real alpha_123 = -2.5e9;
-    // const amrex::Real alpha_1111 = 3.863e10;
-    // const amrex::Real alpha_1112 = 2.529e10;
-    // const amrex::Real alpha_1122 = 1.637e10;
-    // const amrex::Real alpha_1123 = 1.367e10;
-
 
 };
 
