@@ -441,10 +441,6 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("afterdeposition");
 
-    // Synchronize J and rho:
-    // filter (if used), exchange guard cells, interpolate across MR levels
-    SyncCurrentAndRho();
-
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
     // solve.
