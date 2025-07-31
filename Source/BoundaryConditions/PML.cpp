@@ -1339,7 +1339,11 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
 
     // Create the sum of the split fields, in the PML
     MultiFab totpmlmf(pml.boxArray(), pml.DistributionMap(), 1, 0); // Allocate
-    MultiFab::LinComb(totpmlmf, 1.0, pml, 0, 1.0, pml, 1, 0, 1, 0); // Sum
+    if (ncp > 1) {
+        MultiFab::LinComb(totpmlmf, 1.0, pml, 0, 1.0, pml, 1, 0, 1, 0); // Sum
+    } else {
+        MultiFab::Copy(totpmlmf, pml, 0, 0, 1, 0);
+    }
     if (ncp == 3) {
         MultiFab::Add(totpmlmf,pml,2,0,1,0); // Sum the third split component
     }
