@@ -173,6 +173,24 @@ Diagnostics::BaseReadParameters ()
 
 #endif
 
+#ifdef WARPX_FERROE
+    // polarization can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (utils::algorithms::is_in(m_varnames, "px") || utils::algorithms::is_in(m_varnames, "py") || utils::algorithms::is_in(m_varnames, "pz"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "polarization in plotfiles only works with algo.em_solver_medium=macroscopic");
+    }
+
+    // ferroelectric can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    if (utils::algorithms::is_in(m_varnames, "ferroelectric"))
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            "ferroelectric in plotfiles only works with algo.em_solver_medium=macroscopic");
+    }
+#endif
+
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
     if (amrex::ParallelDescriptor::NProcs() == 1){

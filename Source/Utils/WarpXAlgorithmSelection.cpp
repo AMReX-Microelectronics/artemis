@@ -142,6 +142,7 @@ const std::map<std::string, int> IntegrationType_algo_to_int = {
 
 const std::map<std::string, int> CoupledYeeSolver_algo_to_int = {
     {"maxwelllondon", CoupledYeeSolver::MaxwellLondon},
+    {"maxwellferroe", CoupledYeeSolver::MaxwellFerroE},
     {"default", CoupledYeeSolver::None}
 };
 

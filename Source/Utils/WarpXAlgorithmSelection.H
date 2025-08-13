@@ -26,7 +26,8 @@ struct MediumForEM {
 struct CoupledYeeSolver {
     enum {
         MaxwellLondon = 0,
-        None = 1
+        MaxwellFerroE = 1,
+        None = 2
     };
 };
 

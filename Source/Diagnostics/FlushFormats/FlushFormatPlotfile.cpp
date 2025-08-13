@@ -574,6 +574,11 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getMfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "M_yface_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getMfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "M_zface_fp", lev, plot_raw_fields_guards);
 #endif
+#ifdef WARPX_FERROE
+        WriteRawMF( warpx.getpolarization_fp(lev, 0), dm, raw_pltname, default_level_prefix, "px_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getpolarization_fp(lev, 1), dm, raw_pltname, default_level_prefix, "py_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getpolarization_fp(lev, 2), dm, raw_pltname, default_level_prefix, "pz_fp", lev, plot_raw_fields_guards);
+#endif
         if (warpx.get_pointer_F_fp(lev))
         {
             WriteRawMF(warpx.getF_fp(lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);

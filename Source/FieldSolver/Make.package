@@ -7,6 +7,9 @@ ifeq ($(USE_PSATD),TRUE)
 endif
 include $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver/Make.package
 include $(WARPX_HOME)/Source/FieldSolver/London/Make.package
+ifeq ($(USE_FERROE),TRUE)
+include $(WARPX_HOME)/Source/FieldSolver/FerroE/Make.package
+endif
 include $(WARPX_HOME)/Source/FieldSolver/MagnetostaticSolver/Make.package
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver

@@ -426,6 +426,13 @@ WarpX::InitData ()
         m_london->InitData();
     }
 
+#ifdef WARPX_FERROE
+    if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellFerroE) {
+        amrex::Print() << " calling ferroe \n";
+        m_ferroe->InitData();
+    }
+#endif
+
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";
         printGridSummary(std::cout, 0, finestLevel());
@@ -745,6 +752,15 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    ::tolower);
 #endif
 
+#ifdef WARPX_FERROE
+    pp_warpx.query("P_ext_grid_init_style", P_ext_grid_s); // user-defined initial M
+    std::transform(P_ext_grid_s.begin(),
+                   P_ext_grid_s.end(),
+                   P_ext_grid_s.begin(),
+                   ::tolower);
+
+#endif
+
     // * Functions with the string "arr" in their names get an Array of
     //   values from the given entry in the table.  The array argument is
     //   resized (if necessary) to hold all the values requested.
@@ -773,6 +789,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (H_bias_ext_grid_s == "constant")
         utils::parser::getArrWithParser(pp_warpx,"H_bias_external_grid", H_bias_external_grid);
 #endif
+
+#ifdef WARPX_FERROE
+    if (P_ext_grid_s == "constant")
+        utils::parser::getArrWithParser(pp_warpx, "P_external_grid", P_external_grid);
+#endif
+
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
     ParmParse pp_psatd("psatd");
@@ -849,6 +871,15 @@ WarpX::InitLevelData (int lev, Real /*time*/)
            }
         }
 
+#endif
+#ifdef WARPX_FERROE
+        if (P_ext_grid_s == "constant" || P_ext_grid_s == "default"){
+
+            int nghost = 1;
+            for (int icomp = 0; icomp < 3; ++icomp){
+                polarization_fp[lev][i]->setVal(P_external_grid[icomp], icomp, 2, nghost);
+            }
+        }
 #endif
    }
 
@@ -1160,6 +1191,52 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
 #endif //closes #ifdef WARPX_MAG_LLG
+
+#ifdef WARPX_FERROE
+    if (P_ext_grid_s == "parse_p_ext_grid_function") {
+#ifdef WARPX_DIM_RZ
+        amrex::Abort("P-field parser for external fields does not work with RZ");
+#endif
+        utils::parser::Store_parserString(pp_warpx, "Px_external_grid_function(x,y,z)",
+                                                    str_Px_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Py_external_grid_function(x,y,z)",
+                                                    str_Py_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Pz_external_grid_function(x,y,z)",
+                                                    str_Pz_ext_grid_function);
+
+        Pxfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser(str_Px_ext_grid_function,{"x","y","z"}));
+        Pyfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser(str_Py_ext_grid_function,{"x","y","z"}));
+        Pzfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser(str_Pz_ext_grid_function,{"x","y","z"}));
+
+       // Initialize Mfield_fp with external function directly on the faces
+       InitializeExternalFieldsOnGridUsingParser(polarization_fp[lev][0].get(),
+                                                 polarization_fp[lev][1].get(),
+                                                 polarization_fp[lev][2].get(),
+                                                 Pxfield_parser->compile<3>(),
+                                                 Pyfield_parser->compile<3>(),
+                                                 Pzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'P',
+                                                 lev, PatchType::fine);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(polarization_cp[lev][0].get(),
+                                                    polarization_cp[lev][1].get(),
+                                                    polarization_cp[lev][2].get(),
+                                                    Pxfield_parser->compile<3>(),
+                                                    Pyfield_parser->compile<3>(),
+                                                    Pzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'P',
+                                                    lev, PatchType::coarse);
+       }
+    }
+
+#endif //closes #ifdef WARPX_FERROE
 
     // Reading external fields from data file
     if (add_external_B_field) {

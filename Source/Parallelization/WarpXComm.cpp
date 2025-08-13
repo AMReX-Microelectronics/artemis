@@ -696,6 +696,58 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
     }
 }
 
+#ifdef WARPX_FERROE
+void
+WarpX::FillBoundaryP (IntVect ng)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        FillBoundaryP(lev, ng);
+    }
+}
+
+void
+WarpX::FillBoundaryP (int lev, IntVect ng)
+{
+    FillBoundaryP(lev, PatchType::fine, ng);
+    if (lev > 0) FillBoundaryP(lev, PatchType::coarse, ng);
+}
+
+void
+WarpX::FillBoundaryP (int lev, PatchType patch_type, IntVect ng)
+{
+    std::array<amrex::MultiFab*,3> mf;
+    amrex::Periodicity period;
+
+    if (patch_type == PatchType::fine)
+    {
+        mf     = {polarization_fp[lev][0].get(), polarization_fp[lev][1].get(), polarization_fp[lev][2].get()};
+        period = Geom(lev).periodicity();
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        amrex::Abort("EvolveP does not come with coarse patch yet");
+    }
+
+    if (do_pml)
+    {
+        // ExchangeP not needed for PML algorithm
+    }
+
+    // Fill guard cells in valid domain
+    for (int i = 0; i < 3; ++i)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ng <= mf[i]->nGrowVect(),
+            "Error: in FillBoundaryP, requested more guard cells than allocated");
+
+        const amrex::IntVect nghost = (safe_guard_cells) ? mf[i]->nGrowVect() : ng;
+        ablastr::utils::communication::FillBoundary(*mf[i], nghost, WarpX::do_single_precision_comms, period);
+    }
+
+}
+#endif
+
 #ifdef WARPX_MAG_LLG
 void
 WarpX::FillBoundaryM (IntVect ng)

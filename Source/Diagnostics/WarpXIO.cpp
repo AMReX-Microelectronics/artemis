@@ -288,6 +288,9 @@ WarpX::InitFromCheckpoint ()
 #ifdef WARPX_MAG_LLG
             Mfield_fp[lev][i]->setVal(0.0);
 #endif
+#ifdef WARPX_FERROE
+            polarization_fp[lev][i]->setVal(0.0);
+#endif
         }
 
         if (lev > 0) {
@@ -302,6 +305,9 @@ WarpX::InitFromCheckpoint ()
                 Bfield_cp[lev][i]->setVal(0.0);
 #ifdef WARPX_MAG_LLG
                 Mfield_cp[lev][i]->setVal(0.0);
+#endif
+#ifdef WARPX_FERROE
+            polarization_cp[lev][i]->setVal(0.0);
 #endif
             }
         }
@@ -340,6 +346,16 @@ WarpX::InitFromCheckpoint ()
         VisMF::Read(*H_biasfield_fp[lev][2],
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hzbias_fp"));
 #endif
+
+#ifdef WARPX_FERROE
+        VisMF::Read(*polarization_fp[lev][0],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "px_fp"));
+        VisMF::Read(*polarization_fp[lev][1],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "py_fp"));
+        VisMF::Read(*polarization_fp[lev][2],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pz_fp"));
+#endif
+
         if (WarpX::fft_do_time_averaging)
         {
             VisMF::Read(*Efield_avg_fp[lev][0],
@@ -358,6 +374,15 @@ WarpX::InitFromCheckpoint ()
         }
 
         if (is_synchronized || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+            VisMF::Read(*current_fp[lev][0],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_fp"));
+            VisMF::Read(*current_fp[lev][1],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jy_fp"));
+            VisMF::Read(*current_fp[lev][2],
+                        amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jz_fp"));
+        }
+
+        if (is_synchronized || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellFerroE) {
             VisMF::Read(*current_fp[lev][0],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_fp"));
             VisMF::Read(*current_fp[lev][1],
@@ -404,6 +429,15 @@ WarpX::InitFromCheckpoint ()
             VisMF::Read(*H_biasfield_cp[lev][2],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Hzbias_cp"));
 #endif
+
+#ifdef WARPX_FERROE
+        VisMF::Read(*polarization_cp[lev][0],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "px_cp"));
+        VisMF::Read(*polarization_cp[lev][1],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "py_cp"));
+        VisMF::Read(*polarization_cp[lev][2],
+                    amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pz_cp"));
+#endif
             if (WarpX::fft_do_time_averaging)
             {
                 VisMF::Read(*Efield_avg_cp[lev][0],
@@ -422,6 +456,15 @@ WarpX::InitFromCheckpoint ()
             }
 
             if (is_synchronized || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+                VisMF::Read(*current_cp[lev][0],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_cp"));
+                VisMF::Read(*current_cp[lev][1],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jy_cp"));
+                VisMF::Read(*current_cp[lev][2],
+                            amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jz_cp"));
+            }
+
+            if (is_synchronized || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellFerroE) {
                 VisMF::Read(*current_cp[lev][0],
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_cp"));
                 VisMF::Read(*current_cp[lev][1],

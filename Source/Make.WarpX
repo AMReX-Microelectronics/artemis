@@ -73,6 +73,11 @@ ifeq ($(USE_LLG),TRUE)
   DEFINES += -DWARPX_MAG_LLG
 endif
 
+ifeq ($(USE_FERROE),TRUE)
+  USERSuffix := $(USERSuffix).FERROE
+  DEFINES += -DWARPX_FERROE
+endif
+
 -include Make.package
 include $(WARPX_HOME)/Source/Make.package
 include $(WARPX_HOME)/Source/ablastr/Make.package
