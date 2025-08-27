@@ -633,7 +633,7 @@ MacroscopicProperties::InitializePECFromSigma (amrex::MultiFab* sigma_mf,
 
         Array4<amrex::Real> sigma = sigma_mf->array(mfi);
         Array4<amrex::Real> Px = PECx->array(mfi);
-        
+
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
             if (k == npy_k_index) {
@@ -651,7 +651,7 @@ MacroscopicProperties::InitializePECFromSigma (amrex::MultiFab* sigma_mf,
 
         Array4<amrex::Real> sigma = sigma_mf->array(mfi);
         Array4<amrex::Real> Py = PECy->array(mfi);
-        
+
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
             if (k == npy_k_index) {

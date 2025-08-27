@@ -320,7 +320,7 @@ public:
 
     static int use_PEC_mask;
     static int use_lumped_inductor;
-    
+
     //! Integer that corresponds to the order of the PSATD solution
     //! (whether the PSATD equations are derived from first-order or
     //! second-order solution)

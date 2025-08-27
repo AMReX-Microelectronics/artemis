@@ -61,7 +61,7 @@ public:
                                            const int lev,
                                            const int npy_k_index,
                                            const amrex::Real npy_value);
-    
+
     void InitializePECFromSigma (amrex::MultiFab* sigma_mf,
                                  amrex::MultiFab* PECx,
                                  amrex::MultiFab* PECy,
