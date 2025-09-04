@@ -21,4 +21,5 @@ sudo apt-get install -y \
     gnupg               \
     ninja-build         \
     pkg-config          \
-    wget
+    wget                \
+    zlib1g-dev

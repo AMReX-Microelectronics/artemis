@@ -56,7 +56,7 @@ algo.use_PEC_mask = 0
 macroscopic.epsilon_function(x,y,z) = "eps_0 + eps_0 * (eps_r_si - 1.) * (z <= h_si)"
 
 macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si)"
- 
+
 #################################
 ############ FIELDS #############
 #################################
@@ -145,7 +145,7 @@ warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
 
 
 # This is a source on a qubit control line
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."                                                                                                                                                                                                      
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
                                                       ( (y >= 470.e-6 + ddy) * (y < 475.e-6 - ddy) - (y >= 485e-6 + ddy) * (y <= 490e-6 - ddy)) * (z > h_si + ddz) * (z <= h_si + dz + ddz) * (x > 0.e-6 - ddx) * (x < 0.e-6 + ddx)"
 warpx.Ez_excitation_grid_function(x,y,z,t) = "0."

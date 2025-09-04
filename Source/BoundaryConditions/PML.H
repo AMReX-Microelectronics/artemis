@@ -251,7 +251,7 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_j_fp;
 
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_PEC_fp;
-    
+
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_edge_lengths;
 
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_E_cp;

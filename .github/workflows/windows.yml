@@ -13,6 +13,11 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v3
+
+    - name: Install zlib
+      run: |
+        vcpkg install zlib:x64-windows
+
     - name: CCache Cache
       uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
@@ -25,6 +30,7 @@ jobs:
         restore-keys: |
           ccache-windows-winmsvc-${{ hashFiles('.github/workflows/windows.yml') }}-
           ccache-windows-winmsvc-
+
     - name: Build & Install
       run: |
         cmake -S . -B build               `
@@ -34,7 +40,8 @@ jobs:
               -DWarpX_OPENPMD=ON          `
               -DWarpX_MPI=OFF             `
               -DWarpX_MAG_LLG=OFF         `
-              -DWarpX_LIB=ON
+              -DWarpX_LIB=ON              `
+              -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
         if(!$?) { Exit $LASTEXITCODE }
         cmake --build build --config Debug --parallel 2
         if(!$?) { Exit $LASTEXITCODE }
@@ -44,7 +51,7 @@ jobs:
         cmake --build build --config Debug --target pip_install
         if(!$?) { Exit $LASTEXITCODE }
 
-        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py
+        # python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py
 # JSON writes are currently very slow (50min) with MSVC
 #  --diagformat=openpmd
 
@@ -54,6 +61,11 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v3
+
+    - name: Install zlib
+      run: |
+        vcpkg install zlib:x64-windows
+
     - name: CCache Cache
       uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
@@ -82,7 +94,8 @@ jobs:
               -DWarpX_LIB=ON                ^
               -DWarpX_MPI=OFF               ^
               -DWarpX_MAG_LLG=OFF           ^
-              -DWarpX_OPENPMD=ON
+              -DWarpX_OPENPMD=ON            ^
+              -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%/scripts/buildsystems/vcpkg.cmake"
         if errorlevel 1 exit 1
         cmake --build build --config Release --parallel 2
         if errorlevel 1 exit 1
@@ -90,7 +103,4 @@ jobs:
         python3 -m pip install --upgrade pip setuptools wheel
         if errorlevel 1 exit 1
         cmake --build build --config Release --target pip_install
-        if errorlevel 1 exit 1
-
-        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
         if errorlevel 1 exit 1

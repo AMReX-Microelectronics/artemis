@@ -21,6 +21,9 @@ jobs:
       image: senseiinsitu/ci:fedora35-amrex-20220613
     steps:
     - uses: actions/checkout@v4
+    - name: Install zlib
+      run: |
+        dnf install -y zlib-devel
     - name: Configure
       run: |
         cmake -S . -B build     \

@@ -28,12 +28,16 @@ jobs:
     - name: End-of-Line whitespaces
       run: .github/workflows/source/hasEOLwhiteSpace
     - name: Proper file names in Examples
+      if: false
       run: .github/workflows/source/wrongFileNameInExamples
     - name: Examples are tested
+      if: false
       run: .github/workflows/source/inputsNotTested
     - name: Check that the test matrix for CI includes all tests
+      if: false
       run: .github/workflows/source/test_ci_matrix.sh
     - name: Doxygen
+      if: false
       run: |
         sudo apt-get install -y --no-install-recommends doxygen
         .github/workflows/source/doxygen

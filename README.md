@@ -4,40 +4,179 @@ ARTEMIS (Adaptive mesh Refinement Time-domain ElectrodynaMIcs Solver) is a high-
 For questions, please reach out to Zhi (Jackie) Yao (jackie_zhiyao@lbl.gov) and Andy Nonaka (ajnonaka@lbl.gov).
 
 # Installation
-## Download AMReX Repository
-``` git clone git@github.com:AMReX-Codes/amrex.git ```
-## Download Artemis Repository
-``` git clone git@github.com:AMReX-Microelectronics/artemis.git ```
-## Build
-Make sure that the AMReX and Artemis are cloned in the same location in their filesystem. Navigate to the Exec folder of Artemis and execute
-```make -j 4```. <br />
-You can turn on and off the LLG equation by specifying ```USE_LLG``` during compilation. <br />
-The following command compiles Artemis without LLG
-```make -j 4 USE_LLG=FALSE``` <br />
-The following command compiles Artemis with LLG
-```make -j 4 USE_LLG=TRUE``` <br />
-The default value of ```USE_LLG``` is ```TRUE```.
+
+## Prerequisites
+- C++ compiler with C++17 support (GCC, Clang, Intel, NVCC for GPU builds)
+- MPI implementation (OpenMPI, MPICH) - optional but recommended
+- CUDA Toolkit (for GPU builds) - optional
+- OpenMP (for CPU parallel builds) - optional
+- For CMake builds: CMake version 3.18 or higher
+- For GNU Make builds: GNU Make
+
+## Download Repositories
+
+### Download AMReX Repository
+```bash
+git clone https://github.com/AMReX-Codes/amrex.git
+```
+
+### Download Artemis Repository
+```bash
+git clone https://github.com/AMReX-Microelectronics/artemis.git
+```
+
+Make sure that AMReX and Artemis are cloned in the same location in their filesystem.
+
+## Build Options
+
+### Option 1: Build with GNU Make
+
+Navigate to the Exec folder of Artemis and execute:
+
+#### Basic build
+```bash
+make -j 4
+```
+
+#### Build without LLG
+```bash
+make -j 4 USE_LLG=FALSE
+```
+
+#### Build with LLG (default)
+```bash
+make -j 4 USE_LLG=TRUE
+```
+
+#### GPU build with CUDA
+```bash
+make -j 4 USE_LLG=TRUE USE_GPU=TRUE
+```
+
+The default value of `USE_LLG` is `TRUE`.
+
+### Option 2: Build with CMake
+
+Create a build directory and configure:
+
+#### Basic CPU Build
+```bash
+cd artemis
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . -j 4
+```
+
+#### MPI + OpenMP Build
+```bash
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DWarpX_MPI=ON \
+  -DWarpX_COMPUTE=OMP \
+  -DWarpX_MAG_LLG=ON
+cmake --build build -j 4
+```
+
+#### GPU Build with CUDA
+```bash
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DWarpX_COMPUTE=CUDA \
+  -DWarpX_MPI=ON \
+  -DWarpX_MAG_LLG=ON \
+  -DAMReX_CUDA_ARCH=8.0  # Adjust for your GPU architecture
+cmake --build build -j 4
+```
+
+#### Build without LLG
+```bash
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DWarpX_MAG_LLG=OFF
+cmake --build build -j 4
+```
+
+### Common CMake Options
+- `-DWarpX_MAG_LLG=ON/OFF` - Enable/disable LLG equation (default: ON)
+- `-DWarpX_MPI=ON/OFF` - Enable/disable MPI (default: ON)
+- `-DWarpX_COMPUTE=NOACC/OMP/CUDA/SYCL` - Set compute backend
+- `-DWarpX_PRECISION=SINGLE/DOUBLE` - Set floating point precision
+- `-DWarpX_EB=ON/OFF` - Enable/disable embedded boundaries
+- `-DWarpX_OPENPMD=ON/OFF` - Enable/disable openPMD I/O
+- `-DCMAKE_BUILD_TYPE=Debug/Release` - Set build type
+
+### AMReX Configuration Options
+
+**AMReX Dependency Management:**
+```bash
+# Use external AMReX installation
+cmake -S . -B build \
+  -DWarpX_amrex_internal=OFF \
+  -DAMReX_DIR=/path/to/amrex/lib/cmake/AMReX
+
+# Use local AMReX source directory
+cmake -S . -B build -DWarpX_amrex_src=/path/to/amrex/source
+
+# Use custom AMReX repository/branch
+cmake -S . -B build \
+  -DWarpX_amrex_repo=https://github.com/user/amrex.git \
+  -DWarpX_amrex_branch=my_branch
+```
 
 # Running Artemis
-Example input scripts are located in `Examples` directory. 
-## Simple Testcase without LLG
-You can run the following to simulate an air-filled X-band rectangle waveguide:
-## For MPI+OMP build
-```make -j 4 USE_LLG=FALSE``` <br />
-```mpirun -n 4 ./main3d.gnu.TPROF.MTMPI.OMP.GPUCLOCK.ex Examples/Waveguide/inputs_3d_empty_X_band```
-## For MPI+CUDA build
-```make -j 4 USE_LLG=FALSE USE_GPU=TRUE``` <br />
-```mpirun -n 4 ./main3d.gnu.TPROF.MTMPI.CUDA.GPUCLOCK.ex Examples/Waveguide/inputs_3d_empty_X_band``` 
-## Simple Testcase with LLG
-You can run the following to simulate an X-band magnetically tunable filter:
-## For MPI+OMP build
-```make -j 4 USE_LLG=TRUE``` <br />
-```mpirun -n 8 ./main3d.gnu.TPROF.MTMPI.OMP.GPUCLOCK.ex Examples/Waveguide/inputs_3d_LLG_filter```
-## For MPI+CUDA build
-```make -j 4 USE_LLG=TRUE USE_GPU=TRUE``` <br />
-```mpirun -n 8 ./main3d.gnu.TPROF.MTMPI.CUDA.GPUCLOCK.ex Examples/Waveguide/inputs_3d_LLG_filter```
-# Visualization and Data Analysis
-Refer to the following link for several visualization tools that can be used for AMReX plotfiles. 
+
+Example input scripts are located in `Examples` directory.
+
+## Running with GNU Make builds
+
+### Simple Testcase without LLG
+For an air-filled X-band rectangle waveguide:
+
+#### MPI+OMP build
+```bash
+make -j 4 USE_LLG=FALSE
+mpirun -n 4 ./main3d.gnu.TPROF.MTMPI.OMP.GPUCLOCK.ex Examples/Waveguide/inputs_3d_empty_X_band
+```
+
+#### MPI+CUDA build
+```bash
+make -j 4 USE_LLG=FALSE USE_GPU=TRUE
+mpirun -n 4 ./main3d.gnu.TPROF.MTMPI.CUDA.GPUCLOCK.ex Examples/Waveguide/inputs_3d_empty_X_band
+```
+
+### Simple Testcase with LLG
+For an X-band magnetically tunable filter:
+
+#### MPI+OMP build
+```bash
+make -j 4 USE_LLG=TRUE
+mpirun -n 8 ./main3d.gnu.TPROF.MTMPI.OMP.GPUCLOCK.ex Examples/Waveguide/inputs_3d_LLG_filter
+```
+
+#### MPI+CUDA build
+```bash
+make -j 4 USE_LLG=TRUE USE_GPU=TRUE
+mpirun -n 8 ./main3d.gnu.TPROF.MTMPI.CUDA.GPUCLOCK.ex Examples/Waveguide/inputs_3d_LLG_filter
+```
+
+## Running with CMake builds
+
+The CMake build produces executables in the build directory. The exact name depends on your configuration:
+
+### Basic execution
+```bash
+./build/bin/warpx Examples/Waveguide/inputs_3d_empty_X_band
+```
+
+### With MPI
+```bash
+mpirun -n 4 ./build/bin/warpx Examples/Waveguide/inputs_3d_LLG_filter
+```
+
+### With GPU
+```bash
+mpirun -n 4 ./build/bin/warpx Examples/Waveguide/inputs_3d_LLG_filter
+```
 
 [Visualization](https://amrex-codes.github.io/amrex/docs_html/Visualization_Chapter.html)
 

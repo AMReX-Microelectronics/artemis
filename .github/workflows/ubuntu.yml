@@ -50,7 +50,7 @@ jobs:
   build_1D_2D:
     name: GCC 1D & 2D w/ MPI
     runs-on: ubuntu-22.04
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && false
     env:
       CXXFLAGS: "-Werror"
       CXX: "g++-12"

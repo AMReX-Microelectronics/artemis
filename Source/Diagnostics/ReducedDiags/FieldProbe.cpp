@@ -434,8 +434,6 @@ void FieldProbe::ComputeDiags (int step)
         {
             const auto getPosition = GetParticlePosition(pti);
             auto setPosition = SetParticlePosition(pti);
-            const auto& aos = pti.GetArrayOfStructs();
-            const auto* AMREX_RESTRICT m_structs = aos().dataPtr();
 
             auto const np = pti.numParticles();
             if (update_particles_moving_window)
@@ -497,6 +495,8 @@ void FieldProbe::ComputeDiags (int step)
                 ParticleReal* const AMREX_RESTRICT part_Bz = attribs[FieldProbePIdx::Bz].dataPtr();
                 ParticleReal* const AMREX_RESTRICT part_S = attribs[FieldProbePIdx::S].dataPtr();
 
+                auto * const AMREX_RESTRICT idcpu = pti.GetStructOfArrays().GetIdCPUData().data();
+
                 const auto &xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
                 const std::array<Real, 3> &dx = WarpX::CellSize(lev);
 
@@ -538,7 +538,7 @@ void FieldProbe::ComputeDiags (int step)
 
                     //Calculate the Poynting Vector S
                     amrex::ParticleReal const sraw[3]{
-                        Exp * Bzp - Ezp * Byp,
+                        Eyp * Bzp - Ezp * Byp,
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp
                     };
@@ -582,7 +582,7 @@ void FieldProbe::ComputeDiags (int step)
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
                         long idx = ip*noutputs;
-                        dvp[idx++] = m_structs[ip].id();
+                        dvp[idx++] = amrex::ParticleIDWrapper{idcpu[ip]};  // all particles created on IO cpu
                         dvp[idx++] = xp;
                         dvp[idx++] = yp;
                         dvp[idx++] = zp;
@@ -608,7 +608,7 @@ void FieldProbe::ComputeDiags (int step)
         if (m_intervals.contains(step+1))
         {
             // returns total number of mpi notes into mpisize
-            int mpisize = ParallelDescriptor::NProcs();
+            const int mpisize = ParallelDescriptor::NProcs();
 
             // allocates data space for length_array. Will contain size of m_data from each processor
             amrex::Vector<int> length_vector;
@@ -617,7 +617,7 @@ void FieldProbe::ComputeDiags (int step)
             if (amrex::ParallelDescriptor::IOProcessor()) {
                 length_vector.resize(mpisize, 0);
             }
-            localsize.resize(1, m_data.size());
+            localsize.resize(1, static_cast<int>(m_data.size()));
 
             // gather size of m_data from each processor
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,
@@ -658,11 +658,12 @@ void FieldProbe::WriteToFile (int step) const
     if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
 
     // loop over num valid particles to find the lowest particle ID for later sorting
-    long int first_id = m_data_out[0];
-    for (int i = 0; i < m_valid_particles; i++)
+    auto first_id = static_cast<long int>(m_data_out[0]);
+    for (long int i = 0; i < m_valid_particles; i++)
     {
-        if (m_data_out[i*noutputs] < first_id)
-            first_id = m_data_out[i*noutputs];
+        if (m_data_out[i*noutputs] < first_id) {
+            first_id = static_cast<long int>(m_data_out[i*noutputs]);
+        }
     }
 
     // Create a new array to store probe data ordered by id, which will be printed to file.
@@ -671,10 +672,10 @@ void FieldProbe::WriteToFile (int step) const
 
     // loop over num valid particles and write data into the appropriately
     // sorted location
-    for (int i = 0; i < m_valid_particles; i++)
+    for (long int i = 0; i < m_valid_particles; i++)
     {
-        int idx = m_data_out[i*noutputs] - first_id;
-        for (int k = 0; k < noutputs; k++)
+        const long int idx = static_cast<long int>(m_data_out[i*noutputs]) - first_id;
+        for (long int k = 0; k < noutputs; k++)
         {
             sorted_data[idx * noutputs + k] = m_data_out[i * noutputs + k];
         }
@@ -685,7 +686,7 @@ void FieldProbe::WriteToFile (int step) const
                         std::ofstream::out | std::ofstream::app};
 
     // loop over num valid particles and write
-    for (int i = 0; i < m_valid_particles; i++)
+    for (long int i = 0; i < m_valid_particles; i++)
     {
         ofs << std::fixed << std::defaultfloat;
         ofs << step + 1;

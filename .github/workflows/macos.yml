@@ -51,6 +51,7 @@ jobs:
         brew install ninja
         brew install open-mpi
         brew install pkg-config
+        brew install zlib
         set -e
         brew tap openpmd/openpmd
         brew install openpmd-api
@@ -71,11 +72,14 @@ jobs:
           ccache-macos-appleclang-
     - name: build WarpX
       run: |
+        export ZLIB_ROOT=$(brew --prefix zlib)
+        export PKG_CONFIG_PATH="$ZLIB_ROOT/lib/pkgconfig:$PKG_CONFIG_PATH"
         cmake -S . -B build_dp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_EB=ON                \
           -DWarpX_OPENPMD=ON           \
-          -DWarpX_openpmd_internal=OFF
+          -DWarpX_openpmd_internal=OFF \
+          -DZLIB_ROOT="$ZLIB_ROOT"
         cmake --build build_dp -j 3
 
         cmake -S . -B build_sp         \
@@ -84,5 +88,6 @@ jobs:
           -DWarpX_LIB=ON               \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
-          -DWarpX_PRECISION=SINGLE
+          -DWarpX_PRECISION=SINGLE     \
+          -DZLIB_ROOT="$ZLIB_ROOT"
         cmake --build build_sp -j 3
