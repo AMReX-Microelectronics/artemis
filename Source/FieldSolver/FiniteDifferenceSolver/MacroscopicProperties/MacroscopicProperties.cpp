@@ -45,6 +45,7 @@ MacroscopicProperties::ReadParameters ()
 
     // Query mask index
     pp_macroscopic.query("npy_k_index", m_npy_k_index);
+    pp_macroscopic.query("npy_k_index2", m_npy_k_index2);
 
     // Query input for material conductivity, sigma.
     pp_macroscopic.query("sigma_npy_value", m_sigma_npy_value);
@@ -64,6 +65,8 @@ MacroscopicProperties::ReadParameters ()
         m_sigma_s = "parse_sigma_npy_file";
         sigma_specified = true;
         sigma_npy_specified = true;
+        // parse second layer
+        pp_macroscopic.query("sigma_npy_file2", m_sigma_npy_filename2);
     }
     if (sigma_func_specified && sigma_npy_specified) {
          // initialize both later in InitData
@@ -102,6 +105,7 @@ MacroscopicProperties::ReadParameters ()
         m_epsilon_s = "parse_epsilon_npy_file";
         epsilon_specified = true;
         epsilon_npy_specified = true;
+        pp_macroscopic.query("epsilon_npy_file2", m_epsilon_npy_filename2);
     }
     if (epsilon_func_specified && epsilon_npy_specified) {
          // initialize both later in InitData
@@ -140,6 +144,7 @@ MacroscopicProperties::ReadParameters ()
         m_mu_s = "parse_mu_npy_file";
         mu_specified = true;
         mu_npy_specified = true;
+        pp_macroscopic.query("mu_npy_file2", m_mu_npy_filename2);
     }
     if (mu_func_specified && mu_npy_specified) {
          // initialize both later in InitData
@@ -312,6 +317,9 @@ MacroscopicProperties::InitData ()
     // Step 2: Overwrite with numpy mask in valid region if provided
     if (m_sigma_s == "parse_sigma_npy_file" || m_sigma_s == "parse_sigma_both") {
         InitializeMacroMultiFabFromNumpy(m_sigma_mf.get(), m_sigma_npy_filename, lev, m_npy_k_index, m_sigma_npy_value);
+        if (!m_sigma_npy_filename2.empty()) {
+            InitializeMacroMultiFabFromNumpy(m_sigma_mf.get(), m_sigma_npy_filename2, lev, m_npy_k_index2, m_sigma_npy_value);
+        }
     }
 
     if (warpx.use_PEC_mask) {
@@ -325,6 +333,9 @@ MacroscopicProperties::InitData ()
         PECz->setVal(1.);
 
         InitializePECFromSigma(m_sigma_mf.get(), PECx, PECy, m_npy_k_index);
+        if (!m_sigma_npy_filename2.empty()) {
+            InitializePECFromSigma(m_sigma_mf.get(), PECx, PECy, m_npy_k_index2);
+        }
         // no need for sigma anymore
         m_sigma_mf->setVal(0.);
     }
@@ -344,6 +355,9 @@ MacroscopicProperties::InitData ()
     // Step 2: Overwrite with numpy mask in valid region if provided
     if (m_epsilon_s == "parse_epsilon_npy_file" || m_epsilon_s == "parse_epsilon_both") {
         InitializeMacroMultiFabFromNumpy(m_eps_mf.get(), m_epsilon_npy_filename, lev, m_npy_k_index, m_epsilon_npy_value);
+        if (!m_epsilon_npy_filename2.empty()) {
+            InitializeMacroMultiFabFromNumpy(m_eps_mf.get(), m_epsilon_npy_filename2, lev, m_npy_k_index2, m_epsilon_npy_value);
+        }
     }
 
     ////////////////////////
@@ -361,6 +375,9 @@ MacroscopicProperties::InitData ()
     // Step 2: Overwrite with numpy mask in valid region if provided
     if (m_mu_s == "parse_mu_npy_file" || m_mu_s == "parse_mu_both") {
         InitializeMacroMultiFabFromNumpy(m_mu_mf.get(), m_mu_npy_filename, lev, m_npy_k_index, m_mu_npy_value);
+        if (!m_mu_npy_filename2.empty()) {
+            InitializeMacroMultiFabFromNumpy(m_mu_mf.get(), m_mu_npy_filename2, lev, m_npy_k_index2, m_mu_npy_value);
+        }
     }
 
     if (warpx.use_lumped_resistor == 1){

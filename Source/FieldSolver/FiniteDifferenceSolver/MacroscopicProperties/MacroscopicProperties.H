@@ -131,10 +131,14 @@ public:
      amrex::Real m_mu = PhysConst::mu0;
      /** index to insert the mask */
      int m_npy_k_index = 0;
+     int m_npy_k_index2 = 0;
      /** numpy arrays for layer */
      std::string m_sigma_npy_filename;
+     std::string m_sigma_npy_filename2;
      std::string m_epsilon_npy_filename;
+     std::string m_epsilon_npy_filename2;
      std::string m_mu_npy_filename;
+     std::string m_mu_npy_filename2;
      /** numerical value of sigma, epsilon, and mu for gds numpy array layer */
      amrex::Real m_sigma_npy_value = 0.;
      amrex::Real m_epsilon_npy_value = 0.;

@@ -723,6 +723,13 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                                                                      lev,
                                                                      macroscopic_properties->m_npy_k_index,
                                                                      macroscopic_properties->m_sigma_npy_value);
+            if (!macroscopic_properties->m_sigma_npy_filename2.empty()) {
+                macroscopic_properties->InitializeMacroMultiFabFromNumpy(pml_sigma_fp.get(),
+                                                                         macroscopic_properties->m_sigma_npy_filename2,
+                                                                         lev,
+                                                                         macroscopic_properties->m_npy_k_index2,
+                                                                         macroscopic_properties->m_sigma_npy_value);
+            }
         }
 
         if (warpx.use_PEC_mask) {
@@ -732,6 +739,10 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
             macroscopic_properties->InitializePECFromSigma(pml_sigma_fp.get(), pml_PEC_fp[0].get(), pml_PEC_fp[1].get(),
                                                            macroscopic_properties->m_npy_k_index);
+            if (!macroscopic_properties->m_sigma_npy_filename2.empty()) {
+                macroscopic_properties->InitializePECFromSigma(pml_sigma_fp.get(), pml_PEC_fp[0].get(), pml_PEC_fp[1].get(),
+                                                               macroscopic_properties->m_npy_k_index2);
+            }
 
             // no need for sigma anymore
             pml_sigma_fp.get()->setVal(0.);
@@ -755,6 +766,13 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                                                                      lev,
                                                                      macroscopic_properties->m_npy_k_index,
                                                                      macroscopic_properties->m_epsilon_npy_value);
+            if (!macroscopic_properties->m_epsilon_npy_filename2.empty()) {
+                macroscopic_properties->InitializeMacroMultiFabFromNumpy(pml_eps_fp.get(),
+                                                                         macroscopic_properties->m_epsilon_npy_filename2,
+                                                                         lev,
+                                                                         macroscopic_properties->m_npy_k_index2,
+                                                                         macroscopic_properties->m_epsilon_npy_value);
+            }
         }
 
         // Initialize mu, permeability
@@ -775,6 +793,13 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                                                                      lev,
                                                                      macroscopic_properties->m_npy_k_index,
                                                                      macroscopic_properties->m_mu_npy_value);
+            if (!macroscopic_properties->m_mu_npy_filename2.empty()) {
+                macroscopic_properties->InitializeMacroMultiFabFromNumpy(pml_mu_fp.get(),
+                                                                         macroscopic_properties->m_mu_npy_filename2,
+                                                                         lev,
+                                                                         macroscopic_properties->m_npy_k_index2,
+                                                                         macroscopic_properties->m_mu_npy_value);
+            }
         }
 
     }
