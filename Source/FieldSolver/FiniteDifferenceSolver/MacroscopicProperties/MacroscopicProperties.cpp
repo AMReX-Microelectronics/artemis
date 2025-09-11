@@ -363,22 +363,25 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabFromNumpy(m_mu_mf.get(), m_mu_npy_filename, lev, m_npy_k_index, m_mu_npy_value);
     }
 
-    m_lumped_resistor_x_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jx_stag), dmap, 1, ng_EB_alloc);
-    m_lumped_resistor_y_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jy_stag), dmap, 1, ng_EB_alloc);
-    m_lumped_resistor_z_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jz_stag), dmap, 1, ng_EB_alloc);
+    if (warpx.use_lumped_resistor == 1){
+        m_lumped_resistor_x_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jx_stag), dmap, 1, ng_EB_alloc);
+        m_lumped_resistor_y_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jy_stag), dmap, 1, ng_EB_alloc);
+        m_lumped_resistor_z_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jz_stag), dmap, 1, ng_EB_alloc);
 
-    InitializeMacroMultiFabUsingParser(m_lumped_resistor_x_mf.get(), m_lumped_resistor_x_parser->compile<3>(), lev);
-    InitializeMacroMultiFabUsingParser(m_lumped_resistor_y_mf.get(), m_lumped_resistor_y_parser->compile<3>(), lev);
-    InitializeMacroMultiFabUsingParser(m_lumped_resistor_z_mf.get(), m_lumped_resistor_z_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_lumped_resistor_x_mf.get(), m_lumped_resistor_x_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_lumped_resistor_y_mf.get(), m_lumped_resistor_y_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_lumped_resistor_z_mf.get(), m_lumped_resistor_z_parser->compile<3>(), lev);
+    }
 
-    m_lumped_capacitor_x_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jx_stag), dmap, 1, ng_EB_alloc);
-    m_lumped_capacitor_y_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jy_stag), dmap, 1, ng_EB_alloc);
-    m_lumped_capacitor_z_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jz_stag), dmap, 1, ng_EB_alloc);
+    if (warpx.use_lumped_capacitor == 1){
+        m_lumped_capacitor_x_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jx_stag), dmap, 1, ng_EB_alloc);
+        m_lumped_capacitor_y_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jy_stag), dmap, 1, ng_EB_alloc);
+        m_lumped_capacitor_z_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jz_stag), dmap, 1, ng_EB_alloc);
 
-    InitializeMacroMultiFabUsingParser(m_lumped_capacitor_x_mf.get(), m_lumped_capacitor_x_parser->compile<3>(), lev);
-    InitializeMacroMultiFabUsingParser(m_lumped_capacitor_y_mf.get(), m_lumped_capacitor_y_parser->compile<3>(), lev);
-    InitializeMacroMultiFabUsingParser(m_lumped_capacitor_z_mf.get(), m_lumped_capacitor_z_parser->compile<3>(), lev);
-
+        InitializeMacroMultiFabUsingParser(m_lumped_capacitor_x_mf.get(), m_lumped_capacitor_x_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_lumped_capacitor_y_mf.get(), m_lumped_capacitor_y_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_lumped_capacitor_z_mf.get(), m_lumped_capacitor_z_parser->compile<3>(), lev);
+    }
 
 #ifdef WARPX_MAG_LLG
 
