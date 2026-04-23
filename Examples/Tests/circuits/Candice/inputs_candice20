@@ -1,14 +1,14 @@
-# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
-
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 1
+max_step = 9000000
 
 amr.n_cell = n_cellx n_celly n_cellz
-amr.max_grid_size = max_grid_sizex max_grid_sizey max_grid_sizez
+amr.max_grid_size_x = max_grid_sizex
+amr.max_grid_size_y = max_grid_sizey
+amr.max_grid_size_z = max_grid_sizez
 amr.blocking_factor = blocking_factor
-amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
+amr.refine_grid_layout = 0  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
 
 geometry.dims = 3
 geometry.prob_lo = prob_lox prob_loy prob_loz
@@ -20,14 +20,12 @@ amr.max_level = 0
 boundary.field_lo = pml pml pml
 boundary.field_hi = pml pml pml
 
-my_constants.offset_y = -1100.e-6
-
 #################################
 ############ NUMERICS ###########
 #################################
 warpx.verbose = 1
 
-warpx.cfl = 0.8
+warpx.cfl = 0.6
 
 # vacuum or macroscopic
 algo.em_solver_medium = macroscopic
@@ -35,12 +33,12 @@ algo.em_solver_medium = macroscopic
 # laxwendroff or backwardeuler
 algo.macroscopic_sigma_method = laxwendroff
 
-macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_si - sigma_0) * (z <= h_si)"
-macroscopic.epsilon_function(x,y,z) = "eps_0 + eps_0 * (eps_r_si - 1.) * (z <= h_si)"
-macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si)"
+macroscopic.sigma_function(x,y,z) = "sigma_0"
+macroscopic.epsilon_function(x,y,z) = "eps_0 + eps_0 * (eps_r_si - 1.) * (z <= h_bot) + eps_0 * (eps_r_si - 1.) * (z >= h_top)"
+macroscopic.mu_function(x,y,z) = "mu_0"
 
-macroscopic.npy_k_index = 0
-macroscopic.npy_k_index2 = 3
+macroscopic.npy_k_index  = 98 # should be n_cellz/2-"3um"
+macroscopic.npy_k_index2 = 100 # should be n_cellz/2
 
 # comment for PEC, uncomment these for GDS-PEC
 macroscopic.sigma_npy_file = "voyageurs_layer1.npy"
@@ -50,7 +48,7 @@ algo.use_PEC_mask = 1
 
 macroscopic.mu_npy_file = "voyageurs_layer1.npy"
 macroscopic.mu_npy_file2 = "voyageurs_layer2.npy"
-macroscopic.mu_npy_value = 1.25663706e-06
+macroscopic.mu_npy_value = 1.25663707e-06
 
 #################################
 ############ FIELDS #############
@@ -62,11 +60,11 @@ macroscopic.mu_npy_value = 1.25663706e-06
 ###############
 my_constants.n_cellx = 7544
 my_constants.n_celly = 7544
-my_constants.n_cellz = 4
+my_constants.n_cellz = 200
 
 my_constants.max_grid_sizex = 92
 my_constants.max_grid_sizey = 92
-my_constants.max_grid_sizez = 4
+my_constants.max_grid_sizez = 200
 my_constants.blocking_factor = 2
 
 my_constants.prob_lox = 0.
@@ -94,9 +92,10 @@ my_constants.mu_0 = 1.25663706212e-06
 my_constants.mu_r_si = 1.0
 
 ###############
-# silicon and palladium cross section
+# layer heights
 ###############
-my_constants.h_si = 150.e-6
+my_constants.h_top = 150.e-6
+my_constants.h_bot = 147.e-6
 
 ###############
 # derived quantities and fundamental constants - don't touch these
@@ -104,7 +103,7 @@ my_constants.h_si = 150.e-6
 
 my_constants.pi = 3.14159265358979
 
-my_constants.freq = 8.6e9
+my_constants.freq = 7.5e9
 my_constants.TP = 1./freq
 
 # grid spacing
@@ -127,13 +126,16 @@ my_constants.flag_ss = 2
 warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
 warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Ey_excitation_flag_function(x,y,z) = "flag_ss * 0"
+# thin excitation
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_ss * ( (y >= 702.5e-6 + ddy) * (y <= 712.5e-6 - ddy) + (y >= 717.5e-6 + ddy) * (y <= 727.5e-6 - ddy)) * (z > h_top - ddz) * (z < h_top + ddz) * (x > 162.5e-6 - ddx) * (x < 162.5e-6 + ddx)"
 warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
 
 
 # This is a source on a qubit control line
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+# thin excitation
+warpx.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
+                                                      ( (y >= 702.5e-6 + ddy) * (y <= 712.5e-6 - ddy) - (y >= 717.5e-6 + ddy) * (y <= 727.5e-6 - ddy)) * (z > h_top - ddz) * (z < h_top + ddz) * (x > 162.5e-6 - ddx) * (x < 162.5e-6 + ddx)"
 warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 ###############
@@ -143,10 +145,28 @@ warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 warpx.field_io_nfiles=64
 warpx.particle_io_nfiles=64
 
-diagnostics.diags_names = plt
+diagnostics.diags_names = plt full chk
+
 ###############
-# full plotfiles
-plt.intervals = 1
+# reduced plotfiles
+plt.intervals = 4000
 plt.fields_to_plot = Ex Ey Ez Bx By Bz mu
 plt.diag_type = Full
 plt.file_min_digits = 7
+plt.diag_lo = 0. 0. 145.51e-6
+plt.diag_hi = 9430.e-6 9430.e-6 151.49e-6
+
+# full plotfiles
+full.intervals = 1000000
+full.fields_to_plot = Ex Ey Ez Bx By Bz mu
+full.diag_type = Full
+full.file_min_digits = 7
+
+# checkpoint
+chk.intervals = 100000
+chk.diag_type = Full
+chk.format = checkpoint
+chk.file_min_digits = 7
+
+# if you restart, remove mu, sigma, and epsilon from plotfile
+#amr.restart = diags/chk0100000

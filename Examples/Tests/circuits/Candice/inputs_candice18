@@ -6,7 +6,9 @@
 max_step = 1000000
 
 amr.n_cell = n_cellx n_celly n_cellz
-amr.max_grid_size = max_grid_sizex max_grid_sizey max_grid_sizez
+amr.max_grid_size_x = max_grid_sizex
+amr.max_grid_size_y = max_grid_sizey
+amr.max_grid_size_z = max_grid_sizez
 amr.blocking_factor = blocking_factor
 amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
 

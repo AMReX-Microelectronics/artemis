@@ -408,6 +408,7 @@ WarpX::InitData ()
         }
         PostRestart();
         reduced_diags->InitData();
+        multi_diags->InitData();
     }
 
     ComputeMaxStep();
