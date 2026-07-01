@@ -397,6 +397,16 @@ WarpX::InitData ()
         if (WarpX::em_solver_medium==1) {
             m_macroscopic_properties->InitData();
         }
+        // Lumped-element InitData must run BEFORE diagnostics InitData so that
+        // their multifabs exist when CellCenterFunctor captures the pointer.
+        if (use_lumped_inductor) {
+            amrex::Print() << " calling inductor (early) \n";
+            m_inductor->InitData();
+        }
+        if (use_josephson_junction) {
+            amrex::Print() << " calling Josephson junction (early) \n";
+            m_jj->InitData();
+        }
         InitDiagnostics();
     }
     else
@@ -407,6 +417,15 @@ WarpX::InitData ()
             m_macroscopic_properties->InitData();
         }
         PostRestart();
+        // Same ordering constraint as the fresh-start path.
+        if (use_lumped_inductor) {
+            amrex::Print() << " calling inductor (early, restart) \n";
+            m_inductor->InitData();
+        }
+        if (use_josephson_junction) {
+            amrex::Print() << " calling Josephson junction (early, restart) \n";
+            m_jj->InitData();
+        }
         reduced_diags->InitData();
         multi_diags->InitData();
     }
@@ -427,10 +446,9 @@ WarpX::InitData ()
         m_london->InitData();
     }
 
-    if (use_lumped_inductor) {
-        amrex::Print() << " calling inductor \n";
-        m_inductor->InitData();
-    }
+    // NOTE: Inductor and JosephsonJunction InitData were moved earlier
+    // (into the if/else branches above) so that diagnostics InitData sees
+    // their multifabs already allocated.  Do not re-call here.
 
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";

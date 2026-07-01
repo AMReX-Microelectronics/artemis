@@ -225,6 +225,9 @@ amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,P
 int WarpX::yee_coupled_solver_algo;
 int WarpX::use_PEC_mask = 0;
 int WarpX::use_lumped_inductor = 0;
+int WarpX::use_lumped_resistor = 0;
+int WarpX::use_lumped_capacitor = 0;
+int WarpX::use_josephson_junction = 0;
 
 bool WarpX::do_current_centering = false;
 
@@ -493,6 +496,11 @@ WarpX::WarpX ()
     // Lumped inductor
     if (use_lumped_inductor) {
         m_inductor = std::make_unique<Inductor>();
+    }
+
+    // Josephson junction (nonlinear inductor)
+    if (use_josephson_junction) {
+        m_jj = std::make_unique<JosephsonJunction>();
     }
 
     // Set default values for particle and cell weights for costs update;
@@ -1033,6 +1041,9 @@ WarpX::ReadParameters ()
             );
         }
 
+        pp_warpx.query("use_lumped_resistor", use_lumped_resistor);
+        pp_warpx.query("use_lumped_capacitor", use_lumped_capacitor);
+
 #ifdef WARPX_MAG_LLG
         // Read the value of the time advancement scheme of M field
         pp_warpx.query("mag_time_scheme_order", mag_time_scheme_order);
@@ -1267,6 +1278,7 @@ WarpX::ReadParameters ()
 
         pp_algo.query("use_PEC_mask",use_PEC_mask);
         pp_algo.query("use_lumped_inductor",use_lumped_inductor);
+        pp_algo.query("use_josephson_junction",use_josephson_junction);
 
         // Load balancing parameters
         std::vector<std::string> load_balance_intervals_string_vec = {"0"};
