@@ -115,10 +115,8 @@ FlushFormatCheckpoint::WriteToFile (
 
         if (warpx.getis_synchronized()
             || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon
-            || warpx.use_lumped_inductor == 1
-            || warpx.use_josephson_junction == 1) {
+            || warpx.use_lumped_inductor == 1) {
             // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
-            // London / lumped inductor / Josephson junction all treat j as persistent state.
             VisMF::Write(warpx.getcurrent_fp(lev, 0),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_fp"));
             VisMF::Write(warpx.getcurrent_fp(lev, 1),
@@ -182,8 +180,7 @@ FlushFormatCheckpoint::WriteToFile (
 
             if (warpx.getis_synchronized()
                 || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon
-                || warpx.use_lumped_inductor == 1
-                || warpx.use_josephson_junction == 1) {
+                || warpx.use_lumped_inductor == 1) {
                 // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
                 VisMF::Write(warpx.getcurrent_cp(lev, 0),
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_cp"));
@@ -206,12 +203,6 @@ FlushFormatCheckpoint::WriteToFile (
             }
 #endif
         }
-    }
-
-    // Josephson junction state (phi, Js). phi is the junction's only real state and
-    // is NOT reconstructible from the fields, so without this a restart resets it to 0.
-    if (warpx.use_josephson_junction == 1) {
-        warpx.getJosephsonJunction().WriteCheckpoint(checkpointname);
     }
 
     CheckpointParticles(checkpointname, particle_diags);

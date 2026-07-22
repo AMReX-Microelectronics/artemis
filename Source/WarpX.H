@@ -40,6 +40,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldSolver/London/London.H"
 #include "FieldSolver/LumpedElement/Inductor.H"
+#include "FieldSolver/LumpedElement/JosephsonJunction.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -102,6 +103,7 @@ public:
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     London& getLondon () { return *m_london; }
     Inductor& getInductor () { return *m_inductor; }
+    JosephsonJunction& getJosephsonJunction () { return *m_jj; }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
@@ -320,6 +322,9 @@ public:
 
     static int use_PEC_mask;
     static int use_lumped_inductor;
+    static int use_lumped_resistor;
+    static int use_lumped_capacitor;
+    static int use_josephson_junction;
 
     //! Integer that corresponds to the order of the PSATD solution
     //! (whether the PSATD equations are derived from first-order or
@@ -1742,6 +1747,8 @@ private:
     std::unique_ptr<London> m_london;
     // Lumped inductor
     std::unique_ptr<Inductor> m_inductor;
+    // Josephson junction (nonlinear inductor)
+    std::unique_ptr<JosephsonJunction> m_jj;
 
 #ifdef WARPX_MAG_LLG
     // time advancement scheme of M field
