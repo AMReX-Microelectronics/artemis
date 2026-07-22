@@ -425,10 +425,6 @@ WarpX::InitData ()
         if (use_josephson_junction) {
             amrex::Print() << " calling Josephson junction (early, restart) \n";
             m_jj->InitData();
-            // InitData() allocates and ZEROES phi/Js. Restore them from the checkpoint
-            // so the junction continues its phase; otherwise phi restarts at 0 while the
-            // fields are restored, which silently corrupts the post-restart dynamics.
-            m_jj->ReadCheckpoint(restart_chkfile);
         }
         reduced_diags->InitData();
         multi_diags->InitData();

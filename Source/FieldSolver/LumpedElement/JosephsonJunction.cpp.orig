@@ -14,9 +14,6 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
 #include <AMReX_Scan.H>
-#include <AMReX_VisMF.H>
-#include <AMReX_PlotFileUtil.H>
-#include <AMReX_FileSystem.H>
 
 #include <AMReX_BaseFwd.H>
 
@@ -76,9 +73,6 @@ JosephsonJunction::InitData()
     m_phi_x_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jx_stag), dmap, ncomps, ng_EB_alloc);
     m_phi_y_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jy_stag), dmap, ncomps, ng_EB_alloc);
     m_phi_z_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jz_stag), dmap, ncomps, ng_EB_alloc);
-    m_Js_x_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jx_stag), dmap, ncomps, ng_EB_alloc);
-    m_Js_y_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jy_stag), dmap, ncomps, ng_EB_alloc);
-    m_Js_z_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jz_stag), dmap, ncomps, ng_EB_alloc);
 
     InitializeJunctionMultiFabUsingParser(m_Ic_x_mf.get(), m_Ic_x_parser->compile<3>(), lev);
     InitializeJunctionMultiFabUsingParser(m_Ic_y_mf.get(), m_Ic_y_parser->compile<3>(), lev);
@@ -87,9 +81,6 @@ JosephsonJunction::InitData()
     m_phi_x_mf->setVal(0.0);
     m_phi_y_mf->setVal(0.0);
     m_phi_z_mf->setVal(0.0);
-    m_Js_x_mf->setVal(0.0);
-    m_Js_y_mf->setVal(0.0);
-    m_Js_z_mf->setVal(0.0);
 }
 
 void
@@ -129,9 +120,6 @@ JosephsonJunction::EvolveJunctionJ (amrex::Real dt)
         amrex::Array4<amrex::Real> const& phi_x_arr = m_phi_x_mf->array(mfi);
         amrex::Array4<amrex::Real> const& phi_y_arr = m_phi_y_mf->array(mfi);
         amrex::Array4<amrex::Real> const& phi_z_arr = m_phi_z_mf->array(mfi);
-        amrex::Array4<amrex::Real> const& Js_x_arr = m_Js_x_mf->array(mfi);
-        amrex::Array4<amrex::Real> const& Js_y_arr = m_Js_y_mf->array(mfi);
-        amrex::Array4<amrex::Real> const& Js_z_arr = m_Js_z_mf->array(mfi);
         amrex::Box const& tjx = mfi.tilebox(jx->ixType().toIntVect());
         amrex::Box const& tjy = mfi.tilebox(jy->ixType().toIntVect());
         amrex::Box const& tjz = mfi.tilebox(jz->ixType().toIntVect());
@@ -142,9 +130,7 @@ JosephsonJunction::EvolveJunctionJ (amrex::Real dt)
                    const amrex::Real V = Ex_arr(i,j,k) * dx[0];
                    phi_x_arr(i,j,k) += dt * two_e_over_hbar * V;
                    const amrex::Real A = dx[1] * dx[2];
-                   const amrex::Real Js_new = Ic_x_arr(i,j,k) * std::sin(phi_x_arr(i,j,k)) / A;
-                   jx_arr(i,j,k) += Js_new - Js_x_arr(i,j,k);
-                   Js_x_arr(i,j,k) = Js_new;
+                   jx_arr(i,j,k) += Ic_x_arr(i,j,k) * std::sin(phi_x_arr(i,j,k)) / A;
                }
            },
            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
@@ -152,9 +138,7 @@ JosephsonJunction::EvolveJunctionJ (amrex::Real dt)
                    const amrex::Real V = Ey_arr(i,j,k) * dx[1];
                    phi_y_arr(i,j,k) += dt * two_e_over_hbar * V;
                    const amrex::Real A = dx[0] * dx[2];
-                   const amrex::Real Js_new = Ic_y_arr(i,j,k) * std::sin(phi_y_arr(i,j,k)) / A;
-                   jy_arr(i,j,k) += Js_new - Js_y_arr(i,j,k);
-                   Js_y_arr(i,j,k) = Js_new;
+                   jy_arr(i,j,k) += Ic_y_arr(i,j,k) * std::sin(phi_y_arr(i,j,k)) / A;
                }
            },
            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
@@ -162,9 +146,7 @@ JosephsonJunction::EvolveJunctionJ (amrex::Real dt)
                    const amrex::Real V = Ez_arr(i,j,k) * dx[2];
                    phi_z_arr(i,j,k) += dt * two_e_over_hbar * V;
                    const amrex::Real A = dx[0] * dx[1];
-                   const amrex::Real Js_new = Ic_z_arr(i,j,k) * std::sin(phi_z_arr(i,j,k)) / A;
-                   jz_arr(i,j,k) += Js_new - Js_z_arr(i,j,k);
-                   Js_z_arr(i,j,k) = Js_new;
+                   jz_arr(i,j,k) += Ic_z_arr(i,j,k) * std::sin(phi_z_arr(i,j,k)) / A;
                }
            });
     }
@@ -219,49 +201,3 @@ JosephsonJunction::InitializeJunctionMultiFabUsingParser (amrex::MultiFab *,
     amrex::Abort("JosephsonJunction only works with 3D");
 }
 #endif
-
-
-// ---------------------------------------------------------------------------
-// Checkpoint the persistent junction state (phi, Js).
-// phi is the junction's only real state; Js is the supercurrent this class
-// last added to J (needed by the delta update in EvolveJunctionJ). Both are
-// dimension-agnostic MultiFab I/O, so they live outside the 3D-only block.
-// ---------------------------------------------------------------------------
-void
-JosephsonJunction::WriteCheckpoint (const std::string& dir) const
-{
-    if (!m_phi_x_mf) { return; }   // junction never initialized
-    const int lev = 0;
-    const std::string lp{"Level_"};
-    amrex::VisMF::Write(*m_phi_x_mf, amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_phi_x"));
-    amrex::VisMF::Write(*m_phi_y_mf, amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_phi_y"));
-    amrex::VisMF::Write(*m_phi_z_mf, amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_phi_z"));
-    amrex::VisMF::Write(*m_Js_x_mf,  amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_Js_x"));
-    amrex::VisMF::Write(*m_Js_y_mf,  amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_Js_y"));
-    amrex::VisMF::Write(*m_Js_z_mf,  amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_Js_z"));
-}
-
-void
-JosephsonJunction::ReadCheckpoint (const std::string& dir)
-{
-    if (!m_phi_x_mf) { return; }
-    const int lev = 0;
-    const std::string lp{"Level_"};
-    // Checkpoints written before the junction state was saved have no jj_* files.
-    // Warn and keep the freshly-zeroed phi rather than aborting -- but the restart
-    // is then NOT physically continuous (phi loses its history).
-    if (!amrex::FileExists(amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_phi_x") + "_H")) {
-        amrex::Print() << "WARNING: checkpoint '" << dir << "' contains no Josephson junction "
-                       << "state (jj_phi_*). phi restarts from 0 while the fields are restored, "
-                       << "so the junction is inconsistent with the fields -- rerun from scratch "
-                       << "or use a checkpoint written with JJ state.\n";
-        return;
-    }
-    amrex::VisMF::Read(*m_phi_x_mf, amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_phi_x"));
-    amrex::VisMF::Read(*m_phi_y_mf, amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_phi_y"));
-    amrex::VisMF::Read(*m_phi_z_mf, amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_phi_z"));
-    amrex::VisMF::Read(*m_Js_x_mf,  amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_Js_x"));
-    amrex::VisMF::Read(*m_Js_y_mf,  amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_Js_y"));
-    amrex::VisMF::Read(*m_Js_z_mf,  amrex::MultiFabFileFullPrefix(lev, dir, lp, "jj_Js_z"));
-    amrex::Print() << " Josephson junction state (phi, Js) restored from checkpoint\n";
-}
