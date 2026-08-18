@@ -397,7 +397,6 @@ WarpX::InitData ()
         if (WarpX::em_solver_medium==1) {
             m_macroscopic_properties->InitData();
         }
-        InitDiagnostics();
     }
     else
     {
@@ -407,8 +406,6 @@ WarpX::InitData ()
             m_macroscopic_properties->InitData();
         }
         PostRestart();
-        reduced_diags->InitData();
-        multi_diags->InitData();
     }
 
     ComputeMaxStep();
@@ -425,6 +422,13 @@ WarpX::InitData ()
     if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
         amrex::Print() << " calling london \n";
         m_london->InitData();
+    }
+
+    if (restart_chkfile.empty()) {
+        InitDiagnostics();
+    } else {
+        reduced_diags->InitData();
+        multi_diags->InitData();
     }
 
     if (use_lumped_inductor) {
