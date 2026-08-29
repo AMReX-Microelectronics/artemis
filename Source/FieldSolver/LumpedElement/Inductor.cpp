@@ -54,7 +54,7 @@ Inductor::InitData()
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     // number of guard cells used in EB solver
     const amrex::IntVect ng_EB_alloc = warpx.getngEB();
-    // Define a nodal multifab to store if region is on super conductor (1) or not (0)
+    // Define a nodal multifab to store if region has inductor (1) or not (0)
 
     amrex::IntVect jx_stag = warpx.get_pointer_current_fp(lev,0)->ixType().toIntVect();
     amrex::IntVect jy_stag = warpx.get_pointer_current_fp(lev,1)->ixType().toIntVect();

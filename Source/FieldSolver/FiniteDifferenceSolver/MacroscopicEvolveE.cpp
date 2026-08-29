@@ -133,8 +133,36 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     amrex::ignore_unused(edge_lengths);
 #endif
 
+    auto &warpx = WarpX::GetInstance();
+
+    const int lev = 0;
+    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx = warpx.Geom(lev).CellSizeArray();
+
+    int use_lumped_resistor = warpx.use_lumped_resistor;
+    int use_lumped_capacitor = warpx.use_lumped_capacitor;
+
     amrex::MultiFab& sigma_mf = macroscopic_properties->getsigma_mf();
     amrex::MultiFab& epsilon_mf = macroscopic_properties->getepsilon_mf();
+
+    amrex::MultiFab* lumped_resistor_x_mf  = nullptr;
+    amrex::MultiFab* lumped_resistor_y_mf  = nullptr;
+    amrex::MultiFab* lumped_resistor_z_mf  = nullptr;
+    amrex::MultiFab* lumped_capacitor_x_mf = nullptr;
+    amrex::MultiFab* lumped_capacitor_y_mf = nullptr;
+    amrex::MultiFab* lumped_capacitor_z_mf = nullptr;
+
+    if (use_lumped_resistor){
+        lumped_resistor_x_mf = &macroscopic_properties->getlumped_resistor_x_mf();
+        lumped_resistor_y_mf = &macroscopic_properties->getlumped_resistor_y_mf();
+        lumped_resistor_z_mf = &macroscopic_properties->getlumped_resistor_z_mf();
+    }
+
+    if (use_lumped_capacitor){
+        lumped_capacitor_x_mf = &macroscopic_properties->getlumped_capacitor_x_mf();
+        lumped_capacitor_y_mf = &macroscopic_properties->getlumped_capacitor_y_mf();
+        lumped_capacitor_z_mf = &macroscopic_properties->getlumped_capacitor_z_mf();
+    }
+
 #ifndef WARPX_MAG_LLG
     amrex::MultiFab& mu_mf = macroscopic_properties->getmu_mf();
 #endif
@@ -144,6 +172,19 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     amrex::GpuArray<int, 3> const& sigma_stag = macroscopic_properties->sigma_IndexType;
     amrex::GpuArray<int, 3> const& epsilon_stag = macroscopic_properties->epsilon_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr     = macroscopic_properties->macro_cr_ratio;
+
+    if (use_lumped_resistor){
+        amrex::GpuArray<int, 3> const& lumped_resistor_x_stag = macroscopic_properties->lumped_resistor_x_IndexType;
+        amrex::GpuArray<int, 3> const& lumped_resistor_y_stag = macroscopic_properties->lumped_resistor_y_IndexType;
+        amrex::GpuArray<int, 3> const& lumped_resistor_z_stag = macroscopic_properties->lumped_resistor_z_IndexType;
+    }
+
+    if (use_lumped_capacitor){
+        amrex::GpuArray<int, 3> const& lumped_capacitor_x_stag = macroscopic_properties->lumped_capacitor_x_IndexType;
+        amrex::GpuArray<int, 3> const& lumped_capacitor_y_stag = macroscopic_properties->lumped_capacitor_y_IndexType;
+        amrex::GpuArray<int, 3> const& lumped_capacitor_z_stag = macroscopic_properties->lumped_capacitor_z_IndexType;
+    }
+
     amrex::GpuArray<int, 3> const& Ex_stag = macroscopic_properties->Ex_IndexType;
     amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
     amrex::GpuArray<int, 3> const& Ez_stag = macroscopic_properties->Ez_IndexType;
@@ -176,6 +217,24 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         // material prop //
         amrex::Array4<amrex::Real> const& sigma_arr = sigma_mf.array(mfi);
         amrex::Array4<amrex::Real> const& eps_arr = epsilon_mf.array(mfi);
+
+        // Lumped element arrays (default-constructed; set only if feature enabled)
+        amrex::Array4<amrex::Real> resistor_x_arr, resistor_y_arr, resistor_z_arr;
+        amrex::Array4<amrex::Real> capacitor_x_arr, capacitor_y_arr, capacitor_z_arr;
+
+        if (use_lumped_resistor) {
+            // These produce lightweight views; safe to copy and capture by value
+            resistor_x_arr = lumped_resistor_x_mf->array(mfi);
+            resistor_y_arr = lumped_resistor_y_mf->array(mfi);
+            resistor_z_arr = lumped_resistor_z_mf->array(mfi);
+        }
+        if (use_lumped_capacitor) {
+            capacitor_x_arr = lumped_capacitor_x_mf->array(mfi);
+            capacitor_y_arr = lumped_capacitor_y_mf->array(mfi);
+            capacitor_z_arr = lumped_capacitor_z_mf->array(mfi);
+        }
+
+        
 #ifndef WARPX_MAG_LLG
         amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi);
 #endif
@@ -220,12 +279,25 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Interpolated permittivity, epsilon, to Ex position on the grid
                 amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
                                                                                     Ex_stag, macro_cr, i, j, k, scomp);
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
-                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
-                Ex(i, j, k) = alpha * Ex(i, j, k)
-                            + beta * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
-                                       + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)
-                                     ) - beta * jx(i, j, k);
+
+                // Extra conductance term from a lumped resistor on Ex edges
+                amrex::Real const fac1 = (dt/epsilon_interp) * 
+                                         ( sigma_interp + ((use_lumped_resistor && resistor_x_arr(i,j,k)!=0._rt)
+                                            ? dx[0] / (dx[1]*dx[2]*resistor_x_arr(i,j,k)) 
+                                            : 0._rt) );
+
+                // Extra term from a lumped capacitor on Ex edges
+                amrex::Real const fac2 = (use_lumped_capacitor && capacitor_x_arr(i,j,k)!=0._rt)
+                                            ? capacitor_x_arr(i,j,k) * dx[0] / (dx[1]*dx[2]*epsilon_interp)
+                                            : 0._rt;
+
+                amrex::Real alpha_compact = T_MacroAlgo::alpha_compact(fac1, fac2);
+                amrex::Real beta_compact = T_MacroAlgo::beta_compact(fac1, fac2);
+
+                Ex(i, j, k) = alpha_compact * Ex(i, j, k)
+                            + dt/epsilon_interp * beta_compact * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
+                                       + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)) 
+                            - dt/epsilon_interp * beta_compact * jx(i, j, k);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -244,12 +316,28 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Interpolated permittivity, epsilon, to Ey position on the grid
                 amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
                                                                                     Ey_stag, macro_cr, i, j, k, scomp);
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
-                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
-                Ey(i, j, k) = alpha * Ey(i, j, k)
-                            + beta * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
-                                       + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0)
-                                     ) - beta * jy(i, j, k);
+
+                // Extra conductance term from a lumped resistor on Ey edges
+                amrex::Real const fac1 = (dt/epsilon_interp) * 
+                                         ( sigma_interp + ((use_lumped_resistor && resistor_y_arr(i,j,k)!=0._rt)
+                                            ? dx[1] / (dx[0]*dx[2]*resistor_y_arr(i,j,k)) 
+                                            : 0._rt) );
+                // if (use_lumped_resistor && resistor_y_arr(i,j,k)!=0._rt){ 
+                //     printf("fac1=%f\n", fac1);
+                // }
+
+                // Extra term from a lumped capacitor on Ey edges
+                amrex::Real const fac2 = (use_lumped_capacitor && capacitor_y_arr(i,j,k)!=0._rt)
+                                            ? capacitor_y_arr(i,j,k) * dx[1] / (dx[0]*dx[2]*epsilon_interp)
+                                            : 0._rt;
+
+                amrex::Real alpha_compact = T_MacroAlgo::alpha_compact(fac1, fac2);
+                amrex::Real beta_compact = T_MacroAlgo::beta_compact(fac1, fac2);
+
+                Ey(i, j, k) = alpha_compact * Ey(i, j, k)
+                            + dt/epsilon_interp * beta_compact * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
+                                       + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0)) 
+                            - dt/epsilon_interp * beta_compact * jy(i, j, k);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -263,12 +351,25 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Interpolated permittivity, epsilon, to Ez position on the grid
                 amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
                                                                                     Ez_stag, macro_cr, i, j, k, scomp);
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
-                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
-                Ez(i, j, k) = alpha * Ez(i, j, k)
-                            + beta * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
-                                       + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0)
-                                     ) - beta * jz(i, j, k);
+
+                // Extra conductance term from a lumped resistor on Ez edges
+                amrex::Real const fac1 = (dt/epsilon_interp) * 
+                                         ( sigma_interp + ((use_lumped_resistor && resistor_z_arr(i,j,k)!=0._rt)
+                                            ? dx[2] / (dx[0]*dx[1]*resistor_z_arr(i,j,k)) 
+                                            : 0._rt) );
+                
+                // Extra term from a lumped capacitor on Ez edges
+                amrex::Real const fac2 = (use_lumped_capacitor && capacitor_z_arr(i,j,k)!=0._rt)
+                                            ? capacitor_z_arr(i,j,k) * dx[2] / (dx[0]*dx[1]*epsilon_interp)
+                                            : 0._rt;
+                
+                amrex::Real alpha_compact = T_MacroAlgo::alpha_compact(fac1, fac2);
+                amrex::Real beta_compact = T_MacroAlgo::beta_compact(fac1, fac2);
+
+                Ez(i, j, k) = alpha_compact * Ez(i, j, k)
+                            + dt/epsilon_interp * beta_compact * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
+                                       + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0)) 
+                            - dt/epsilon_interp * beta_compact * jz(i, j, k);
             }
         );
     }

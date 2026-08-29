@@ -47,6 +47,20 @@ public:
      amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
      amrex::MultiFab * get_pointer_mu () {return m_mu_mf.get();}
 
+    amrex::MultiFab& getlumped_resistor_x_mf () {return (*m_lumped_resistor_x_mf);}
+    amrex::MultiFab * get_pointer_lumped_resistor_x () {return m_lumped_resistor_x_mf.get();}
+    amrex::MultiFab& getlumped_resistor_y_mf () {return (*m_lumped_resistor_y_mf);}
+    amrex::MultiFab * get_pointer_lumped_resistor_y () {return m_lumped_resistor_y_mf.get();}
+    amrex::MultiFab& getlumped_resistor_z_mf () {return (*m_lumped_resistor_z_mf);}
+    amrex::MultiFab * get_pointer_lumped_resistor_z () {return m_lumped_resistor_z_mf.get();}
+     
+    amrex::MultiFab& getlumped_capacitor_x_mf () {return (*m_lumped_capacitor_x_mf);}
+    amrex::MultiFab * get_pointer_lumped_capacitor_x () {return m_lumped_capacitor_x_mf.get();}
+    amrex::MultiFab& getlumped_capacitor_y_mf () {return (*m_lumped_capacitor_y_mf);}
+    amrex::MultiFab * get_pointer_lumped_capacitor_y () {return m_lumped_capacitor_y_mf.get();}
+    amrex::MultiFab& getlumped_capacitor_z_mf () {return (*m_lumped_capacitor_z_mf);}
+    amrex::MultiFab * get_pointer_lumped_capacitor_z () {return m_lumped_capacitor_z_mf.get();}
+     
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;
      /** Initializes the Multifabs storing macroscopic properties
@@ -73,6 +87,17 @@ public:
      amrex::GpuArray<int, 3> epsilon_IndexType;
      /** Gpu Vector with index type of the permeability multifab */
      amrex::GpuArray<int, 3> mu_IndexType;
+     
+    /** Gpu Vector with index type of the lumped resistor multifab */
+    amrex::GpuArray<int, 3> lumped_resistor_x_IndexType;
+    amrex::GpuArray<int, 3> lumped_resistor_y_IndexType;
+    amrex::GpuArray<int, 3> lumped_resistor_z_IndexType;
+
+    /** Gpu Vector with index type of the lumped capacitor multifab */
+    amrex::GpuArray<int, 3> lumped_capacitor_x_IndexType;
+    amrex::GpuArray<int, 3> lumped_capacitor_y_IndexType;
+    amrex::GpuArray<int, 3> lumped_capacitor_z_IndexType;
+
      /** Gpu Vector with index type of the Ex multifab */
      amrex::GpuArray<int, 3> Ex_IndexType;
      /** Gpu Vector with index type of the Ey multifab */
@@ -85,6 +110,12 @@ public:
      amrex::GpuArray<int, 3> By_IndexType;
      /** Gpu Vector with index type of the Bz multifab */
      amrex::GpuArray<int, 3> Bz_IndexType;
+     /** Gpu Vector with index type of the jx multifab */
+     amrex::GpuArray<int, 3> jx_IndexType;
+     /** Gpu Vector with index type of the jy multifab */
+     amrex::GpuArray<int, 3> jy_IndexType;
+     /** Gpu Vector with index type of the jz multifab */
+     amrex::GpuArray<int, 3> jz_IndexType;
 
      /** Stores initialization type for conductivity : constant or parser */
      std::string m_sigma_s = "constant";
@@ -116,6 +147,15 @@ public:
      std::unique_ptr<amrex::Parser> m_sigma_parser;
      std::unique_ptr<amrex::Parser> m_epsilon_parser;
      std::unique_ptr<amrex::Parser> m_mu_parser;
+
+    std::unique_ptr<amrex::Parser> m_lumped_resistor_x_parser;
+    std::unique_ptr<amrex::Parser> m_lumped_resistor_y_parser;
+    std::unique_ptr<amrex::Parser> m_lumped_resistor_z_parser;
+
+    std::unique_ptr<amrex::Parser> m_lumped_capacitor_x_parser;
+    std::unique_ptr<amrex::Parser> m_lumped_capacitor_y_parser;
+    std::unique_ptr<amrex::Parser> m_lumped_capacitor_z_parser;
+     
 
 #ifdef WARPX_MAG_LLG
      /** Gpu Vector with index type of the Hx multifab */
@@ -324,7 +364,24 @@ private:
      /** Multifab for m_mu */
      std::unique_ptr<amrex::MultiFab> m_mu_mf;
 
+    /** Multifab for lumped resistor */
+    std::unique_ptr<amrex::MultiFab> m_lumped_resistor_x_mf;
+    std::unique_ptr<amrex::MultiFab> m_lumped_resistor_y_mf;
+    std::unique_ptr<amrex::MultiFab> m_lumped_resistor_z_mf;
+    /** string for storing parser function */
+    std::string m_str_lumped_resistor_x_function;
+    std::string m_str_lumped_resistor_y_function;
+    std::string m_str_lumped_resistor_z_function;
 
+    /** Multifab for lumped capacitor */
+    std::unique_ptr<amrex::MultiFab> m_lumped_capacitor_x_mf;
+    std::unique_ptr<amrex::MultiFab> m_lumped_capacitor_y_mf;
+    std::unique_ptr<amrex::MultiFab> m_lumped_capacitor_z_mf;
+    /** string for storing parser function */
+    std::string m_str_lumped_capacitor_x_function;
+    std::string m_str_lumped_capacitor_y_function;
+    std::string m_str_lumped_capacitor_z_function;
+    
      /** string for storing parser function */
      std::string m_str_sigma_function;
      std::string m_str_epsilon_function;
@@ -362,6 +419,22 @@ struct LaxWendroffAlgo {
          return beta;
      }
 
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real alpha_compact (amrex::Real const fac1,
+                               amrex::Real const fac2) {
+         using namespace amrex;
+         amrex::Real alpha_compact = (1._rt - 0.5_rt * fac1 + fac2)/(1._rt + 0.5_rt * fac1 + fac2);
+         return alpha_compact;
+     }
+
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real beta_compact (amrex::Real const fac1,
+                              amrex::Real const fac2) {
+         using namespace amrex;
+         amrex::Real beta_compact = 1._rt /  (1._rt + 0.5_rt * fac1 + fac2);
+         return beta_compact;
+     }
+
 };
 
 /**
@@ -392,6 +465,22 @@ struct BackwardEulerAlgo {
          amrex::Real fac1 = sigma * dt / epsilon;
          amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
          return beta;
+     }
+
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real alpha_compact (amrex::Real const fac1,
+                               amrex::Real const fac2) {
+         using namespace amrex;
+         amrex::Real alpha_compact = (1._rt + fac2)/(1._rt + fac1 + fac2);
+         return alpha_compact;
+     }
+
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real beta_compact (amrex::Real const fac1,
+                              amrex::Real const fac2) {
+         using namespace amrex;
+         amrex::Real beta_compact = 1._rt / (1._rt + fac1 + fac2);
+         return beta_compact;
      }
 
 };

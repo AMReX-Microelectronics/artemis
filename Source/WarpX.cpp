@@ -225,6 +225,8 @@ amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,P
 int WarpX::yee_coupled_solver_algo;
 int WarpX::use_PEC_mask = 0;
 int WarpX::use_lumped_inductor = 0;
+int WarpX::use_lumped_resistor = 0;
+int WarpX::use_lumped_capacitor = 0;
 
 bool WarpX::do_current_centering = false;
 
@@ -1032,6 +1034,9 @@ WarpX::ReadParameters ()
                 + " please set both parameters to the same value"
             );
         }
+
+        pp_warpx.query("use_lumped_resistor", use_lumped_resistor);
+        pp_warpx.query("use_lumped_capacitor", use_lumped_capacitor);    
 
 #ifdef WARPX_MAG_LLG
         // Read the value of the time advancement scheme of M field
