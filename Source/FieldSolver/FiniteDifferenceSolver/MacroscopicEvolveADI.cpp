@@ -453,13 +453,15 @@ namespace
     }
 
     void add_soft_e_source_to_rhs (
-        MultiFab& rhs, MultiFab const& Cb, int e_comp, Real time)
+        MultiFab& rhs, MultiFab const& Cb, int e_comp)
     {
         if (WarpX::E_excitation_grid_s != "parse_e_excitation_grid_function") {
             return;
         }
 
         WarpX& warpx = WarpX::GetInstance();
+        // Both ADI half-steps share the midpoint sample S^{n+1/2}.
+        Real const time = warpx.gett_new(0) + 0.5_rt * warpx.getdt(0);
         auto const field_parser =
             (e_comp == 0) ? warpx.Exfield_xt_grid_parser->compile<4>() :
             (e_comp == 1) ? warpx.Eyfield_xt_grid_parser->compile<4>() :
@@ -495,6 +497,7 @@ namespace
                     // Flag=2 is a soft *field* increment (E += 1/2 S), not an
                     // Ampère current. Divide by Cb so the contribution to E is
                     // independent of the material prefactor on the RHS curl terms.
+                    // The two half-steps together recover a full-step increment S.
                     rhs_arr(i,j,k) +=
                         0.5_rt * field_parser(x, y, z, time) / cb_arr(i,j,k);
                 } else if (flag_type > 0._rt) {
@@ -707,7 +710,7 @@ namespace
         MultiFab const& ex, MultiFab const& ey,
         MultiFab const& hy, MultiFab const& hz,
         AdiCoeffs const& c, AdiMaterialCoeffs const& mat,
-        Periodicity const& periodicity, Real source_time)
+        Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ex);
         MultiFab p_field = make_rhs(ex);
@@ -741,7 +744,7 @@ namespace
         }
         add_lumped_inductor_current_to_rhs(
             rhs, *mat.kappa[0], 0, periodicity);
-        add_soft_e_source_to_rhs(rhs, cb_field, 0, source_time);
+        add_soft_e_source_to_rhs(rhs, cb_field, 0);
         return rhs;
     }
 
@@ -750,7 +753,7 @@ namespace
         MultiFab const& ey, MultiFab const& ez,
         MultiFab const& hx, MultiFab const& hz,
         AdiCoeffs const& c, AdiMaterialCoeffs const& mat,
-        Periodicity const& periodicity, Real source_time)
+        Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ey);
         MultiFab p_field = make_rhs(ey);
@@ -784,7 +787,7 @@ namespace
         }
         add_lumped_inductor_current_to_rhs(
             rhs, *mat.kappa[1], 1, periodicity);
-        add_soft_e_source_to_rhs(rhs, cb_field, 1, source_time);
+        add_soft_e_source_to_rhs(rhs, cb_field, 1);
         return rhs;
     }
 
@@ -793,7 +796,7 @@ namespace
         MultiFab const& ez, MultiFab const& ex,
         MultiFab const& hx, MultiFab const& hy,
         AdiCoeffs const& c, AdiMaterialCoeffs const& mat,
-        Periodicity const& periodicity, Real source_time)
+        Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ez);
         MultiFab p_field = make_rhs(ez);
@@ -827,7 +830,7 @@ namespace
         }
         add_lumped_inductor_current_to_rhs(
             rhs, *mat.kappa[2], 2, periodicity);
-        add_soft_e_source_to_rhs(rhs, cb_field, 2, source_time);
+        add_soft_e_source_to_rhs(rhs, cb_field, 2);
         return rhs;
     }
 
@@ -836,7 +839,7 @@ namespace
         MultiFab const& ex, MultiFab const& ez,
         MultiFab const& hy, MultiFab const& hz,
         AdiCoeffs const& c, AdiMaterialCoeffs const& mat,
-        Periodicity const& periodicity, Real source_time)
+        Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ex);
         MultiFab p_field = make_rhs(ex);
@@ -870,7 +873,7 @@ namespace
         }
         add_lumped_inductor_current_to_rhs(
             rhs, *mat.kappa[0], 0, periodicity);
-        add_soft_e_source_to_rhs(rhs, cb_field, 0, source_time);
+        add_soft_e_source_to_rhs(rhs, cb_field, 0);
         return rhs;
     }
 
@@ -879,7 +882,7 @@ namespace
         MultiFab const& ey, MultiFab const& ex,
         MultiFab const& hx, MultiFab const& hz,
         AdiCoeffs const& c, AdiMaterialCoeffs const& mat,
-        Periodicity const& periodicity, Real source_time)
+        Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ey);
         MultiFab p_field = make_rhs(ey);
@@ -913,7 +916,7 @@ namespace
         }
         add_lumped_inductor_current_to_rhs(
             rhs, *mat.kappa[1], 1, periodicity);
-        add_soft_e_source_to_rhs(rhs, cb_field, 1, source_time);
+        add_soft_e_source_to_rhs(rhs, cb_field, 1);
         return rhs;
     }
 
@@ -922,7 +925,7 @@ namespace
         MultiFab const& ez, MultiFab const& ey,
         MultiFab const& hx, MultiFab const& hy,
         AdiCoeffs const& c, AdiMaterialCoeffs const& mat,
-        Periodicity const& periodicity, Real source_time)
+        Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ez);
         MultiFab p_field = make_rhs(ez);
@@ -956,7 +959,7 @@ namespace
         }
         add_lumped_inductor_current_to_rhs(
             rhs, *mat.kappa[2], 2, periodicity);
-        add_soft_e_source_to_rhs(rhs, cb_field, 2, source_time);
+        add_soft_e_source_to_rhs(rhs, cb_field, 2);
         return rhs;
     }
 
@@ -1149,8 +1152,7 @@ namespace
         AdiMaterialCoeffs const& mat,
         Periodicity const& periodicity,
         PecConfig const& pec,
-        AdiFieldArray const& pec_masks,
-        Real source_time)
+        AdiFieldArray const& pec_masks)
     {
         // Implicit E along y,z,x; explicit B at n+1/2.
         MultiFab Ex0 = make_copy(*Efield[0]);
@@ -1161,19 +1163,19 @@ namespace
         copy_fields(Bfield_adi[1], mat.H, periodicity);
         MultiFab rhs_ex = build_rhs_ex1(
             *Efield_adi[1][0], *Efield_adi[1][1],
-            *Bfield_adi[1][1], *Bfield_adi[1][2], c, mat, periodicity, source_time);
+            *Bfield_adi[1][1], *Bfield_adi[1][2], c, mat, periodicity);
 
         copy_fields(Efield_adi[2], Efield, periodicity);
         copy_fields(Bfield_adi[2], mat.H, periodicity);
         MultiFab rhs_ey = build_rhs_ey1(
             *Efield_adi[2][1], *Efield_adi[2][2],
-            *Bfield_adi[2][0], *Bfield_adi[2][2], c, mat, periodicity, source_time);
+            *Bfield_adi[2][0], *Bfield_adi[2][2], c, mat, periodicity);
 
         copy_fields(Efield_adi[0], Efield, periodicity);
         copy_fields(Bfield_adi[0], mat.H, periodicity);
         MultiFab rhs_ez = build_rhs_ez1(
             *Efield_adi[0][2], *Efield_adi[0][0],
-            *Bfield_adi[0][0], *Bfield_adi[0][1], c, mat, periodicity, source_time);
+            *Bfield_adi[0][0], *Bfield_adi[0][1], c, mat, periodicity);
 
         solve_implicit_ex1(*Efield_adi[1][0], rhs_ex, c, mat, periodicity, pec, pec_masks);
         solve_implicit_ey1(*Efield_adi[2][1], rhs_ey, c, mat, periodicity, pec, pec_masks);
@@ -1213,8 +1215,7 @@ namespace
         AdiMaterialCoeffs const& mat,
         Periodicity const& periodicity,
         PecConfig const& pec,
-        AdiFieldArray const& pec_masks,
-        Real source_time)
+        AdiFieldArray const& pec_masks)
     {
         // Implicit E along z,x,y; explicit B at n+1.
         MultiFab Exh = make_copy(*Efield[0]);
@@ -1225,19 +1226,19 @@ namespace
         copy_fields(Bfield_adi[2], mat.H, periodicity);
         MultiFab rhs_ex = build_rhs_ex2(
             *Efield_adi[2][0], *Efield_adi[2][2],
-            *Bfield_adi[2][1], *Bfield_adi[2][2], c, mat, periodicity, source_time);
+            *Bfield_adi[2][1], *Bfield_adi[2][2], c, mat, periodicity);
 
         copy_fields(Efield_adi[0], Efield, periodicity);
         copy_fields(Bfield_adi[0], mat.H, periodicity);
         MultiFab rhs_ey = build_rhs_ey2(
             *Efield_adi[0][1], *Efield_adi[0][0],
-            *Bfield_adi[0][0], *Bfield_adi[0][2], c, mat, periodicity, source_time);
+            *Bfield_adi[0][0], *Bfield_adi[0][2], c, mat, periodicity);
 
         copy_fields(Efield_adi[1], Efield, periodicity);
         copy_fields(Bfield_adi[1], mat.H, periodicity);
         MultiFab rhs_ez = build_rhs_ez2(
             *Efield_adi[1][2], *Efield_adi[1][1],
-            *Bfield_adi[1][0], *Bfield_adi[1][1], c, mat, periodicity, source_time);
+            *Bfield_adi[1][0], *Bfield_adi[1][1], c, mat, periodicity);
 
         solve_implicit_ex2(*Efield_adi[2][0], rhs_ex, c, mat, periodicity, pec, pec_masks);
         solve_implicit_ey2(*Efield_adi[0][1], rhs_ey, c, mat, periodicity, pec, pec_masks);
@@ -1319,16 +1320,9 @@ FiniteDifferenceSolver::MacroscopicEvolveADI (
     update_material_coeffs(mat, Bfield, dt, periodicity, macroscopic_properties);
 
     WarpX& warpx = WarpX::GetInstance();
-    // Soft field sources (flag=2) are timed at the arrival levels of each
-    // half-step, like a hard Dirichlet value: S^{n+1/2} then S^{n+1}.
-    // (Quarter-steps n+1/4, n+3/4 would be appropriate only for a continuous
-    // Ampère current centered on each half-interval.)
-    Real const first_e_source_time = warpx.gett_new(0) + 0.5_rt * dt;
-    Real const second_e_source_time = warpx.gett_new(0) + dt;
 
     adi_first_half_step(
-        Efield, Bfield, Efield_adi, Bfield_adi, c, mat, periodicity, pec, PEC_adi,
-        first_e_source_time);
+        Efield, Bfield, Efield_adi, Bfield_adi, c, mat, periodicity, pec, PEC_adi);
 
     warpx.FillBoundaryE(warpx.getngEB());
     warpx.FillBoundaryB(warpx.getngEB());
@@ -1337,12 +1331,11 @@ FiniteDifferenceSolver::MacroscopicEvolveADI (
 
     update_material_coeffs(mat, Bfield, dt, periodicity, macroscopic_properties);
     adi_second_half_step(
-        Efield, Bfield, Efield_adi, Bfield_adi, c, mat, periodicity, pec, PEC_adi,
-        second_e_source_time);
+        Efield, Bfield, Efield_adi, Bfield_adi, c, mat, periodicity, pec, PEC_adi);
 
     warpx.FillBoundaryE(warpx.getngEB());
     warpx.FillBoundaryB(warpx.getngEB());
     warpx.ApplyExternalFieldExcitationOnGrid(
-        ExternalFieldType::BfieldExternal, DtType::SecondHalf);
+        ExternalFieldType::BfieldExternal, DtType::FirstHalf);
 #endif
 }
