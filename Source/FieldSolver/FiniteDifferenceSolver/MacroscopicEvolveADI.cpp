@@ -1316,6 +1316,9 @@ FiniteDifferenceSolver::MacroscopicEvolveADI (
 
     warpx.FillBoundaryE(warpx.getngEB());
     warpx.FillBoundaryB(warpx.getngEB());
+    // Soft H/B source once per step, after the first magnetic half-step, at t^{n+1/2}.
+    warpx.ApplyExternalFieldExcitationOnGrid(
+        ExternalFieldType::BfieldExternal, DtType::FirstHalf, false);
 
     update_material_coeffs(mat, Bfield, dt, periodicity, macroscopic_properties);
     adi_second_half_step(
@@ -1323,8 +1326,5 @@ FiniteDifferenceSolver::MacroscopicEvolveADI (
 
     warpx.FillBoundaryE(warpx.getngEB());
     warpx.FillBoundaryB(warpx.getngEB());
-    // Soft H/B source once per step, at t^{n+1/2}, matching the E source.
-    warpx.ApplyExternalFieldExcitationOnGrid(
-        ExternalFieldType::BfieldExternal, DtType::FirstHalf, false);
 #endif
 }
