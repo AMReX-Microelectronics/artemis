@@ -1,0 +1,46 @@
+# Match GNU Make flags for Bin/main3d.gnu.TPROF.MTMPI.ex (see `make -n …MacroscopicEvolveADI.o`).
+# Relative -I paths need compile_commands.json so clangd uses artemis/ as the
+# compile working directory (otherwise -I is resolved from each source file dir).
+CompileFlags:
+  CompilationDatabase: .
+  Add:
+    - -I.
+    - -I./Source
+    - -I./Source/Particles/Filter
+    - -Itmp_build_dir/s/3d.gnu.TPROF.MTMPI.EXE
+    - -I../amrex/Src/Base
+    - -I../amrex/Src/Base/Parser
+    - -I../amrex/Src/Particle
+    - -I../amrex/Src/Boundary
+    - -I../amrex/Src/AmrCore
+    - -I../amrex/Src/LinearSolvers/MLMG
+    - -I../amrex/Tools/C_scripts
+    - -I/usr/local/Cellar/open-mpi/5.0.8/include
+    - -DAMREX_EXPORT_DYNAMIC
+    - -DAMREX_TINY_PROFILING
+    - -DBL_USE_MPI
+    - -DAMREX_USE_MPI
+    - -DAMREX_MPI_THREAD_MULTIPLE
+    - -DBL_NO_FORT
+    - -DAMREX_GPU_MAX_THREADS=0
+    - -DBL_SPACEDIM=3
+    - -DAMREX_SPACEDIM=3
+    - -DBL_FORT_USE_UNDERSCORE
+    - -DAMREX_FORT_USE_UNDERSCORE
+    - -DBL_Darwin
+    - -DAMREX_Darwin
+    - -DAMREX_PARTICLES
+    - -DNDEBUG
+    - -DOMPI_SKIP_MPICXX
+    - -DWARPX_DIM_3D
+    - -DWARPX_ZINDEX=2
+    - -DPICSAR_NO_ASSUMED_ALIGNMENT
+    - -DWARPX
+
+---
+If:
+  PathMatch: .*\.(cpp|cc|cxx|hpp|ipp|hh|hxx|H)$
+CompileFlags:
+  Add:
+    - -xc++
+    - -std=c++20

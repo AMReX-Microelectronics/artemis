@@ -150,7 +150,8 @@ WarpX::Evolve (int numsteps)
                 m_london->EvolveLondonJ(-0.5_rt*dt[0]); // J^(n) to J^(n-1/2) using E^(n)
                 FillBoundaryJ(guard_cells.ng_alloc_EB);
             }
-            if (use_lumped_inductor) {
+            if (use_lumped_inductor &&
+                macroscopic_time_integrator_algo != MacroscopicTimeSteppingScheme::ADI) {
                 m_inductor->EvolveInductorJ(-0.5_rt*dt[0]); // J^(n) to J^(n-1/2) using E^(n)
                 FillBoundaryJ(guard_cells.ng_alloc_EB);
             }
@@ -427,7 +428,8 @@ WarpX::OneStep_nosub (Real cur_time)
         // fill boundary here
     }
 #endif
-    if (use_lumped_inductor == 1) {
+    if (use_lumped_inductor == 1 &&
+        macroscopic_time_integrator_algo != MacroscopicTimeSteppingScheme::ADI) {
         m_inductor->EvolveInductorJ(dt[0]); // J^(n-1/2) to J^(n+1/2) using E^(n)
         FillBoundaryJ(guard_cells.ng_alloc_EB);
     }
@@ -486,11 +488,19 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         FillBoundaryG(guard_cells.ng_FieldSolverG);
+        if (WarpX::em_solver_medium == MediumForEM::Macroscopic &&
+            WarpX::macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI) {
+#ifdef WARPX_MAG_LLG
+            WARPX_ABORT_WITH_MESSAGE("Macroscopic ADI is not implemented with WARPX_MAG_LLG.");
+#else
+            MacroscopicEvolveADI(dt[0]); // We now have E^{n+1} and B^{n+1}
+#endif
+        } else {
 #ifndef WARPX_MAG_LLG
         EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
         // ApplyExternalFieldExcitation
-        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal, DtType::FirstHalf); // apply B external excitation; soft source to be fixed
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal, DtType::FirstHalf); // B soft/hard at t^{n+1/2}
 #endif
 
 #ifdef WARPX_MAG_LLG
@@ -550,8 +560,9 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifndef WARPX_MAG_LLG
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
         // ApplyExternalFieldExcitation
-        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal, DtType::SecondHalf); // redundant for hs; need to fix the way to increment ss
+        ApplyExternalFieldExcitationOnGrid(ExternalFieldType::BfieldExternal, DtType::SecondHalf); // B soft/hard at t^{n+1}
 #endif
+        }
 
 #ifdef WARPX_MAG_LLG
 #ifndef WARPX_DIM_RZ

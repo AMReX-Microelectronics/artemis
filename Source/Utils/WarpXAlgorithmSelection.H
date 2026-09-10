@@ -50,6 +50,16 @@ struct MacroscopicSolverAlgo {
     };
 };
 
+/**
+  * \brief struct to select the macroscopic electromagnetic time stepping.
+  */
+struct MacroscopicTimeSteppingScheme {
+    enum {
+        FDTD = 0,
+        ADI = 1
+    };
+};
+
 struct GridType {
     enum {
         Collocated = 0,

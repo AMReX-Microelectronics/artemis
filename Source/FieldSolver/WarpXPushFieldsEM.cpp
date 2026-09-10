@@ -1145,6 +1145,91 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     ApplyEfieldBoundary(lev, patch_type);
 }
 
+void
+WarpX::MacroscopicEvolveADI (amrex::Real a_dt)
+{
+    for (int lev = 0; lev <= finest_level; ++lev ) {
+        MacroscopicEvolveADI(lev, a_dt);
+    }
+}
+
+void
+WarpX::MacroscopicEvolveADI (int lev, amrex::Real a_dt) {
+
+    WARPX_PROFILE("WarpX::MacroscopicEvolveADI()");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        lev == 0,
+        "Macroscopic ADI is not implemented for lev>0."
+    );
+
+    MacroscopicEvolveADI(lev, PatchType::fine, a_dt);
+}
+
+void
+WarpX::MacroscopicEvolveADI (int lev, PatchType patch_type, amrex::Real a_dt) {
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        patch_type == PatchType::fine,
+        "Macroscopic ADI is not implemented for coarse patches."
+    );
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !(do_pml && pml[lev]->ok()),
+        "Macroscopic ADI currently supports periodic domains without PML."
+    );
+
+#ifdef WARPX_MAG_LLG
+    amrex::ignore_unused(lev, a_dt);
+    WARPX_ABORT_WITH_MESSAGE("Macroscopic ADI is not implemented with WARPX_MAG_LLG.");
+#else
+    if (use_PEC_mask && !m_pec_fp_adi_initialized[lev])
+    {
+        for (int normal = 0; normal < 3; ++normal)
+        {
+            bool const lo_pec = field_boundary_lo[normal] == FieldBoundaryType::PEC;
+            bool const hi_pec = field_boundary_hi[normal] == FieldBoundaryType::PEC;
+            if (!(lo_pec && hi_pec))
+            {
+                for (int component = 0; component < 3; ++component)
+                {
+                    MultiFab const& mask = *PEC_fp[lev][component];
+                    if (mask.ixType().cellCentered(normal)) { continue; }
+
+                    Box const bounds = mask.boxArray().minimalBox();
+                    Box const lo_wall =
+                        amrex::makeSlab(bounds, normal, bounds.smallEnd(normal));
+                    Box const hi_wall =
+                        amrex::makeSlab(bounds, normal, bounds.bigEnd(normal));
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        mask.min(lo_wall, 0) != 0._rt && mask.min(hi_wall, 0) != 0._rt,
+                        "A PEC mask touches a domain wall. Macroscopic ADI requires both "
+                        "field boundaries normal to that wall to be PEC.");
+                }
+            }
+        }
+
+        Periodicity const& periodicity = Geom(lev).periodicity();
+        for (int solve_dir = 0; solve_dir < 3; ++solve_dir)
+        {
+            for (int component = 0; component < 3; ++component)
+            {
+                if (component == solve_dir) { continue; }
+                PEC_fp_adi[lev][solve_dir][component]->ParallelCopy(
+                    *PEC_fp[lev][component], 0, 0, 1,
+                    IntVect(0), IntVect(0), periodicity);
+            }
+        }
+        m_pec_fp_adi_initialized[lev] = true;
+    }
+
+    m_fdtd_solver_fp[lev]->MacroscopicEvolveADI(
+        Efield_fp[lev], Bfield_fp[lev],
+        Efield_fp_adi[lev], Bfield_fp_adi[lev],
+        PEC_fp_adi[lev],
+        a_dt, Geom(lev).periodicity(), m_macroscopic_properties);
+#endif
+}
+
 #ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
 // define WarpX::MacroscopicEvolveHM

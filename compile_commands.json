@@ -1,0 +1,12 @@
+[
+  {
+    "directory": "/Users/rsz/Documents/GT_Research/AMReX/artemis",
+    "file": "Source/FieldSolver/FiniteDifferenceSolver/MacroscopicEvolveADI.cpp",
+    "arguments": [
+      "clang++",
+      "-c",
+      "-std=c++20",
+      "Source/FieldSolver/FiniteDifferenceSolver/MacroscopicEvolveADI.cpp"
+    ]
+  }
+]

@@ -1,0 +1,179 @@
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 2500
+# amr.restart = diags/chk0100000
+
+amr.n_cell = n_cellx n_celly n_cellz
+amr.max_grid_size_x = max_grid_sizex
+amr.max_grid_size_y = max_grid_sizey
+amr.max_grid_size_z = max_grid_sizez
+amr.blocking_factor = blocking_factor
+amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
+
+geometry.dims = 3
+geometry.prob_lo = prob_lox prob_loy prob_loz
+geometry.prob_hi = prob_hix prob_hiy prob_hiz
+
+amr.max_level = 0
+
+# use pec instead of pml overlaying current source so you don't get a reflection
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 0
+
+warpx.cfl = cfl
+
+# vacuum or macroscopic
+algo.em_solver_medium = macroscopic
+
+# laxwendroff or backwardeuler
+algo.macroscopic_sigma_method = laxwendroff
+algo.time_stepping_scheme = adi
+
+macroscopic.npy_k_index = 25
+
+macroscopic.sigma_npy_file = "artemis_crosstalk-v0p0_flipped.npy"
+macroscopic.sigma_npy_value = 1.e10
+
+algo.use_PEC_mask = 1
+
+macroscopic.mu_npy_file = "artemis_crosstalk-v0p0_flipped.npy"
+macroscopic.mu_npy_value = 1.25663706213e-06
+
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_si - sigma_0) * (z <= h_si)"
+macroscopic.epsilon_function(x,y,z) = "eps_0 + eps_0 * (eps_r_si - 1.) * (z <= h_si)"
+macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si)"
+
+algo.use_lumped_inductor = 1
+# inductor per cell
+inductor.inductor_x_function(x,y,z) = "384.6153846153846e-14 * (x > 297.5e-6) * (x < 362.5e-6) * (y > 425.e-6 - ddy) * (y < 425.e-6 + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
+inductor.inductor_y_function(x,y,z) = "0."
+inductor.inductor_z_function(x,y,z) = "0."
+
+#################################
+############ FIELDS #############
+#################################
+
+###############
+# domain size
+# n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
+###############
+my_constants.n_cellx = 264
+my_constants.n_celly = 336
+my_constants.n_cellz = 50
+
+my_constants.max_grid_sizex = 264
+my_constants.max_grid_sizey = 336
+my_constants.max_grid_sizez = 50
+my_constants.blocking_factor = 2
+
+my_constants.prob_lox = 0.
+my_constants.prob_loy = 0.
+my_constants.prob_loz = 0.
+
+my_constants.prob_hix = 660.e-6
+my_constants.prob_hiy = 840.e-6
+my_constants.prob_hiz = 150.e-6
+
+my_constants.Lx = prob_hix - prob_lox
+my_constants.Ly = prob_hiy - prob_loy
+my_constants.Lz = prob_hiz - prob_loz
+
+###############
+# material properties
+###############
+my_constants.sigma_0 = 0.0
+my_constants.sigma_si = 0.
+my_constants.sigma_metal = 1.e10
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_si = 11.7
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_si = 1.0
+my_constants.mu_r_test = 0.999999
+
+###############
+# silicon and palladium cross section
+###############
+my_constants.h_si = 75.e-6
+
+###############
+# derived quantities and fundamental constants - don't touch these
+###############
+
+my_constants.pi = 3.14159265358979
+
+my_constants.cfl = 3.2
+my_constants.freq = 7.5e10
+my_constants.TP = 1./freq
+
+# grid spacing
+my_constants.dx = Lx / n_cellx
+my_constants.dy = Ly / n_celly
+my_constants.dz = Lz / n_cellz
+
+my_constants.ddx = dx/1.e6
+my_constants.ddy = dy/1.e6
+my_constants.ddz = dz/1.e6
+
+my_constants.flag_none = 0
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
+
+###############
+# excitation
+###############
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_ss * (x >= 297.5e-6) * (x <= 362.5e-6) * (z > h_si - ddz) * (z < h_si + ddz) * (y > 675.e-6 - ddy) * (y < 675.e-6 + ddy)"
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "cfl/0.8 * exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) * (x >= 297.5e-6) * (x <= 362.5e-6) * (z > h_si - ddz) * (z < h_si + ddz) * (y > 675.e-6 - ddy) * (y < 675.e-6 + ddy)"
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+###############
+# diagnostics
+###############
+
+diagnostics.diags_names = plt chk
+###############
+# full plotfiles
+plt.intervals = 20
+plt.fields_to_plot = Ex Ey Ez Bx By Bz mu
+plt.diag_type = Full
+plt.file_min_digits = 7
+
+chk.format = checkpoint
+chk.intervals = 100000
+chk.intervals = 10000
+chk.diag_type = Full
+chk.file_min_digits = 7
+
+warpx.reduced_diags_names = Eobs0 Eobs1
+
+my_constants.x0 = 330.e-6
+my_constants.y0 = 670.e-6
+my_constants.z0 = h_si
+Eobs0.type = RawEFieldReduction
+Eobs0.reduction_type = integral
+Eobs0.integration_type = volume
+Eobs0.intervals = 10
+Eobs0.reduced_function(x,y,z) = (x > x0 - dx/2-ddx) * (x < x0 + dx/2+ddx) * (y > y0 - dy/2-ddy) * (y < y0 + dy/2+ddy) * (z > z0 - dz/2-ddz) * (z < z0 + dz/2+ddz)
+
+my_constants.x1 = 330.e-6
+my_constants.y1 = 430.e-6
+my_constants.z1 = h_si
+Eobs1.type = RawEFieldReduction
+Eobs1.reduction_type = integral
+Eobs1.integration_type = volume
+Eobs1.intervals = 10
+Eobs1.reduced_function(x,y,z) = (x > x1 - dx/2-ddx) * (x < x1 + dx/2+ddx) * (y > y1 - dy/2-ddy) * (y < y1 + dy/2+ddy) * (z > z1 - dz/2-ddz) * (z < z1 + dz/2+ddz)

@@ -185,6 +185,14 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      | - macroscopic" << "\n";
     }
     if ( (em_solver_medium == MediumForEM::Macroscopic) &&
+       (WarpX::macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::FDTD)){
+      amrex::Print() << "                      |  - FDTD time stepping\n";
+      }
+    else if ((em_solver_medium == MediumForEM::Macroscopic) &&
+            (WarpX::macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI)){
+      amrex::Print() << "                      |  - ADI time stepping\n";
+      }
+    if ( (em_solver_medium == MediumForEM::Macroscopic) &&
        (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff)){
       amrex::Print() << "                      |  - Lax-Wendroff algorithm\n";
       }

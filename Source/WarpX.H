@@ -296,6 +296,10 @@ public:
      *  (BackwardEuler - 0, Lax-Wendroff - 1)
      */
     static int macroscopic_solver_algo;
+    /** Integer that corresponds to macroscopic EM time stepping
+     *  (FDTD - 0, ADI - 1)
+     */
+    static int macroscopic_time_integrator_algo;
     /** Integers that correspond to boundary condition applied to fields at the
      *  lower domain boundaries
      *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
@@ -814,6 +818,9 @@ public:
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
+    void MacroscopicEvolveADI (         amrex::Real dt);
+    void MacroscopicEvolveADI (int lev, amrex::Real dt);
+    void MacroscopicEvolveADI (int lev, PatchType patch_type, amrex::Real dt);
 
 #ifdef WARPX_MAG_LLG
     void MacroscopicEvolveHM (         amrex::Real dt);
@@ -1262,7 +1269,8 @@ public:
      *   \param[in] zflag_parser  : Type zfield excitation (hard source=0/soft source=1)
      *   \param[in] lev           : level on which the excitation is applied.
      */
-    void ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a_dt_type = DtType::Full);
+    void ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a_dt_type = DtType::Full,
+                                             bool split_soft_source = true);
     void ApplyExternalFieldExcitationOnGrid ( amrex::MultiFab *mfx,
          amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          amrex::ParserExecutor<4> const& xfield_parser,
@@ -1271,7 +1279,7 @@ public:
          amrex::ParserExecutor<3> const& xflag_parser,
          amrex::ParserExecutor<3> const& yflag_parser,
          amrex::ParserExecutor<3> const& zflag_parser, const int lev,
-         DtType a_dt_type );
+         DtType a_dt_type, bool split_soft_source = true );
     /** Parse field excitation functions and flags*/
     void ReadExcitationParser ();
 
@@ -1608,6 +1616,15 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > PEC_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
+    // ADI work fields on x-, y-, and z-directed pencil decompositions.
+    amrex::Vector<std::array<
+        std::array<std::unique_ptr<amrex::MultiFab>, 3>, 3>> Efield_fp_adi;
+    amrex::Vector<std::array<
+        std::array<std::unique_ptr<amrex::MultiFab>, 3>, 3>> Bfield_fp_adi;
+    // Static PEC masks remapped onto the six ADI E-field pencil layouts.
+    amrex::Vector<std::array<
+        std::array<std::unique_ptr<amrex::MultiFab>, 3>, 3>> PEC_fp_adi;
+    amrex::Vector<int> m_pec_fp_adi_initialized;
 #ifdef WARPX_MAG_LLG
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Hfield_fp;
