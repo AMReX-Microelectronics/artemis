@@ -1,0 +1,81 @@
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH -C gpu
+#SBATCH -G 4
+#SBATCH -q regular
+#SBATCH -J waveguide_test
+#SBATCH -A m3766
+#SBATCH -t 02:00:00
+
+# OpenMP settings:
+export OMP_NUM_THREADS=1
+export OMP_PLACES=threads
+export OMP_PROC_BIND=spread
+
+export MPICH_GPU_SUPPORT_ENABLED=1
+export AMREX_CUDA_SHARE_PARAM_MEM=1
+
+#run the application: 
+# applications may perform better with --gpu-bind=none instead of --gpu-bind=single:1
+srun -n 4 -c 32 --cpu_bind=cores -G 4 ./main3d.gnu.TPROF.MTMPI.CUDA.ex inputs_3d_empty_X_band
+
+#!/bin/bash
+
+rm -r raw_data
+mkdir raw_data
+rm -r FieldInTime
+mkdir FieldInTime
+
+for timestep in $(seq 0 500 1700000); do
+    newnumber='000000000'${timestep}      # get number, pack with zeros
+    newnumber=${newnumber:(-9)}       # the last eight characters
+
+    ./WritePlotfileToASCII3d.gnu.x86-milan.ex infile=diags/CPW_surf${newnumber} | tee raw_data/raw_${newnumber}.txt
+
+    for i in $(seq 53 1 53); do # Hz
+        for j in $(seq 125 1 125); do
+            string="^$i $j 501 5" # Hz
+            prefix="^$i "
+            if [[ "$string" =~ ^"$prefix" ]]; then
+                ALLNAME=${i}_${j}_${newnumber}_Hz
+                grep "$string" raw_data/raw_${newnumber}.txt | tee -a raw_data/$ALLNAME.txt #
+
+                XYNAME=${i}_${j}_Hz
+                grep "$string" raw_data/$ALLNAME.txt | tee -a FieldInTime/$XYNAME.txt # begin y
+            fi
+
+        done
+    done 
+
+    for i in $(seq 60 1 60); do # Ez
+        for j in $(seq 95 1 95); do
+            string="^$i $j 505 2" # Ez
+            prefix="^$i "
+            if [[ "$string" =~ ^"$prefix" ]]; then
+                ALLNAME=${i}_${j}_${newnumber}_Ez
+                grep "$string" raw_data/raw_${newnumber}.txt | tee -a raw_data/$ALLNAME.txt #
+
+                XYNAME=${i}_${j}_Ez
+                grep "$string" raw_data/$ALLNAME.txt | tee -a FieldInTime/$XYNAME.txt # begin y
+            fi
+
+        done
+    done 
+
+    for i in $(seq 60 1 60); do # Hx
+        for j in $(seq 100 1 100); do
+            string="^$i $j 508 3" # Hx
+            prefix="^$i "
+            if [[ "$string" =~ ^"$prefix" ]]; then
+                ALLNAME=${i}_${j}_${newnumber}_Hx
+                grep "$string" raw_data/raw_${newnumber}.txt | tee -a raw_data/$ALLNAME.txt #
+
+                XYNAME=${i}_${j}_Hx
+                grep "$string" raw_data/$ALLNAME.txt | tee -a FieldInTime/$XYNAME.txt # begin y
+            fi
+
+        done
+    done 
+
+done
+
