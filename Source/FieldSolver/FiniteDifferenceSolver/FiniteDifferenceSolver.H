@@ -18,6 +18,7 @@
 #include <AMReX_REAL.H>
 
 #include <AMReX_BaseFwd.H>
+#include <AMReX_Periodicity.H>
 
 #include <array>
 #include <memory>
@@ -126,6 +127,21 @@ class FiniteDifferenceSolver
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                             amrex::Real const dt,
                             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
+#ifndef WARPX_DIM_RZ
+#ifndef WARPX_MAG_LLG
+        /**
+          * \brief Periodic-only ADI update for macroscopic freespace cases.
+          */
+        void MacroscopicEvolveADI ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+                            std::array< std::array<std::unique_ptr<amrex::MultiFab>, 3>, 3>& Efield_adi,
+                            std::array< std::array<std::unique_ptr<amrex::MultiFab>, 3>, 3>& Bfield_adi,
+                            std::array< std::array<std::unique_ptr<amrex::MultiFab>, 3>, 3> const& PEC_adi,
+                            amrex::Real const dt,
+                            amrex::Periodicity const& periodicity,
+                            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
+#endif
+#endif
 #ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
         /**

@@ -710,6 +710,18 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_sc_fp(lev, 1), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Bz_sc" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_sc_fp(lev, 2), lev, m_crse_ratio);
+        } else if (m_varnames[comp].rfind("josephson_phi_", 0) == 0 ||
+                   m_varnames[comp].rfind("josephson_Ic_", 0) == 0) {
+            const auto& name = m_varnames[comp];
+            const auto axis = std::string("xyz").find(name.back());
+            bool const phase = name.rfind("josephson_phi_", 0) == 0;
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_josephson_junction &&
+                axis != std::string::npos &&
+                name == std::string(phase ? "josephson_phi_" : "josephson_Ic_") + name.back(),
+                "Josephson diagnostics require an enabled junction and x/y/z component.");
+            auto& macro = warpx.GetMacroscopicProperties();
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(
+                phase ? macro.m_jj_phi[axis].get() : macro.m_jj_Ic[axis].get(), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "inductorx" ){
              m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getInductor().m_inductor_x_mf.get(), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "inductory" ){

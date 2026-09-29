@@ -19,7 +19,8 @@ using namespace amrex;
  */
 
 void
-WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a_dt_type)
+WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a_dt_type,
+                                           bool split_soft_source)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
         if (externalfieldtype == ExternalFieldType::AllExternal || externalfieldtype == ExternalFieldType::EfieldExternal) {
@@ -33,7 +34,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a
                                                    Exfield_flag_parser->compile<3>(),
                                                    Eyfield_flag_parser->compile<3>(),
                                                    Ezfield_flag_parser->compile<3>(),
-                                                   lev, a_dt_type );
+                                                   lev, a_dt_type, split_soft_source );
             }
         }
         // The excitation, especially when used to set an internal PEC, will be extended
@@ -50,7 +51,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a
                                                        Exfield_flag_parser->compile<3>(),
                                                        Eyfield_flag_parser->compile<3>(),
                                                        Ezfield_flag_parser->compile<3>(),
-                                                       lev, a_dt_type );
+                                                       lev, a_dt_type, split_soft_source );
             }
         }
         if (externalfieldtype == ExternalFieldType::AllExternal || externalfieldtype == ExternalFieldType::BfieldExternal) {
@@ -64,7 +65,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a
                                                    Bxfield_flag_parser->compile<3>(),
                                                    Byfield_flag_parser->compile<3>(),
                                                    Bzfield_flag_parser->compile<3>(),
-                                                   lev, a_dt_type );
+                                                   lev, a_dt_type, split_soft_source );
             }
         }
 #ifdef WARPX_MAG_LLG
@@ -79,7 +80,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a
                                                Hxfield_flag_parser->compile<3>(),
                                                Hyfield_flag_parser->compile<3>(),
                                                Hzfield_flag_parser->compile<3>(),
-                                               lev, a_dt_type );
+                                               lev, a_dt_type, split_soft_source );
             }
         }
         if (externalfieldtype == ExternalFieldType::AllExternal || externalfieldtype == ExternalFieldType::HbiasfieldExternal) {
@@ -93,7 +94,7 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a
                                                Hx_biasfield_flag_parser->compile<3>(),
                                                Hy_biasfield_flag_parser->compile<3>(),
                                                Hz_biasfield_flag_parser->compile<3>(),
-                                               lev, a_dt_type );
+                                               lev, a_dt_type, split_soft_source );
             }
         }
 #endif
@@ -108,7 +109,8 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
        ParserExecutor<4> const& zfield_parser,
        ParserExecutor<3> const& xflag_parser,
        ParserExecutor<3> const& yflag_parser,
-       ParserExecutor<3> const& zflag_parser, const int lev, DtType a_dt_type )
+       ParserExecutor<3> const& zflag_parser, const int lev, DtType a_dt_type,
+       bool split_soft_source )
 {
     // This function adds the contribution from an external excitation to the fields.
     // A flag is used to determine the type of excitation.
@@ -124,7 +126,16 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
         mfy_stag[idim] = mfy->ixType()[idim];
         mfz_stag[idim] = mfz->ixType()[idim];
     }
+    // Sample the excitation at the field arrival time for this stage.
+    // Soft field sources (flag=2) are increments at those levels, so
+    // FirstHalf -> t^{n+1/2}, SecondHalf -> t^{n+1}. Full keeps t^n
+    // (used e.g. for the t=0 hard-source application before any evolve).
     amrex::Real t = gett_new(lev);
+    if (a_dt_type == DtType::FirstHalf) {
+        t += 0.5_rt * dt[lev];
+    } else if (a_dt_type == DtType::SecondHalf) {
+        t += dt[lev];
+    }
     const auto problo = Geom(lev).ProbLoArray();
     const auto dx = Geom(lev).CellSizeArray();
     amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
@@ -136,10 +147,11 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
     const int nComp_x = mfx->nComp();
     const int nComp_y = mfy->nComp();
     const int nComp_z = mfz->nComp();
-    // Multiplication factor for field parser depending on dt_type
-    // If Full, then 1 (default), if FirstHalf or SecondHalf then 0.5
+    // Soft sources are split with a factor of 0.5 across FirstHalf/SecondHalf
+    // unless the caller requests a single full-strength application.
     int dt_type_flag = 0;
-    if (a_dt_type == DtType::FirstHalf or a_dt_type == DtType::SecondHalf ) {
+    if (split_soft_source &&
+        (a_dt_type == DtType::FirstHalf or a_dt_type == DtType::SecondHalf)) {
         dt_type_flag = 1;
     }
 #ifdef AMREX_USE_OMP

@@ -24,7 +24,7 @@ TINY_PROFILE   = TRUE
 
 USE_MPI   = TRUE
 USE_OMP   = FALSE
-USE_GPU   = FALSE
+USE_GPU   = TRUE
 
 EBASE     = main
 

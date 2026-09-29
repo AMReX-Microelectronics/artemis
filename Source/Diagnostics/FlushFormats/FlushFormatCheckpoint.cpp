@@ -9,6 +9,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParticleIO.H>
@@ -205,6 +206,9 @@ FlushFormatCheckpoint::WriteToFile (
         }
     }
 
+    if (WarpX::use_josephson_junction) {
+        warpx.GetMacroscopicProperties().WriteJosephsonCheckpoint(checkpointname);
+    }
     CheckpointParticles(checkpointname, particle_diags);
 
     WriteDMaps(checkpointname, nlev);

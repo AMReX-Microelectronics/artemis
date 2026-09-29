@@ -1,10 +1,11 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
+# 3D mesh, 1D pulse along z (fine direction)
 max_step = 250
-amr.n_cell = 32 32 32
-amr.max_grid_size = 32
-amr.blocking_factor = 32
+amr.n_cell = 8 8 1024
+amr.max_grid_size = 1024
+amr.blocking_factor = 8
 geometry.dims = 3
 geometry.prob_lo     =  -4.e-6 -4.e-6 -4.e-6
 geometry.prob_hi     =   4.e-6  4.e-6  4.e-6
@@ -15,11 +16,13 @@ boundary.field_hi = periodic periodic periodic
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
+warpx.verbose = 0
 warpx.use_filter = 0
-warpx.cfl = 0.9
+warpx.cfl = 50
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
+
+algo.time_stepping_scheme = adi # fdtd or adi
 
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
 
@@ -42,15 +45,16 @@ my_constants.sigma_0 = 0.0
 my_constants.epsilon_0 = 8.8541878128e-12
 my_constants.mu_0 = 1.25663706212e-06
 
+# Ex / By packet propagating along +z
 warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)"
+warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(z)**2/(L/32)**2)*cos(2*pi*(z)/wavelength)"
 warpx.Ey_external_grid_function(x,y,z) = "0."
 warpx.Ez_external_grid_function(x,y,z) = "0."
 
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 warpx.Bx_external_grid_function(x,y,z) = "0."
-warpx.By_external_grid_function(x,y,z) = "0."
-warpx.Bz_external_grid_function(x,y,z) = "(-1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)/c)"
+warpx.By_external_grid_function(x,y,z) = "(1.e5*exp(-(z)**2/(L/32)**2)*cos(2*pi*(z)/wavelength)/c)"
+warpx.Bz_external_grid_function(x,y,z) = "0."
 
 warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
 

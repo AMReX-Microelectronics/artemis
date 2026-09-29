@@ -22,6 +22,9 @@
 #include <AMReX_Parser.H>
 
 #include <AMReX_BaseFwd.H>
+#include <AMReX_VisMF.H>
+#include <AMReX_PlotFileUtil.H>
+#include <cmath>
 
 #include <memory>
 #include <sstream>
@@ -41,6 +44,50 @@ MacroscopicProperties::ReadParameters ()
     // user-defined sigma, mu, and epsilon are queried.
     // The vacuum values are used as default for the macroscopic parameters
     // with a warning message to the user to indicate that no value was specified.
+
+    if (WarpX::use_lumped_resistor) {
+        const std::array<std::string, 3> directions = {"x", "y", "z"};
+        for (int comp = 0; comp < 3; ++comp) {
+            std::string expression;
+            utils::parser::Store_parserString(pp_macroscopic,
+                "lumped_resistor_" + directions[comp] + "_function(x,y,z)", expression);
+            m_lumped_resistor_parser[comp] = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(expression, {"x", "y", "z"}));
+        }
+    }
+
+    if (WarpX::use_lumped_capacitor) {
+        const std::array<std::string, 3> directions = {"x", "y", "z"};
+        for (int comp = 0; comp < 3; ++comp) {
+            std::string expression;
+            utils::parser::Store_parserString(pp_macroscopic,
+                "lumped_capacitor_" + directions[comp] + "_function(x,y,z)", expression);
+            m_lumped_capacitor_parser[comp] = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(expression, {"x", "y", "z"}));
+        }
+    }
+
+    if (WarpX::use_josephson_junction) {
+        ParmParse pp_jj("josephson");
+        const std::array<std::string, 3> directions = {"x", "y", "z"};
+        for (int comp = 0; comp < 3; ++comp) {
+            std::string expression;
+            utils::parser::Store_parserString(pp_jj,
+                "Ic_" + directions[comp] + "_function(x,y,z)", expression);
+            m_jj_Ic_parser[comp] = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(expression, {"x", "y", "z"}));
+        }
+        utils::parser::queryWithParser(pp_jj, "initial_phase", m_jj_initial_phase);
+        pp_jj.query("newton_rtol", m_jj_rtol);
+        pp_jj.query("newton_atol", m_jj_atol);
+        pp_jj.query("max_iterations", m_jj_max_iterations);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            std::isfinite(m_jj_initial_phase) && std::isfinite(m_jj_rtol) &&
+            std::isfinite(m_jj_atol) &&
+            m_jj_rtol > 0. && m_jj_atol > 0. &&
+            m_jj_max_iterations > 0,
+            "Josephson phase must be finite; nonlinear tolerances and iteration limit must be positive.");
+    }
 
     // Query mask index
     pp_macroscopic.query("npy_k_index", m_npy_k_index);
@@ -251,6 +298,53 @@ MacroscopicProperties::InitData ()
     amrex::BoxArray ba = warpx.boxArray(lev);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     const amrex::IntVect ng_EB_alloc = warpx.getngEB();
+    if (WarpX::use_lumped_resistor) {
+        for (int comp = 0; comp < 3; ++comp) {
+            auto const staggering = warpx.get_pointer_current_fp(lev, comp)->ixType();
+            auto& resistance = m_lumped_resistor_mf[comp];
+            resistance = std::make_unique<amrex::MultiFab>(
+                amrex::convert(ba, staggering), dmap, 1, ng_EB_alloc);
+            InitializeMacroMultiFabUsingParser(
+                resistance.get(), m_lumped_resistor_parser[comp]->compile<3>(), lev);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !resistance->contains_nan() && !resistance->contains_inf() &&
+                resistance->min(0) >= 0.,
+                "Lumped resistance must be finite and nonnegative; zero disables it.");
+        }
+    }
+
+    if (WarpX::use_lumped_capacitor) {
+        for (int comp = 0; comp < 3; ++comp) {
+            auto const staggering = warpx.get_pointer_current_fp(lev, comp)->ixType();
+            auto& capacitance = m_lumped_capacitor_mf[comp];
+            capacitance = std::make_unique<amrex::MultiFab>(
+                amrex::convert(ba, staggering), dmap, 1, ng_EB_alloc);
+            InitializeMacroMultiFabUsingParser(
+                capacitance.get(), m_lumped_capacitor_parser[comp]->compile<3>(), lev);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !capacitance->contains_nan() && !capacitance->contains_inf() &&
+                capacitance->min(0) >= 0.,
+                "Lumped capacitance must be finite and nonnegative; zero disables it.");
+        }
+    }
+
+    if (WarpX::use_josephson_junction) {
+        for (int comp = 0; comp < 3; ++comp) {
+            auto const staggering = warpx.get_pointer_Efield_fp(lev, comp)->ixType();
+            m_jj_Ic[comp] = std::make_unique<amrex::MultiFab>(
+                amrex::convert(ba, staggering), dmap, 1, ng_EB_alloc);
+            m_jj_phi[comp] = std::make_unique<amrex::MultiFab>(
+                amrex::convert(ba, staggering), dmap, 1, ng_EB_alloc);
+            InitializeMacroMultiFabUsingParser(
+                m_jj_Ic[comp].get(), m_jj_Ic_parser[comp]->compile<3>(), lev);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !m_jj_Ic[comp]->contains_nan() && !m_jj_Ic[comp]->contains_inf() &&
+                m_jj_Ic[comp]->min(0) >= 0.,
+                "Josephson critical current must be finite and nonnegative.");
+            m_jj_phi[comp]->setVal(m_jj_initial_phase);
+        }
+    }
+
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
     m_sigma_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EB_alloc);
@@ -724,5 +818,24 @@ MacroscopicProperties::InitializePECFromSigma (amrex::MultiFab* sigma_mf,
             }
 
         });
+    }
+}
+
+// Phase is the only independent Josephson state; Ic is rebuilt from the input.
+void MacroscopicProperties::WriteJosephsonCheckpoint (const std::string& dir) const
+{
+    for (int comp = 0; comp < 3; ++comp) {
+        amrex::VisMF::Write(*m_jj_phi[comp], amrex::MultiFabFileFullPrefix(
+            0, dir, "Level_", "jj_phi_" + std::string(1, "xyz"[comp])));
+    }
+}
+
+void MacroscopicProperties::ReadJosephsonCheckpoint (const std::string& dir)
+{
+    for (int comp = 0; comp < 3; ++comp) {
+        // Missing phase is a fatal error: resetting it cannot give a continuous restart.
+        amrex::VisMF::Read(*m_jj_phi[comp], amrex::MultiFabFileFullPrefix(
+            0, dir, "Level_", "jj_phi_" + std::string(1, "xyz"[comp])));
+        m_jj_phi[comp]->FillBoundaryAndSync(WarpX::GetInstance().Geom(0).periodicity());
     }
 }

@@ -296,6 +296,10 @@ public:
      *  (BackwardEuler - 0, Lax-Wendroff - 1)
      */
     static int macroscopic_solver_algo;
+    /** Integer that corresponds to macroscopic EM time stepping
+     *  (FDTD - 0, ADI - 1)
+     */
+    static int macroscopic_time_integrator_algo;
     /** Integers that correspond to boundary condition applied to fields at the
      *  lower domain boundaries
      *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
@@ -320,6 +324,9 @@ public:
 
     static int use_PEC_mask;
     static int use_lumped_inductor;
+    static int use_lumped_resistor;
+    static int use_lumped_capacitor;
+    static int use_josephson_junction;
 
     //! Integer that corresponds to the order of the PSATD solution
     //! (whether the PSATD equations are derived from first-order or
@@ -634,6 +641,14 @@ public:
     amrex::MultiFab * get_pointer_H_biasfield_aux  (int lev, int direction) const { return H_biasfield_aux[lev][direction].get(); }
 #endif
     amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
+    int AdiPmlOn () const { return adi_pml; }
+    void FillAdiPmlProfiles ();
+    void UpdateAdiPmlRecursionCoeffs (amrex::Real dt);
+    amrex::MultiFab& get_adi_pml_stretch (int dir) { return *adi_pml_stretch[dir]; }
+    amrex::MultiFab& get_adi_pml_a (int dir) { return *adi_pml_a[dir]; }
+    amrex::MultiFab& get_adi_pml_b (int dir) { return *adi_pml_b[dir]; }
+    amrex::MultiFab& get_adi_psi_e (int idx) { return *adi_psi_e[idx]; }
+    amrex::MultiFab& get_adi_psi_h (int idx) { return *adi_psi_h[idx]; }
     amrex::MultiFab * get_pointer_PEC_fp  (int lev, int direction) const { return PEC_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_sc_fp  (int lev, int direction) const { return Bfield_sc_fp[lev][direction].get(); }
@@ -814,6 +829,9 @@ public:
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
+    void MacroscopicEvolveADI (         amrex::Real dt);
+    void MacroscopicEvolveADI (int lev, amrex::Real dt);
+    void MacroscopicEvolveADI (int lev, PatchType patch_type, amrex::Real dt);
 
 #ifdef WARPX_MAG_LLG
     void MacroscopicEvolveHM (         amrex::Real dt);
@@ -1262,7 +1280,8 @@ public:
      *   \param[in] zflag_parser  : Type zfield excitation (hard source=0/soft source=1)
      *   \param[in] lev           : level on which the excitation is applied.
      */
-    void ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a_dt_type = DtType::Full);
+    void ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a_dt_type = DtType::Full,
+                                             bool split_soft_source = true);
     void ApplyExternalFieldExcitationOnGrid ( amrex::MultiFab *mfx,
          amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          amrex::ParserExecutor<4> const& xfield_parser,
@@ -1271,7 +1290,7 @@ public:
          amrex::ParserExecutor<3> const& xflag_parser,
          amrex::ParserExecutor<3> const& yflag_parser,
          amrex::ParserExecutor<3> const& zflag_parser, const int lev,
-         DtType a_dt_type );
+         DtType a_dt_type, bool split_soft_source = true );
     /** Parse field excitation functions and flags*/
     void ReadExcitationParser ();
 
@@ -1478,6 +1497,9 @@ private:
     void PostRestart ();
 
     void InitPML ();
+    /** Grow Geom(0) by pml_ncell on PML faces when ADI uses outside-domain PML. */
+    void GrowDomainForAdiOutsidePML ();
+    void InitAdiPML ();
     void ComputePMLFactors ();
 
     void InitFilter ();
@@ -1608,6 +1630,15 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > PEC_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
+    // ADI work fields on x-, y-, and z-directed pencil decompositions.
+    amrex::Vector<std::array<
+        std::array<std::unique_ptr<amrex::MultiFab>, 3>, 3>> Efield_fp_adi;
+    amrex::Vector<std::array<
+        std::array<std::unique_ptr<amrex::MultiFab>, 3>, 3>> Bfield_fp_adi;
+    // Static PEC masks remapped onto the six ADI E-field pencil layouts.
+    amrex::Vector<std::array<
+        std::array<std::unique_ptr<amrex::MultiFab>, 3>, 3>> PEC_fp_adi;
+    amrex::Vector<int> m_pec_fp_adi_initialized;
 #ifdef WARPX_MAG_LLG
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Hfield_fp;
@@ -1715,6 +1746,20 @@ private:
     int pml_has_particles = 0;
     int do_pml_j_damping = 0;
     int do_pml_in_domain = 0;
+    // Convolutional PML on the ADI domain (not split-field pml[lev]).
+    int adi_pml = 0;
+    amrex::IntVect adi_pml_Lo = amrex::IntVect::TheZeroVector();
+    amrex::IntVect adi_pml_Hi = amrex::IntVect::TheZeroVector();
+    amrex::Real adi_pml_kappa_max = 1.0;
+    amrex::Real adi_pml_alpha_max = 0.0;
+    amrex::Real adi_pml_R = 1.e-8;
+    amrex::Real adi_pml_m = 3.0;
+    amrex::Real adi_pml_sigma_max = -1.0;
+    std::array<std::unique_ptr<amrex::MultiFab>, 3> adi_pml_stretch;
+    std::array<std::unique_ptr<amrex::MultiFab>, 3> adi_pml_a;
+    std::array<std::unique_ptr<amrex::MultiFab>, 3> adi_pml_b;
+    std::array<std::unique_ptr<amrex::MultiFab>, 6> adi_psi_e;
+    std::array<std::unique_ptr<amrex::MultiFab>, 6> adi_psi_h;
     static int do_similar_dm_pml;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp

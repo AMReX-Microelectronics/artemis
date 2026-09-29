@@ -19,6 +19,7 @@
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 
+#include <array>
 #include <memory>
 #include <string>
 
@@ -46,6 +47,25 @@ public:
      /** return MultiFab, mu (permeability) of the medium. */
      amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
      amrex::MultiFab * get_pointer_mu () {return m_mu_mf.get();}
+
+     /** Per-edge resistance [Ohm]; zero disables the resistor on that edge. */
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_lumped_resistor_mf;
+     std::array<std::unique_ptr<amrex::Parser>, 3> m_lumped_resistor_parser;
+
+     /** Per-edge capacitance [F]; zero disables the capacitor on that edge. */
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_lumped_capacitor_mf;
+     std::array<std::unique_ptr<amrex::Parser>, 3> m_lumped_capacitor_parser;
+
+     // Josephson critical current [A] and persistent edge phase [rad].
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_jj_Ic;
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_jj_phi;
+     std::array<std::unique_ptr<amrex::Parser>, 3> m_jj_Ic_parser;
+     amrex::Real m_jj_initial_phase = 0.;
+     amrex::Real m_jj_rtol = 1.e-10;
+     amrex::Real m_jj_atol = 1.e-12; // Newton step ||ΔE||_∞ [V/m]
+     int m_jj_max_iterations = 30;
+     void WriteJosephsonCheckpoint (const std::string& dir) const;
+     void ReadJosephsonCheckpoint (const std::string& dir);
 
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;

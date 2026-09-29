@@ -79,7 +79,6 @@ Inductor::InitData()
 void
 Inductor::EvolveInductorJ (amrex::Real dt)
 {
-    amrex::Print() << " evolve inductor J using E\n";
     auto & warpx = WarpX::GetInstance();
     const int lev = 0;
 

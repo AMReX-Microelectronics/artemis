@@ -12,6 +12,14 @@ AMReX_buildInfo.cpp
 Backtrace.*
 *.vth
 *.sw[opqrs]
+warpx_used_inputs
+diag*/
+wave_freespace_run/
+*_run/
+*.mp4
+*.mov
+*.avi
+*.gif
 
 ####################
 # AMReX data files #
@@ -70,3 +78,11 @@ cmake-build-*/
 .DS_Store
 .AppleDouble
 .LSOverride
+
+
+adi_dispersion/
+adi_grid_convergence/
+adi_cfl_convergence/
+adi_mms*/
+diags*
+*.log

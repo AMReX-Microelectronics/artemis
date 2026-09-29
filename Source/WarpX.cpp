@@ -204,6 +204,7 @@ bool WarpX::do_dive_cleaning = false;
 bool WarpX::do_divb_cleaning = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
+int WarpX::macroscopic_time_integrator_algo;
 bool WarpX::do_single_precision_comms = false;
 
 bool WarpX::do_shared_mem_charge_deposition = false;
@@ -225,6 +226,9 @@ amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,P
 int WarpX::yee_coupled_solver_algo;
 int WarpX::use_PEC_mask = 0;
 int WarpX::use_lumped_inductor = 0;
+int WarpX::use_lumped_resistor = 0;
+int WarpX::use_lumped_capacitor = 0;
+int WarpX::use_josephson_junction = 0;
 
 bool WarpX::do_current_centering = false;
 
@@ -390,6 +394,13 @@ WarpX::WarpX ()
     Efield_fp.resize(nlevs_max);
     PEC_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
+    if (macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI)
+    {
+        Efield_fp_adi.resize(nlevs_max);
+        Bfield_fp_adi.resize(nlevs_max);
+        PEC_fp_adi.resize(nlevs_max);
+        m_pec_fp_adi_initialized.resize(nlevs_max, false);
+    }
     Bfield_sc_fp.resize(nlevs_max);
 #ifdef WARPX_MAG_LLG
     Mfield_fp.resize(nlevs_max);
@@ -975,6 +986,11 @@ WarpX::ReadParameters ()
         pp_warpx.query("pml_has_particles", pml_has_particles);
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
+        utils::parser::queryWithParser(pp_warpx, "pml_kappa_max", adi_pml_kappa_max);
+        utils::parser::queryWithParser(pp_warpx, "pml_alpha_max", adi_pml_alpha_max);
+        utils::parser::queryWithParser(pp_warpx, "pml_R", adi_pml_R);
+        utils::parser::queryWithParser(pp_warpx, "pml_m", adi_pml_m);
+        utils::parser::queryWithParser(pp_warpx, "pml_sigma_max", adi_pml_sigma_max);
         pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
         // Read `v_particle_pml` in units of the speed of light
         v_particle_pml = 1._rt;
@@ -1257,6 +1273,16 @@ WarpX::ReadParameters ()
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) galerkin_interpolation = false;
 
         em_solver_medium = GetAlgorithmInteger(pp_algo, "em_solver_medium");
+        macroscopic_time_integrator_algo =
+            GetAlgorithmInteger(pp_algo, "time_stepping_scheme");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            macroscopic_time_integrator_algo != MacroscopicTimeSteppingScheme::ADI ||
+            em_solver_medium == MediumForEM::Macroscopic,
+            "algo.time_stepping_scheme=adi requires "
+            "algo.em_solver_medium=macroscopic.");
+        // Before InitFromScratch: extend Geom(0) so ADI CFS-PML layers sit
+        // outside the user-specified physical box (do_pml_in_domain = 0).
+        GrowDomainForAdiOutsidePML();
         if (em_solver_medium == MediumForEM::Macroscopic ) {
             macroscopic_solver_algo = GetAlgorithmInteger(pp_algo,"macroscopic_sigma_method");
         }
@@ -1267,6 +1293,26 @@ WarpX::ReadParameters ()
 
         pp_algo.query("use_PEC_mask",use_PEC_mask);
         pp_algo.query("use_lumped_inductor",use_lumped_inductor);
+        ParmParse("warpx").query("use_lumped_resistor", use_lumped_resistor);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !use_lumped_resistor ||
+            (macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI &&
+             em_solver_medium == MediumForEM::Macroscopic && AMREX_SPACEDIM == 3),
+            "warpx.use_lumped_resistor requires 3D macroscopic ADI.");
+        ParmParse("warpx").query("use_lumped_capacitor", use_lumped_capacitor);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !use_lumped_capacitor ||
+            (macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI &&
+             em_solver_medium == MediumForEM::Macroscopic && AMREX_SPACEDIM == 3),
+            "warpx.use_lumped_capacitor requires 3D macroscopic ADI.");
+
+        pp_algo.query("use_josephson_junction", use_josephson_junction);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !use_josephson_junction ||
+            (macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI &&
+             em_solver_medium == MediumForEM::Macroscopic && AMREX_SPACEDIM == 3 &&
+             maxLevel() == 0),
+            "algo.use_josephson_junction requires single-level 3D macroscopic ADI.");
 
         // Load balancing parameters
         std::vector<std::string> load_balance_intervals_string_vec = {"0"};
@@ -2003,6 +2049,28 @@ WarpX::ClearLevel (int lev)
         PEC_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
         Bfield_sc_fp [lev][i].reset();
+        if (macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI)
+        {
+            for (int solve_dir = 0; solve_dir < 3; ++solve_dir)
+            {
+                Efield_fp_adi[lev][solve_dir][i].reset();
+                Bfield_fp_adi[lev][solve_dir][i].reset();
+                PEC_fp_adi[lev][solve_dir][i].reset();
+            }
+            m_pec_fp_adi_initialized[lev] = false;
+            if (lev == 0)
+            {
+                for (int idim = 0; idim < 3; ++idim) {
+                    adi_pml_stretch[idim].reset();
+                    adi_pml_a[idim].reset();
+                    adi_pml_b[idim].reset();
+                }
+                for (int ip = 0; ip < 6; ++ip) {
+                    adi_psi_e[ip].reset();
+                    adi_psi_h[ip].reset();
+                }
+            }
+        }
 #ifdef WARPX_MAG_LLG
         Mfield_fp [lev][i].reset();
         Hfield_fp [lev][i].reset();
@@ -2325,6 +2393,53 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(Efield_fp[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp[x]"));
     AllocInitMultiFab(Efield_fp[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp[y]"));
     AllocInitMultiFab(Efield_fp[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp[z]"));
+
+#if defined(WARPX_DIM_3D)
+    if (macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI)
+    {
+        Box const domain = Geom(lev).Domain();
+        int const nprocs = ParallelDescriptor::NProcs();
+        std::array<BoxArray, 3> const pencil_ba = {
+            amrex::decompose(domain, nprocs, {false, true, true}),
+            amrex::decompose(domain, nprocs, {true, false, true}),
+            amrex::decompose(domain, nprocs, {true, true, false})};
+        std::array<DistributionMapping, 3> const pencil_dm = {
+            DistributionMapping(pencil_ba[0]),
+            DistributionMapping(pencil_ba[1]),
+            DistributionMapping(pencil_ba[2])};
+        std::array<IntVect, 3> const e_nodal_flags = {
+            Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag};
+        std::array<IntVect, 3> const b_nodal_flags = {
+            Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag};
+
+        for (int solve_dir = 0; solve_dir < 3; ++solve_dir)
+        {
+            for (int component = 0; component < 3; ++component)
+            {
+                std::string const dir = std::to_string(solve_dir);
+                std::string const comp = std::to_string(component);
+                AllocInitMultiFab(
+                    Efield_fp_adi[lev][solve_dir][component],
+                    amrex::convert(pencil_ba[solve_dir], e_nodal_flags[component]),
+                    pencil_dm[solve_dir], ncomps, ngEB,
+                    tag("Efield_fp_adi[" + dir + "][" + comp + "]"));
+                AllocInitMultiFab(
+                    Bfield_fp_adi[lev][solve_dir][component],
+                    amrex::convert(pencil_ba[solve_dir], b_nodal_flags[component]),
+                    pencil_dm[solve_dir], ncomps, ngEB,
+                    tag("Bfield_fp_adi[" + dir + "][" + comp + "]"));
+                if (use_PEC_mask && component != solve_dir)
+                {
+                    AllocInitMultiFab(
+                        PEC_fp_adi[lev][solve_dir][component],
+                        amrex::convert(pencil_ba[solve_dir], e_nodal_flags[component]),
+                        pencil_dm[solve_dir], 1, IntVect(0),
+                        tag("PEC_fp_adi[" + dir + "][" + comp + "]"));
+                }
+            }
+        }
+    }
+#endif
 
     AllocInitMultiFab(PEC_fp[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, tag("PEC_fp[x]"));
     AllocInitMultiFab(PEC_fp[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, tag("PEC_fp[y]"));

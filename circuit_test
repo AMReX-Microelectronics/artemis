@@ -1,0 +1,79 @@
+max_step = 2400
+amr.n_cell = 256 4 256
+amr.max_grid_size = 256
+amr.blocking_factor = 1
+geometry.dims = 3
+boundary.field_lo = pec periodic pec
+boundary.field_hi = pec periodic pec
+geometry.prob_lo = -1.00e-03 -1.00e-04 -1.00e-03
+geometry.prob_hi = 1.00e-03 1.00e-04 1.00e-03
+amr.max_level = 0
+my_constants.pi = 3.1415926536
+my_constants.c = 299792458.0000000000
+my_constants.length = 2.0e-3
+my_constants.pitchx = 5.0e-4
+my_constants.pitchy = 5.0e-4
+my_constants.pitchz = 5.0e-4
+my_constants.rjx = 3.00e-05
+my_constants.rjz = 3.00e-05
+my_constants.TP = 1.00e-12 # 1 period
+my_constants.flag_none = 0
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
+my_constants.wavelength = 3.00e-04 # 1.0e12 Hz
+my_constants.EPR = 30.0
+my_constants.radius = 0.5e-04
+my_constants.A = 2.6
+my_constants.B = 1.3
+my_constants.C = 1.7
+my_constants.D = 0.0
+my_constants.E = 0.0
+my_constants.F = 0.0
+my_constants.scale_factor = 1 / (radius * radius)
+my_constants.A_scaled = A * scale_factor
+my_constants.B_scaled = B * scale_factor
+my_constants.C_scaled = C * scale_factor
+warpx.verbose = 0
+warpx.use_filter = 0
+warpx.cfl = 1
+algo.em_solver_medium = macroscopic
+algo.macroscopic_sigma_method = laxwendroff
+algo.time_stepping_scheme = adi
+macroscopic.sigma_function(x,y,z) = "0.0"
+# macroscopic.sigma_function(x,y,z) = "1000.0 * floor(abs(x+length/2)/pitchx"
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06"
+# macroscopic.epsilon_function(x,y,z) = "(EPR-1) * 8.8541878128e-12 * exp(-(x-floor(x/pitchx)*pitchx)**2/(2*radius**2) 
+#                                                                         - (z-floor(z/pitchz)*pitchz)**2/(2*radius**2)) + 8.8541878128e-12 "
+macroscopic.epsilon_function(x,y,z) = "(EPR - 1) * 8.8541878128e-12 * (abs(x+length)/pitchx)
+                                   + 8.8541878128e-12 " 
+# sigma & epsilon. These two don't need to align
+# 1. uniform thickness: step layer; sweep pitchx
+# 2. uniform thickness: remove "floor" for continuous epsilon; sweep pitchx 
+# 3. uniform thickness: shuffle layers
+# 4. nonuniform layer thickness: random number generator
+# 5. change x layer to z layer
+# max EPR <= 100; min EPR = 1
+warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+warpx.Ex_excitation_grid_function(x,y,z,t) = "1.25663706212e-06 * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (x <= + rjx) * (x >= - rjx) * (z <= + rjz) * (z >= - rjz)"
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_ss * (x <= + rjx) * (x >= - rjx) * (z <= + rjz) * (z >= - rjz)"
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+# source sweep
+# 1. change Ex to Ey (keep slice direction to be x)
+# 2. sweep source location
+# 3. sweep wavelength
+warpx.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
+warpx.Bx_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.By_excitation_grid_function(x,y,z,t) = "(exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (x <= + rjx) * (x >= - rjx) * (z <= + rjz) * (z >= - rjz)"
+warpx.Bz_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.Bx_excitation_flag_function(x,y,z) = "flag_none"
+warpx.By_excitation_flag_function(x,y,z) = "flag_ss * (x <= + rjx) * (x >= - rjx) * (z <= + rjz) * (z >= - rjz)"
+warpx.Bz_excitation_flag_function(x,y,z) = "flag_none"
+diagnostics.diags_names = plt
+plt.intervals = 20
+# plt.diag_lo = -1.00e-03 -1.00e-03 -1.00e-05
+# plt.diag_hi = 1.00e-03 1.00e-03 1.00e-05
+plt.diag_type = Full
+plt.fields_to_plot = Ex Ey Ez Bx By Bz epsilon

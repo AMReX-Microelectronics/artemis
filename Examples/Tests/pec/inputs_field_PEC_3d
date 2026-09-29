@@ -3,14 +3,14 @@
 # standing wave.
 
 # max step
-max_step = 125
+max_step = 1000
 
 # number of grid points
-amr.n_cell = 32 32 256
+amr.n_cell = 4 4 1024
 
 # Maximum allowable size of each subdomain
 amr.max_grid_size = 1024
-amr.blocking_factor = 32
+amr.blocking_factor = 4
 
 amr.max_level = 0
 
@@ -26,12 +26,21 @@ boundary.field_hi = periodic periodic pec
 warpx.serialize_initial_conditions = 1
 
 # Verbosity
-warpx.verbose = 1
+warpx.verbose = 0
 
 # Algorithms
 algo.current_deposition = esirkepov
+algo.em_solver_medium = macroscopic
+algo.time_stepping_scheme = adi
+algo.macroscopic_sigma_method = laxwendroff
+
+# Vacuum material properties for the macroscopic ADI field solve
+macroscopic.sigma_function(x,y,z) = "0.0"
+macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12"
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06"
+
 # CFL
-warpx.cfl = 0.9
+warpx.cfl = 2
 
 
 my_constants.z1 = -2.e-6
@@ -48,7 +57,7 @@ warpx.By_external_grid_function(x,y,z)= "0."
 warpx.Bz_external_grid_function(x,y,z) = "0."
 
 # Diagnostics
-diagnostics.diags_names = diag1
-diag1.intervals = 125
-diag1.diag_type = Full
-diag1.fields_to_plot = Ey Bx
+diagnostics.diags_names = plt
+plt.intervals = 10
+plt.diag_type = Full
+plt.fields_to_plot = Ex Ey Ez Bx By Bz

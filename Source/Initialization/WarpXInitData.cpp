@@ -185,6 +185,14 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      | - macroscopic" << "\n";
     }
     if ( (em_solver_medium == MediumForEM::Macroscopic) &&
+       (WarpX::macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::FDTD)){
+      amrex::Print() << "                      |  - FDTD time stepping\n";
+      }
+    else if ((em_solver_medium == MediumForEM::Macroscopic) &&
+            (WarpX::macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI)){
+      amrex::Print() << "                      |  - ADI time stepping\n";
+      }
+    if ( (em_solver_medium == MediumForEM::Macroscopic) &&
        (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff)){
       amrex::Print() << "                      |  - Lax-Wendroff algorithm\n";
       }
@@ -405,6 +413,9 @@ WarpX::InitData ()
         if (WarpX::em_solver_medium==1) {
             m_macroscopic_properties->InitData();
         }
+        if (use_josephson_junction) {
+            m_macroscopic_properties->ReadJosephsonCheckpoint(restart_chkfile);
+        }
         PostRestart();
     }
 
@@ -519,6 +530,12 @@ WarpX::InitFromScratch ()
 void
 WarpX::InitPML ()
 {
+    if (macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI)
+    {
+        InitAdiPML();
+        return;
+    }
+
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
             do_pml = 1;
