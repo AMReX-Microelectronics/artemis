@@ -25,13 +25,20 @@ HPC Systems
    :maxdepth: 1
 
    hpc/cori
+   hpc/perlmutter
    hpc/summit
    hpc/spock
+   hpc/crusher
+   hpc/frontier
+   hpc/fugaku
    hpc/juwels
    hpc/lassen
    hpc/quartz
    hpc/lawrencium
    hpc/ookami
+   hpc/lxplus
+   hpc/lumi
+   hpc/taurus
 
 .. tip::
 

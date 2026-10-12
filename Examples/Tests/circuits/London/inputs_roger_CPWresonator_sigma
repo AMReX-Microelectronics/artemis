@@ -1,0 +1,219 @@
+# We are interested in modeling a CPW resonator with NB as superconductors
+# To work around the London-PML, we have vacuum edges.
+
+####################################################################################################
+## This input file requires USE_LLG=FALSE in the GNUMakefile.
+#################################################################################################
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+my_constants.nx = 130
+my_constants.ny = 1008
+my_constants.nz = 1280
+amr.n_cell = nx ny nz
+
+amr.max_grid_size_x = 130
+amr.max_grid_size_y = 504
+amr.max_grid_size_z = 80
+amr.blocking_factor = 2  # box lengths must be integer multiples of this
+amr.refine_grid_layout = 0
+amr.max_level = 0
+
+# domain sizes and cell numbers separately defined for easier excitation function definition
+my_constants.Lx = 130.0e-6
+my_constants.Ly = 1008.0e-6
+my_constants.Lz = 64.0e-6
+
+geometry.dims = 3
+geometry.prob_lo = -Lx/2 -Ly/2 -Lz/2
+geometry.prob_hi =  Lx/2  Ly/2  Lz/2
+
+my_constants.pi = 3.14159265359
+my_constants.c = 299792458.
+
+my_constants.dx = Lx / nx
+my_constants.dy = Ly / ny
+my_constants.dz = Lz / nz
+my_constants.ddz = dz / 100
+my_constants.ddy = dy / 100
+my_constants.ddx = dx / 100
+
+my_constants.th_si = 32.0e-6
+my_constants.th_nb = 200.0e-9    # dimensions in z direction (nb thickness has 4 cells)
+
+my_constants.gap_cap = 100.0e-6
+my_constants.strip_c = 600.0e-6
+my_constants.strip_edge = 104.0e-6     # dimensions in y direction
+
+my_constants.gap_cpw = 6.0e-6
+my_constants.w_line = 10.0e-6
+my_constants.w_gnd = 54.0e-6      # dimensions in x direction
+
+my_constants.obsx = w_line/2 + gap_cpw/2
+
+my_constants.obsy1 = -strip_c/2 + dy
+my_constants.obsy2 = -strip_c/4
+my_constants.obsy3 = 0.0
+my_constants.obsy4 = strip_c/4
+my_constants.obsy5 = strip_c/2 - dy
+my_constants.obsy_in = -strip_c/2 - gap_cap - strip_edge/2
+my_constants.obsy_out = strip_c/2 + gap_cap + strip_edge/2
+my_constants.obsy_gap_out = strip_c/2 + gap_cap/2
+my_constants.obsy_gap_in = -strip_c/2 - gap_cap/2
+
+my_constants.obsz_s = -Lz/2 + th_si + dz  # above silicon surface
+my_constants.obsz_m = -Lz/2 + th_si + th_nb + dz  # above metal surface
+
+my_constants.frequency = 100.e9
+my_constants.TP = 1./frequency
+
+my_constants.sigma_nb = 6.e7
+my_constants.sigma_0 = 0.0
+my_constants.sigma_si = 0.0
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_nb = 1.0
+my_constants.eps_r_si = 11.7
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_nb = 1.0
+my_constants.mu_r_si = 1.0
+
+my_constants.vedge = 4    # number of cells that contain vacuum at edges to buffer conductor/superconductor material (only need in x and y dimensions)
+
+my_constants.flag_none = 0 # no source flag
+my_constants.flag_hs = 1 # hard source flag
+my_constants.flag_ss = 2 # soft source flag
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+warpx.use_filter = 0
+warpx.cfl = 0.95
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
+particles.nspecies = 0
+
+algo.em_solver_medium = macroscopic           # vacuum/macroscopic
+algo.macroscopic_sigma_method = backwardeuler   # laxwendroff or backwardeuler
+
+macroscopic.sigma_function(x,y,z) = "sigma_0
++ (sigma_si - sigma_0) * (z < -Lz/2 + th_si)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > +strip_c/2 + gap_cap) * (y < +strip_c/2 + gap_cap + strip_edge - vedge*dy)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) * (x > -w_line/2 - gap_cpw - w_gnd + vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)
++ (sigma_nb - sigma_0) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)"
+
+macroscopic.epsilon_function(x,y,z) = "eps_0
++ eps_0 * (eps_r_si - 1) * (z < -Lz/2 + th_si)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > +strip_c/2 + gap_cap) * (y < +strip_c/2 + gap_cap + strip_edge - vedge*dy)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) * (x > -w_line/2 - gap_cpw - w_gnd + vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)
++ eps_0 * (eps_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)"
+
+macroscopic.mu_function(x,y,z) = "mu_0
++ mu_0 * (mu_r_si - 1) * (z < -Lz/2 + th_si)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > -strip_c/2) * (y < strip_c/2)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y < -strip_c/2 - gap_cap) * (y > -strip_c/2 - gap_cap - strip_edge + vedge*dy)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > -w_line/2) * (x < w_line/2) * (y > +strip_c/2 + gap_cap) * (y < +strip_c/2 + gap_cap + strip_edge - vedge*dy)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x < -w_line/2 - gap_cpw) * (x > -w_line/2 - gap_cpw - w_gnd + vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)
++ mu_0 * (mu_r_nb - 1) * (z > -Lz/2 + th_si) * (z < -Lz/2 + th_si + th_nb) * (x > +w_line/2 + gap_cpw) * (x < +w_line/2 + gap_cpw + w_gnd - vedge*dx) * (y < Ly/2 - vedge*dy) * (y > -Ly/2 + vedge*dy)"
+
+#################################
+############ FIELDS #############
+#################################
+
+warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_ss * ((x > w_line/2 + ddx) * (x < w_line/2 + gap_cpw - ddx) + (x < -w_line/2 - ddx) * (x > -w_line/2 - gap_cpw + ddx))
+                                                    * (z < -Lz/2 + th_si + th_nb + ddz) * (z > -Lz/2 + th_si - ddz)
+                                                    * (y > -Ly/2 + dy*vedge - ddy) * (y < -Ly/2 + dy*vedge + ddy)"
+warpx.Ex_excitation_grid_function(x,y,z,t) = "exp(-(t - 4.*TP)**2/(2*TP*TP))*sin(2*pi*t*frequency) * ((x > w_line/2) * (x < w_line/2 + gap_cpw) + (-1.) * (x < -w_line/2) * (x > -w_line/2 - gap_cpw))"
+
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+# Diagnostics
+
+diagnostics.diags_names = plt chk
+plt.file_min_digits = 8
+plt.intervals = 10000
+plt.diag_type = Full
+plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz sigma epsilon mu
+#plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz sigma epsilon mu Bx_sc By_sc Bz_sc
+
+chk.file_min_digits = 8
+chk.format = checkpoint
+chk.intervals = 50000
+chk.diag_type = Full
+
+max_step = 2000000
+#amr.restart = diags/chk01000000
+
+warpx.reduced_diags_names = Eobs1 Eobs2 Eobs3 Eobs4 Eobs5 Eobs_out_s Eobs_in_s Eobs_out_m Eobs_in_m Eobs_gap_out Eobs_gap_in
+Eobs1.type = RawEFieldReduction
+Eobs2.type = RawEFieldReduction
+Eobs3.type = RawEFieldReduction
+Eobs4.type = RawEFieldReduction
+Eobs5.type = RawEFieldReduction
+Eobs_out_s.type = RawEFieldReduction
+Eobs_in_s.type = RawEFieldReduction
+Eobs_out_m.type = RawEFieldReduction
+Eobs_in_m.type = RawEFieldReduction
+Eobs_gap_out.type = RawEFieldReduction
+Eobs_gap_in.type = RawEFieldReduction
+
+Eobs1.reduction_type = integral
+Eobs2.reduction_type = integral
+Eobs3.reduction_type = integral
+Eobs4.reduction_type = integral
+Eobs5.reduction_type = integral
+Eobs_out_s.reduction_type = integral
+Eobs_in_s.reduction_type = integral
+Eobs_out_m.reduction_type = integral
+Eobs_in_m.reduction_type = integral
+Eobs_gap_out.reduction_type = integral
+Eobs_gap_in.reduction_type = integral
+
+Eobs1.integration_type = volume
+Eobs2.integration_type = volume
+Eobs3.integration_type = volume
+Eobs4.integration_type = volume
+Eobs5.integration_type = volume
+Eobs_out_s.integration_type = volume
+Eobs_in_s.integration_type = volume
+Eobs_out_m.integration_type = volume
+Eobs_in_m.integration_type = volume
+Eobs_gap_out.integration_type = volume
+Eobs_gap_in.integration_type = volume
+
+Eobs1.intervals = 1
+Eobs2.intervals = 1
+Eobs3.intervals = 1
+Eobs4.intervals = 1
+Eobs5.intervals = 1
+Eobs_out_s.intervals = 1
+Eobs_in_s.intervals = 1
+Eobs_out_m.intervals = 1
+Eobs_in_m.intervals = 1
+Eobs_gap_out.intervals = 1
+Eobs_gap_in.intervals = 1
+
+Eobs1.reduced_function(x,y,z) = (y > obsy1 - ddy)*(y < obsy1 + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
+Eobs2.reduced_function(x,y,z) = (y > obsy2 - ddy)*(y < obsy2 + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
+Eobs3.reduced_function(x,y,z) = (y > obsy3 - ddy)*(y < obsy3 + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
+Eobs4.reduced_function(x,y,z) = (y > obsy4 - ddy)*(y < obsy4 + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
+Eobs5.reduced_function(x,y,z) = (y > obsy5 - ddy)*(y < obsy5 + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
+Eobs_out_s.reduced_function(x,y,z) = (y > obsy_out - ddy)*(y < obsy_out + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
+Eobs_in_s.reduced_function(x,y,z) = (y > obsy_in - ddy)*(y < obsy_in + dy - ddy)*(x > obsx - ddx)*(x < obsx + dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
+Eobs_out_m.reduced_function(x,y,z) = (y > obsy_out - ddy)*(y < obsy_out + dy - ddy)*(x > -ddx)*(x < dx - ddx)*(z > obsz_m - ddz)*(z < obsz_m + dz - ddz)
+Eobs_in_m.reduced_function(x,y,z) = (y > obsy_in - ddy)*(y < obsy_in + dy - ddy)*(x > -ddx)*(x < dx - ddx)*(z > obsz_m - ddz)*(z < obsz_m + dz - ddz)
+Eobs_gap_out.reduced_function(x,y,z) = (y > obsy_gap_out - ddy)*(y < obsy_gap_out + dy - ddy)*(x > -ddx)*(x < dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)
+Eobs_gap_in.reduced_function(x,y,z) = (y > obsy_gap_in - ddy)*(y < obsy_gap_in + dy - ddy)*(x > -ddx)*(x < dx - ddx)*(z > obsz_s - ddz)*(z < obsz_s + dz - ddz)

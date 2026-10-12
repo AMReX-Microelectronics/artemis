@@ -1,0 +1,59 @@
+name: 🐧 In Situ Vis
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-insituvis
+  cancel-in-progress: true
+
+jobs:
+  sensei:
+    name: SENSEI
+    runs-on: ubuntu-24.04
+    if: github.event.pull_request.draft == false
+    env:
+      CXX: clang++
+      CC: clang
+      CXXFLAGS: "-Werror -Wshadow -Woverloaded-virtual -Wunreachable-code -Wno-error=pass-failed"
+      CMAKE_GENERATOR: Ninja
+      CMAKE_PREFIX_PATH: /root/install/sensei/v4.0.0/lib64/cmake
+    container:
+      image: senseiinsitu/ci:fedora35-amrex-20220613
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install zlib
+      run: |
+        dnf install -y zlib-devel
+    - name: Configure
+      run: |
+        cmake -S . -B build     \
+          -DWarpX_SENSEI=ON     \
+          -DWarpX_MAG_LLG=OFF   \
+          -DWarpX_COMPUTE=NOACC
+    - name: Build
+      run: |
+        cmake --build build -j 2
+
+  ascent:
+    name: Ascent
+    runs-on: ubuntu-24.04
+    if: github.event.pull_request.draft == false
+    env:
+      CXX: g++
+      CC: gcc
+      CMAKE_PREFIX_PATH: /ascent/install/lib/cmake/
+    container:
+      image: alpinedav/ascent:0.9.2
+    steps:
+    - uses: actions/checkout@v4
+    - name: Configure
+      run: |
+        . /ascent_docker_setup_env.sh
+        cmake -S . -B build   \
+            -DWarpX_ASCENT=ON \
+            -DWarpX_MAG_LLG=OFF \
+            -DWarpX_COMPUTE=NOACC
+    - name: Build
+      run: |
+        . /ascent_docker_setup_env.sh
+        cmake --build build -j 2

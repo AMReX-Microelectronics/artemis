@@ -1,0 +1,199 @@
+# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 4000
+
+amr.n_cell = n_cellx n_celly n_cellz
+amr.max_grid_size = max_grid_size
+amr.blocking_factor = blocking_factor
+amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
+
+geometry.dims = 3
+geometry.prob_lo = -Lx/2. 0. 0.
+geometry.prob_hi =  Lx/2. Ly Lz
+
+amr.max_level = 0
+
+# use pec instead of pml overlaying current source so you don't get a reflection
+boundary.field_lo = pml pec pec
+boundary.field_hi = pml pml pml
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+
+warpx.cfl = 0.9
+
+# vacuum or macroscopic
+algo.em_solver_medium = macroscopic
+
+# laxwendroff or backwardeuler
+algo.macroscopic_sigma_method = laxwendroff
+
+###############
+# geometry
+# each row represents a different part of the circuit
+# 1. vacuum everywhere, then add in si and pd sections
+# 2. si substrate
+# 3. straight pd wire from inlet in +y direction
+# 4. curved pd wire
+# 5. straight pd wire in -x direction
+###############
+
+macroscopic.sigma_function(x,y,z) = "sigma_0
++ (sigma_si - sigma_0) * (z <= h_si)
++ (sigma_pd - sigma_0) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd)
++ (sigma_pd - sigma_0) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
++ (sigma_pd - sigma_0) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
+
+macroscopic.epsilon_function(x,y,z) = "eps_0
++ eps_0 * (eps_r_si - 1.) * (z <= h_si)
++ eps_0 * (eps_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd)
++ eps_0 * (eps_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
++ eps_0 * (eps_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
+
+macroscopic.mu_function(x,y,z) = "mu_0
++ mu_0 * (mu_r_si - 1.) * (z <= h_si)
++ mu_0 * (mu_r_pd - 1.) * (x >= -w_pd/2.) * (x <= w_pd/2.) * (y <= l_pd) * (z > h_si) * (z <= h_si + h_pd)
++ mu_0 * (mu_r_pd - 1.) * ( (x+r_pd)^2 + (y-l_pd)^2 >= (r_pd-w_pd/2.)^2 ) * ( (x+r_pd)^2 + (y-l_pd)^2 <= (r_pd+w_pd/2.)^2 ) * (x >= -r_pd) * (y > l_pd) * (z > h_si) * (z <= h_si+h_pd)
++ mu_0 * (mu_r_pd - 1.) * (x < -r_pd) * (y >= l_pd+r_pd-w_pd/2.) * (y <= l_pd+r_pd+w_pd/2.) * (z > h_si) * (z <= h_si+h_pd)"
+
+#################################
+############ FIELDS #############
+#################################
+
+###############
+# domain size
+# n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
+###############
+my_constants.n_cellx = 256
+my_constants.n_celly = 384
+my_constants.n_cellz = 32
+my_constants.max_grid_size = 384   # for GPU
+#my_constants.max_grid_size = 32    # for CPU
+my_constants.blocking_factor = 32
+
+my_constants.Lx = 32.e-6
+my_constants.Ly = 48.e-6
+my_constants.Lz = 4.e-6
+
+###############
+# material properties
+###############
+my_constants.sigma_0 = 0.0
+my_constants.sigma_pd = 1.e7
+my_constants.sigma_si = 1.e1
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_pd = 13.
+my_constants.eps_r_si = 12.
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_pd = 1.0
+my_constants.mu_r_si = 1.0
+
+###############
+# silicon and palladium cross section
+###############
+my_constants.h_si = 1.e-6
+my_constants.w_pd = 2.e-6
+my_constants.h_pd = 1.e-6
+
+###############
+# curved geometry parameters
+###############
+
+# straight
+#my_constants.r_pd = 0.   # note this is irrelevant if l_pd is larger than L_y
+#my_constants.l_pd = 1.e9
+
+# 90 degree angle
+#my_constants.r_pd = 0.
+#my_constants.l_pd = 32.e-6
+
+# rounded
+my_constants.r_pd = 16.e-6
+my_constants.l_pd = 16.e-6
+
+###############
+# waveguide port parameters
+###############
+my_constants.h_port = 1.e-6
+my_constants.w_port = 16.e-6
+my_constants.wavelength = 4.e-6
+
+###############
+# derived quantities and fundamental constants - don't touch these
+###############
+
+my_constants.pi = 3.14159265358979
+
+# c is 1/sqrt(eps*mu) using silicon material properties
+my_constants.c = 1./sqrt(eps_0*eps_r_si*mu_0*mu_r_si)
+
+# grid spacing
+my_constants.dx = Lx / n_cellx
+my_constants.dy = Ly / n_celly
+my_constants.dz = Lz / n_cellz
+
+my_constants.tiny = 1.e-12
+
+###############
+# excitation
+###############
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "0."
+warpx.Ey_excitation_flag_function(x,y,z) = "0."
+warpx.Ez_excitation_flag_function(x,y,z) = "(x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= -dy/2.) * (y <= dy/2.)"
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*x)/w_port) * sin(2*pi*c*t/wavelength)"
+
+###############
+# diagnostics
+###############
+
+diagnostics.diags_names = plt
+#diagnostics.diags_names = plt input output
+
+###############
+# full plotfiles
+plt.intervals = 10
+plt.fields_to_plot = Ez
+plt.diag_type = Full
+
+###############
+# input
+#input.intervals = 1
+#input.fields_to_plot = Ez
+#input.diag_lo = -tiny  tiny        tiny
+#input.diag_hi =  tiny  2.*dy-tiny  h_si-tiny
+#input.diag_type = Full
+
+###############
+# output: straight
+
+#output.intervals = 1
+#output.fields_to_plot = Ez
+#output.diag_lo = -tiny  Ly-2.*dy+tiny  tiny
+#output.diag_hi =  tiny  Ly-tiny        h_si-tiny
+#output.diag_type = Full
+
+###############
+
+###############
+# output: 90 degree angle or rounded
+
+#output.intervals = 1
+#output.fields_to_plot = Ez
+#output.diag_lo = -Lx/2.+tiny        l_pd+r_pd-tiny  tiny
+#output.diag_hi = -Lx/2.+2.*dx-tiny  l_pd+r_pd+tiny  h_si-tiny
+#output.diag_type = Full
+
+###############

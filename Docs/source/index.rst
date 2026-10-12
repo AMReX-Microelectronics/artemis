@@ -1,33 +1,33 @@
 :orphan:
 
-WarpX
------
+ARTEMIS
+-------
 
-WarpX is an advanced **electromagnetic Particle-In-Cell** code.
+ARTEMIS is an advanced electrodynamics code based on `WarpX <https://ecp-warpx.github.io>`__.
+It couples Maxwell's equations with classical models describing quantum behavior of materials used in microelectronics.
 
 It supports many features including:
 
     - Perfectly-Matched Layers (PML)
-    - Boosted-frame simulations
-    - Mesh refinement
+    - Heterogeneous materials
+    - User-defined excitations
+    - Landau-Lifshitz-Gilbert equations for micromagenetics
 
-For details on the algorithms that WarpX implements, see the :ref:`theory section <theory>`.
+For details on the algorithms that ARTEMIS implements, see the :ref:`theory section <theory>`.
 
-WarpX is a *highly-parallel and highly-optimized code*, which can run on GPUs and multi-core CPUs, and includes load balancing capabilities.
-In addition, WarpX is also a *multi-platform code* and runs on Linux, macOS and Windows.
+ARTEMIS is a *highly-parallel and highly-optimized code*, which can run on GPUs and multi-core CPUs, and includes load balancing capabilities.
+In addition, ARTEMIS is also a *multi-platform code* and runs on Linux, macOS and Windows. ARTEMIS has leveraged the ECP code WarpX, and is built on the ECP framework AMReX.
 
 .. _contact:
 
 Contact us
 ^^^^^^^^^^
 
-If you are starting using WarpX, or if you have a user question, please pop in our `Gitter chat room <https://gitter.im/ECP-WarpX/community>`__ and get in touch with the community.
-
-The `WarpX GitHub repo <https://github.com/ECP-WarpX/WarpX>`__ is the main communication platform.
+The `ARTEMIS GitHub repo <https://github.com/ECP-WarpX/artemis>`__ is the main communication platform.
 Have a look at the action icons on the top right of the web page: feel free to watch the repo if you want to receive updates, or to star the repo to support the project.
-For bug reports or to request new features, you can also open a new `issue <https://github.com/ECP-WarpX/WarpX/issues>`__.
+For bug reports or to request new features, you can also open a new `issue <https://github.com/ECP-WarpX/artemis/issues>`__.
 
-We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>`__ on which you can find already answered questions, add new questions, get help with installation procedures, discuss ideas or share comments.
+We also have a `discussion page <https://github.com/ECP-WarpX/artemis/discussions>`__ on which you can find already answered questions, add new questions, get help with installation procedures, discuss ideas or share comments.
 
 .. raw:: html
 
@@ -35,13 +35,13 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
    /* front page: hide chapter titles
     * needed for consistent HTML-PDF-EPUB chapters
     */
-   div#installation.section,
-   div#usage.section,
-   div#theory.section,
-   div#data-analysis.section,
-   div#development.section,
-   div#maintenance.section,
-   div#epilogue.section {
+   section#installation,
+   section#usage,
+   section#theory,
+   section#data-analysis,
+   section#development,
+   section#maintenance,
+   section#epilogue {
        display:none;
    }
    </style>
@@ -51,6 +51,7 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
 
    coc
    acknowledge_us
+   highlights
 
 Installation
 ------------
@@ -73,11 +74,13 @@ Usage
    :hidden:
 
    usage/how_to_run
+   usage/domain_decomposition
    usage/parameters
    usage/python
    usage/examples
    usage/pwfa
    usage/workflows
+   usage/faq
 
 Data Analysis
 -------------
@@ -94,8 +97,8 @@ Data Analysis
    dataanalysis/visit
    dataanalysis/visualpic
    dataanalysis/picviewer
-   dataanalysis/backtransformed_diags
    dataanalysis/reduced_diags
+   dataanalysis/workflows
 
 Theory
 ------
@@ -110,6 +113,7 @@ Theory
    theory/PML
    theory/boosted_frame
    theory/input_output
+   theory/collisions
 
 Development
 -----------
@@ -123,6 +127,7 @@ Development
    developers/developers
    developers/doxygen
    developers/gnumake
+   developers/faq
 .. good to have in the future:
 ..   developers/repostructure
 

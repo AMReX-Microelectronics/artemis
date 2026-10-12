@@ -13,8 +13,7 @@ max_step = 3000
 amr.n_cell = 64 64 64 # number of cells spanning the domain in each coordinate direction at level 0
 amr.max_grid_size = 32 # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 16
-geometry.coord_sys = 0
-
+geometry.dims = 3
 geometry.prob_lo = -15e-3 -15e-3 -15.0e-3
 geometry.prob_hi =  15e-3  15e-3  15.0e-3
 boundary.field_lo = periodic periodic periodic

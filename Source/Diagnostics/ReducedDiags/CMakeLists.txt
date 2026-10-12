@@ -2,6 +2,8 @@ target_sources(WarpX
   PRIVATE
     BeamRelevant.cpp
     FieldEnergy.cpp
+    FieldProbe.cpp
+    FieldProbeParticleContainer.cpp
     FieldMomentum.cpp
     LoadBalanceCosts.cpp
     LoadBalanceEfficiency.cpp
@@ -15,4 +17,8 @@ target_sources(WarpX
     RhoMaximum.cpp
     ParticleNumber.cpp
     FieldReduction.cpp
+    FieldProbe.cpp
+    RawEFieldReduction.cpp
+    RawBFieldReduction.cpp
+    ChargeOnEB.cpp
 )

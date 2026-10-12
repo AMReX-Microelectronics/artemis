@@ -23,6 +23,20 @@ struct MediumForEM {
     };
 };
 
+struct CoupledYeeSolver {
+    enum {
+        MaxwellLondon = 0,
+        None = 1
+    };
+};
+
+struct LumpedInductor {
+    enum {
+        Off = 0,
+        On = 1
+    };
+};
+
 /**
   * \brief struct to select algorithm for macroscopic Maxwell solver
            LaxWendroff (semi-implicit) represents sigma*E = sigma*0.5*(E^(n) + E^(n+1))
@@ -36,11 +50,21 @@ struct MacroscopicSolverAlgo {
     };
 };
 
-struct MaxwellSolverAlgo {
+struct GridType {
     enum {
-        Yee = 0,
-        CKC = 1,
-        PSATD = 2
+        Collocated = 0,
+        Staggered = 1,
+        Hybrid = 2
+    };
+};
+
+struct ElectromagneticSolverAlgo {
+    enum {
+        None = 0,
+        Yee = 1,
+        CKC = 2,
+        PSATD = 3,
+        ECT = 4
     };
 };
 
@@ -48,7 +72,8 @@ struct ElectrostaticSolverAlgo {
     enum {
         None = 0,
         Relativistic = 1,
-        LabFrame = 2
+        LabFrameElectroMagnetostatic = 2,
+        LabFrame = 3  // Non relativistic
     };
 };
 
@@ -82,6 +107,27 @@ struct GatheringAlgo {
     };
 };
 
+struct PSATDSolutionType {
+    enum {
+        FirstOrder = 0,
+        SecondOrder = 1
+    };
+};
+
+struct JInTime {
+    enum {
+        Constant = 0,
+        Linear = 1
+    };
+};
+
+struct RhoInTime {
+    enum {
+        Constant = 0,
+        Linear = 1
+    };
+};
+
 /** Strategy to compute weights for use in load balance.
  */
 struct LoadBalanceCostsUpdateAlgo {
@@ -104,7 +150,8 @@ struct FieldBoundaryType {
         Damped = 4,   // Fields in the guard cells are damped for PSATD
                      //in the moving window direction
         Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
-        None = 6     // The fields values at the boundary are not updated. This is
+        Neumann = 6, // For electrostatic, the normal E is set to zero
+        None = 7     // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
     };
 };
@@ -129,6 +176,7 @@ struct ExternalFieldType {
         HfieldExternal = 3,
         HbiasfieldExternal = 4
 #endif
+        EfieldExternalPML = 5
     };
 };
 
@@ -139,6 +187,13 @@ struct ReductionType {
         Maximum = 0,
         Minimum = 1,
         Sum = 2
+    };
+};
+
+struct IntegrationType {
+    enum {
+        Volume = 0,
+        Surface = 1
     };
 };
 

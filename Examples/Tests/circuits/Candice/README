@@ -1,0 +1,25 @@
+Starting with inputs_pd_curved:
+
+inputs_candice0 - straightened
+inputs_candice1 - orient wave to travel in x-direction
+inputs_candice2 - add shoulder
+inputs_candice2s - change input to soft source
+inputs_candice3 - turn metal to PEC layer
+inputs_candice3a - parameterize by frequency, not wavelength
+inputs_candice4 - length/time scale to match 2.5 micron dx/dy
+inputs_candice5 - increase dx to 10 microns, increase thickness of substrate, change width of line and air gaps
+inputs_candice6 - put buffer behind x=0, truncate line to 635 micron length
+inputs_candice7 - invert logic to subtract off superconductor, add mu difference above etch
+inputs_candice8 - first curve
+inputs_candice9 - fix PEC edges, robustify "do nothing" case to for work for flag 0, -1, -2, ...
+inputs_candice10 - use Ey source with alternating sign on each side of the signal line
+inputs_candice11 - add another curve and straight line, move soft source inside of etch region
+inputs_candice12 - more curves
+inputs_candice13 - completed meadering line
+inputs_candice14 - left etch behind source
+inputs_candice15 - finish geometry
+inputs_candice16 - move source to vertical line
+inputs_candice16 - v01 geometry file
+inputs_candice17 - PML truncating qubit control line
+inputs_candice17 - CFL to 0.8, file_min_digits=7, freq=8.6e9
+inputs_candice18 - finite thickness conductivity, move prob_lox to edge of charge line

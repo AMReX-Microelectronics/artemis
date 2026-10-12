@@ -7,6 +7,9 @@ target_sources(WarpX
 )
 
 add_subdirectory(FiniteDifferenceSolver)
+add_subdirectory(London)
+add_subdirectory(LumpedElement)
+add_subdirectory(MagnetostaticSolver)
 if(WarpX_PSATD)
     add_subdirectory(SpectralSolver)
 endif()
