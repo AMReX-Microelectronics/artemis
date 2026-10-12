@@ -7,7 +7,9 @@
 #ifndef WARPX_AMREX_INIT_H_
 #define WARPX_AMREX_INIT_H_
 
-#include <AMReX.H>
+#include <AMReX_ccse-mpi.H>
+
+#include <AMReX_BaseFwd.H>
 
 /** Call amrex::Initialize
  *
@@ -25,8 +27,8 @@ amrex::AMReX*
 warpx_amrex_init(
     int& argc,
     char**& argv,
-    bool const build_parm_parse = true,
-    MPI_Comm const mpi_comm = MPI_COMM_WORLD
+    bool const build_parm_parse = true
+    /*  MPI_Comm mpi_comm = MPI_COMM_WORLD */
 );
 
 #endif

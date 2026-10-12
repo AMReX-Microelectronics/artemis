@@ -11,8 +11,8 @@
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PML_current.H"
 #include "BoundaryConditions/PMLComponent.H"
-#include "Utils/CoarsenIO.H"
 #include "Utils/WarpXConst.H"
+#include <ablastr/coarsen/sample.H>
 #include <AMReX_Gpu.H>
 #include <AMReX.H>
 
@@ -48,11 +48,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
 #    endif
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         amrex::Abort("Macro E-push is not implemented for nodal, yet.");
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
             MacroscopicEvolveEPMLCartesian <CartesianYeeAlgorithm, LaxWendroffAlgo> (
@@ -77,7 +77,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
                 macroscopic_properties, eps_mf, mu_mf, sigma_mf);
         }
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
         // Note :: Macroscopic Evolve E for PML is the same for CKC and Yee
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
             MacroscopicEvolveEPMLCartesian <CartesianCKCAlgorithm, LaxWendroffAlgo> (
@@ -197,10 +197,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 // Interpolate conductivity, sigma, to Ex position on the grid
-                amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
+                amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp( sigma_arr, sigma_stag,
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 // Interpolated permittivity, epsilon, to Ex position on the grid
-                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
+                amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp( eps_arr, epsilon_stag,
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
@@ -215,10 +215,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 // Interpolate conductivity, sigma, to Ey position on the grid
-                amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
+                amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp( sigma_arr, sigma_stag,
                                            Ey_stag, macro_cr, i, j, k, scomp);
                 // Interpolated permittivity, epsilon, to Ey position on the grid
-                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
+                amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp( eps_arr, epsilon_stag,
                                            Ey_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
@@ -233,10 +233,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 // Interpolate conductivity, sigma, to Ez position on the grid
-                amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
+                amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp( sigma_arr, sigma_stag,
                                            Ez_stag, macro_cr, i, j, k, scomp);
                 // Interpolated permittivity, epsilon, to Ez position on the grid
-                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
+                amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp( eps_arr, epsilon_stag,
                                            Ez_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
@@ -274,10 +274,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
             amrex::ParallelFor( tex, tey, tez,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     // Interpolate conductivity, sigma, to Ex position on the grid
-                    amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
+                    amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp( sigma_arr, sigma_stag,
                                                Ex_stag, macro_cr, i, j, k, scomp);
                     // Interpolated permittivity, epsilon, to Ex position on the grid
-                    amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
+                    amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp( eps_arr, epsilon_stag,
                                                Ex_stag, macro_cr, i, j, k, scomp);
                     amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
@@ -286,10 +286,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     // Interpolate conductivity, sigma, to Ey position on the grid
-                    amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
+                    amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp( sigma_arr, sigma_stag,
                                                Ey_stag, macro_cr, i, j, k, scomp);
                     // Interpolated permittivity, epsilon, to Ey position on the grid
-                    amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
+                    amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp( eps_arr, epsilon_stag,
                                                Ey_stag, macro_cr, i, j, k, scomp);
                     amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
@@ -298,10 +298,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPMLCartesian (
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     // Interpolate conductivity, sigma, to Ez position on the grid
-                    amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
+                    amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp( sigma_arr, sigma_stag,
                                                Ez_stag, macro_cr, i, j, k, scomp);
                     // Interpolated permittivity, epsilon, to Ez position on the grid
-                    amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
+                    amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp( eps_arr, epsilon_stag,
                                                Ez_stag, macro_cr, i, j, k, scomp);
                     amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 

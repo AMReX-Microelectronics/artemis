@@ -1,0 +1,110 @@
+# Maximum number of time steps
+
+my_constants.prob_lo = -640.e-9
+my_constants.prob_hi =  640.e-9
+
+################################
+# Space-Time Convergence
+################################
+
+my_constants.nx = 128
+my_constants.ny = 128
+my_constants.nz = 128
+amr.max_grid_size = 64
+max_step = 50
+warpx.cfl = 0.9
+
+#my_constants.nx = 256
+#my_constants.ny = 256
+#my_constants.nz = 256
+#amr.max_grid_size = 128
+#max_step = 100
+#warpx.cfl = 0.9
+
+#my_constants.nx = 512
+#my_constants.ny = 512
+#my_constants.nz = 512
+#amr.max_grid_size = 128
+#max_step = 200
+#warpx.cfl = 0.9
+
+# number of grid points
+amr.n_cell = nx ny nz
+
+# Maximum allowable size of each subdomain in the problem domain;
+# this is used to decompose the domain for parallel calculations.
+
+# Maximum level in hierarchy (for now must be 0, i.e., one level in total)
+amr.max_level = 0
+
+# Geometry
+geometry.coord_sys = 0  # 0: Cartesian
+geometry.dims = 3
+
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
+
+geometry.prob_lo = prob_lo prob_lo prob_lo
+geometry.prob_hi = prob_hi prob_hi prob_hi
+
+my_constants.dx = (prob_hi-prob_lo) / nx
+my_constants.dy = (prob_hi-prob_lo) / ny
+my_constants.dz = (prob_hi-prob_lo) / nz
+
+# Verbosity
+warpx.verbose = 1
+
+# Algorithms
+algo.current_deposition = esirkepov
+
+my_constants.sigma = 1.e4
+my_constants.eps_r = 1.0
+my_constants.mu_r = 1.0
+
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+
+macroscopic.sigma_function(x,y,z) = "sigma"
+macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
+macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
+
+#London
+algo.yee_coupled_solver = MaxwellLondon
+
+london.penetration_depth = 40.e-9
+
+london.superconductor_function(x,y,z) = "1."
+
+my_constants.L = 80.e-9
+my_constants.c = 299792458.
+my_constants.obs = -400.e-9
+
+warpx.E_ext_grid_init_style = parse_E_ext_grid_function
+warpx.Ex_external_grid_function(x,y,z) = "exp(-z**2/L**2)"
+warpx.Ey_external_grid_function(x,y,z) = "exp(-x**2/L**2)"
+warpx.Ez_external_grid_function(x,y,z) = "exp(-y**2/L**2)"
+
+warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.Bx_external_grid_function(x,y,z) = "exp(-y**2/L**2)/c"
+warpx.By_external_grid_function(x,y,z) = "exp(-z**2/L**2)/c"
+warpx.Bz_external_grid_function(x,y,z) = "exp(-x**2/L**2)/c"
+
+# Diagnostics
+diagnostics.diags_names = plt
+plt.plot_raw_fields = 1
+plt.intervals = 50
+plt.diag_type = Full
+#plt.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz Bx_sc By_sc Bz_sc superconductor
+plt.fields_to_plot = Ex Ey Ez Bx By Bz
+
+# Remove species
+particles.nspecies = 0
+
+warpx.reduced_diags_names = Eobs
+
+Eobs.type = RawEFieldReduction
+Eobs.reduction_type = integral
+Eobs.integration_type = surface
+Eobs.intervals = 1
+Eobs.surface_normal = X
+Eobs.reduced_function(x,y,z) = (y > 0) * (y < dy) * (z > obs - dz/2) * (z < obs + dz/2) * (x > -dx/100) * (x < dx/100)

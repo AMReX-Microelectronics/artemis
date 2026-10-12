@@ -1,0 +1,138 @@
+# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 4000
+
+amr.n_cell = n_cellx n_celly n_cellz
+amr.max_grid_size = max_grid_size
+amr.blocking_factor = blocking_factor
+amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
+
+geometry.dims = 3
+geometry.prob_lo = -0.1*Lx -Ly/2. 0.
+geometry.prob_hi =  0.9*Lx  Ly/2. Lz
+
+amr.max_level = 0
+
+# use pec instead of pml overlaying current source so you don't get a reflection
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+
+warpx.cfl = 0.8
+
+# vacuum or macroscopic
+algo.em_solver_medium = macroscopic
+
+# laxwendroff or backwardeuler
+algo.macroscopic_sigma_method = laxwendroff
+
+macroscopic.sigma_function(x,y,z) = "sigma_0
++ (sigma_si - sigma_0) * (z <= h_si)"
+
+macroscopic.epsilon_function(x,y,z) = "eps_0
++ eps_0 * (eps_r_si - 1.) * (z <= h_si)"
+
+macroscopic.mu_function(x,y,z) = "mu_0
++ mu_0 * (mu_r_si - 1.) * (z <= h_si)"
+
+#################################
+############ FIELDS #############
+#################################
+
+###############
+# domain size
+# n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
+###############
+my_constants.n_cellx = 400
+my_constants.n_celly = 256
+my_constants.n_cellz = 32
+my_constants.max_grid_size = 384
+my_constants.blocking_factor = 2
+
+my_constants.Lx = 1000.e-6
+my_constants.Ly = 640.e-6
+my_constants.Lz = 320.e-6
+
+###############
+# material properties
+###############
+my_constants.sigma_0 = 0.0
+my_constants.sigma_si = 0.
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_si = 12.
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_si = 1.0
+
+###############
+# silicon and palladium cross section
+###############
+my_constants.h_si = 160.e-6
+my_constants.w_sc = 20.e-6
+my_constants.w_air = 10.e-6
+
+###############
+# waveguide port parameters
+###############
+my_constants.h_port = 160.e-6
+my_constants.w_port = 320.e-6
+
+###############
+# derived quantities and fundamental constants - don't touch these
+###############
+
+my_constants.pi = 3.14159265358979
+
+my_constants.freq = 1.e12
+my_constants.TP = 1./freq
+
+# grid spacing
+my_constants.dx = Lx / n_cellx
+my_constants.dy = Ly / n_celly
+my_constants.dz = Lz / n_cellz
+
+my_constants.ddx = dx/1.e6
+my_constants.ddy = dy/1.e6
+my_constants.ddz = dz/1.e6
+
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
+
+###############
+# excitation
+###############
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) * (y >= -w_sc/2. - ddy) * (y <= w_sc/2. + ddy) * (x >= -ddx) * (x <= 635.e-6 + ddx)
+                                          + flag_hs * (z > h_si - ddz) * (z < h_si + ddz) * (y <= -w_sc/2. - w_air + ddy) * (x >= -ddx) * (x <= 635.e-6 + ddx)
+                                          + flag_hs * (z > h_si - ddz) * (z < h_si + ddz) * (y >=  w_sc/2. + w_air - ddy) * (x >= -ddx) * (x <= 635.e-6 + ddx)"
+
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) * (y >= -w_sc/2. - ddy) * (y <= w_sc/2. + ddy) * (x >= -ddx) * (x <= 635.e-6 + ddx)
+                                          + flag_hs * (z > h_si - ddz) * (z < h_si + ddz) * (y <= -w_sc/2. - w_air + ddy) * (x >= -ddx) * (x <= 635.e-6 + ddx)
+                                          + flag_hs * (z > h_si - ddz) * (z < h_si + ddz) * (y >=  w_sc/2. + w_air - ddy) * (x >= -ddx) * (x <= 635.e-6 + ddx)"
+
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_ss * (y > -w_port/2. - ddy) * (y < w_port/2. + ddy) * (z > -ddz) * (z < h_port + ddz) * (x >= -ddx) * (x <= ddx)"
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*y)/w_port) * sin(2*pi*freq*t) * exp(-(t-3*TP)**2/(2*TP**2))"
+
+###############
+# diagnostics
+###############
+
+diagnostics.diags_names = plt
+###############
+# full plotfiles
+plt.intervals = 100
+plt.fields_to_plot = Ex Ey Ez Bx By Bz sigma epsilon mu
+plt.diag_type = Full

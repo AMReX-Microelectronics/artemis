@@ -1,0 +1,123 @@
+name: 🐧 HIP
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-hip
+  cancel-in-progress: true
+
+jobs:
+  build_hip_3d_sp:
+    name: HIP 3D SP
+    runs-on: ubuntu-24.04
+    env:
+      CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"
+      CMAKE_GENERATOR: Ninja
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+      - name: install dependencies
+        shell: bash
+        run: .github/workflows/dependencies/hip.sh 6.3.2
+      - name: CCache Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ccache
+            ~/.cache/ccache
+          key: ccache-hip-3dsp-${{ hashFiles('.github/workflows/hip.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+          restore-keys: |
+            ccache-hip-3dsp-${{ hashFiles('.github/workflows/hip.yml') }}-
+            ccache-hip-3dsp-
+      - name: build WarpX
+        shell: bash
+        run: |
+          export CCACHE_COMPRESS=1
+          export CCACHE_COMPRESSLEVEL=10
+          export CCACHE_MAXSIZE=100M
+          ccache -z
+
+          source /etc/profile.d/rocm.sh
+          hipcc --version
+          which clang
+          which clang++
+          export CXX=$(which clang++)
+          export CC=$(which clang)
+
+          cmake -S . -B build_sp \
+            -D_GLIBCXX_ASSERTIONS=0 \
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DAMReX_AMD_ARCH=gfx900     \
+            -DWarpX_COMPUTE=HIP         \
+            -DWarpX_EB=ON               \
+            -DWarpX_LIB=ON              \
+            -DWarpX_MPI=ON              \
+            -DWarpX_OPENPMD=ON          \
+            -DWarpX_PRECISION=SINGLE    \
+            -DWarpX_PSATD=ON
+          cmake --build build_sp -j 2
+
+          export WARPX_MPI=OFF
+          PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+          python3 -m pip install *.whl
+
+          ccache -s
+          du -hs ~/.cache/ccache
+
+  build_hip_2d_dp:
+    name: HIP 2D DP
+    runs-on: ubuntu-24.04
+    env:
+      CXXFLAGS: "-Werror -Wno-deprecated-declarations -Wno-error=pass-failed"
+      CMAKE_GENERATOR: Ninja
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+      - name: install dependencies
+        shell: bash
+        run: .github/workflows/dependencies/hip.sh 6.3.2
+      - name: CCache Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ccache
+            ~/.cache/ccache
+          key: ccache-hip-2ddp-${{ hashFiles('.github/workflows/hip.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+          restore-keys: |
+            ccache-hip-2ddp-${{ hashFiles('.github/workflows/hip.yml') }}-
+            ccache-hip-2ddp-
+      - name: build WarpX
+        shell: bash
+        run: |
+          export CCACHE_COMPRESS=1
+          export CCACHE_COMPRESSLEVEL=10
+          export CCACHE_MAXSIZE=100M
+          ccache -z
+
+          source /etc/profile.d/rocm.sh
+          hipcc --version
+          which clang
+          which clang++
+          export CXX=$(which clang++)
+          export CC=$(which clang)
+
+          cmake -S . -B build_2d \
+            -D_GLIBCXX_ASSERTIONS=0 \
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DAMReX_AMD_ARCH=gfx900     \
+            -DWarpX_DIMS=2              \
+            -DWarpX_COMPUTE=HIP         \
+            -DWarpX_EB=ON               \
+            -DWarpX_LIB=ON              \
+            -DWarpX_MPI=ON              \
+            -DWarpX_OPENPMD=ON          \
+            -DWarpX_PRECISION=DOUBLE    \
+            -DWarpX_PSATD=ON
+          cmake --build build_2d -j 2
+
+          export WARPX_MPI=OFF
+          PYWARPX_LIB_DIR=$PWD/build_2d/lib python3 -m pip wheel .
+          python3 -m pip install *.whl
+
+          ccache -s
+          du -hs ~/.cache/ccache

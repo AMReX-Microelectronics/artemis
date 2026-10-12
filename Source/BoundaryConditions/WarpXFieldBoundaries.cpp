@@ -4,20 +4,15 @@
 #include "Evolve/WarpXDtType.H"
 #include "WarpX_PEC.H"
 
-#include <AMReX_REAL.H>
-#include <AMReX_Vector.H>
-#include <AMReX_Print.H>
-#include <array>
-#include <memory>
-
 #include <AMReX.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_IntVect.H>
-#include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_Print.H>
 
 #include <algorithm>
+#include <array>
 #include <memory>
 using namespace amrex::literals;
 using namespace amrex;
@@ -80,4 +75,17 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
                                          WarpX::field_boundary_hi);
         }
     }
+}
+
+void WarpX::ApplyRhofieldBoundary (const int lev, MultiFab* rho,
+                                   PatchType patch_type)
+{
+    if (PEC::isAnyBoundaryPEC()) PEC::ApplyPECtoRhofield(rho, lev, patch_type);
+}
+
+void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
+                                 amrex::MultiFab* Jy, amrex::MultiFab* Jz,
+                                 PatchType patch_type)
+{
+    if (PEC::isAnyBoundaryPEC()) PEC::ApplyPECtoJfield(Jx, Jy, Jz, lev, patch_type);
 }

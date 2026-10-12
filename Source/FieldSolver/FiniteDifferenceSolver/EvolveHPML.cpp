@@ -37,15 +37,15 @@ void FiniteDifferenceSolver::EvolveHPML (
     amrex::ignore_unused(Hfield, Efield, dt, dive_cleaning);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveHPMLCartesian <CartesianNodalAlgorithm> (Hfield, Efield, dt, dive_cleaning);
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         EvolveHPMLCartesian <CartesianYeeAlgorithm> (Hfield, Efield, dt, dive_cleaning);
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveHPMLCartesian <CartesianCKCAlgorithm> (Hfield, Efield, dt, dive_cleaning);
 

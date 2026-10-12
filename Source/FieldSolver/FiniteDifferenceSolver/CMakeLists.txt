@@ -8,10 +8,12 @@ target_sources(WarpX
     EvolveF.cpp
     EvolveFPML.cpp
     EvolveG.cpp
+    EvolveECTRho.cpp
     FiniteDifferenceSolver.cpp
     MacroscopicEvolveE.cpp
     MacroscopicEvolveEPML.cpp
     ApplySilverMuellerBoundary.cpp
+    EvolveBLondon.cpp
 )
 
 if(WarpX_MAG_LLG)

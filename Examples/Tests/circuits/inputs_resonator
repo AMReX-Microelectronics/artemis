@@ -1,0 +1,132 @@
+################################
+####### GENERAL PARAMETERS ######
+#################################
+
+# do not modify these
+geometry.dims = 3
+warpx.verbose = 1
+amr.max_level = 0
+amr.blocking_factor = 1024
+
+# stop at max_step or 100 periods, whichever occurs first
+max_step = 100000
+stop_time = 100 * wavelength/c
+warpx.cfl = 0.9
+
+# number of cells in each direction
+my_constants.ncells = 40
+amr.n_cell = ncells ncells ncells
+amr.max_grid_size = ncells
+
+# physical size of domain in [m]
+my_constants.Ldomain = 0.02
+geometry.prob_lo = -Ldomain/2 -Ldomain/2 -Ldomain/2
+geometry.prob_hi =  Ldomain/2  Ldomain/2  Ldomain/2
+
+# define grid spacing in each direction
+my_constants.dx = Ldomain/ncells
+my_constants.dy = Ldomain/ncells
+my_constants.dz = Ldomain/ncells
+
+# define a 'small' grid spacing
+my_constants.smalldx = dx/100
+my_constants.smalldy = dy/100
+my_constants.smalldz = dz/100
+
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
+
+#################################
+############ NUMERICS ###########
+#################################
+
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+
+#################################
+############ FIELDS #############
+#################################
+
+# length of cubic cavity
+my_constants.Lcavity = 1.e-2
+
+# thickness of metal
+my_constants.tmetal = 1.e-3
+
+# excitation parameters
+# speed of light
+my_constants.c = 299792458.
+my_constants.wavelength = 1.e-2
+my_constants.f = c/wavelength
+my_constants.BW = 2/f
+my_constants.t0 = 2.e-10
+
+# conductivity of metal
+# 5.8e7 = copper
+my_constants.sigma = 5.8e3
+
+my_constants.pi = 3.14159265359
+my_constants.epsilon_0 = 8.8541878128e-12
+my_constants.mu_0 = 1.25663706212e-06
+
+macroscopic.epsilon_function(x,y,z) = "epsilon_0"
+macroscopic.mu_function(x,y,z) = "mu_0"
+
+macroscopic.sigma_function(x,y,z) = "sigma * (
+( (x>-Lcavity/2-tmetal) * (x<-Lcavity/2) * (y>-Lcavity/2-tmetal) * (y<Lcavity/2+tmetal) * (z>-Lcavity/2-tmetal) * (z<Lcavity/2+tmetal) ) or
+( (x>Lcavity/2) * (x<Lcavity/2+tmetal) * (y>-Lcavity/2-tmetal) * (y<Lcavity/2+tmetal) * (z>-Lcavity/2-tmetal) * (z<Lcavity/2+tmetal) ) or
+( (x>-Lcavity/2-tmetal) * (x<Lcavity/2+tmetal) * (y>-Lcavity/2-tmetal) * (y<-Lcavity/2) * (z>-Lcavity/2-tmetal) * (z<Lcavity/2+tmetal) ) or
+( (x>-Lcavity/2-tmetal) * (x<Lcavity/2+tmetal) * (y>Lcavity/2) * (y<Lcavity/2+tmetal) * (z>-Lcavity/2-tmetal) * (z<Lcavity/2+tmetal) ) or
+( (x>-Lcavity/2-tmetal) * (x<Lcavity/2+tmetal) * (y>-Lcavity/2-tmetal) * (y<Lcavity/2+tmetal) * (z>-Lcavity/2-tmetal) * (z<-Lcavity/2) ) or
+( (x>-Lcavity/2-tmetal) * (x<Lcavity/2+tmetal) * (y>-Lcavity/2-tmetal) * (y<Lcavity/2+tmetal) * (z>Lcavity/2) * (z<Lcavity/2+tmetal) ) )"
+
+# initial E field
+warpx.E_ext_grid_init_style = parse_E_ext_grid_function
+warpx.Ex_external_grid_function(x,y,z) = "0."
+warpx.Ey_external_grid_function(x,y,z) = "0."
+warpx.Ez_external_grid_function(x,y,z) = "0."
+
+# initial B field
+warpx.B_ext_grid_init_style = parse_B_ext_grid_function
+warpx.Bx_external_grid_function(x,y,z) = "0."
+warpx.By_external_grid_function(x,y,z) = "0."
+warpx.Bz_external_grid_function(x,y,z) = "0."
+
+# external E excitation
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "0."
+warpx.Ey_excitation_flag_function(x,y,z) = "0."
+warpx.Ez_excitation_flag_function(x,y,z) = "0."
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+# external B excitation
+warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
+
+# 2 = soft source excitation (increment field as opposed to overwrite with a hard source)
+warpx.Bx_excitation_flag_function(x,y,z) = "2 * (x>-smalldx) * (x<smalldx) * (y>0) * (y<dy) * (z>-Lcavity/2) * (z<Lcavity/2)"
+warpx.By_excitation_flag_function(x,y,z) = "0."
+warpx.Bz_excitation_flag_function(x,y,z) = "0."
+
+warpx.Bx_excitation_grid_function(x,y,z,t) = "exp(-(t-t0)*(t-t0)/(BW*BW))*sin(2*pi*f*(t-t0))"
+warpx.By_excitation_grid_function(x,y,z,t) = "0."
+warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
+
+# plotfile diagnostics
+diagnostics.diags_names = plt
+plt.intervals = 100
+plt.fields_to_plot = Ex Ey Ez Bx By Bz
+plt.diag_type = Full
+plt.plot_raw_fields = 0
+
+# output diagnostics
+warpx.reduced_diags_names = Eobs1
+Eobs1.type = RawEFieldReduction
+Eobs1.reduction_type = integral
+Eobs1.integration_type = volume
+Eobs1.intervals = 1
+Eobs1.reduced_function(x,y,z) = (x>Lcavity/4-smalldx) * (x<Lcavity/4+dx/2+smalldx) * (y>Lcavity/4-smalldy) * (y<Lcavity/4+dy/2+smalldy) * (z>Lcavity/4-smalldz) * (z<Lcavity/4+dz/2+smalldz)

@@ -8,7 +8,7 @@
 #ifndef WARPX_FINITE_DIFFERENCE_SOLVER_H_
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
-#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
 #include "FiniteDifferenceSolver_fwd.H"
 
 #include "BoundaryConditions/PML_fwd.H"
@@ -39,12 +39,23 @@ class FiniteDifferenceSolver
          *
          * \param fdtd_algo Identifies the chosen algorithm, as defined in WarpXAlgorithmSelection.H
          * \param cell_size Cell size along each dimension, for the chosen refinement level
-         * \param do_nodal  Whether the solver is applied to a nodal or staggered grid
+         * \param grid_type Whether the solver is applied to a collocated or staggered grid
          */
         FiniteDifferenceSolver (
             int const fdtd_algo,
             std::array<amrex::Real,3> cell_size,
-            bool const do_nodal );
+            short const grid_type );
+
+        void EvolveBLondon ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& current,
+                       std::unique_ptr<amrex::MultiFab> const& Gfield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+                       std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
+                       std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+                       int lev, amrex::Real const dt, amrex::Real const penetration_depth );
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -76,6 +87,12 @@ class FiniteDifferenceSolver
                       std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
                       amrex::Real const dt);
 
+        void EvolveECTRho ( std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+                            const int lev );
+
         void ApplySilverMuellerBoundary(
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
@@ -95,10 +112,10 @@ class FiniteDifferenceSolver
           * \param[out] Efield  vector of electric field MultiFabs updated at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
           * \param[in] Jfield   vector of current density MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
           * \param[in] dt       timestep of the simulation
           * \param[in] macroscopic_properties contains user-defined properties of the medium.
           */
-
         void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
 #ifndef WARPX_MAG_LLG
                             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
@@ -106,6 +123,7 @@ class FiniteDifferenceSolver
                             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Hfield,
 #endif
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                             amrex::Real const dt,
                             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 #ifndef WARPX_DIM_RZ
@@ -126,7 +144,7 @@ class FiniteDifferenceSolver
           * \param[in] macroscopic_properties   contains user-defined properties of the medium.
           */
 
-        void MacroscopicEvolveHM ( int lev,
+        void MacroscopicEvolveHM (
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
                        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
@@ -135,7 +153,8 @@ class FiniteDifferenceSolver
                        amrex::Real const dt,
                        std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 
-        void MacroscopicEvolveHM_2nd ( int lev,
+        void MacroscopicEvolveHM_2nd (
+                       int lev,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
                        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
@@ -155,6 +174,7 @@ class FiniteDifferenceSolver
        void EvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
                       std::array< amrex::MultiFab*, 3 > const Bfield,
                       std::array< amrex::MultiFab*, 3 > const Jfield,
+                      std::array< amrex::MultiFab*, 3 > const edge_lengths,
                       amrex::MultiFab* const Ffield,
                       MultiSigmaBox const& sigba,
                       amrex::Real const dt, bool pml_has_particles );
@@ -190,7 +210,7 @@ class FiniteDifferenceSolver
     private:
 
         int m_fdtd_algo;
-        bool m_do_nodal;
+        short m_grid_type;
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;
@@ -244,11 +264,17 @@ class FiniteDifferenceSolver
             amrex::MultiFab& divE );
 #else
         template< typename T_Algo >
+        void EvolveBLondonCartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& current,
+            std::unique_ptr<amrex::MultiFab> const& Gfield,
+            int lev, amrex::Real const dt, amrex::Real const penetration_depth );
+
+        template< typename T_Algo >
         void EvolveBCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::unique_ptr<amrex::MultiFab> const& Gfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
             int lev, amrex::Real const dt );
 
         template< typename T_Algo >
@@ -305,13 +331,13 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Hfield,
 #endif
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
 #ifdef WARPX_MAG_LLG
         template< typename T_Algo >
         void MacroscopicEvolveHMCartesian(
-            int lev,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
@@ -344,6 +370,7 @@ class FiniteDifferenceSolver
             std::array< amrex::MultiFab*, 3 > Efield,
             std::array< amrex::MultiFab*, 3 > const Bfield,
             std::array< amrex::MultiFab*, 3 > const Jfield,
+            std::array< amrex::MultiFab*, 3 > const edge_lengths,
             amrex::MultiFab* const Ffield,
             MultiSigmaBox const& sigba,
             amrex::Real const dt, bool pml_has_particles );
