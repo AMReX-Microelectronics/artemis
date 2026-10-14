@@ -2,16 +2,16 @@
  * Maxence Thevenet, Remi Lehe, Weiqun Zhang
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PML_H_
-#define WARPX_PML_H_
+#ifndef ARTEMIS_PML_H_
+#define ARTEMIS_PML_H_
 
 #include "PML_fwd.H"
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
@@ -152,7 +152,7 @@ public:
     std::array<amrex::MultiFab*,3> Getj_cp ();
     std::array<amrex::MultiFab*,3> Get_edge_lengths ();
     std::array<amrex::MultiFab*,3> Get_face_areas ();
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
     std::array<amrex::MultiFab*,3> GetH_fp ();
     std::array<amrex::MultiFab*,3> GetH_cp ();
 #endif
@@ -163,7 +163,7 @@ public:
     amrex::MultiFab* GetE_fp (int comp);
     amrex::MultiFab* GetPEC_fp (int comp);
 
-    // Used when WarpX::do_pml_dive_cleaning = true
+    // Used when Artemis::do_pml_dive_cleaning = true
     amrex::MultiFab* GetF_fp ();
     amrex::MultiFab* GetF_cp ();
 
@@ -174,7 +174,7 @@ public:
     amrex::MultiFab* Getmu_cp();
     amrex::MultiFab* Getsigma_fp();
     amrex::MultiFab* Getsigma_cp();
-    // Used when WarpX::do_pml_divb_cleaning = true
+    // Used when Artemis::do_pml_divb_cleaning = true
     amrex::MultiFab* GetG_fp ();
     amrex::MultiFab* GetG_cp ();
 
@@ -184,7 +184,7 @@ public:
     const MultiSigmaBox& GetMultiSigmaBox_cp () const
         { return *sigba_cp; }
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
     void PushPSATD (const int lev);
 #endif
 
@@ -202,7 +202,7 @@ public:
     void ExchangeF (amrex::MultiFab* F_fp, amrex::MultiFab* F_cp, int do_pml_in_domain);
     void ExchangeF (PatchType patch_type, amrex::MultiFab* Fp, int do_pml_in_domain);
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
     void ExchangeH (const std::array<amrex::MultiFab*,3>& H_fp,
                     const std::array<amrex::MultiFab*,3>& H_cp, int do_pml_in_domain);
     void ExchangeH (PatchType patch_type,
@@ -219,7 +219,7 @@ public:
     void FillBoundaryE (PatchType patch_type);
     void FillBoundaryB (PatchType patch_type);
     void FillBoundaryF (PatchType patch_type);
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
     void FillBoundaryH ();
     void FillBoundaryH (PatchType patch_type);
 #endif
@@ -258,11 +258,11 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_B_cp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_j_cp;
 
-    // Used when WarpX::do_pml_dive_cleaning = true
+    // Used when Artemis::do_pml_dive_cleaning = true
     std::unique_ptr<amrex::MultiFab> pml_F_fp;
     std::unique_ptr<amrex::MultiFab> pml_F_cp;
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_H_fp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_H_cp;
 #endif
@@ -274,14 +274,14 @@ private:
     std::unique_ptr<amrex::MultiFab> pml_eps_cp;
     std::unique_ptr<amrex::MultiFab> pml_mu_cp;
     std::unique_ptr<amrex::MultiFab> pml_sigma_cp;
-    // Used when WarpX::do_pml_divb_cleaning = true
+    // Used when Artemis::do_pml_divb_cleaning = true
     std::unique_ptr<amrex::MultiFab> pml_G_fp;
     std::unique_ptr<amrex::MultiFab> pml_G_cp;
 
     std::unique_ptr<MultiSigmaBox> sigba_fp;
     std::unique_ptr<MultiSigmaBox> sigba_cp;
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
     std::unique_ptr<SpectralSolver> spectral_solver_fp;
     std::unique_ptr<SpectralSolver> spectral_solver_cp;
 #endif
@@ -323,7 +323,7 @@ private:
     static void CopyToPML (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom);
 };
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
 void PushPMLPSATDSinglePatch( const int lev,
     SpectralSolver& solver,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,

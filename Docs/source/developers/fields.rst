@@ -9,7 +9,7 @@ Fields
 
 The main fields are the electric field ``Efield``, the magnetic field ``Bfield``, the current density ``current`` and the charge density ``rho``. When a divergence-cleaner is used, we add another field ``F`` (containing :math:`\vec \nabla \cdot \vec E - \rho`).
 
-Due the AMR strategy used in WarpX (see section :ref:`Theory: AMR <theory-amr>` for a complete description), each field on a given refinement level ``lev`` (except for the coarsest ``0``) is defined on:
+Due the AMR strategy used in Artemis (see section :ref:`Theory: AMR <theory-amr>` for a complete description), each field on a given refinement level ``lev`` (except for the coarsest ``0``) is defined on:
 
 * **the fine patch** (suffix ``_fp``, the actual resolution on ``lev``).
 
@@ -24,7 +24,7 @@ As an example, the structures for the electric field are ``Efield_fp``, ``Efield
 Declaration
 -----------
 
-All the fields described above are public members of class ``WarpX``, defined in ``WarpX.H``. They are defined as an ``amrex::Vector`` (over MR levels) of ``std::array`` (for the 3 spatial components :math:`E_x`, :math:`E_y`, :math:`E_z`) of ``std::unique_ptr`` of ``amrex::MultiFab``, i.e.:
+All the fields described above are public members of class ``Artemis``, defined in ``Artemis.H``. They are defined as an ``amrex::Vector`` (over MR levels) of ``std::array`` (for the 3 spatial components :math:`E_x`, :math:`E_y`, :math:`E_z`) of ``std::unique_ptr`` of ``amrex::MultiFab``, i.e.:
 
   amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
 
@@ -33,14 +33,14 @@ Hence, ``Ex`` on MR level ``lev`` is a pointer to an ``amrex::MultiFab``. The ot
 Allocation and initialization
 -----------------------------
 
-The ``MultiFab`` constructor (for, e.g., ``Ex`` on level ``lev``) is called in ``WarpX::AllocLevelMFs``.
+The ``MultiFab`` constructor (for, e.g., ``Ex`` on level ``lev``) is called in ``Artemis::AllocLevelMFs``.
 
-By default, the ``MultiFab`` are set to ``0`` at initialization. They can be assigned a different value in ``WarpX::InitLevelData``.
+By default, the ``MultiFab`` are set to ``0`` at initialization. They can be assigned a different value in ``Artemis::InitLevelData``.
 
 Field solver
 ------------
 
-The field solver is performed in ``WarpX::EvolveE`` for the electric field and ``WarpX::EvolveB`` for the magnetic field, called from ``WarpX::OneStep_nosub`` in ``WarpX::EvolveEM``. This section describes the FDTD field push. It is implemented in ``Source/FieldSolver/FiniteDifferenceSolver/``.
+The field solver is performed in ``Artemis::EvolveE`` for the electric field and ``Artemis::EvolveB`` for the magnetic field, called from ``Artemis::OneStep_nosub`` in ``Artemis::EvolveEM``. This section describes the FDTD field push. It is implemented in ``Source/FieldSolver/FiniteDifferenceSolver/``.
 
 As all cell-wise operation, the field push is done as follows (this is split in multiple functions in the actual implementation to avoid code duplication)
 :
@@ -85,36 +85,36 @@ Guard cells exchanges
 
 Communications are mostly handled in ``Source/Parallelization/``.
 
-For E and B guard cell **exchanges**, the main functions are variants of ``amrex::FillBoundary(amrex::MultiFab, ...)`` (or ``amrex::MultiFab::FillBoundary(...)``) that fill guard cells of all ``amrex::FArrayBox`` in an ``amrex::MultiFab`` with valid cells of corresponding ``amrex::FArrayBox`` neighbors of the same ``amrex::MultiFab``. There are a number of ``FillBoundaryE``, ``FillBoundaryB`` etc. Under the hood, ``amrex::FillBoundary`` calls ``amrex::ParallelCopy``, which is also sometimes directly called in WarpX. Most calls a
+For E and B guard cell **exchanges**, the main functions are variants of ``amrex::FillBoundary(amrex::MultiFab, ...)`` (or ``amrex::MultiFab::FillBoundary(...)``) that fill guard cells of all ``amrex::FArrayBox`` in an ``amrex::MultiFab`` with valid cells of corresponding ``amrex::FArrayBox`` neighbors of the same ``amrex::MultiFab``. There are a number of ``FillBoundaryE``, ``FillBoundaryB`` etc. Under the hood, ``amrex::FillBoundary`` calls ``amrex::ParallelCopy``, which is also sometimes directly called in Artemis. Most calls a
 
-For the current density, the valid cells of neighboring ``MultiFabs`` are accumulated (added) rather than just copied. This is done using ``amrex::MultiFab::SumBoundary``, and mostly located in ``Source/Parallelization/WarpXSumGuardCells.H``.
+For the current density, the valid cells of neighboring ``MultiFabs`` are accumulated (added) rather than just copied. This is done using ``amrex::MultiFab::SumBoundary``, and mostly located in ``Source/Parallelization/ArtemisSumGuardCells.H``.
 
 Interpolations for MR
 ---------------------
 
 This is mostly implemented in ``Source/Parallelization``, see the following functions (you may complain to the authors if the documentation is empty)
 
-.. doxygenfunction:: WarpX::SyncCurrent
+.. doxygenfunction:: Artemis::SyncCurrent
 
-.. doxygenfunction:: WarpX::RestrictCurrentFromFineToCoarsePatch
+.. doxygenfunction:: Artemis::RestrictCurrentFromFineToCoarsePatch
 
-.. doxygenfunction:: WarpX::AddCurrentFromFineLevelandSumBoundary
+.. doxygenfunction:: Artemis::AddCurrentFromFineLevelandSumBoundary
 
 Filter
 ------
 
-General functions for filtering can be found in ``Source/Filter/``, where the main ``Filter`` class is defined (see below). All filters (so far there are two of them) in WarpX derive from this class.
+General functions for filtering can be found in ``Source/Filter/``, where the main ``Filter`` class is defined (see below). All filters (so far there are two of them) in Artemis derive from this class.
 
 .. doxygenclass:: Filter
 
 Bilinear filter
 ~~~~~~~~~~~~~~~
 
-The multi-pass bilinear filter (applied on the current density) is implemented in ``Source/Filter/``, and class ``WarpX`` holds an instance of this class in member variable ``WarpX::bilinear_filter``. For performance reasons (to avoid creating too many guard cells), this filter is directly applied in communication routines, see ``WarpX::AddCurrentFromFineLevelandSumBoundary`` above and
+The multi-pass bilinear filter (applied on the current density) is implemented in ``Source/Filter/``, and class ``Artemis`` holds an instance of this class in member variable ``Artemis::bilinear_filter``. For performance reasons (to avoid creating too many guard cells), this filter is directly applied in communication routines, see ``Artemis::AddCurrentFromFineLevelandSumBoundary`` above and
 
-.. doxygenfunction:: WarpX::ApplyFilterJ(const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &current, const int lev, const int idim)
+.. doxygenfunction:: Artemis::ApplyFilterJ(const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &current, const int lev, const int idim)
 
-.. doxygenfunction:: WarpX::SumBoundaryJ(const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &current, const int lev, const int idim, const amrex::Periodicity &period)
+.. doxygenfunction:: Artemis::SumBoundaryJ(const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &current, const int lev, const int idim, const amrex::Periodicity &period)
 
 Godfrey's anti-NCI filter for FDTD simulations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,6 +123,6 @@ This filter is applied on the electric and magnetic field (on the auxiliary grid
 
 .. doxygenclass:: NCIGodfreyFilter
 
-The class ``WarpX`` holds two corresponding instances of this class in member variables ``WarpX::nci_godfrey_filter_exeybz`` and ``WarpX::nci_godfrey_filter_bxbyez``. It is a 9-point stencil (is the ``z`` direction only), for which the coefficients are computed using tabulated values (depending on dz/dx) in ``Source/Utils/NCIGodfreyTables.H``, see variable ``table_nci_godfrey_galerkin_Ex_Ey_Bz``. The filter is applied in ``PhysicalParticleContainer::Evolve``, right after field gather and before particle push, see
+The class ``Artemis`` holds two corresponding instances of this class in member variables ``Artemis::nci_godfrey_filter_exeybz`` and ``Artemis::nci_godfrey_filter_bxbyez``. It is a 9-point stencil (is the ``z`` direction only), for which the coefficients are computed using tabulated values (depending on dz/dx) in ``Source/Utils/NCIGodfreyTables.H``, see variable ``table_nci_godfrey_galerkin_Ex_Ey_Bz``. The filter is applied in ``PhysicalParticleContainer::Evolve``, right after field gather and before particle push, see
 
 .. doxygenfunction:: PhysicalParticleContainer::applyNCIFilter

@@ -1,11 +1,11 @@
 /* Copyright 2019 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_amrex_qed_wrapper_commons_h_
-#define WARPX_amrex_qed_wrapper_commons_h_
+#ifndef ARTEMIS_amrex_qed_wrapper_commons_h_
+#define ARTEMIS_amrex_qed_wrapper_commons_h_
 /*
  * This header contains some common #define directives
  * used by the QED library wrappers and related components.
@@ -106,4 +106,4 @@ using PicsarQedVector = std::vector<Real>;
 
 #endif
 
-#endif //WARPX_amrex_qed_wrapper_commons_h_
+#endif //ARTEMIS_amrex_qed_wrapper_commons_h_

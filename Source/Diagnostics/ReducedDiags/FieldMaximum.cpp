@@ -1,6 +1,6 @@
 /* Copyright 2020 Neil Zaim, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,7 +8,7 @@
 #include "FieldMaximum.H"
 
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <ablastr/coarsen/sample.H>
 
@@ -44,8 +44,8 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 : ReducedDiags{rd_name}
 {
     // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+#if (defined ARTEMIS_DIM_RZ)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldMaximum reduced diagnostics does not work for RZ coordinate.");
 #endif
 
@@ -104,22 +104,22 @@ void FieldMaximum::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // get number of level
-    const auto nLevel = warpx.finestLevel() + 1;
+    const auto nLevel = artemis.finestLevel() + 1;
 
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // get MultiFab data at lev
-        const MultiFab & Ex = warpx.getEfield(lev,0);
-        const MultiFab & Ey = warpx.getEfield(lev,1);
-        const MultiFab & Ez = warpx.getEfield(lev,2);
-        const MultiFab & Bx = warpx.getBfield(lev,0);
-        const MultiFab & By = warpx.getBfield(lev,1);
-        const MultiFab & Bz = warpx.getBfield(lev,2);
+        const MultiFab & Ex = artemis.getEfield(lev,0);
+        const MultiFab & Ey = artemis.getEfield(lev,1);
+        const MultiFab & Ez = artemis.getEfield(lev,2);
+        const MultiFab & Bx = artemis.getBfield(lev,0);
+        const MultiFab & By = artemis.getBfield(lev,1);
+        const MultiFab & Bz = artemis.getBfield(lev,2);
 
         constexpr int noutputs = 8; // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
         constexpr int index_Ex = 0;

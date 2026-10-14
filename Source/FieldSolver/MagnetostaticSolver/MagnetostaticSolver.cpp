@@ -1,22 +1,22 @@
 /* Copyright 2022 S. Eric Clark, LLNL
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Python/WarpX_py.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Python/Artemis_py.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "Parallelization/WarpXComm_K.H"
+#include "Utils/ArtemisUtil.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Parallelization/ArtemisComm_K.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -56,21 +56,21 @@
 using namespace amrex;
 
 void
-WarpX::ComputeMagnetostaticField()
+Artemis::ComputeMagnetostaticField()
 {
-    WARPX_PROFILE("WarpX::ComputeMagnetostaticField");
+    ARTEMIS_PROFILE("Artemis::ComputeMagnetostaticField");
     // Fields have been reset in Electrostatic solver for this time step, these fields
     // are added into the B fields after electrostatic solve
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(this->max_level == 0, "Magnetostatic solver not implemented with mesh refinement.");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(this->max_level == 0, "Magnetostatic solver not implemented with mesh refinement.");
 
     AddMagnetostaticFieldLabFrame();
 }
 
 void
-WarpX::AddMagnetostaticFieldLabFrame()
+Artemis::AddMagnetostaticFieldLabFrame()
 {
-    WARPX_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
+    ARTEMIS_PROFILE("Artemis::AddMagnetostaticFieldLabFrame");
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
@@ -78,8 +78,8 @@ WarpX::AddMagnetostaticFieldLabFrame()
         m_vector_poisson_boundary_handler.defineVectorPotentialBCs();
     }
 
-#ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+#ifdef ARTEMIS_DIM_RZ
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                      "Error: RZ magnetostatic only implemented for a single mode");
 #endif
 
@@ -92,13 +92,13 @@ WarpX::AddMagnetostaticFieldLabFrame()
 
     // Deposit current density (source of Poisson solver)
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+        ArtemisParticleContainer& species = mypc->GetParticleContainer(ispecies);
         if (!species.do_not_deposit) {
             species.DepositCurrent(current_fp, dt[0], 0.);
         }
     }
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(),
                                                   current_fp[lev][1].get(),
@@ -112,7 +112,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     setVectorPotentialBC(vector_potential_fp_nodal);
 
     // Compute the vector potential A, by solving the Poisson equation
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
     amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
@@ -139,7 +139,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
    \param[in] verbosity The verbosity setting for the MLMG solver
 */
 void
-WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3> >& curr,
+Artemis::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3> >& curr,
                                 amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3> >& A,
                                 Real const required_precision,
                                 Real absolute_tolerance,
@@ -165,7 +165,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
 
     amrex::Vector<amrex::EBFArrayBoxFactory const *> factories;
     for (int lev = 0; lev <= finest_level; ++lev) {
-        factories.push_back(&WarpX::fieldEBFactory(lev));
+        factories.push_back(&Artemis::fieldEBFactory(lev));
     }
     std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory({factories});
 #else
@@ -184,7 +184,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
         this->dmap,
         this->grids,
         this->m_vector_poisson_boundary_handler,
-        WarpX::do_single_precision_comms,
+        Artemis::do_single_precision_comms,
         this->ref_ratio,
         post_A_calculation,
         gett_new(0),
@@ -203,7 +203,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
    \param[inout] A The vector potential
 */
 void
-WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>>& A ) const
+Artemis::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>>& A ) const
 {
     // check if any dimension has non-periodic boundary conditions
     if (!m_vector_poisson_boundary_handler.has_non_periodic) return;
@@ -258,16 +258,16 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
 {
     for (int adim = 0; adim < 3; adim++) {
         int dim_start = 0;
-#ifdef WARPX_DIM_RZ
-        WarpX& warpx = WarpX::GetInstance();
-        auto geom = warpx.Geom(0);
+#ifdef ARTEMIS_DIM_RZ
+        Artemis& artemis = Artemis::GetInstance();
+        auto geom = artemis.Geom(0);
         if (geom.ProbLo(0) == 0){
             lobc[adim][0] = LinOpBCType::Neumann;
             dirichlet_flag[adim][0] = false;
             dim_start = 1;
 
             // handle the r_max boundary explicity
-            if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
+            if (Artemis::field_boundary_hi[0] == FieldBoundaryType::PEC) {
                 if (adim == 0) {
                     hibc[adim][0] = LinOpBCType::Neumann;
                     dirichlet_flag[adim][1] = false;
@@ -276,7 +276,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                     dirichlet_flag[adim][1] = true;
                 }
             }
-            else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
+            else if (Artemis::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
                 hibc[adim][0] = LinOpBCType::Neumann;
                 dirichlet_flag[adim][1] = false;
             }
@@ -285,12 +285,12 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
         for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
             bool ndotA = (adim == idim);
 
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             if (idim == 1) ndotA = (adim == 2);
 #endif
 
-            if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
-                && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
+            if ( Artemis::field_boundary_lo[idim] == FieldBoundaryType::Periodic
+                && Artemis::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
                 lobc[adim][idim] = LinOpBCType::Periodic;
                 hibc[adim][idim] = LinOpBCType::Periodic;
                 dirichlet_flag[adim][idim*2] = false;
@@ -298,7 +298,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
             }
             else {
                 has_non_periodic = true;
-                if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
+                if ( Artemis::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
                     if (ndotA) {
                         lobc[adim][idim] = LinOpBCType::Neumann;
                         dirichlet_flag[adim][idim*2] = false;
@@ -308,18 +308,18 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                     }
                 }
 
-                else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
+                else if ( Artemis::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
                     lobc[adim][idim] = LinOpBCType::Neumann;
                     dirichlet_flag[adim][idim*2] = false;
                 }
                 else {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
                         "Field boundary conditions have to be either periodic, PEC, or neumann "
                         "when using the magnetostatic solver"
                     );
                 }
 
-                if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
+                if ( Artemis::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
                     if (ndotA) {
                         hibc[adim][idim] = LinOpBCType::Neumann;
                         dirichlet_flag[adim][idim*2+1] = false;
@@ -328,12 +328,12 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                         dirichlet_flag[adim][idim*2+1] = true;
                     }
                 }
-                else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
+                else if ( Artemis::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
                     hibc[adim][idim] = LinOpBCType::Neumann;
                     dirichlet_flag[adim][idim*2+1] = false;
                 }
                 else {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
                         "Field boundary conditions have to be either periodic, PEC, or neumann "
                         "when using the electrostatic solver"
                     );
@@ -347,23 +347,23 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
 void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std::unique_ptr<amrex::MultiFab> &src,
                                                                        const std::unique_ptr<amrex::MultiFab> &dst)
 {
-    WarpX &warpx = WarpX::GetInstance();
+    Artemis &artemis = Artemis::GetInstance();
 
     // Grab Interpolation Coefficients
     // Order of finite-order centering of fields
-    const int fg_nox = WarpX::field_centering_nox;
-    const int fg_noy = WarpX::field_centering_noy;
-    const int fg_noz = WarpX::field_centering_noz;
+    const int fg_nox = Artemis::field_centering_nox;
+    const int fg_noy = Artemis::field_centering_noy;
+    const int fg_noz = Artemis::field_centering_noz;
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
-    amrex::Real const * stencil_coeffs_x = warpx.device_field_centering_stencil_coeffs_x.data();
-    amrex::Real const * stencil_coeffs_y = warpx.device_field_centering_stencil_coeffs_y.data();
-    amrex::Real const * stencil_coeffs_z = warpx.device_field_centering_stencil_coeffs_z.data();
+    amrex::Real const * stencil_coeffs_x = artemis.device_field_centering_stencil_coeffs_x.data();
+    amrex::Real const * stencil_coeffs_y = artemis.device_field_centering_stencil_coeffs_y.data();
+    amrex::Real const * stencil_coeffs_z = artemis.device_field_centering_stencil_coeffs_z.data();
 
     // Synchronize the ghost cells, do halo exchange
     ablastr::utils::communication::FillBoundary(*src,
                                                 src->nGrowVect(),
-                                                WarpX::do_single_precision_comms);
+                                                Artemis::do_single_precision_comms);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -380,7 +380,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std
 
         ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
         {
-            warpx_interp(j, k, l, dst_arr, src_arr, dst_stag, src_stag, fg_nox, fg_noy, fg_noz,
+            artemis_interp(j, k, l, dst_arr, src_arr, dst_stag, src_stag, fg_nox, fg_noy, fg_noz,
                 stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
         });
     }
@@ -395,11 +395,11 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
 
     amrex::Array<amrex::MultiFab*, AMREX_SPACEDIM> buf_ptr =
     {
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         m_grad_buf_e_stag[lev][0].get(),
         m_grad_buf_e_stag[lev][1].get(),
         m_grad_buf_e_stag[lev][2].get()
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         m_grad_buf_e_stag[lev][0].get(),
         m_grad_buf_e_stag[lev][2].get()
 #endif

@@ -24,39 +24,39 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
-We use the following modules and environments on the system (``$HOME/lumi_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/lumi_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/lumi-csc/lumi_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/lumi-csc/lumi_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/lumi-csc/lumi_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/lumi-csc/lumi_artemis.profile.example``.
 
 
-We recommend to store the above lines in a file, such as ``$HOME/lumi_warpx.profile``, and load it into your shell after a login:
-
-.. code-block:: bash
-
-   source $HOME/lumi_warpx.profile
-
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+We recommend to store the above lines in a file, such as ``$HOME/lumi_artemis.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   source $HOME/lumi_artemis.profile
+
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
+
+.. code-block:: bash
+
+   cd $HOME/src/artemis
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON
+   cmake -S . -B build -DArtemis_DIMS=3 -DArtemis_COMPUTE=HIP -DArtemis_PSATD=ON
    cmake --build build -j 6
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lumi>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lumi>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in LUMI-P.
 
 
@@ -91,7 +91,7 @@ Known System Issues
 .. warning::
 
    December 12th, 2022:
-   There is a caching bug in libFabric that causes WarpX simulations to occasionally hang on LUMI on more than 1 node.
+   There is a caching bug in libFabric that causes Artemis simulations to occasionally hang on LUMI on more than 1 node.
 
    As a work-around, please export the following environment variable in your job scripts until the issue is fixed:
 

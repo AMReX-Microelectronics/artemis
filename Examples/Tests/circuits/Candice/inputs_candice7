@@ -1,4 +1,3 @@
-# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
 
 ################################
 ####### GENERAL PARAMETERS ######
@@ -23,9 +22,9 @@ boundary.field_hi = pml pml pml
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
+artemis.verbose = 1
 
-warpx.cfl = 0.8
+artemis.cfl = 0.8
 
 # vacuum or macroscopic
 algo.em_solver_medium = macroscopic
@@ -113,25 +112,25 @@ my_constants.flag_ss = 2
 # excitation
 ###############
 
-warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+artemis.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
+artemis.Ex_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
                                             (1
                                             -(x > -ddx) * (x < 635.e-6 + ddx) * (y > -w_sc/2. - w_air - ddy) * (y < -w_sc/2. + ddy)
                                             -(x > -ddx) * (x < 635.e-6 + ddx) * (y > w_sc/2. + ddy) * (y < w_sc/2. + w_air + ddy)
                                             )"
 
-warpx.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
+artemis.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
                                             (1
                                             -(x > -ddx) * (x < 635.e-6 + ddx) * (y > -w_sc/2. - w_air - ddy) * (y < -w_sc/2. + ddy)
                                             -(x > -ddx) * (x < 635.e-6 + ddx) * (y > w_sc/2. + ddy) * (y < w_sc/2. + w_air + ddy)
                                             )"
 
-warpx.Ez_excitation_flag_function(x,y,z) = "flag_ss * (y > -w_port/2. - ddy) * (y < w_port/2. + ddy) * (z > -ddz) * (z < h_port + ddz) * (x >= -ddx) * (x <= ddx)"
+artemis.Ez_excitation_flag_function(x,y,z) = "flag_ss * (y > -w_port/2. - ddy) * (y < w_port/2. + ddy) * (z > -ddz) * (z < h_port + ddz) * (x >= -ddx) * (x <= ddx)"
 
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*y)/w_port) * sin(2*pi*freq*t) * exp(-(t-3*TP)**2/(2*TP**2))"
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*y)/w_port) * sin(2*pi*freq*t) * exp(-(t-3*TP)**2/(2*TP**2))"
 
 ###############
 # diagnostics

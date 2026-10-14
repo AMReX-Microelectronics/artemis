@@ -1,14 +1,14 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "FiniteDifferenceSolver.H"
 
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#ifndef WARPX_DIM_RZ
+#include "Utils/ArtemisAlgorithmSelection.H"
+#ifndef ARTEMIS_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
@@ -45,7 +45,7 @@ void FiniteDifferenceSolver::ComputeDivE (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
 
         ComputeDivECylindrical <CylindricalYeeAlgorithm> ( Efield, divEfield );
@@ -65,13 +65,13 @@ void FiniteDifferenceSolver::ComputeDivE (
 
 #endif
     } else {
-        WARPX_ABORT_WITH_MESSAGE("ComputeDivE: Unknown algorithm");
+        ARTEMIS_ABORT_WITH_MESSAGE("ComputeDivE: Unknown algorithm");
     }
 
 }
 
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::ComputeDivECartesian (
@@ -117,7 +117,7 @@ void FiniteDifferenceSolver::ComputeDivECartesian (
 
 }
 
-#else // corresponds to ifndef WARPX_DIM_RZ
+#else // corresponds to ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::ComputeDivECylindrical (
@@ -189,4 +189,4 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
 
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to ifndef ARTEMIS_DIM_RZ

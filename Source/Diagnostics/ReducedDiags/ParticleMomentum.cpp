@@ -1,6 +1,6 @@
 /* Copyright 2019-2020
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,9 +9,9 @@
 
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/SpeciesPhysicalProperties.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_PODVector.H>
@@ -35,11 +35,11 @@ using namespace amrex;
 ParticleMomentum::ParticleMomentum (std::string rd_name)
     : ReducedDiags{rd_name}
 {
-    // Get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // Get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // Get MultiParticleContainer class object
-    const auto & mypc = warpx.GetPartContainer();
+    const auto & mypc = artemis.GetPartContainer();
 
     // Get number of species
     const int nSpecies = mypc.nSpecies();
@@ -122,7 +122,7 @@ void ParticleMomentum::ComputeDiags (int step)
     }
 
     // Get MultiParticleContainer class object
-    const auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const auto & mypc = Artemis::GetInstance().GetPartContainer();
 
     // Get number of species
     const int nSpecies = mypc.nSpecies();
@@ -135,7 +135,7 @@ void ParticleMomentum::ComputeDiags (int step)
     // Loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
-        // Get WarpXParticleContainer class object
+        // Get ArtemisParticleContainer class object
         const auto & myspc = mypc.GetParticleContainer(i_s);
 
         // Get mass
@@ -143,7 +143,7 @@ void ParticleMomentum::ComputeDiags (int step)
         // but ux, uy, uz are calculated assuming a mass equal to the electron mass)
         const amrex::Real m = (myspc.AmIA<PhysicalSpecies::photon>()) ? PhysConst::m_e : myspc.getMass();
 
-        using PType = typename WarpXParticleContainer::SuperParticleType;
+        using PType = typename ArtemisParticleContainer::SuperParticleType;
 
         // Use amrex::ParticleReduce to compute the sum of the momenta and weights of all particles
         // held by the current MPI rank for this species (loop over all boxes held by this MPI rank):

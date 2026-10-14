@@ -1,6 +1,6 @@
 /* Copyright 2021 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -83,13 +83,13 @@ namespace ApplyParticleBoundaries {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void
     apply_boundaries (
-#ifndef WARPX_DIM_1D_Z
+#ifndef ARTEMIS_DIM_1D_Z
               amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
 #endif
-#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ)
                       amrex::ParticleReal& y,
 #endif
-#if (defined WARPX_DIM_3D)
+#if (defined ARTEMIS_DIM_3D)
                       amrex::Real ymin, amrex::Real ymax,
 #endif
                       amrex::ParticleReal& z, amrex::Real zmin, amrex::Real zmax,
@@ -102,13 +102,13 @@ namespace ApplyParticleBoundaries {
         bool change_sign_uy = false;
         bool change_sign_uz = false;
 
-#ifndef WARPX_DIM_1D_Z
+#ifndef ARTEMIS_DIM_1D_Z
         apply_boundary(x, xmin, xmax, change_sign_ux, particle_lost,
                        boundaries.xmin_bc, boundaries.xmax_bc,
                        boundaries.reflection_model_xlo(-ux), boundaries.reflection_model_xhi(ux),
                        engine);
 #endif
-#ifdef WARPX_DIM_3D
+#ifdef ARTEMIS_DIM_3D
         apply_boundary(y, ymin, ymax, change_sign_uy, particle_lost,
                        boundaries.ymin_bc, boundaries.ymax_bc,
                        boundaries.reflection_model_ylo(-uy), boundaries.reflection_model_yhi(uy),
@@ -124,7 +124,7 @@ namespace ApplyParticleBoundaries {
             change_sign_uy = true;
             change_sign_uz = true;
         }
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         // Note that the reflection of the position does "r = 2*rmax - r", but this is only approximate.
         // The exact calculation requires the position at the start of the step.
         if (change_sign_ux && change_sign_uy) {

@@ -1,11 +1,11 @@
 /* Copyright 2021 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_PML_RZ_H_
-#define WARPX_PSATD_ALGORITHM_PML_RZ_H_
+#ifndef ARTEMIS_PSATD_ALGORITHM_PML_RZ_H_
+#define ARTEMIS_PSATD_ALGORITHM_PML_RZ_H_
 
 #include "SpectralBaseAlgorithmRZ.H"
 
@@ -59,4 +59,4 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
         SpectralRealCoefficients C_coef, S_ck_coef;
 };
 
-#endif // WARPX_PSATD_ALGORITHM_PML_RZ_H_
+#endif // ARTEMIS_PSATD_ALGORITHM_PML_RZ_H_

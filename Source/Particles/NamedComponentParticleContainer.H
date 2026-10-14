@@ -1,6 +1,6 @@
 /* Copyright 2022 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -23,7 +23,7 @@ struct PIdx
     enum {
         w = 0,      ///< weight
         ux, uy, uz,
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         theta,      ///< RZ needs all three position components
 #endif
         nattribs    ///< number of attributes
@@ -65,7 +65,7 @@ public:
         particle_comps["ux"] = PIdx::ux;
         particle_comps["uy"] = PIdx::uy;
         particle_comps["uz"] = PIdx::uz;
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         particle_comps["theta"] = PIdx::theta;
 #endif
     }

@@ -1,16 +1,16 @@
 /* Copyright 2019 Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include <AMReX_AmrCore.H>
 #include <AMReX_REAL.H>
 
-#ifndef WARPX_GODFREY_COEFF_TABLE_H_
-#define WARPX_GODFREY_COEFF_TABLE_H_
+#ifndef ARTEMIS_GODFREY_COEFF_TABLE_H_
+#define ARTEMIS_GODFREY_COEFF_TABLE_H_
 
-namespace warpx
+namespace artemis
 {
 namespace nci_godfrey
 {
@@ -453,8 +453,8 @@ namespace nci_godfrey
         {-2.30207_rt,1.69438_rt,-0.391629_rt,0.000683629_rt}
     };
 
-} //namespace warpx
+} //namespace artemis
 
 } //namespace nci_godfrey
 
-#endif // #ifndef WARPX_GODFREY_COEFF_TABLE_H_
+#endif // #ifndef ARTEMIS_GODFREY_COEFF_TABLE_H_

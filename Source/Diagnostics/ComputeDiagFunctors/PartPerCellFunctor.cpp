@@ -2,7 +2,7 @@
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Particles/MultiParticleContainer.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <ablastr/coarsen/sample.H>
 
@@ -25,17 +25,17 @@ PartPerCellFunctor::PartPerCellFunctor(const amrex::MultiFab* mf_src, const int 
 void
 PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/) const
 {
-    auto& warpx = WarpX::GetInstance();
+    auto& artemis = Artemis::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered
     // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
     // Temporary cell-centered, single-component MultiFab for storing particles per cell.
-    amrex::MultiFab ppc_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
+    amrex::MultiFab ppc_mf(artemis.boxArray(m_lev), artemis.DistributionMap(m_lev), 1, ng);
     // Set value to 0, and increment the value in each cell with ppc.
     ppc_mf.setVal(0._rt);
     // Compute ppc which includes a summation over all species.
-    warpx.GetPartContainer().Increment(ppc_mf, m_lev);
+    artemis.GetPartContainer().Increment(ppc_mf, m_lev);
     // Coarsen and interpolate from ppc_mf to the output diagnostic MultiFab, mf_dst.
     ablastr::coarsen::sample::Coarsen(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

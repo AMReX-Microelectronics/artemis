@@ -1,4 +1,4 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     BeamRelevant.cpp
     FieldEnergy.cpp

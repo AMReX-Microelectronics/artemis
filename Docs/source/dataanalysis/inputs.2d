@@ -17,8 +17,8 @@ boundary.field_lo = pml pml
 boundary.field_hi = pml pml
 geometry.prob_lo     = -125.e-6 -149.e-6
 geometry.prob_hi     =  125.e-6    1.e-6
-warpx.fine_tag_lo    =  -12.e-6 -110.e-6
-warpx.fine_tag_hi    =   12.e-6 -100.e-6
+artemis.fine_tag_lo    =  -12.e-6 -110.e-6
+artemis.fine_tag_hi    =   12.e-6 -100.e-6
 
 #################################
 ############ NUMERICS ###########
@@ -29,12 +29,12 @@ algo.field_gathering = 0
 algo.particle_pusher = 0
 algo.particle_shape = 3
 algo.maxwell_solver = ckc
-warpx.use_filter = 1
-warpx.pml_ncell = 10
-warpx.cfl = .99
-warpx.do_moving_window = 1
-warpx.moving_window_dir = z
-warpx.moving_window_v = 1. # in units of the speed of light
+artemis.use_filter = 1
+artemis.pml_ncell = 10
+artemis.cfl = .99
+artemis.do_moving_window = 1
+artemis.moving_window_dir = z
+artemis.moving_window_v = 1. # in units of the speed of light
 
 #################################
 ############ PLASMA #############

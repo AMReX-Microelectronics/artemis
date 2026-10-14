@@ -9,7 +9,7 @@ This section lists frequently asked usage questions.
 What is "MPI initialized with thread support level ..."?
 --------------------------------------------------------
 
-When we start up WarpX, we report a couple of information on used MPI processes across parallel compute processes, CPU threads or GPUs and further capabilities.
+When we start up Artemis, we report a couple of information on used MPI processes across parallel compute processes, CPU threads or GPUs and further capabilities.
 For instance, a parallel, multi-process, multi-threaded CPU run could output::
 
    MPI initialized with 4 MPI processes

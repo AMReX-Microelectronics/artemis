@@ -1,7 +1,7 @@
 /* Copyright 2022 Andrew Myers, Burlen Loring, Luca Fedeli
  * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,7 +9,7 @@
 #include "ParserUtils.H"
 
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Parser.H>
 #include <AMReX_ParmParse.H>
@@ -59,7 +59,7 @@ namespace {
             error_detected = true;
             assert_msg =  "NaN detected when casting " + real_name + " to integer type";
         }
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!error_detected, assert_msg);
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(!error_detected, assert_msg);
         return result;
    }
 }
@@ -99,7 +99,7 @@ amrex::Parser utils::parser::makeParser (
     amrex::ParmParse pp_my_constants("my_constants");
 
     // Physical / Numerical Constants available to parsed expressions
-    static std::map<std::string, amrex::Real> warpx_constants =
+    static std::map<std::string, amrex::Real> artemis_constants =
       {
        {"clight", PhysConst::c},
        {"epsilon0", PhysConst::ep0},
@@ -117,7 +117,7 @@ amrex::Parser utils::parser::makeParser (
         // user's expressions because of the limited range of exponentials in single precision
         double v;
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             recursive_symbols.count(*it)==0,
             "Expressions contains recursive symbol "+*it);
         recursive_symbols.insert(*it);
@@ -130,8 +130,8 @@ amrex::Parser utils::parser::makeParser (
             continue;
         }
 
-        const auto constant = warpx_constants.find(*it);
-        if (constant != warpx_constants.end()) {
+        const auto constant = artemis_constants.find(*it);
+        if (constant != artemis_constants.end()) {
           parser.setConstant(*it, constant->second);
           it = symbols.erase(it);
           continue;
@@ -140,7 +140,7 @@ amrex::Parser utils::parser::makeParser (
         ++it;
     }
     for (auto const& s : symbols) {
-        WARPX_ABORT_WITH_MESSAGE("makeParser::Unknown symbol "+s);
+        ARTEMIS_ABORT_WITH_MESSAGE("makeParser::Unknown symbol "+s);
     }
     return parser;
 }

@@ -1,6 +1,6 @@
 /* Copyright 2022 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -10,7 +10,7 @@
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Particles/ParticleBoundaryBuffer.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -45,15 +45,15 @@ BoundaryScrapingDiagnostics::ReadParameters ()
 #endif
 
     // Do a few checks
-#ifndef WARPX_USE_OPENPMD
-    amrex::Abort("You need to compile WarpX with openPMD support, in order to use BoundaryScrapingDiagnostic: -DWarpX_OPENPMD=ON");
+#ifndef ARTEMIS_USE_OPENPMD
+    amrex::Abort("You need to compile Artemis with openPMD support, in order to use BoundaryScrapingDiagnostic: -DArtemis_OPENPMD=ON");
 #endif
 
     // Check that the output format is openPMD
     std::string error_string = std::string("You need to set `")
         .append(m_diag_name)
         .append(".format=openpmd` for the BoundaryScrapingDiagnostic.");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "openpmd",
         error_string);
 
@@ -84,8 +84,8 @@ BoundaryScrapingDiagnostics::InitializeBufferData (int /*i_buffer*/, int /*lev*/
 void
 BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
 {
-    auto & warpx = WarpX::GetInstance();
-    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    auto & artemis = Artemis::GetInstance();
+    const MultiParticleContainer& mpc = artemis.GetPartContainer();
 
     // If the user does not specify any species, dump all species
     if (m_output_species_names.empty()) {
@@ -93,10 +93,10 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
     }
 
     // Initialize one ParticleDiag per species requested
-    ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
+    ParticleBoundaryBuffer& particle_buffer = artemis.GetParticleBoundaryBuffer();
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for (auto const& species_name : m_output_species_names){
-            WarpXParticleContainer* pc = &mpc.GetParticleContainerFromName(species_name);
+            ArtemisParticleContainer* pc = &mpc.GetParticleContainerFromName(species_name);
             PinnedMemoryParticleContainer* bnd_buffer = particle_buffer.getParticleBufferPointer(species_name, i_buffer);
             m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, pc, bnd_buffer));
         }
@@ -131,8 +131,8 @@ BoundaryScrapingDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flus
 void
 BoundaryScrapingDiagnostics::Flush (int i_buffer)
 {
-    auto & warpx = WarpX::GetInstance();
-    ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
+    auto & artemis = Artemis::GetInstance();
+    ParticleBoundaryBuffer& particle_buffer = artemis.GetParticleBoundaryBuffer();
 
     int n_particles = 0;
     for (auto const& species_name : m_output_species_names) {
@@ -150,16 +150,16 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
     int const numBTDBuffers = 0;
     // The data being written out is saved in a pinned particle container
     bool const use_pinned_pc = true;
-    const amrex::Geometry& geom = warpx.Geom(0); // For compatibility with `WriteToFile` ; not used
+    const amrex::Geometry& geom = artemis.Geom(0); // For compatibility with `WriteToFile` ; not used
 
     // The data for each boundary is written out to a separate directory with the boundary name
     std::string file_prefix = m_file_prefix + "/particles_at_" + particle_buffer.boundaryName(i_buffer);
 
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_output_species[i_buffer], nlev_output, file_prefix,
+        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], artemis.getistep(),
+        artemis.gett_new(0), m_output_species[i_buffer], nlev_output, file_prefix,
         m_file_min_digits, false, false, use_pinned_pc, isBTD,
-        warpx.getistep(0), bufferID, numBTDBuffers, geom,
+        artemis.getistep(0), bufferID, numBTDBuffers, geom,
         isLastBTD, m_totalParticles_flushed_already[i_buffer]);
 
     // Now that the data has been written out, clear out the buffer

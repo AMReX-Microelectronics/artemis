@@ -1,9 +1,9 @@
 #include "PsatdAlgorithmComoving.H"
 
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -19,7 +19,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 
 using namespace amrex;
 
@@ -37,7 +37,7 @@ PsatdAlgorithmComoving::PsatdAlgorithmComoving (const SpectralKSpace& spectral_k
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument grid_type=GridType::Staggered is then irrelevant)
        kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, GridType::Staggered)),
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
        ky_vec(spectral_kspace.getModifiedKComponent(dm, 1, -1, GridType::Staggered)),
        kz_vec(spectral_kspace.getModifiedKComponent(dm, 2, -1, GridType::Staggered)),
 #else
@@ -88,7 +88,7 @@ PsatdAlgorithmComoving::pushSpectralFields (SpectralFieldData& f) const
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
         const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
@@ -113,7 +113,7 @@ PsatdAlgorithmComoving::pushSpectralFields (SpectralFieldData& f) const
 
             // k vector values
             const amrex::Real kx_mod = modified_kx_arr[i];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const amrex::Real ky_mod = modified_ky_arr[j];
             const amrex::Real kz_mod = modified_kz_arr[k];
 #else
@@ -171,7 +171,7 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
         // Extract pointers for the k vectors
         const amrex::Real* kx_mod = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* kx     = kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* ky_mod = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* ky     = ky_vec[mfi].dataPtr();
 #endif
@@ -189,7 +189,7 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
 
         // Store comoving velocity
         const amrex::Real vx = m_v_comoving[0];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real vy = m_v_comoving[1];
 #endif
         const amrex::Real vz = m_v_comoving[2];
@@ -200,7 +200,7 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
             // Calculate norm of finite-order k vector
             const amrex::Real knorm_mod = std::sqrt(
                 amrex::Math::powi<2>(kx_mod[i]) +
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 amrex::Math::powi<2>(ky_mod[j]) +
                 amrex::Math::powi<2>(kz_mod[k]));
 #else
@@ -209,7 +209,7 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
             // Calculate norm of infinite-order k vector
             const amrex::Real knorm = std::sqrt(
                 amrex::Math::powi<2>(kx[i]) +
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 amrex::Math::powi<2>(ky[j]) +
                 amrex::Math::powi<2>(kz[k]));
 #else
@@ -226,7 +226,7 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
 
             // Calculate dot product of k vector with comoving velocity
             const amrex::Real kv = kx[i]*vx +
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 ky[j]*vy + kz[k]*vz;
 #else
                 kz[j]*vz;
@@ -430,7 +430,7 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
         // Extract pointers for the k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* const kx_arr = kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* const ky_arr = ky_vec[mfi].dataPtr();
 #endif
@@ -458,7 +458,7 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
             // k vector values, and coefficients
             const amrex::Real kx_mod = modified_kx_arr[i];
             const amrex::Real kx = kx_arr[i];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const amrex::Real ky_mod = modified_ky_arr[j];
             const amrex::Real kz_mod = modified_kz_arr[k];
             const amrex::Real ky = ky_arr[j];
@@ -502,8 +502,8 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
 void
 PsatdAlgorithmComoving::VayDeposition (SpectralFieldData& /*field_data*/)
 {
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Vay deposition not implemented for comoving PSATD");
 }
 
-#endif // WARPX_USE_PSATD
+#endif // ARTEMIS_USE_PSATD

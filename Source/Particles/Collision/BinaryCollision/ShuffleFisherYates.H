@@ -1,18 +1,18 @@
 /* Copyright 2019 Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_SHUFFLE_FISHER_YATES_H_
-#define WARPX_PARTICLES_COLLISION_SHUFFLE_FISHER_YATES_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_SHUFFLE_FISHER_YATES_H_
+#define ARTEMIS_PARTICLES_COLLISION_SHUFFLE_FISHER_YATES_H_
 
 #include <AMReX_Random.H>
 
 /* \brief Shuffle array according to Fisher-Yates algorithm.
  *        Only shuffle the part between is <= i < ie, n = ie-is.
  *        T_index shall be
- *        amrex::DenseBins<WarpXParticleContainer::ParticleType>::index_type
+ *        amrex::DenseBins<ArtemisParticleContainer::ParticleType>::index_type
 */
 
 template <typename T_index>
@@ -33,4 +33,4 @@ void ShuffleFisherYates (T_index *array, T_index const is, T_index const ie,
     }
 }
 
-#endif // WARPX_PARTICLES_COLLISION_SHUFFLE_FISHER_YATES_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_SHUFFLE_FISHER_YATES_H_

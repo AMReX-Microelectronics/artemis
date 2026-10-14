@@ -1,6 +1,6 @@
 /* Copyright 2019-2020 Michael Rowan, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,8 +9,8 @@
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Artemis.H"
 
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
@@ -45,14 +45,14 @@ namespace
         int tid = mfi.LocalTileIndex();
         auto box_index = std::make_pair(gid, tid);
 
-        auto & warpx = WarpX::GetInstance();
-        MultiParticleContainer const & mpc = warpx.GetPartContainer();
+        auto & artemis = Artemis::GetInstance();
+        MultiParticleContainer const & mpc = artemis.GetPartContainer();
         int const nSpecies = mpc.nSpecies();
 
         amrex::Long num_macro_particles = 0;
         for (int i_s = 0; i_s < nSpecies; ++i_s)
         {
-            WarpXParticleContainer const & pc = mpc.GetParticleContainer(i_s);
+            ArtemisParticleContainer const & pc = mpc.GetParticleContainer(i_s);
             auto const & plev  = pc.GetParticles(lev);
 
             auto const & ptile = plev.at(box_index);
@@ -74,21 +74,21 @@ LoadBalanceCosts::LoadBalanceCosts (std::string rd_name)
 // function that gathers costs
 void LoadBalanceCosts::ComputeDiags (int step)
 {
-    // get a reference to WarpX instance
-    auto& warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto& artemis = Artemis::GetInstance();
 
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
     if (!m_intervals.contains(step+1) ||
-        !warpx.get_load_balance_intervals().isActivated() ) { return; }
+        !artemis.get_load_balance_intervals().isActivated() ) { return; }
 
     // get number of boxes over all levels
-    auto nLevels = warpx.finestLevel() + 1;
+    auto nLevels = artemis.finestLevel() + 1;
     int nBoxes = 0;
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        const auto cost = warpx.getCosts(lev);
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        const auto cost = artemis.getCosts(lev);
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             cost, "ERROR: costs are not initialized on level " + std::to_string(lev) + " !");
         nBoxes += cost->size();
     }
@@ -104,18 +104,18 @@ void LoadBalanceCosts::ComputeDiags (int step)
     m_data.resize(dataSize, 0.0_rt);
     m_data.assign(dataSize, 0.0_rt);
 
-    // read in WarpX costs to local copy; compute if using `Heuristic` update
+    // read in Artemis costs to local copy; compute if using `Heuristic` update
     amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
 
     costs.resize(nLevels);
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        costs[lev] = std::make_unique<LayoutData<Real>>(*warpx.getCosts(lev));
+        costs[lev] = std::make_unique<LayoutData<Real>>(*artemis.getCosts(lev));
     }
 
-    if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+    if (artemis.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
-        warpx.ComputeCostsHeuristic(costs);
+        artemis.ComputeCostsHeuristic(costs);
     }
 
     // keep track of correct index in array over all boxes on all levels
@@ -125,8 +125,8 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // save data
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
-        const MultiFab & Ex = warpx.getEfield(lev,0);
+        const amrex::DistributionMapping& dm = artemis.DistributionMap(lev);
+        const MultiFab & Ex = artemis.getEfield(lev,0);
         for (MFIter mfi(Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& tbx = mfi.tilebox();
@@ -139,7 +139,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
 #else
             m_data[shift_m_data + mfi.index()*m_nDataFields + 4] = 0.;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = tbx.loVect()[2];
 #else
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = 0.;
@@ -256,7 +256,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     ofs << std::fixed << std::setprecision(14) << std::scientific;
 
     // write time
-    ofs << WarpX::GetInstance().gett_new(0);
+    ofs << Artemis::GetInstance().gett_new(0);
 
     // loop over data size and write
     for (int i = 0; i < static_cast<int>(m_data.size()); ++i)
@@ -279,13 +279,13 @@ void LoadBalanceCosts::WriteToFile (int step) const
     // close file
     ofs.close();
 
-    // get a reference to WarpX instance
-    auto& warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto& artemis = Artemis::GetInstance();
 
     if (!ParallelDescriptor::IOProcessor()) return;
 
     // final step is a special case, fill jagged array with NaN
-    if (m_intervals.nextContains(step+1) > warpx.maxStep())
+    if (m_intervals.nextContains(step+1) > artemis.maxStep())
     {
         // open tmp file to copy data
         std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;
@@ -333,7 +333,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
         // open the data-containing file
         std::string fileDataName = m_path + m_rd_name + "." + m_extension;
         std::ifstream ifs(fileDataName, std::ifstream::in);
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ifs, "Failed to load balance file");
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(ifs, "Failed to load balance file");
         ifs.exceptions(std::ios_base::badbit); // | std::ios_base::failbit
 
         // Fill in the tmp costs file with data, padded with NaNs

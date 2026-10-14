@@ -1,13 +1,13 @@
 /* Copyright 2022 Andrew Myers, Luca Fedeli, Maxence Thevenet
  * Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_UTILS_ALGORITHMS_ISIN_H_
-#define WARPX_UTILS_ALGORITHMS_ISIN_H_
+#ifndef ARTEMIS_UTILS_ALGORITHMS_ISIN_H_
+#define ARTEMIS_UTILS_ALGORITHMS_ISIN_H_
 
 #include <algorithm>
 #include <vector>
@@ -55,4 +55,4 @@ namespace utils::algorithms
     }
 }
 
-#endif //WARPX_UTILS_ALGORITHMS_ISIN_H_
+#endif //ARTEMIS_UTILS_ALGORITHMS_ISIN_H_

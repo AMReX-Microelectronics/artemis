@@ -1,13 +1,13 @@
 /* Copyright 2019-2020 Maxence Thevenet, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
 #include "ReducedDiags.H"
 
-#include "WarpX.H"
+#include "Artemis.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 
@@ -70,7 +70,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 void ReducedDiags::InitData ()
 {
     // Defines an empty function InitData() to be overwritten if needed.
-    // Function used to initialize data of the diagnostics after the WarpX
+    // Function used to initialize data of the diagnostics after the Artemis
     // data structures are all set up
 }
 
@@ -85,7 +85,7 @@ void ReducedDiags::BackwardCompatibility ()
 {
     amrex::ParmParse pp_rd_name(m_rd_name);
     std::vector<std::string> backward_strings;
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_rd_name.queryarr("frequency", backward_strings),
         "<reduced_diag_name>.frequency is no longer a valid option. "
         "Please use the renamed option <reduced_diag_name>.intervals instead."
@@ -108,7 +108,7 @@ void ReducedDiags::WriteToFile (int step) const
     ofs << std::fixed << std::setprecision(14) << std::scientific;
 
     // write time
-    ofs << WarpX::GetInstance().gett_new(0);
+    ofs << Artemis::GetInstance().gett_new(0);
 
     // loop over data size and write
     for (const auto& item : m_data) ofs << m_sep << item;

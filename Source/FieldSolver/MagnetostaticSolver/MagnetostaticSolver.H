@@ -1,6 +1,6 @@
 /* Copyright 2022 S. Eric Clark, LLNL
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -30,7 +30,7 @@ namespace MagnetostaticSolver {
 
     /** use amrex to directly calculate the magnetic field since with EB's the
      *
-     * simple finite difference scheme in WarpX::computeE sometimes fails
+     * simple finite difference scheme in Artemis::computeE sometimes fails
      */
     class EBCalcBfromVectorPotentialPerLevel {
       private:

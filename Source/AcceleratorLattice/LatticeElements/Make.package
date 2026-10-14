@@ -3,4 +3,4 @@ CEXE_sources += Drift.cpp
 CEXE_sources += HardEdgedQuadrupole.cpp
 CEXE_sources += HardEdgedPlasmaLens.cpp
 
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/AcceleratorLattice/LatticeElements
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/AcceleratorLattice/LatticeElements

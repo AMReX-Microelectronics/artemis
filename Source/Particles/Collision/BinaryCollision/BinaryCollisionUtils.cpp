@@ -1,6 +1,6 @@
 /* Copyright 2021 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,7 +8,7 @@
 #include "BinaryCollisionUtils.H"
 
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_Vector.H>
@@ -33,12 +33,12 @@ namespace BinaryCollisionUtils{
                 (species1.AmIA<PhysicalSpecies::hydrogen3>() && species2.AmIA<PhysicalSpecies::hydrogen2>())
                 )
             {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     product_species_name.size() == 2u,
                     "ERROR: Deuterium-tritium fusion must contain exactly two product species");
                 auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
                 auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     (product_species1.AmIA<PhysicalSpecies::helium4>() && product_species2.AmIA<PhysicalSpecies::neutron>())
                     ||
                     (product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium4>()),
@@ -47,7 +47,7 @@ namespace BinaryCollisionUtils{
             }
             else if (species1.AmIA<PhysicalSpecies::hydrogen2>() && species2.AmIA<PhysicalSpecies::hydrogen2>())
             {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     product_species_name.size() == 2u,
                     "ERROR: Deuterium-deuterium fusion must contain exactly two product species");
                 auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
@@ -71,12 +71,12 @@ namespace BinaryCollisionUtils{
                 (species1.AmIA<PhysicalSpecies::helium3>() && species2.AmIA<PhysicalSpecies::hydrogen2>())
                 )
             {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     product_species_name.size() == 2u,
                     "ERROR: Deuterium-helium fusion must contain exactly two product species");
                 auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
                 auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     (product_species1.AmIA<PhysicalSpecies::helium4>() && product_species2.AmIA<PhysicalSpecies::proton>())
                     ||
                     (product_species1.AmIA<PhysicalSpecies::proton>() && product_species2.AmIA<PhysicalSpecies::helium4>()),
@@ -88,11 +88,11 @@ namespace BinaryCollisionUtils{
                 (species1.AmIA<PhysicalSpecies::boron11>() && species2.AmIA<PhysicalSpecies::proton>())
                 )
             {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     product_species_name.size() == 1,
                     "ERROR: Proton-boron must contain exactly one product species");
                 auto& product_species = mypc->GetParticleContainerFromName(product_species_name[0]);
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     product_species.AmIA<PhysicalSpecies::helium>(),
                     "ERROR: Product species of proton-boron fusion must be of type alpha");
                 return NuclearFusionType::ProtonBoronToAlphas;

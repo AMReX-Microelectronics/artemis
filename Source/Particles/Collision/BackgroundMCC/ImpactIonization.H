@@ -1,16 +1,16 @@
 /* Copyright 2021 Modern Electron
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_MCC_SCATTERING_H_
-#define WARPX_PARTICLES_COLLISION_MCC_SCATTERING_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_MCC_SCATTERING_H_
+#define ARTEMIS_PARTICLES_COLLISION_MCC_SCATTERING_H_
 
 #include "MCCProcess.H"
 
 #include "Utils/ParticleUtils.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Random.H>
 #include <AMReX_REAL.H>
@@ -37,7 +37,7 @@ public:
     * is used to determine whether it actually collides.
     * Note that the mass and energy quantities have to be stored as doubles to
     * ensure accurate energy calculations (otherwise errors occur with single
-    * or mixed precision builds of WarpX).
+    * or mixed precision builds of Artemis).
     *
     * @param[in] mcc_process an MCCProcess object associated with the ionization
     * @param[in] mass colliding particle's mass (could also assume electron)
@@ -135,7 +135,7 @@ public:
     * (normalized temperature).
     * Note that the mass and energy quantities have to be stored as doubles to
     * ensure accurate energy calculations (otherwise errors occur with single
-    * or mixed precision builds of WarpX).
+    * or mixed precision builds of Artemis).
     *
     * @param[in] energy_cost energy cost of ionization
     * @param[in] mass1 mass of the colliding species
@@ -227,4 +227,4 @@ private:
     amrex::ParserExecutor<4> m_T_a_func;
     amrex::Real m_t;
 };
-#endif // WARPX_PARTICLES_COLLISION_MCC_SCATTERING_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_MCC_SCATTERING_H_

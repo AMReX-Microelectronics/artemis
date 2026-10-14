@@ -2296,14 +2296,14 @@ PREDEFINED             = AMREX_Linux=1 \
                          BL_USE_MPI=1 \
                          BL_USE_OMP=1 \
                          AMREX_USE_SENSEI_INSITU=1 \
-                         WARPX=1 \
-                         WARPX_DIM_RZ=1 \
-                         WARPX_DIM_XZ=1 \
-                         WARPX_USE_GPU=1 \
-                         WARPX_USE_OPENPMD=1 \
-                         WARPX_USE_PSATD=1 \
-                         WARPX_QED=1 \
-                         WARPX_QED_TABLE_GEN=1
+                         ARTEMIS=1 \
+                         ARTEMIS_DIM_RZ=1 \
+                         ARTEMIS_DIM_XZ=1 \
+                         ARTEMIS_USE_GPU=1 \
+                         ARTEMIS_USE_OPENPMD=1 \
+                         ARTEMIS_USE_PSATD=1 \
+                         ARTEMIS_QED=1 \
+                         ARTEMIS_QED_TABLE_GEN=1
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

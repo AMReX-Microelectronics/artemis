@@ -3,8 +3,8 @@ import re
 import scipy.constants as scc
 
 """
-This file is part of the suite of scripts to use LibEnsemble on top of WarpX
-simulations. It provides functions to modify some parameters in a WarpX
+This file is part of the suite of scripts to use LibEnsemble on top of Artemis
+simulations. It provides functions to modify some parameters in a Artemis
 input file.
 """
 
@@ -27,7 +27,7 @@ def write_sim_input(input_file, x_values):
 
     Parameters
     ----------
-    input_file : WarpX input file.
+    input_file : Artemis input file.
     x_values : Specific value of input x for this run.
     """
 
@@ -100,11 +100,11 @@ def write_sim_input(input_file, x_values):
         output_text, 'my_constants.adjust_factor = ', str(adjust_factor))
     # Set when to stop the run
     output_text = _set_value(
-        output_text, 'warpx.zmax_plasma_to_compute_max_step = ',
+        output_text, 'artemis.zmax_plasma_to_compute_max_step = ',
         str(zmax_stop_run))
     # Set mirrors position
     output_text = _set_value(
-        output_text, 'warpx.mirror_z = ', str(mirror_z_1)+' '+str(mirror_z_2))
+        output_text, 'artemis.mirror_z = ', str(mirror_z_1)+' '+str(mirror_z_2))
     # Set laser2 position
     output_text = _set_value(
         output_text, 'laser2.position = ', '0. 0. '+ str(z_antenna_2))

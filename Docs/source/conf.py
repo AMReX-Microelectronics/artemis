@@ -3,13 +3,13 @@
 # Copyright 2017-2020 Andrew Myers, Axel Huebl, Burlen Loring
 # Maxence Thevenet, Remi Lehe
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
 # -*- coding: utf-8 -*-
 #
-# WarpX documentation build configuration file, created by
+# Artemis documentation build configuration file, created by
 # sphinx-quickstart on Tue Mar  7 22:08:26 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -70,8 +70,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ARTEMIS'
-copyright = '2017-2022, WarpX-ARTEMIS collaboration'
-author = 'WarpX-ARTEMIS collaboration'
+copyright = '2017-2022, Artemis-ARTEMIS collaboration'
+author = 'Artemis-ARTEMIS collaboration'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -153,7 +153,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'ARTEMIS.tex', 'ARTEMIS Documentation',
-     'WarpX-ARTEMIS collaboration', 'manual'),
+     'Artemis-ARTEMIS collaboration', 'manual'),
 ]
 
 

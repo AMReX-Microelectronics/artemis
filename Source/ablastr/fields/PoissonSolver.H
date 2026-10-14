@@ -1,13 +1,13 @@
 /* Copyright 2019-2022 Axel Huebl, Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #ifndef ABLASTR_POISSON_SOLVER_H
 #define ABLASTR_POISSON_SOLVER_H
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
@@ -19,7 +19,7 @@
 #include <AMReX_Vector.H>
 #include <AMReX_Array.H>
 #include <AMReX_MLNodeTensorLaplacian.H>
-#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
+#if defined(AMREX_USE_EB) || defined(ARTEMIS_DIM_RZ)
 #   include <AMReX_MLEBNodeFDLaplacian.H>
 #endif
 #ifdef AMREX_USE_EB
@@ -180,15 +180,15 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
     for (int lev=0; lev<=finest_level; lev++) {
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
                 {{ beta[2] }};  // beta_x and beta_z
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 {{ beta[0], beta[2] }};  // beta_x and beta_z
 #else
                 {{ beta[0], beta[1], beta[2] }};
 #endif
 
-#if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
+#if !(defined(AMREX_USE_EB) || defined(ARTEMIS_DIM_RZ))
         // Determine whether to use semi-coarsening
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
                 {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
@@ -212,7 +212,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         }
 #endif
 
-#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
+#if defined(AMREX_USE_EB) || defined(ARTEMIS_DIM_RZ)
         // In the presence of EB or RZ: the solver assumes that the beam is
         // propagating along  one of the axes of the grid, i.e. that only *one*
         // of the components of `beta` is non-negligible.
@@ -225,7 +225,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         // Note: this assumes that the beam is propagating along
         // one of the axes of the grid, i.e. that only *one* of the
         // components of `beta` is non-negligible. // we use this
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
         linop.setSigma({0._rt, 1._rt-beta_solver[1]*beta_solver[1]});
 #else
         linop.setSigma({AMREX_D_DECL(
@@ -253,7 +253,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
         // Solve the Poisson equation
         linop.setDomainBC( boundary_handler.lobc, boundary_handler.hibc );
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         linop.setRZ(true);
 #endif
         amrex::MLMG mlmg(linop); // actual solver defined here

@@ -1,20 +1,20 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     SpectralFieldData.cpp
     SpectralKSpace.cpp
     SpectralSolver.cpp
 )
 
-if(WarpX_COMPUTE STREQUAL CUDA)
+if(Artemis_COMPUTE STREQUAL CUDA)
     target_sources(ablastr PRIVATE WrapCuFFT.cpp)
-elseif(WarpX_COMPUTE STREQUAL HIP)
+elseif(Artemis_COMPUTE STREQUAL HIP)
     target_sources(ablastr PRIVATE WrapRocFFT.cpp)
 else()
     target_sources(ablastr PRIVATE WrapFFTW.cpp)
 endif()
 
-if(WarpX_DIMS STREQUAL RZ)
-    target_sources(WarpX
+if(Artemis_DIMS STREQUAL RZ)
+    target_sources(Artemis
       PRIVATE
         SpectralSolverRZ.cpp
         SpectralFieldDataRZ.cpp

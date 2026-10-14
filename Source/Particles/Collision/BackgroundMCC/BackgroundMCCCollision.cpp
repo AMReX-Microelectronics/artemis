@@ -1,6 +1,6 @@
 /* Copyright 2021 Modern Electron
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -12,8 +12,8 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/ParticleUtils.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
@@ -24,14 +24,14 @@
 BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name)
     : CollisionBase(collision_name)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
                                      "Background MCC must have exactly one species.");
 
     amrex::ParmParse pp_collision_name(collision_name);
 
     amrex::ParticleReal background_density = 0;
     if (utils::parser::queryWithParser(pp_collision_name, "background_density", background_density)) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             (background_density > 0),
             "The background density must be greater than 0.");
         m_background_density_parser =
@@ -47,7 +47,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
     amrex::ParticleReal background_temperature;
     if (utils::parser::queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             (background_temperature >= 0), "The background temperature must be positive."
         );
         m_background_temperature_parser =
@@ -72,7 +72,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     if (m_max_background_density == 0 && background_density != 0) {
         m_max_background_density = background_density;
     }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         (m_max_background_density > 0),
         "The maximum background density must be greater than 0."
     );
@@ -109,7 +109,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
         MCCProcess process(scattering_process, cross_section_file, energy);
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != MCCProcessType::INVALID,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != MCCProcessType::INVALID,
                                          "Cannot add an unknown MCC process type");
 
         // if the scattering process is ionization get the secondary species
@@ -118,7 +118,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         // the maximum collision frequency with the same function used for
         // particle conserving processes
         if (process.type() == MCCProcessType::IONIZATION) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!ionization_flag,
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(!ionization_flag,
                                              "Background MCC only supports a single ionization process");
             ionization_flag = true;
 
@@ -206,7 +206,7 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processe
 void
 BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc)
 {
-    WARPX_PROFILE("BackgroundMCCCollision::doCollisions()");
+    ARTEMIS_PROFILE("BackgroundMCCCollision::doCollisions()");
     using namespace amrex::literals;
 
     auto& species1 = mypc->GetParticleContainerFromName(m_species_names[0]);
@@ -231,7 +231,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
         // dt has to be small enough that a linear expansion of the collision
         // probability is sufficiently accurately, otherwise the MCC results
         // will be very heavily affected by small changes in the timestep
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n < 0.1_prt,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(coll_n < 0.1_prt,
             "dt is too large to ensure accurate MCC results"
         );
 
@@ -243,7 +243,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
             auto coll_n_ioniz = m_nu_max_ioniz * dt;
             m_total_collision_prob_ioniz = 1.0_prt - std::exp(-coll_n_ioniz);
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1_prt,
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1_prt,
                 "dt is too large to ensure accurate MCC results"
             );
 
@@ -273,15 +273,15 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
     auto const flvl = species1.finestLevel();
     for (int lev = 0; lev <= flvl; ++lev) {
 
-        auto cost = WarpX::getCosts(lev);
+        auto cost = Artemis::getCosts(lev);
 
         // firstly loop over particles box by box and do all particle conserving
         // scattering
 #ifdef _OPENMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        for (ArtemisParIter pti(species1, lev); pti.isValid(); ++pti) {
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
             }
@@ -289,7 +289,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
 
             doBackgroundCollisionsWithinTile(pti, cur_time);
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
@@ -306,7 +306,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
 
 
 void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
-( WarpXParIter& pti, amrex::Real t )
+( ArtemisParIter& pti, amrex::Real t )
 {
     using namespace amrex::literals;
 
@@ -458,9 +458,9 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
 void BackgroundMCCCollision::doBackgroundIonization
 ( int lev, amrex::LayoutData<amrex::Real>* cost,
-  WarpXParticleContainer& species1, WarpXParticleContainer& species2, amrex::Real t)
+  ArtemisParticleContainer& species1, ArtemisParticleContainer& species2, amrex::Real t)
 {
-    WARPX_PROFILE("BackgroundMCCCollision::doBackgroundIonization()");
+    ARTEMIS_PROFILE("BackgroundMCCCollision::doBackgroundIonization()");
 
     SmartCopyFactory copy_factory_elec(species1, species1);
     SmartCopyFactory copy_factory_ion(species1, species2);
@@ -478,9 +478,9 @@ void BackgroundMCCCollision::doBackgroundIonization
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
+    for (ArtemisParIter pti(species1, lev); pti.isValid(); ++pti) {
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
         }
@@ -505,7 +505,7 @@ void BackgroundMCCCollision::doBackgroundIonization
         setNewParticleIDs(elec_tile, np_elec, num_added);
         setNewParticleIDs(ion_tile, np_ion, num_added);
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;

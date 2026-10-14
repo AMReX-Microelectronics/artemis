@@ -27,7 +27,7 @@ my_constants.ddz = dz / 100
 my_constants.ddx = dx / 100
 
 # Verbosity
-warpx.verbose = 1
+artemis.verbose = 1
 
 # Algorithms
 algo.current_deposition = esirkepov
@@ -50,7 +50,7 @@ macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r"
 macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r"
 
 # CFL
-warpx.cfl = 0.5
+artemis.cfl = 0.5
 
 #London
 algo.yee_coupled_solver = MaxwellLondon
@@ -67,25 +67,25 @@ my_constants.width = 20*dt
 my_constants.source = min_box + 5*dz
 my_constants.obs = -2.*dz + min_slab
 
-warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t - init)**2/(2*width*width))"
+artemis.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t - init)**2/(2*width*width))"
 
-warpx.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
-#warpx.Bx_excitation_grid_function(x,y,z,t) = "(-1./c)*exp(-(t - init)**2/(2*width*width))"
-warpx.Bx_excitation_grid_function(x,y,z,t)= "0."
-warpx.By_excitation_grid_function(x,y,z,t)= "0."
-warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
+artemis.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
+#artemis.Bx_excitation_grid_function(x,y,z,t) = "(-1./c)*exp(-(t - init)**2/(2*width*width))"
+artemis.Bx_excitation_grid_function(x,y,z,t)= "0."
+artemis.By_excitation_grid_function(x,y,z,t)= "0."
+artemis.Bz_excitation_grid_function(x,y,z,t) = "0."
 
-warpx.Ez_excitation_flag_function(x,y,z) = "0."
-warpx.Ex_excitation_flag_function(x,y,z) = "0."
-warpx.Ey_excitation_flag_function(x,y,z) = "0. + 2*(z>(source - dz/2 - ddz))*(z<(source + ddz))"
+artemis.Ez_excitation_flag_function(x,y,z) = "0."
+artemis.Ex_excitation_flag_function(x,y,z) = "0."
+artemis.Ey_excitation_flag_function(x,y,z) = "0. + 2*(z>(source - dz/2 - ddz))*(z<(source + ddz))"
 
-warpx.By_excitation_flag_function(x,y,z) = "0."
-warpx.Bz_excitation_flag_function(x,y,z) = "0."
-warpx.Bx_excitation_flag_function(x,y,z) = "0. + 2*(z>(source - dz/2 - ddz))*(z<(source + ddz))"
-#warpx.Bx_excitation_flag_function(x,y,z) = "0."
+artemis.By_excitation_flag_function(x,y,z) = "0."
+artemis.Bz_excitation_flag_function(x,y,z) = "0."
+artemis.Bx_excitation_flag_function(x,y,z) = "0. + 2*(z>(source - dz/2 - ddz))*(z<(source + ddz))"
+#artemis.Bx_excitation_flag_function(x,y,z) = "0."
 
 # Diagnostics
 #diagnostics.diags_names = diag1
@@ -97,7 +97,7 @@ warpx.Bx_excitation_flag_function(x,y,z) = "0. + 2*(z>(source - dz/2 - ddz))*(z<
 # Remove species
 particles.nspecies = 0
 
-warpx.reduced_diags_names = Eobs
+artemis.reduced_diags_names = Eobs
 
 Eobs.type = RawEFieldReduction
 Eobs.reduction_type = integral

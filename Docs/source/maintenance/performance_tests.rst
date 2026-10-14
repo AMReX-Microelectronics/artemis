@@ -3,9 +3,9 @@
 Automated performance tests
 ===========================
 
-WarpX has automated performance test scripts, which run weak scalings for various tests on a weekly basis. The results are stored in the `perf_logs repo <https://github.com/ECP-WarpX/perf_logs>`_ and plots of the performance history can be found on `this page <https://ecp-warpx.github.io/perf_logs/>`_.
+Artemis has automated performance test scripts, which run weak scalings for various tests on a weekly basis. The results are stored in the `perf_logs repo <https://github.com/ECP-WarpX/perf_logs>`_ and plots of the performance history can be found on `this page <https://ecp-warpx.github.io/perf_logs/>`_.
 
-These performance tests run automatically, so they need to do ``git`` operations etc. For this reason, they need a separate clone of the source repos, so they don't conflict with one's usual operations. This is typically in a sub-directory in the ``$HOME``, with variable ``$AUTOMATED_PERF_TESTS`` pointing to it. Similarly, a directory is needed to run the simulations and store the results. By default, it is ``$SCRATCH/performance_warpx``.
+These performance tests run automatically, so they need to do ``git`` operations etc. For this reason, they need a separate clone of the source repos, so they don't conflict with one's usual operations. This is typically in a sub-directory in the ``$HOME``, with variable ``$AUTOMATED_PERF_TESTS`` pointing to it. Similarly, a directory is needed to run the simulations and store the results. By default, it is ``$SCRATCH/performance_artemis``.
 
 The test runs a weak scaling (1,2,8,64,256,512 nodes) for 6 different tests ``Tools/PerformanceTests/automated_test_{1,2,3,4,5,6}_*``, gathered in 1 batch job per number of nodes to avoid submitting too many jobs.
 
@@ -23,7 +23,7 @@ Here is an example setup for Summit:
 
    mkdir $HOME/AUTOMATED_PERF_TESTS
    cd $AUTOMATED_PERF_TESTS
-   git clone https://github.com/ECP-WarpX/WarpX.git warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git artemis
    git clone https://github.com/ECP-WarpX/picsar.git
    git clone https://github.com/AMReX-Codes/amrex.git
    git clone https://github.com/ECP-WarpX/perf_logs.git
@@ -68,8 +68,8 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    export LAPACK=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
-   python3 -m venv $HOME/sw/venvs/warpx-perftest
-   source $HOME/sw/venvs/warpx-perftest/bin/activate
+   python3 -m venv $HOME/sw/venvs/artemis-perftest
+   source $HOME/sw/venvs/artemis-perftest/bin/activate
    # While setting up the performance tests for the first time,
    # execute the lines above this comment and then the commented
    # lines below this comment once, before submission.
@@ -85,7 +85,7 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    #python3 -m pip install --upgrade tables
 
    # Run the performance test suite
-   cd $AUTOMATED_PERF_TESTS/warpx/Tools/PerformanceTests/
+   cd $AUTOMATED_PERF_TESTS/artemis/Tools/PerformanceTests/
    python run_automated.py --n_node_list='1,2,8,64,256,512' --automated
 
    # submit next week's job
@@ -101,7 +101,7 @@ Then, running
 
 will submit this job once, and all the following ones. It will:
 
- - Create directory ``$SCRATCH/performance_warpx`` if doesn't exist.
+ - Create directory ``$SCRATCH/performance_artemis`` if doesn't exist.
  - Create 1 sub-directory per week per number of nodes (1,2,8,64,256,512).
  - Submit one job per number of nodes. It will run 6 different tests, each twice (to detect fluctuations).
  - Submit an analysis job, that will read the results ONLY AFTER all runs are finished. This uses the dependency feature of the batch system.

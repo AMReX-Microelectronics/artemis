@@ -27,24 +27,24 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
-We use the following modules and environments on the system (``$HOME/summit_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/summit_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/summit-olcf/summit_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/summit-olcf/summit_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/summit-olcf/summit_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/summit-olcf/summit_artemis.profile.example``.
 
 
-We recommend to store the above lines in a file, such as ``$HOME/summit_warpx.profile``, and load it into your shell after a login:
+We recommend to store the above lines in a file, such as ``$HOME/summit_artemis.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   source $HOME/summit_warpx.profile
+   source $HOME/summit_artemis.profile
 
 For PSATD+RZ simulations, you will need to build BLAS++ and LAPACK++:
 
@@ -69,9 +69,9 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
    python3 -m pip cache purge
-   rm -rf $HOME/sw/venvs/warpx
-   python3 -m venv $HOME/sw/venvs/warpx
-   source $HOME/sw/venvs/warpx/bin/activate
+   rm -rf $HOME/sw/venvs/artemis
+   python3 -m venv $HOME/sw/venvs/artemis
+   source $HOME/sw/venvs/artemis/bin/activate
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade wheel
    python3 -m pip install --upgrade cython
@@ -83,16 +83,16 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    python3 -m pip install --upgrade matplotlib==3.2.2  # does not try to build freetype itself
    python3 -m pip install --upgrade yt
    # WIP: issues with nlopt
-   # python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+   # python3 -m pip install -r $HOME/src/artemis/Tools/LibEnsemble/requirements.txt
 
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DArtemis_DIMS=3 -DArtemis_COMPUTE=CUDA
    cmake --build build -j 6
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -103,20 +103,20 @@ We only prefix it to request a node for the compilation (``runNode``), so we can
 .. code-block:: bash
 
    # PICMI build
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
 
    # install or update dependencies
    python3 -m pip install -r requirements.txt
 
    # compile parallel PICMI interfaces in 3D, 2D, 1D and RZ
-   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall --no-deps -v .
+   runNode ARTEMIS_MPI=ON ARTEMIS_COMPUTE=CUDA ARTEMIS_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall --no-deps -v .
 
-Or, if you are *developing*, do a quick PICMI install of a *single geometry* (see: :ref:`WarpX_DIMS <building-cmake-options>`) using:
+Or, if you are *developing*, do a quick PICMI install of a *single geometry* (see: :ref:`Artemis_DIMS <building-cmake-options>`) using:
 
 .. code-block:: bash
 
    # find dependencies & configure
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_LIB=ON -DWarpX_DIMS=RZ
+   cmake -S . -B build -DArtemis_COMPUTE=CUDA -DArtemis_PSATD=ON -DArtemis_LIB=ON -DArtemis_DIMS=RZ
 
    # build and then call "python3 -m pip install ..."
    cmake --build build --target pip_install -j 6
@@ -132,11 +132,11 @@ Running
 V100 GPUs (16GB)
 ^^^^^^^^^^^^^^^^
 
-The batch script below can be used to run a WarpX simulation on 2 nodes on
+The batch script below can be used to run a Artemis simulation on 2 nodes on
 the supercomputer Summit at OLCF. Replace descriptions between chevrons ``<>``
 by relevant values, for instance ``<input file>`` could be
 ``plasma_mirror_inputs``.
-Note that WarpX runs with one MPI rank per GPU and there are 6 GPUs per node:
+Note that Artemis runs with one MPI rank per GPU and there are 6 GPUs per node:
 
 .. literalinclude:: ../../../../Tools/machines/summit-olcf/summit_v100.bsub
    :language: bash
@@ -170,7 +170,7 @@ A batch script with more options regarding profiling on Summit can be found at
 Power9 CPUs
 ^^^^^^^^^^^
 
-Similar to above, the batch script below can be used to run a WarpX simulation on
+Similar to above, the batch script below can be used to run a Artemis simulation on
 1 node on the supercomputer Summit at OLCF, on Power9 CPUs (i.e., the GPUs are
 ignored).
 
@@ -193,7 +193,7 @@ parameters provided good performance:
 
 * **SMT 1 (Simultaneous Multithreading level 1)**
 
-* **Sixteen `64x64x64` grids per MPI rank** (with default tiling in WarpX, this
+* **Sixteen `64x64x64` grids per MPI rank** (with default tiling in Artemis, this
   results in ~49 tiles per OpenMP thread)
 
 .. _building-summit-io-performance:

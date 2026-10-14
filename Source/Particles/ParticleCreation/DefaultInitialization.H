@@ -1,7 +1,7 @@
 /* Copyright 2019-2020 Andrew Myers, Axel Huebl,
  * Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -34,18 +34,18 @@ enum struct InitializationPolicy {Zero=0, One, RandomExp};
 
 /**
  * \brief This map sets the initialization policy for each particle component
- * used in WarpX.
+ * used in Artemis.
  */
 static std::map<std::string, InitializationPolicy> initialization_policies = {
     {"w",     InitializationPolicy::Zero },
     {"ux",    InitializationPolicy::Zero },
     {"uy",    InitializationPolicy::Zero },
     {"uz",    InitializationPolicy::Zero },
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     {"theta", InitializationPolicy::Zero},
 #endif
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     {"opticalDepthBW",   InitializationPolicy::RandomExp},
     {"opticalDepthQSR",   InitializationPolicy::RandomExp}
 #endif

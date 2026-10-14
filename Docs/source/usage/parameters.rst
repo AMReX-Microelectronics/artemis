@@ -5,7 +5,7 @@ Input Parameters
 
 .. note::
 
-   WarpX input options are read via AMReX `ParmParse <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse>`__.
+   Artemis input options are read via AMReX `ParmParse <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse>`__.
 
 .. note::
 
@@ -30,54 +30,54 @@ Overall simulation parameters
 
     Note: in boosted-frame simulations, ``stop_time`` refers to the time in the boosted frame.
 
-* ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
-    Name of a file that WarpX writes to archive the used inputs.
+* ``artemis.used_inputs_file`` (`string`; default: ``artemis_used_inputs``)
+    Name of a file that Artemis writes to archive the used inputs.
     The context of this file will contain an exact copy of all explicitly and implicitly used inputs parameters, including those :ref:`extended and overwritten from the command line <usage_run>`.
 
-* ``warpx.gamma_boost`` (`float`)
+* ``artemis.gamma_boost`` (`float`)
     The Lorentz factor of the boosted frame in which the simulation is run.
-    (The corresponding Lorentz transformation is assumed to be along ``warpx.boost_direction``.)
+    (The corresponding Lorentz transformation is assumed to be along ``artemis.boost_direction``.)
 
     When using this parameter, the input parameters are interpreted as in the
     lab-frame and automatically converted to the boosted frame.
     (See the corresponding documentation of each input parameters for exceptions.)
 
-* ``warpx.boost_direction`` (string: ``x``, ``y`` or ``z``)
+* ``artemis.boost_direction`` (string: ``x``, ``y`` or ``z``)
     The direction of the Lorentz-transform for boosted-frame simulations
     (The direction ``y`` cannot be used in 2D simulations.)
 
-* ``warpx.zmax_plasma_to_compute_max_step`` (`float`) optional
+* ``artemis.zmax_plasma_to_compute_max_step`` (`float`) optional
     Can be useful when running in a boosted frame. If specified, automatically
     calculates the number of iterations required in the boosted frame for the
     lower `z` end of the simulation domain to reach
-    ``warpx.zmax_plasma_to_compute_max_step`` (typically the plasma end,
+    ``artemis.zmax_plasma_to_compute_max_step`` (typically the plasma end,
     given in the lab frame). The value of ``max_step`` is overwritten, and
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
-* ``warpx.compute_max_step_from_btd`` (`integer`; 0 by default) optional
+* ``artemis.compute_max_step_from_btd`` (`integer`; 0 by default) optional
     Can be useful when computing back-transformed diagnostics.  If specified,
     automatically calculates the number of iterations required in the boosted
     frame for all back-transformed diagnostics to be completed. If ``max_step``,
-    ``stop_time``, or ``warpx.zmax_plasma_to_compute_max_step`` are not specified,
+    ``stop_time``, or ``artemis.zmax_plasma_to_compute_max_step`` are not specified,
     or the current values of ``max_step`` and/or ``stop_time`` are too low to fill
     all BTD snapshots, the values of ``max_step`` and/or ``stop_time`` are
     overwritten with the new values and printed to standard output.
 
-* ``warpx.random_seed`` (`string` or `int` > 0) optional
-    If provided ``warpx.random_seed = random``, the random seed will be determined
+* ``artemis.random_seed`` (`string` or `int` > 0) optional
+    If provided ``artemis.random_seed = random``, the random seed will be determined
     using `std::random_device` and `std::clock()`,
     thus every simulation run produces different random numbers.
-    If provided ``warpx.random_seed = n``, and it is required that `n > 0`,
+    If provided ``artemis.random_seed = n``, and it is required that `n > 0`,
     the random seed for each MPI rank is `(mpi_rank+1) * n`,
     where `mpi_rank` starts from 0.
-    `n = 1` and ``warpx.random_seed = default``
+    `n = 1` and ``artemis.random_seed = default``
     produce the default random seed.
     Note that when GPU threading is used,
     one should not expect to obtain the same random numbers,
-    even if a fixed ``warpx.random_seed`` is provided.
+    even if a fixed ``artemis.random_seed`` is provided.
 
-* ``warpx.do_electrostatic`` (`string`) optional (default `none`)
+* ``artemis.do_electrostatic`` (`string`) optional (default `none`)
     Specifies the electrostatic mode. When turned on, instead of updating
     the fields at each iteration with the full Maxwell equations, the fields
     are recomputed at each iteration from the Poisson equation.
@@ -125,16 +125,16 @@ Overall simulation parameters
     error when evaluating convergence and an absolute error tolerance of
     :math:`10^{-6}` :math:`\mathrm{V/m}^2` will be used (unless a different
     non-zero value is specified by the user via
-    ``warpx.self_fields_absolute_tolerance``).
+    ``artemis.self_fields_absolute_tolerance``).
 
-* ``warpx.self_fields_required_precision`` (`float`, default: 1.e-11)
+* ``artemis.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
     computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
     This solver can fail to reach the default precision within a reasonable time.
-    This only applies when warpx.do_electrostatic = labframe.
+    This only applies when artemis.do_electrostatic = labframe.
 
-* ``warpx.self_fields_absolute_tolerance`` (`float`, default: 0.0)
+* ``artemis.self_fields_absolute_tolerance`` (`float`, default: 0.0)
     The absolute tolerance with which the space-charge fields should be
     calculated in units of :math:`\mathrm{V/m}^2`. More specifically, the acceptable
     residual with which the solution can be considered converged. In general
@@ -144,13 +144,13 @@ Overall simulation parameters
     that solution sufficiently to reach the ``self_fields_required_precision``
     value.
 
-* ``warpx.self_fields_max_iters`` (`integer`, default: 200)
+* ``artemis.self_fields_max_iters`` (`integer`, default: 200)
     Maximum number of iterations used for MLMG solver for space-charge
     fields calculation. In case if MLMG converges but fails to reach the desired
     ``self_fields_required_precision``, this parameter may be increased.
-    This only applies when warpx.do_electrostatic = labframe.
+    This only applies when artemis.do_electrostatic = labframe.
 
-* ``warpx.self_fields_verbosity`` (`integer`, default: 2)
+* ``artemis.self_fields_verbosity`` (`integer`, default: 2)
     The vebosity used for MLMG solver for space-charge fields calculation. Currently
     MLMG solver looks for verbosity levels from 0-5. A higher number results in more
     verbose output.
@@ -158,29 +158,29 @@ Overall simulation parameters
 * ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
     This will cause severe performance drops.
-    Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
+    Note that even with this set to ``1`` Artemis will not catch all out-of-memory events yet when operating close to maximum device memory.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
 
 * ``amrex.the_arena_is_managed``  (``0`` or ``1``; default is ``0`` for false)
     When running on GPUs, device memory that is accessed from the host will automatically be transferred with managed memory.
     This is useful for convenience during development, but has sometimes severe performance and memory footprint implications if relied on (and sometimes vendor bugs).
-    For all regular WarpX operations, we therefore do explicit memory transfers without the need for managed memory and thus changed the AMReX default to false.
+    For all regular Artemis operations, we therefore do explicit memory transfers without the need for managed memory and thus changed the AMReX default to false.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
 
 Signal Handling
 ^^^^^^^^^^^^^^^
 
-WarpX can handle Unix (Linux/macOS) `process signals <https://en.wikipedia.org/wiki/Signal_(IPC)>`__.
+Artemis can handle Unix (Linux/macOS) `process signals <https://en.wikipedia.org/wiki/Signal_(IPC)>`__.
 This can be useful to configure jobs on HPC and cloud systems to shut down cleanly when they are close to reaching their allocated walltime or to steer the simulation behavior interactively.
 
 Allowed signal names are documented in the `C++ standard <https://en.cppreference.com/w/cpp/utility/program/SIG_types>`__ and `POSIX <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html>`__.
-We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal configuration name for ``SIGINT`` is ``INT``.
+We follow the same naming, but remove the ``SIG`` prefix, e.g., the Artemis signal configuration name for ``SIGINT`` is ``INT``.
 
-* ``warpx.break_signals`` (array of `string`, separated by spaces) optional
+* ``artemis.break_signals`` (array of `string`, separated by spaces) optional
     A list of signal names or numbers that the simulation should
     handle by cleanly terminating at the next timestep
 
-* ``warpx.checkpoint_signals`` (array of `string`, separated by spaces) optional
+* ``artemis.checkpoint_signals`` (array of `string`, separated by spaces) optional
     A list of signal names or numbers that the simulation should
     handle by outputting a checkpoint at the next timestep. A
     diagnostic of type `checkpoint` must be configured.
@@ -195,19 +195,19 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
    The ``TSTP`` (terminal stop) command is sent interactively from ``Ctrl+Z`` to temporarily send a process to sleep (until send in the background with commands such as ``bg`` or continued with ``fg``), overwriting it would thus disable that functionality.
    The signals ``KILL`` and ``STOP`` cannot be used.
 
-   The ``FPE`` signal should not be overwritten in WarpX, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
+   The ``FPE`` signal should not be overwritten in Artemis, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_artemis>`.
 
 .. tip::
 
    For example, the following logic can be added to `Slurm batch scripts <https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm:signals>`__ (`signal name to number mapping here <https://en.wikipedia.org/wiki/Signal_(IPC)#Default_action>`__) to gracefully shut down 6 min prior to walltime.
-   If you have a checkpoint diagnostics in your inputs file, this automatically will write a checkpoint due to the default ``<diag_name>.dump_last_timestep = 1`` option in WarpX.
+   If you have a checkpoint diagnostics in your inputs file, this automatically will write a checkpoint due to the default ``<diag_name>.dump_last_timestep = 1`` option in Artemis.
 
    .. code-block:: bash
 
       #SBATCH --signal=B:1@360
 
       srun ...                   \
-        warpx.break_signals=HUP  \
+        artemis.break_signals=HUP  \
         > output.txt
 
    For `LSF batch systems <https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=options-wa>`__, the equivalent job script lines are:
@@ -217,7 +217,7 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
       #BSUB -wa 'HUP' -wt '6'
 
       jsrun ...                  \
-        warpx.break_signals=HUP  \
+        artemis.break_signals=HUP  \
         > output.txt
 
 .. _running-cpp-parameters-box:
@@ -249,12 +249,12 @@ Setting up the field mesh
     For ``3``, a cartesian geometry of ``x``, ``y``, ``z`` is modeled.
     For ``2``, the axes are ``x`` and ``z`` and all physics in ``y`` is assumed to be translation symmetric.
     For ``1``, the only axis is ``z`` and the dimensions ``x`` and ``y`` are translation symmetric.
-    For ``RZ``, we apply an azimuthal mode decomposition, with ``warpx.n_rz_azimuthal_modes`` providing further control.
+    For ``RZ``, we apply an azimuthal mode decomposition, with ``artemis.n_rz_azimuthal_modes`` providing further control.
 
-    Note that this value has to match the :ref:`WarpX_DIMS <building-cmake-options>` compile-time option.
-    If you installed WarpX from a :ref:`package manager <install-users>`, then pick the right executable by name.
+    Note that this value has to match the :ref:`Artemis_DIMS <building-cmake-options>` compile-time option.
+    If you installed Artemis from a :ref:`package manager <install-users>`, then pick the right executable by name.
 
-* ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
+* ``artemis.n_rz_azimuthal_modes`` (`integer`; 1 by default)
     When using the RZ version, this is the number of azimuthal modes.
     The default is ``1``, which corresponds to a perfectly axisymmetric simulation.
 
@@ -264,35 +264,35 @@ Setting up the field mesh
     upper corner (``geometry.prob_hi``). The first axis of the coordinates is x
     (or r with cylindrical) and the last is z.
 
-* ``warpx.do_moving_window`` (`integer`; 0 by default)
+* ``artemis.do_moving_window`` (`integer`; 0 by default)
     Whether to use a moving window for the simulation
 
-* ``warpx.moving_window_dir`` (either ``x``, ``y`` or ``z``)
+* ``artemis.moving_window_dir`` (either ``x``, ``y`` or ``z``)
     The direction of the moving window.
 
-* ``warpx.moving_window_v`` (`float`)
+* ``artemis.moving_window_v`` (`float`)
     The speed of moving window, in units of the speed of light
     (i.e. use ``1.0`` for a moving window that moves exactly at the speed of light)
 
-* ``warpx.start_moving_window_step`` (`integer`; 0 by default)
+* ``artemis.start_moving_window_step`` (`integer`; 0 by default)
     The timestep at which the moving window starts.
 
-* ``warpx.end_moving_window_step`` (`integer`; default is ``-1`` for false)
+* ``artemis.end_moving_window_step`` (`integer`; default is ``-1`` for false)
     The timestep at which the moving window ends.
 
-* ``warpx.fine_tag_lo`` and ``warpx.fine_tag_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters) optional
+* ``artemis.fine_tag_lo`` and ``artemis.fine_tag_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters) optional
     **When using static mesh refinement with 1 level**, the extent of the refined patch.
     This patch is rectangular, and thus its extent is given here by the coordinates
-    of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
+    of the lower corner (``artemis.fine_tag_lo``) and upper corner (``artemis.fine_tag_hi``).
 
-* ``warpx.refine_plasma`` (`integer`) optional (default `0`)
+* ``artemis.refine_plasma`` (`integer`) optional (default `0`)
     Increase the number of macro-particles that are injected "ahead" of a mesh
     refinement patch in a moving window simulation.
 
     Note: in development; only works with static mesh-refinement, specific
     to moving window plasma injection, and requires a single refined level.
 
-* ``warpx.n_current_deposition_buffer`` (`integer`)
+* ``artemis.n_current_deposition_buffer`` (`integer`)
     When using mesh refinement: the particles that are located inside
     a refinement patch, but within ``n_current_deposition_buffer`` cells of
     the edge of this patch, will deposit their charge and current to the
@@ -302,16 +302,16 @@ Setting up the field mesh
     ``n_current_deposition_buffer`` is automatically set so as to be large
     enough to hold the particle shape, on the fine grid
 
-* ``warpx.n_field_gather_buffer`` (`integer`, optional)
-    Default: ``warpx.n_field_gather_buffer = n_current_deposition_buffer + 1`` (one cell larger than ``n_current_deposition_buffer`` on the fine grid).
+* ``artemis.n_field_gather_buffer`` (`integer`, optional)
+    Default: ``artemis.n_field_gather_buffer = n_current_deposition_buffer + 1`` (one cell larger than ``n_current_deposition_buffer`` on the fine grid).
 
     When using mesh refinement, particles that are located inside a refinement patch, but within ``n_field_gather_buffer`` cells of the edge of the patch, gather the fields from the lower refinement level, instead of gathering the fields from the refinement patch itself.
     This avoids some of the spurious effects that can occur inside the refinement patch, close to its edge.
     See the section :ref:`Mesh refinement <theory-amr>` for more details.
 
-* ``warpx.do_single_precision_comms`` (`integer`; 0 by default)
+* ``artemis.do_single_precision_comms`` (`integer`; 0 by default)
     Perform MPI communications for field guard regions in single precision.
-    Only meaningful for ``WarpX_PRECISION=DOUBLE``.
+    Only meaningful for ``Artemis_PRECISION=DOUBLE``.
 
 * ``particles.deposit_on_main_grid`` (`list of strings`)
     When using mesh refinement: the particle species whose name are included
@@ -335,7 +335,7 @@ Domain Boundary Conditions
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
 
     * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. See the :ref:`PML theory section <theory-bc>` for more details.
-      Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.pml_has_particles``, and ``warpx.do_pml_j_damping``.
+      Additional pml algorithms can be explored using the parameters ``artemis.do_pml_in_domain``, ``artemis.pml_has_particles``, and ``artemis.do_pml_j_damping``.
 
     * ``absorbing_silver_mueller``: This option can be used to set the Silver-Mueller absorbing boundary conditions. These boundary conditions are simpler and less computationally expensive than the pml, but are also less effective at absorbing the field. They only work with the Yee Maxwell solver.
 
@@ -370,41 +370,41 @@ Domain Boundary Conditions
 Additional PML parameters
 -------------------------
 
-* ``warpx.pml_ncell`` (`int`; default: 10)
+* ``artemis.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
 
 * ``do_similar_dm_pml`` (`int`; default: 1)
     Whether or not to use an amrex::DistributionMapping for the PML grids that is `similar` to the mother grids, meaning that the
     mapping will be computed to minimize the communication costs between the PML and the mother grids.
 
-* ``warpx.pml_delta`` (`int`; default: 10)
+* ``artemis.pml_delta`` (`int`; default: 10)
     The characteristic depth, in number of cells, over which
     the absorption coefficients of the PML increases.
 
-* ``warpx.do_pml_in_domain`` (`int`; default: 0)
+* ``artemis.do_pml_in_domain`` (`int`; default: 0)
     Whether to create the PML inside the simulation area or outside. If inside,
     it allows the user to propagate particles in PML and to use extended PML
 
-* ``warpx.pml_has_particles`` (`int`; default: 0)
+* ``artemis.pml_has_particles`` (`int`; default: 0)
     Whether to propagate particles in PML or not. Can only be done if PML are in simulation domain,
-    i.e. if `warpx.do_pml_in_domain = 1`.
+    i.e. if `artemis.do_pml_in_domain = 1`.
 
-* ``warpx.do_pml_j_damping`` (`int`; default: 0)
+* ``artemis.do_pml_j_damping`` (`int`; default: 0)
     Whether to damp current in PML. Can only be used if particles are propagated in PML,
-    i.e. if `warpx.pml_has_particles = 1`.
+    i.e. if `artemis.pml_has_particles = 1`.
 
-* ``warpx.v_particle_pml`` (`float`; default: 1)
-    When ``warpx.do_pml_j_damping = 1``, the assumed velocity of the particles to be absorbed in the PML, in units of the speed of light `c`.
+* ``artemis.v_particle_pml`` (`float`; default: 1)
+    When ``artemis.do_pml_j_damping = 1``, the assumed velocity of the particles to be absorbed in the PML, in units of the speed of light `c`.
 
-* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+* ``artemis.do_pml_dive_cleaning`` (`bool`; default: 1)
     Whether to use divergence cleaning for E in the PML region.
-    The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
+    The value must match ``artemis.do_pml_divb_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
     This option is implemented only for the PSATD solver.
 
-* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+* ``artemis.do_pml_divb_cleaning`` (`bool`; default: 1)
     Whether to use divergence cleaning for B in the PML region.
-    The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
+    The value must match ``artemis.do_pml_dive_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
 
 .. _running-cpp-parameters-eb:
@@ -412,14 +412,14 @@ Additional PML parameters
 Embedded Boundary Conditions
 ----------------------------
 
-* ``warpx.eb_implicit_function`` (`string`)
+* ``artemis.eb_implicit_function`` (`string`)
     A function of `x`, `y`, `z` that defines the surface of the embedded
     boundary. That surface lies where the function value is 0 ;
     the physics simulation area is where the function value is negative ;
     the interior of the embeddded boundary is where the function value is positive.
 
-* ``warpx.eb_potential(x,y,z,t)`` (`string`)
-    Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
+* ``artemis.eb_potential(x,y,z,t)`` (`string`)
+    Only used when ``artemis.do_electrostatic=labframe``. Gives the value of
     the electric potential at the surface of the embedded boundary,
     as a function of  `x`, `y`, `z` and time. This function is also evaluated
     inside the embedded boundary. For this reason, it is important to define
@@ -430,7 +430,7 @@ Embedded Boundary Conditions
 Distribution across MPI ranks and parallelization
 -------------------------------------------------
 
-* ``warpx.numprocs`` (`2 ints` for 2D, `3 ints` for 3D) optional (default `none`)
+* ``artemis.numprocs`` (`2 ints` for 2D, `3 ints` for 3D) optional (default `none`)
     This optional parameter can be used to control the domain decomposition on the
     coarsest level. The domain will be chopped into the exact number of pieces in each
     dimension as specified by this parameter. If it's not specified, the domain
@@ -454,11 +454,11 @@ Distribution across MPI ranks and parallelization
 
 * ``algo.load_balance_intervals`` (`string`) optional (default `0`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
-    WarpX should try to redistribute the work across MPI ranks, in order to have
+    Artemis should try to redistribute the work across MPI ranks, in order to have
     better load balancing.
     Use 0 to disable load_balancing.
 
-    When performing load balancing, WarpX measures the wall time for
+    When performing load balancing, Artemis measures the wall time for
     computational parts of the PIC cycle. It then uses this data to decide
     how to redistribute the subdomains across MPI ranks. (Each subdomain
     is unchanged, but its owner is changed in order to have better performance.)
@@ -511,7 +511,7 @@ Distribution across MPI ranks and parallelization
 
     If this is `timers`: costs are updated according to in-code timers.
 
-    If this is `gpuclock`: [**requires to compile with option** ``-DWarpX_GPUCLOCK=ON``]
+    If this is `gpuclock`: [**requires to compile with option** ``-DArtemis_GPUCLOCK=ON``]
     costs are measured as (max-over-threads) time spent in current deposition
     routine (only applies when running on GPUs).
 
@@ -547,7 +547,7 @@ Distribution across MPI ranks and parallelization
     | PSATD    | 0.575 | 0.405 | 0.25  |
     +----------+-------+-------+-------+
 
-* ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
+* ``artemis.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
 
 .. _running-cpp-parameters-parser:
@@ -555,17 +555,17 @@ Distribution across MPI ranks and parallelization
 Math parser and user-defined constants
 --------------------------------------
 
-WarpX uses AMReX's math parser that reads expressions in the input file.
+Artemis uses AMReX's math parser that reads expressions in the input file.
 It can be used in all input parameters that consist of one or more integers or floats.
 Integer input expecting boolean, 0 or 1, are not parsed.
 Note that when multiple values are expected, the expressions are space delimited.
 For integer input values, the expressions are evaluated as real numbers and the final result rounded to the nearest integer.
 See `this section <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parser>`__ of the AMReX documentation for a complete list of functions supported by the math parser.
 
-WarpX constants
+Artemis constants
 ^^^^^^^^^^^^^^^
 
-WarpX provides a few pre-defined constants, that can be used for any parameter that consists of one or more floats.
+Artemis provides a few pre-defined constants, that can be used for any parameter that consists of one or more floats.
 
 ======== ===================
 q_e      elementary charge
@@ -580,7 +580,7 @@ pi       math constant pi
 kb       Boltzmann constant (J/K)
 ======== ===================
 
-See ``Source/Utils/WarpXConst.H`` for the values.
+See ``Source/Utils/ArtemisConst.H`` for the values.
 
 User-defined constants
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -589,8 +589,8 @@ Users can define their own constants in the input file.
 These constants can be used for any parameter that consists of one or more integers or floats.
 User-defined constant names can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
-by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
-The values of the constants can include the predefined WarpX constants listed above as well as other user-defined constants.
+by Artemis, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
+The values of the constants can include the predefined Artemis constants listed above as well as other user-defined constants.
 For example:
 
 * ``my_constants.a0 = 3.0``
@@ -637,7 +637,7 @@ Particle initialization
     particles are pushed in a standard way, using the specified pusher.
     (see the parameter ``<species_name>.zinject_plane`` below)
 
-* ``particles.do_tiling`` (`bool`) optional (default `false` if WarpX is compiled for GPUs, `true` otherwise)
+* ``particles.do_tiling`` (`bool`) optional (default `false` if Artemis is compiled for GPUs, `true` otherwise)
     Controls whether tiling ('cache blocking') transformation is used for particles.
     Tiling should be on when using OpenMP and off when using GPUs.
 
@@ -660,7 +660,7 @@ Particle initialization
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)
     The charge of one `physical` particle of this species.
     If ``species_type`` is specified, the charge will be set to the physical value and ``charge`` is optional.
-    When ``<species>.do_field_ionization = 1``, the physical particle charge is equal to ``ionization_initial_level * charge``, so latter parameter should be equal to q_e (which is defined in WarpX as the elementary charge in coulombs).
+    When ``<species>.do_field_ionization = 1``, the physical particle charge is equal to ``ionization_initial_level * charge``, so latter parameter should be equal to q_e (which is defined in Artemis as the elementary charge in coulombs).
 
 * ``<species_name>.mass`` (`float`) optional (default `NaN`)
     The mass of one `physical` particle of this species.
@@ -722,7 +722,7 @@ Particle initialization
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
       The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
-      For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
+      For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build Artemis with it, please visit :ref:`the install section <install-developers>`.
 
     * ``NFluxPerCell``: Continuously inject a flux of macroparticles from a planar surface.
       The density specified by the density profile is interpreted to have the units of #/m^2/s.
@@ -1030,7 +1030,7 @@ Particle initialization
         to clear the buffer after processing the data. The
         buffer will grow unbounded as particles are scraped and therefore could
         lead to memory issues if not periodically cleared. To clear the buffer
-        call ``warpx_clearParticleBoundaryBuffer()``.
+        call ``artemis_clearParticleBoundaryBuffer()``.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
@@ -1144,7 +1144,7 @@ Laser initialization
         but the second number is ignored.
 
     When running a **boosted-frame simulation**, provide the value of
-    ``<laser_name>.position`` in the laboratory frame, and use ``warpx.gamma_boost``
+    ``<laser_name>.position`` in the laboratory frame, and use ``artemis.gamma_boost``
     to automatically perform the conversion to the boosted frame. Note that,
     in this case, the laser antenna will be moving, in the boosted frame.
 
@@ -1165,7 +1165,7 @@ Laser initialization
     .. warning::
 
         When running **boosted-frame simulations**, ``<laser_name>.direction`` should
-        be parallel to ``warpx.boost_direction``, for now.
+        be parallel to ``artemis.boost_direction``, for now.
 
 * ``<laser_name>.e_max`` (`float` ; in V/m)
     Peak amplitude of the laser field.
@@ -1178,7 +1178,7 @@ Laser initialization
         E_{max} = a_0 \frac{2 \pi m_e c^2}{e\lambda} = a_0 \times (4.0 \cdot 10^{12} \;V.m^{-1})
 
     When running a **boosted-frame simulation**, provide the value of ``<laser_name>.e_max``
-    in the laboratory frame, and use ``warpx.gamma_boost`` to automatically
+    in the laboratory frame, and use ``artemis.gamma_boost`` to automatically
     perform the conversion to the boosted frame.
 
 * ``<laser_name>.a0`` (`float` ; dimensionless)
@@ -1190,7 +1190,7 @@ Laser initialization
     The wavelength of the laser in vacuum.
 
     When running a **boosted-frame simulation**, provide the value of
-    ``<laser_name>.wavelength`` in the laboratory frame, and use ``warpx.gamma_boost``
+    ``<laser_name>.wavelength`` in the laboratory frame, and use ``artemis.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
 * ``<laser_name>.profile`` (`string`)
@@ -1251,7 +1251,7 @@ Laser initialization
     given by ``<laser_name>.position`` (only used for the ``"gaussian"`` profile)
 
     When running a **boosted-frame simulation**, provide the value of
-    ``<laser_name>.profile_t_peak`` in the laboratory frame, and use ``warpx.gamma_boost``
+    ``<laser_name>.profile_t_peak`` in the laboratory frame, and use ``artemis.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
 * ``<laser_name>.profile_duration`` (`float` ; in seconds)
@@ -1272,7 +1272,7 @@ Laser initialization
         E(\boldsymbol{x},t) \propto \frac{1}{32}\left[10 - 15 \cos\left(\frac{2\pi t}{\tau}\right) + 6 \cos\left(\frac{4\pi t}{\tau}\right) - \cos\left(\frac{6\pi t}{\tau}\right) \right]\Theta(\tau - t)
 
     When running a **boosted-frame simulation**, provide the value of
-    ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
+    ``<laser_name>.profile_duration`` in the laboratory frame, and use ``artemis.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
 * ``<laser_name>.profile_waist`` (`float` ; in meters)
@@ -1289,7 +1289,7 @@ Laser initialization
     Use a negative number for a defocussing laser instead of a focussing laser.
 
     When running a **boosted-frame simulation**, provide the value of
-    ``<laser_name>.profile_focal_distance`` in the laboratory frame, and use ``warpx.gamma_boost``
+    ``<laser_name>.profile_focal_distance`` in the laboratory frame, and use ``artemis.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
 * ``<laser_name>.phi0`` (`float`; in radians) optional (default `0.`)
@@ -1326,27 +1326,27 @@ Laser initialization
 * ``<laser_name>.min_particles_per_mode`` (`int`) optional (default `4`)
     When using the RZ version, this specifies the minimum number of particles
     per angular mode. The laser particles are loaded into radial spokes, with
-    the number of spokes given by min_particles_per_mode*(warpx.n_rz_azimuthal_modes-1).
+    the number of spokes given by min_particles_per_mode*(artemis.n_rz_azimuthal_modes-1).
 
 * ``lasers.deposit_on_main_grid`` (`int`) optional (default `0`)
     When using mesh refinement, whether the antenna that emits the laser
     deposits charge/current only on the main grid (i.e. level 0), or also
     on the higher mesh-refinement levels.
 
-* ``warpx.num_mirrors`` (`int`) optional (default `0`)
+* ``artemis.num_mirrors`` (`int`) optional (default `0`)
     Users can input perfect mirror condition inside the simulation domain.
-    The number of mirrors is given by ``warpx.num_mirrors``. The mirrors are
+    The number of mirrors is given by ``artemis.num_mirrors``. The mirrors are
     orthogonal to the `z` direction. The following parameters are required
-    when ``warpx.num_mirrors`` is >0.
+    when ``artemis.num_mirrors`` is >0.
 
-* ``warpx.mirror_z`` (list of `float`) required if ``warpx.num_mirrors>0``
+* ``artemis.mirror_z`` (list of `float`) required if ``artemis.num_mirrors>0``
     ``z`` location of the front of the mirrors.
 
-* ``warpx.mirror_z_width`` (list of `float`) required if ``warpx.num_mirrors>0``
+* ``artemis.mirror_z_width`` (list of `float`) required if ``artemis.num_mirrors>0``
     ``z`` width of the mirrors.
 
-* ``warpx.mirror_z_npoints`` (list of `int`) required if ``warpx.num_mirrors>0``
-    In the boosted frame, depending on `gamma_boost`, ``warpx.mirror_z_width``
+* ``artemis.mirror_z_npoints`` (list of `int`) required if ``artemis.num_mirrors>0``
+    In the boosted frame, depending on `gamma_boost`, ``artemis.mirror_z_width``
     can be smaller than the cell size, so that the mirror would not work. This
     parameter is the minimum number of points for the mirror. If
     ``mirror_z_width < dz/cell_size``, the upper bound of the mirror is increased
@@ -1358,22 +1358,22 @@ External fields
 Grid initialization
 ^^^^^^^^^^^^^^^^^^^
 
-* ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
+* ``artemis.B_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     magnetic field. The "default" style initializes the
     external magnetic field (Bx,By,Bz) to (0.0, 0.0, 0.0).
     The string can be set to "constant" if a constant magnetic field is
     required to be set at initialization. If set to "constant", then an
-    additional parameter, namely, ``warpx.B_external_grid`` must be specified.
+    additional parameter, namely, ``artemis.B_external_grid`` must be specified.
     If set to ``parse_B_ext_grid_function``, then a mathematical expression can
     be used to initialize the external magnetic field on the grid. It
     requires additional parameters in the input file, namely,
-    ``warpx.Bx_external_grid_function(x,y,z)``,
-    ``warpx.By_external_grid_function(x,y,z)``,
-    ``warpx.Bz_external_grid_function(x,y,z)`` to initialize the external
+    ``artemis.Bx_external_grid_function(x,y,z)``,
+    ``artemis.By_external_grid_function(x,y,z)``,
+    ``artemis.Bz_external_grid_function(x,y,z)`` to initialize the external
     magnetic field for each of the three components on the grid.
     Constants required in the expression can be set using ``my_constants``.
-    For example, if ``warpx.Bx_external_grid_function(x,y,z)=Bo*x + delta*(y + z)``
+    For example, if ``artemis.Bx_external_grid_function(x,y,z)=Bo*x + delta*(y + z)``
     then the constants `Bo` and `delta` required in the above equation
     can be set using ``my_constants.Bo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first dimension
@@ -1385,29 +1385,29 @@ Grid initialization
 
     If ``B_ext_grid_init_style`` is set to be ``read_from_file``, an additional parameter,
     indicating the path of an openPMD data file,
-    ``warpx.read_fields_from_path`` must be specified,
-    from which external B field data can be loaded into WarpX.
+    ``artemis.read_fields_from_path`` must be specified,
+    from which external B field data can be loaded into Artemis.
     One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
     Regarding how to prepare the openPMD data file, one can refer to
     the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
 
-* ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
+* ``artemis.E_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     electric field. The "default" style initializes the
     external electric field (Ex,Ey,Ez) to (0.0, 0.0, 0.0).
     The string can be set to "constant" if a constant electric field is
     required to be set at initialization. If set to "constant", then an
-    additional parameter, namely, ``warpx.E_external_grid`` must be specified
+    additional parameter, namely, ``artemis.E_external_grid`` must be specified
     in the input file.
     If set to ``parse_E_ext_grid_function``, then a mathematical expression can
     be used to initialize the external electric field on the grid. It
     required additional parameters in the input file, namely,
-    ``warpx.Ex_external_grid_function(x,y,z)``,
-    ``warpx.Ey_external_grid_function(x,y,z)``,
-    ``warpx.Ez_external_grid_function(x,y,z)`` to initialize the external
+    ``artemis.Ex_external_grid_function(x,y,z)``,
+    ``artemis.Ey_external_grid_function(x,y,z)``,
+    ``artemis.Ez_external_grid_function(x,y,z)`` to initialize the external
     electric field for each of the three components on the grid.
     Constants required in the expression can be set using ``my_constants``.
-    For example, if ``warpx.Ex_external_grid_function(x,y,z)=Eo*x + delta*(y + z)``
+    For example, if ``artemis.Ex_external_grid_function(x,y,z)=Eo*x + delta*(y + z)``
     then the constants `Bo` and `delta` required in the above equation
     can be set using ``my_constants.Eo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first
@@ -1417,32 +1417,32 @@ Grid initialization
     does not work with RZ and the code will abort with an error message.
     If ``E_ext_grid_init_style`` is set to be ``read_from_file``, an additional parameter,
     indicating the path of an openPMD data file,
-    ``warpx.read_fields_from_path`` must be specified,
-    from which external E field data can be loaded into WarpX.
+    ``artemis.read_fields_from_path`` must be specified,
+    from which external E field data can be loaded into Artemis.
     One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
     Regarding how to prepare the openPMD data file, one can refer to
     the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
     Note that if both `B_ext_grid_init_style` and `E_ext_grid_init_style` are set to
-    `read_from_file`, the openPMD file specified by `warpx.read_fields_from_path`
+    `read_from_file`, the openPMD file specified by `artemis.read_fields_from_path`
     should contain both B and E external fields data.
 
-* ``warpx.H_ext_grid_init_style`` (string) optional (default is "default")
+* ``artemis.H_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     magnetic field intensity. The "default" style initializes the
     external magnetic field (Hx,Hy,Hz) to (0.0, 0.0, 0.0).
     The string can be set to "constant" if a constant magnetic field is
     required to be set at initialization. If set to "constant", then an
-    additional parameter, namely, ``warpx.H_external_grid`` must be specified
+    additional parameter, namely, ``artemis.H_external_grid`` must be specified
     in the input file.
     If set to ``parse_H_ext_grid_function``, then a mathematical expression can
     be used to initialize the external magnetic field on the grid. It
     required additional parameters in the input file, namely,
-    ``warpx.Hx_external_grid_function(x,y,z)``,
-    ``warpx.Hy_external_grid_function(x,y,z)``,
-    ``warpx.Hz_external_grid_function(x,y,z)`` to initialize the external
+    ``artemis.Hx_external_grid_function(x,y,z)``,
+    ``artemis.Hy_external_grid_function(x,y,z)``,
+    ``artemis.Hz_external_grid_function(x,y,z)`` to initialize the external
     magnetic field intensity for each of the three components on the grid.
     Constants required in the expression can be set using ``my_constants``.
-    For example, if ``warpx.Hx_external_grid_function(x,y,z)=Ho*x + delta*(y + z)``
+    For example, if ``artemis.Hx_external_grid_function(x,y,z)=Ho*x + delta*(y + z)``
     then the constants `Ho` and `delta` required in the above equation
     can be set using ``my_constants.Ho=`` and ``my_constants.delta=`` in the
     input file. This function is currently supported only for 3D simulations.
@@ -1450,9 +1450,9 @@ Grid initialization
     does not work with RZ and the code will abort with an error message.
     This requires `USE_LLG=TRUE` in the GNUMakefile.
 
-* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
-    required when ``warpx.E_ext_grid_init_style="constant"``
-    and when ``warpx.B_ext_grid_init_style="constant"``, respectively.
+* ``artemis.E_external_grid`` & ``artemis.B_external_grid`` (list of `3 floats`)
+    required when ``artemis.E_ext_grid_init_style="constant"``
+    and when ``artemis.B_ext_grid_init_style="constant"``, respectively.
     External uniform and constant electrostatic and magnetostatic field added
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
@@ -1460,8 +1460,8 @@ Grid initialization
     Note that the implementation of the parser for external B-field does not work
     with USE_LLG=TRUE and the code will abort with an error message
 
-* ``warpx.H_external_grid`` (list of `3 floats`)
-    required when ``warpx.H_ext_grid_init_style="constant"``.
+* ``artemis.H_external_grid`` (list of `3 floats`)
+    required when ``artemis.H_ext_grid_init_style="constant"``.
     External uniform and constant magnetostatic field added
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
@@ -1530,13 +1530,13 @@ Applied to Particles
     on the grid at every timestep. To add an external B-excitation as a function
     of (x,y,z,t), use the option ``parse_B_excitation_grid_function``. This option requires
     additional parameters in the input file to set the parser function, namely,
-    ``warpx.Bx_excitation_grid_function(x,y,z,t)``,
-    ``warpx.By_excitation_grid_function(x,y,z,t)``,
-    ``warpx.Bz_excitation_grid_function(x,y,z,t)`` to apply the external B-field on the grid.
+    ``artemis.Bx_excitation_grid_function(x,y,z,t)``,
+    ``artemis.By_excitation_grid_function(x,y,z,t)``,
+    ``artemis.Bz_excitation_grid_function(x,y,z,t)`` to apply the external B-field on the grid.
     Additionally, the option also requires a flag function to set the type of excitation,
-    ``warpx.Bx_excitation_flag_function(x,y,z)``,
-    ``warpx.By_excitation_flag_function(x,y,z)``,
-    ``warpx.Bz_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    ``artemis.Bx_excitation_flag_function(x,y,z)``,
+    ``artemis.By_excitation_flag_function(x,y,z)``,
+    ``artemis.Bz_excitation_flag_function(x,y,z)``. This spatially varying function can be
     set to have three values, namely 0, 1, or 2.
     If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
     field component at that location.
@@ -1557,13 +1557,13 @@ Applied to Particles
     on the grid at every timestep. To add an external E-excitation as a function
     of (x,y,z,t), use the option ``parse_E_excitation_grid_function``. This option requires
     additional parameters in the input file to set the parser function, namely,
-    ``warpx.Ex_excitation_grid_function(x,y,z,t)``,
-    ``warpx.Ey_excitation_grid_function(x,y,z,t)``,
-    ``warpx.Ez_excitation_grid_function(x,y,z,t)`` to apply the external E-field on the grid.
+    ``artemis.Ex_excitation_grid_function(x,y,z,t)``,
+    ``artemis.Ey_excitation_grid_function(x,y,z,t)``,
+    ``artemis.Ez_excitation_grid_function(x,y,z,t)`` to apply the external E-field on the grid.
     Additionally, the option also requires a flag function to set the type of excitation,
-    ``warpx.Ex_excitation_flag_function(x,y,z)``,
-    ``warpx.Ey_excitation_flag_function(x,y,z)``,
-    ``warpx.Ez_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    ``artemis.Ex_excitation_flag_function(x,y,z)``,
+    ``artemis.Ey_excitation_flag_function(x,y,z)``,
+    ``artemis.Ez_excitation_flag_function(x,y,z)``. This spatially varying function can be
     set to have three values, namely 0, 1, or 2.
     If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
     field component at that location.
@@ -1578,14 +1578,14 @@ Applied to Particles
     Note that by default the parser applies these functions to the electric fields only in the valid region
     or in the regions specified by the user-defined parser.
     The same function can also be applied to the fields in the pml region by setting
-    ``warpx.Apply_E_excitation_in_pml_region``.
+    ``artemis.Apply_E_excitation_in_pml_region``.
 
 * ``Apply_E_excitation_in_pml_region`` (integer `0` or `1`) optional (default is `0`)
     This parameter is used only if `E_excitation_on_grid_style` is set in the input.
     If set to `1`, the excitation function for Ex, Ey, Ez set using
-    ``warpx.Ex_excitation_grid_function(x,y,z,t)``,
-    ``warpx.Ey_excitation_grid_function(x,y,z,t)``,
-    ``warpx.Ez_excitation_grid_function(x,y,z,t)`` will be applied to the electric fields defined
+    ``artemis.Ex_excitation_grid_function(x,y,z,t)``,
+    ``artemis.Ey_excitation_grid_function(x,y,z,t)``,
+    ``artemis.Ez_excitation_grid_function(x,y,z,t)`` will be applied to the electric fields defined
     in the pml region. Note that, the pml region is set outside the domain boundary.
     So for this feature to work as intended, it is essential that the parser function covers the pml
     region.
@@ -1596,13 +1596,13 @@ Applied to Particles
     on the grid at every timestep. To add an external H-excitation as a function
     of (x,y,z,t), use the option ``parse_H_excitation_grid_function``. This option requires
     additional parameters in the input file to set the parser function, namely,
-    ``warpx.Hx_excitation_grid_function(x,y,z,t)``,
-    ``warpx.Hy_excitation_grid_function(x,y,z,t)``,
-    ``warpx.Hz_excitation_grid_function(x,y,z,t)`` to apply the external H-field on the grid.
+    ``artemis.Hx_excitation_grid_function(x,y,z,t)``,
+    ``artemis.Hy_excitation_grid_function(x,y,z,t)``,
+    ``artemis.Hz_excitation_grid_function(x,y,z,t)`` to apply the external H-field on the grid.
     Additionally, the option also requires a flag function to set the type of excitation,
-    ``warpx.Hx_excitation_flag_function(x,y,z)``,
-    ``warpx.Hy_excitation_flag_function(x,y,z)``,
-    ``warpx.Hz_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    ``artemis.Hx_excitation_flag_function(x,y,z)``,
+    ``artemis.Hy_excitation_flag_function(x,y,z)``,
+    ``artemis.Hz_excitation_flag_function(x,y,z)``. This spatially varying function can be
     set to have three values, namely 0, 1, or 2.
     If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
     field component at that location.
@@ -1625,13 +1625,13 @@ Applied to Particles
     on the grid at every timestep. To add an external H-bias-excitation as a function
     of (x,y,z,t), use the option ``parse_h_bias_excitation_grid_function``. This option requires
     additional parameters in the input file to set the parser function, namely,
-    ``warpx.Hx_bias_excitation_grid_function(x,y,z,t)``,
-    ``warpx.Hy_bias_excitation_grid_function(x,y,z,t)``,
-    ``warpx.Hz_bias_excitation_grid_function(x,y,z,t)`` to apply the external H-bias-field on the grid.
+    ``artemis.Hx_bias_excitation_grid_function(x,y,z,t)``,
+    ``artemis.Hy_bias_excitation_grid_function(x,y,z,t)``,
+    ``artemis.Hz_bias_excitation_grid_function(x,y,z,t)`` to apply the external H-bias-field on the grid.
     Additionally, the option also requires a flag function to set the type of excitation,
-    ``warpx.Hx_bias_excitation_flag_function(x,y,z)``,
-    ``warpx.Hy_bias_excitation_flag_function(x,y,z)``,
-    ``warpx.Hz_bias_excitation_flag_function(x,y,z)``. This spatially varying function can be
+    ``artemis.Hx_bias_excitation_flag_function(x,y,z)``,
+    ``artemis.Hy_bias_excitation_flag_function(x,y,z)``,
+    ``artemis.Hz_bias_excitation_flag_function(x,y,z)``. This spatially varying function can be
     set to have three values, namely 0, 1, or 2.
     If the flag is set to 0 at a given `(x,y,z)`, then the excitation is not applied to the
     field component at that location.
@@ -1709,7 +1709,7 @@ Note that elements of the same type cannot overlap each other.
 Collision models
 ----------------
 
-WarpX provides several particle collision models, using varying degrees of approximation.
+Artemis provides several particle collision models, using varying degrees of approximation.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
@@ -1722,13 +1722,13 @@ WarpX provides several particle collision models, using varying degrees of appro
     - ``pairwisecoulomb`` for pairwise Coulomb collisions, the default if unspecified.
       This provides a pair-wise relativistic elastic Monte Carlo binary Coulomb collision model,
       following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`__.
-      When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
+      When the RZ mode is used, `artemis.n_rz_azimuthal_modes` must be set to 1 at the moment,
       since the current implementation of the collision module assumes axisymmetry.
     - ``nuclearfusion`` for fusion reactions.
       This implements the pair-wise fusion model by `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__.
-      Currently, WarpX supports deuterium-deuterium, deuterium-tritium, deuterium-helium and proton-boron fusion.
+      Currently, Artemis supports deuterium-deuterium, deuterium-tritium, deuterium-helium and proton-boron fusion.
       When initializing the reactant and product species, you need to use ``species_type`` (see the documentation
-      for this parameter), so that WarpX can identify the type of reaction to use.
+      for this parameter), so that Artemis can identify the type of reaction to use.
       (e.g. ``<species_name>.species_type = 'deuterium'``)
     - ``background_mcc`` for collisions between particles and a neutral background.
       This is a relativistic Monte Carlo treatment for particles colliding
@@ -1783,14 +1783,14 @@ WarpX provides several particle collision models, using varying degrees of appro
     If the fusion multiplier is too high and results in a fusion probability
     that approaches 1 (for a given collision between two macroparticles), then
     there is a risk of underestimating the total fusion yield. In these cases,
-    WarpX reduces the fusion multiplier used in that given collision.
+    Artemis reduces the fusion multiplier used in that given collision.
     ``m_probability_threshold`` is the fusion probability threshold above
-    which WarpX reduces the fusion multiplier.
+    which Artemis reduces the fusion multiplier.
 
 * ``<collision_name>.fusion_probability_target_value`` (`float`) optional.
     Only for ``nuclearfusion``.
     When the probability of fusion for a given collision exceeds
-    ``fusion_probability_threshold``, WarpX reduces the fusion multiplier for
+    ``fusion_probability_threshold``, Artemis reduces the fusion multiplier for
     that collisions such that the fusion probability approches ``fusion_probability_target_value``.
 
 * ``<collision_name>.background_density`` (`float`)
@@ -1885,22 +1885,22 @@ This section describes the input parameters used to select numerical methods and
 Time step
 ^^^^^^^^^
 
-* ``warpx.cfl`` (`float`) optional (default `0.999`)
+* ``artemis.cfl`` (`float`) optional (default `0.999`)
     The ratio between the actual timestep that is used in the simulation
-    and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
+    and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `artemis.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
     This parameter will only be used with the electromagnetic solver.
 
-* ``warpx.const_dt`` (`float`)
+* ``artemis.const_dt`` (`float`)
     Allows direct specification of the time step size, in units of seconds.
     When the electrostatic solver is being used, this must be supplied.
-    This can be used with the electromagnetic solver, overriding ``warpx.cfl``, but
+    This can be used with the electromagnetic solver, overriding ``artemis.cfl``, but
     it is up to the user to ensure that the CFL condition is met.
 
 Filtering
 ^^^^^^^^^
 
-* ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
+* ``artemis.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
     Whether to smooth the charge and currents on the mesh, after depositing them from the macro-particles.
     This uses a bilinear filter (see the :ref:`filtering section <theory-pic-filter>`).
     The default is `1` in all cases, except for simulations in RZ geometry using the FDTD solver.
@@ -1910,11 +1910,11 @@ Filtering
 
        Known bug: filter currently not working with FDTD solver in RZ geometry (see https://github.com/ECP-WarpX/WarpX/issues/1943).
 
-* ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
+* ``artemis.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
     In 2D simulations, only the first two values are read.
 
-* ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
+* ``artemis.use_filter_compensation`` (`0` or `1`; default: `0`)
     Whether to add compensation when applying filtering.
     This is only supported with the RZ spectral solver.
 
@@ -1957,7 +1957,7 @@ Particle push, charge and current deposition, field gathering
     The algorithm for field gathering. Available options are:
 
      * ``energy-conserving``: gathers directly from the grid points (either staggered
-       or nodal grid points depending on ``warpx.grid_type``).
+       or nodal grid points depending on ``artemis.grid_type``).
      * ``momentum-conserving``: first average the fields from the grid points to
        the nodes, and then gather from the nodes.
 
@@ -1983,7 +1983,7 @@ Particle push, charge and current deposition, field gathering
 Maxwell solver
 ^^^^^^^^^^^^^^
 
-Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Difference Time-Domain method (FDTD) or the Pseudo-Spectral Analytical Time-Domain method (PSATD), respectively.
+Two families of Maxwell solvers are implemented in Artemis, based on the Finite-Difference Time-Domain method (FDTD) or the Pseudo-Spectral Analytical Time-Domain method (PSATD), respectively.
 
 * ``algo.maxwell_solver`` (`string`, optional)
     The algorithm for the Maxwell field solver.
@@ -2062,23 +2062,23 @@ Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Di
 * ``macroscopic.mag_LLG_anisotropy_axis`` (default: ``0.0`` in all directions)
     The anisotropy axis of the term H_anisotropy in H_eff for the LLG updates. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
-* ``warpx.mag_time_scheme_order`` (`1` or `2`; default: `1`)
+* ``artemis.mag_time_scheme_order`` (`1` or `2`; default: `1`)
     The value of the time advancement scheme of M field. `mag_time_scheme_order==1` is the 1st-order Eulerian scheme and `mag_time_scheme_order==2` is the 2nd-order trapezoidal scheme for the LLG equation. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
-* ``warpx.mag_M_normalization`` (`0` or `1` or `2`; no default, must be user-input)
+* ``artemis.mag_M_normalization`` (`0` or `1` or `2`; no default, must be user-input)
     The strategy of normalizating M magnitude. `mag_M_normalization==0` indicates unsaturated materials, i.e. `M_magnitude` is no larger than the saturation magnetization `mag_Ms`.
     Therefore, no normalization of M magnitude is applied. `mag_M_normalization>0` indicates saturated materials, i.e. `M_magnitude` is equal the saturation magnetization `mag_Ms`.
     In this case, the value of `mag_M_normalization` indicates when to apply normalization in the second-order magnetization scheme. `mag_M_normalization==1` applies it after each iteration; `mag_M_normalization==2` applies it after the iterations have converged.
     In the first-order magnetization scheme, `mag_M_normalization==1` is equivalent to `mag_M_normalization==2`, and both normalize `M_magnitude` by `mag_Ms`.
     This requires `USE_LLG=TRUE` in the GNUMakefile.
 
-* ``warpx.mag_LLG_coupling`` (`0` or `1`; default: `1`)
+* ``artemis.mag_LLG_coupling`` (`0` or `1`; default: `1`)
     Turn on coupling of Maxwell solution to the LLG updates. `mag_LLG_coupling==1` enables, `mag_LLG_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
-* ``warpx.mag_LLG_exchange_coupling`` (`0` or `1`; default: `0`)
+* ``artemis.mag_LLG_exchange_coupling`` (`0` or `1`; default: `0`)
     Turn on the exchange coupling term H_exchange in H_eff for the LLG updates. `mag_LLG_exchange_coupling=1` enables, `mag_LLG_exchange_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
-* ``warpx.mag_LLG_anisotropy_coupling`` (`0` or `1`; default: `0`)
+* ``artemis.mag_LLG_anisotropy_coupling`` (`0` or `1`; default: `0`)
     Turn on the anisotropy coupling term H_anisotropy in H_eff for the LLG updates. `mag_LLG_anisotropy_coupling=1` enables, `mag_LLG_anisotropy_coupling=0` diables. This requires `USE_LLG=TRUE` in the GNUMakefile.
 
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
@@ -2086,7 +2086,7 @@ Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Di
     When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
     For example, :math:`E_z` is gathered using ``algo.particle_shape`` along :math:`(x,y)` and ``algo.particle_shape - 1`` along :math:`z`.
     See equations (21)-(23) of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
-    Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
+    Defaults to `1` unless ``artemis.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
 
     .. warning::
 
@@ -2094,15 +2094,15 @@ Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Di
         At present, this parameter is intended mainly for testing and development purposes.
 
 * ``interpolation.field_centering_nox``, ``interpolation.field_centering_noy``, ``interpolation.field_centering_noz`` (default: ``2`` in all directions)
-    The order of interpolation used with staggered grids (``warpx.do_nodal = 0``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions. High-order interpolation (order 8 in each direction, at least) is necessary to ensure stability in typical LWFA boosted-frame simulations using the Galilean PSATD or comoving PSATD schemes. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+    The order of interpolation used with staggered grids (``artemis.do_nodal = 0``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions. High-order interpolation (order 8 in each direction, at least) is necessary to ensure stability in typical LWFA boosted-frame simulations using the Galilean PSATD or comoving PSATD schemes. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
 
 * ``interpolation.current_centering_nox``, ``interpolation.current_centering_noy``, ``interpolation.current_centering_noz`` (default: ``2`` in all directions)
-    The order of interpolation used to center the currents from nodal to staggered grids (if ``warpx.do_current_centering = 1``), before pushing the Maxwell fields on staggered grids. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+    The order of interpolation used to center the currents from nodal to staggered grids (if ``artemis.do_current_centering = 1``), before pushing the Maxwell fields on staggered grids. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
 
-* ``warpx.do_current_centering`` (`0` or `1` ; default: 0)
-    If true, the current is deposited on a nodal grid and then centered to a staggered grid (Yee grid), using finite-order interpolation. If ``warpx.do_nodal = 1``, the Maxwell fields are pushed on a nodal grid, it is not necessary to center the currents to a staggered grid, and we set therefore ``warpx.do_current_centering = 0`` automatically, overwriting the user-defined input.
+* ``artemis.do_current_centering`` (`0` or `1` ; default: 0)
+    If true, the current is deposited on a nodal grid and then centered to a staggered grid (Yee grid), using finite-order interpolation. If ``artemis.do_nodal = 1``, the Maxwell fields are pushed on a nodal grid, it is not necessary to center the currents to a staggered grid, and we set therefore ``artemis.do_current_centering = 0`` automatically, overwriting the user-defined input.
 
-* ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
+* ``artemis.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate
     the error in :math:`div(E)-\rho`. This can be useful when using a current
     deposition algorithm which is not strictly charge-conserving, or when
@@ -2110,12 +2110,12 @@ Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Di
     to propagate (at the speed of light) to the boundaries of the simulation
     domain, where it can be absorbed.
 
-* ``warpx.do_nodal`` (`0` or `1` ; default: 0)
+* ``artemis.do_nodal`` (`0` or `1` ; default: 0)
     Whether to use a nodal grid (i.e. all fields are defined at the
     same points in space) or a staggered grid (i.e. Yee grid ; different
     fields are defined at different points in space)
 
-* ``warpx.do_subcycling`` (`0` or `1`; default: 0)
+* ``artemis.do_subcycling`` (`0` or `1`; default: 0)
     Whether or not to use sub-cycling. Different refinement levels have a
     different cell size, which results in different Courant–Friedrichs–Lewy
     (CFL) limits for the time step. By default, when using mesh refinement,
@@ -2129,12 +2129,12 @@ Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Di
     ``amr.max_level = 1``. More information can be found at
     https://ieeexplore.ieee.org/document/8659392.
 
-* ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
-    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. When ``warpx.do_multi_J = 1``, we perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step, instead of using one single current deposited at half time. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
+* ``artemis.do_multi_J`` (`0` or `1`; default: `0`)
+    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``artemis.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. When ``artemis.do_multi_J = 1``, we perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step, instead of using one single current deposited at half time. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
 
-* ``warpx.do_multi_J_n_depositions`` (integer)
-    Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
-    Note that this input parameter is not optional and must always be set in all input files where ``warpx.do_multi_J = 1``. No default value is provided automatically.
+* ``artemis.do_multi_J_n_depositions`` (integer)
+    Number of sub-steps to use with the multi-J algorithm, when ``artemis.do_multi_J = 1``.
+    Note that this input parameter is not optional and must always be set in all input files where ``artemis.do_multi_J = 1``. No default value is provided automatically.
 
 Maxwell solver: PSATD method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2150,14 +2150,14 @@ Maxwell solver: PSATD method
 
 * ``psatd.periodic_single_box_fft`` (`0` or `1`; default: 0)
     If true, this will *not* incorporate the guard cells into the box over which FFTs are performed.
-    This is only valid when WarpX is run with periodic boundaries and a single box.
+    This is only valid when Artemis is run with periodic boundaries and a single box.
     In this case, using `psatd.periodic_single_box_fft` is equivalent to using a global FFT over the whole domain.
     Therefore, all the approximations that are usually made when using local FFTs with guard cells
     (for problems with multiple boxes) become exact in the case of the periodic, single-box FFT without guard cells.
 
 * ``psatd.current_correction`` (`0` or `1`; default: `1`, with the exceptions mentioned below)
     If true, a current correction scheme in Fourier space is applied in order to guarantee charge conservation.
-    The default value is ``psatd.current_correction=1``, unless a charge-conserving current deposition scheme is used (by setting ``algo.current_deposition=esirkepov`` or ``algo.current_deposition=vay``) or unless the ``div(E)`` cleaning scheme is used (by setting ``warpx.do_dive_cleaning=1``).
+    The default value is ``psatd.current_correction=1``, unless a charge-conserving current deposition scheme is used (by setting ``algo.current_deposition=esirkepov`` or ``algo.current_deposition=vay``) or unless the ``div(E)`` cleaning scheme is used (by setting ``artemis.do_dive_cleaning=1``).
 
     If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD scheme described in (`Vay et al, JCP 243, 2013 <https://doi.org/10.1016/j.jcp.2013.03.010>`_) and the current correction reads
 
@@ -2244,7 +2244,7 @@ Maxwell solver: PSATD method
 
     The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero and ``0`` otherwise.
     The option ``psatd.update_with_rho=0`` is not implemented with the following algorithms:
-    comoving PSATD (``psatd.v_comoving``), time averaging (``psatd.do_time_averaging=1``), div(E) cleaning (``warpx.do_dive_cleaning=1``), and multi-J (``warpx.do_multi_J=1``).
+    comoving PSATD (``psatd.v_comoving``), time averaging (``psatd.do_time_averaging=1``), div(E) cleaning (``artemis.do_dive_cleaning=1``), and multi-J (``artemis.do_multi_J=1``).
 
     Note that the update with and without rho is also supported in RZ geometry.
 
@@ -2261,22 +2261,22 @@ Maxwell solver: PSATD method
     It also requires the use of the direct current deposition algorithm (by setting ``algo.current_deposition = direct``).
 
 * ``psatd.use_default_v_galilean`` (`0` or `1`; default: `0`)
-    This can be used in boosted-frame simulations only and sets the Galilean velocity along the :math:`z` direction automatically as :math:`v_{G} = -\sqrt{1-1/\gamma^2}`, where :math:`\gamma` is the Lorentz factor of the boosted frame (set by ``warpx.gamma_boost``).
+    This can be used in boosted-frame simulations only and sets the Galilean velocity along the :math:`z` direction automatically as :math:`v_{G} = -\sqrt{1-1/\gamma^2}`, where :math:`\gamma` is the Lorentz factor of the boosted frame (set by ``artemis.gamma_boost``).
     See the section :ref:`Numerical Stability and alternate formulation in a Galilean frame <theory-boostedframe-galilean>` for more information on the Galilean algorithm for boosted-frame simulations.
 
 * ``psatd.v_comoving`` (3 floating-point values, in units of the speed of light; default ``0. 0. 0.``)
     Defines the comoving velocity in the comoving PSATD scheme.
-    A non-zero comoving velocity selects the comoving PSATD algorithm, which suppresses the numerical Cherenkov instability (NCI) in boosted-frame simulations, under certain assumptions. This option requires that WarpX is compiled with ``USE_PSATD = TRUE``. It also requires the use of direct current deposition (``algo.current_deposition = direct``) and has not been neither implemented nor tested with other current deposition schemes.
+    A non-zero comoving velocity selects the comoving PSATD algorithm, which suppresses the numerical Cherenkov instability (NCI) in boosted-frame simulations, under certain assumptions. This option requires that Artemis is compiled with ``USE_PSATD = TRUE``. It also requires the use of direct current deposition (``algo.current_deposition = direct``) and has not been neither implemented nor tested with other current deposition schemes.
 
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
-* ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
-    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. When ``warpx.do_multi_J = 1``, we perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step, instead of using one single current deposited at half time. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
+* ``artemis.do_multi_J`` (`0` or `1`; default: `0`)
+    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``artemis.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. When ``artemis.do_multi_J = 1``, we perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step, instead of using one single current deposited at half time. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
 
-* ``warpx.do_multi_J_n_depositions`` (integer)
-    Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
-    Note that this input parameter is not optional and must always be set in all input files where ``warpx.do_multi_J = 1``. No default value is provided automatically.
+* ``artemis.do_multi_J_n_depositions`` (integer)
+    Number of sub-steps to use with the multi-J algorithm, when ``artemis.do_multi_J = 1``.
+    Note that this input parameter is not optional and must always be set in all input files where ``artemis.do_multi_J = 1``. No default value is provided automatically.
 
 Maxwell solver: macroscopic media
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2303,14 +2303,14 @@ Maxwell solver: macroscopic media
 Grid types (collocated, staggered, hybrid)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* ``warpx.grid_type`` (`string`, ``collocated``, ``staggered`` or ``hybrid``)
+* ``artemis.grid_type`` (`string`, ``collocated``, ``staggered`` or ``hybrid``)
     Whether to use a collocated grid (all fields defined at the cell nodes),
     a staggered grid (fields defined on a Yee grid), or a hybrid grid (fields
     and currents are interpolated back and forth between a staggered grid and a
     nodal grid, must be used with momentum-conserving field gathering algorithm,
     ``algo.field_gathering = momentum-conserving``).
 
-    Default: ``warpx.grid_type = staggered``.
+    Default: ``artemis.grid_type = staggered``.
 
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
     Whether to use a Galerkin scheme when gathering fields to particles.
@@ -2325,25 +2325,25 @@ Grid types (collocated, staggered, hybrid)
         The default behavior should not normally be changed.
         At present, this parameter is intended mainly for testing and development purposes.
 
-* ``warpx.field_centering_nox``, ``warpx.field_centering_noy``, ``warpx.field_centering_noz`` (`integer`, optional)
-    The order of interpolation used with staggered or hybrid grids (``warpx.grid_type = staggered`` or ``warpx.grid_type = hybrid``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions.
+* ``artemis.field_centering_nox``, ``artemis.field_centering_noy``, ``artemis.field_centering_noz`` (`integer`, optional)
+    The order of interpolation used with staggered or hybrid grids (``artemis.grid_type = staggered`` or ``artemis.grid_type = hybrid``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions.
 
-    Default: ``warpx.field_centering_no<x,y,z> = 2`` with staggered grids, ``warpx.field_centering_no<x,y,z> = 8`` with hybrid grids (typically necessary to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
+    Default: ``artemis.field_centering_no<x,y,z> = 2`` with staggered grids, ``artemis.field_centering_no<x,y,z> = 8`` with hybrid grids (typically necessary to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
 
-* ``warpx.current_centering_nox``, ``warpx.current_centering_noy``, ``warpx.current_centering_noz`` (`integer`, optional)
-    The order of interpolation used with hybrid grids (``warpx.grid_type = hybrid``) to interpolate the currents from the cell nodes to the cell centers when ``warpx.do_current_centering = 1``, before pushing the Maxwell fields on staggered grids.
+* ``artemis.current_centering_nox``, ``artemis.current_centering_noy``, ``artemis.current_centering_noz`` (`integer`, optional)
+    The order of interpolation used with hybrid grids (``artemis.grid_type = hybrid``) to interpolate the currents from the cell nodes to the cell centers when ``artemis.do_current_centering = 1``, before pushing the Maxwell fields on staggered grids.
 
-    Default: ``warpx.current_centering_no<x,y,z> = 8`` with hybrid grids (typically necessary to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
+    Default: ``artemis.current_centering_no<x,y,z> = 8`` with hybrid grids (typically necessary to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
 
-* ``warpx.do_current_centering`` (`bool`, `0` or `1`)
+* ``artemis.do_current_centering`` (`bool`, `0` or `1`)
     If true, the current is deposited on a nodal grid and then centered to a staggered grid (Yee grid), using finite-order interpolation.
 
-    Default: ``warpx.do_current_centering = 0`` with collocated or staggered grids, ``warpx.do_current_centering = 1`` with hybrid grids.
+    Default: ``artemis.do_current_centering = 0`` with collocated or staggered grids, ``artemis.do_current_centering = 1`` with hybrid grids.
 
 Additional parameters
 ^^^^^^^^^^^^^^^^^^^^^
 
-* ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
+* ``artemis.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate
     the error in :math:`div(E)-\rho`. This can be useful when using a current
     deposition algorithm which is not strictly charge-conserving, or when
@@ -2351,7 +2351,7 @@ Additional parameters
     to propagate (at the speed of light) to the boundaries of the simulation
     domain, where it can be absorbed.
 
-* ``warpx.do_subcycling`` (`0` or `1`; default: 0)
+* ``artemis.do_subcycling`` (`0` or `1`; default: 0)
     Whether or not to use sub-cycling. Different refinement levels have a
     different cell size, which results in different Courant–Friedrichs–Lewy
     (CFL) limits for the time step. By default, when using mesh refinement,
@@ -2365,7 +2365,7 @@ Additional parameters
     ``amr.max_level = 1``. More information can be found at
     https://ieeexplore.ieee.org/document/8659392.
 
-* ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
+* ``artemis.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     synchronization of sources (`rho` and `J`) and fields (`E` and `B`) on grid nodes at box
     boundaries is performed. Since the grid nodes at the interface between two neighbor boxes are
@@ -2374,35 +2374,35 @@ Additional parameters
     Note that if Perfectly Matched Layers (PML) are used, synchronization of the `E` and `B` fields
     is performed at every timestep regardless of this parameter.
 
-* ``warpx.use_hybrid_QED`` (`bool`; default: 0)
+* ``artemis.use_hybrid_QED`` (`bool`; default: 0)
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
     field solver to solve non-linear Maxwell's equations, according to [Quantum Electrodynamics
     vacuum polarization solver, P. Carneiro et al., `ArXiv 2016 <https://arxiv.org/abs/1607.04224>`__].
     Note that this option can only be used with the PSATD build. Furthermore, one must set
-    ``warpx.grid_type = collocated`` (which otherwise would be ``staggered`` by default).
+    ``artemis.grid_type = collocated`` (which otherwise would be ``staggered`` by default).
 
-* ``warpx.quantum_xi`` (`float`; default: 1.3050122.e-52)
+* ``artemis.quantum_xi`` (`float`; default: 1.3050122.e-52)
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
-     Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
+     Note that this option will only have an effect if the ``artemis.use_Hybrid_QED`` flag is also triggered.
 
-* ``warpx.do_device_synchronize`` (`bool`) optional (default `1`)
+* ``artemis.do_device_synchronize`` (`bool`) optional (default `1`)
     When running in an accelerated platform, whether to call a ``amrex::Gpu::synchronize()`` around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 
-* ``warpx.sort_intervals`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
+* ``artemis.sort_intervals`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
      Using the `Intervals parser`_ syntax, this string defines the timesteps at which particles are
      sorted.
      If ``<=0``, do not sort particles.
      It is turned on on GPUs for performance reasons (to improve memory locality).
 
-* ``warpx.sort_particles_for_deposition`` (`bool`) optional (default: ``true`` for the CUDA backend, otherwise ``false``)
+* ``artemis.sort_particles_for_deposition`` (`bool`) optional (default: ``true`` for the CUDA backend, otherwise ``false``)
      This option controls the type of sorting used if particle sorting is turned on, i.e. if ``sort_intervals`` is not ``<=0``.
      If ``true``, particles will be sorted by cell to optimize deposition with many particles per cell, in the order x -> y -> z -> ppc.
      If ``false``, particles will be sorted by bin, using the ``sort_bin_size`` parameter below, in the order ppc -> x -> y -> z.
      ``true`` is recommend for best performance on NVIDIA GPUs, especially if there are many particles per cell.
 
-* ``warpx.sort_idx_type`` (list of `int`) optional (default: ``0 0 0``)
+* ``artemis.sort_idx_type`` (list of `int`) optional (default: ``0 0 0``)
     This controls the type of grid used to sort the particles when ``sort_particles_for_deposition`` is ``true``. Possible values are:
     ``idx_type = {0, 0, 0}``: Sort particles to a cell centered grid
     ``idx_type = {1, 1, 1}``: Sort particles to a node centered grid
@@ -2410,11 +2410,11 @@ Additional parameters
      In 2D (XZ and RZ), only the first two elements are read.
      In 1D, only the first element is read.
 
-* ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
+* ``artemis.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
      If ``sort_intervals`` is activated and ``sort_particles_for_deposition`` is ``false``, particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
-* ``warpx.do_shared_mem_charge_deposition`` (`bool`) optional (default `false`)
+* ``artemis.do_shared_mem_charge_deposition`` (`bool`) optional (default `false`)
      If activated, charge deposition will allocate and use small
      temporary buffers on which to accumulate deposited charge values
      from particles. On GPUs these buffers will reside in ``__shared__``
@@ -2423,7 +2423,7 @@ Additional parameters
      of assigning the particles to bins small enough to fit in the
      space available for the temporary buffers.
 
-* ``warpx.do_shared_mem_current_deposition`` (`bool`) optional (default `false`)
+* ``artemis.do_shared_mem_current_deposition`` (`bool`) optional (default `false`)
      If activated, current deposition will allocate and use small
      temporary buffers on which to accumulate deposited current values
      from particles. On GPUs these buffers will reside in ``__shared__``
@@ -2435,7 +2435,7 @@ Additional parameters
      (e.g. for high particles per cell). This feature is only available for CUDA
      and HIP, and is only recommended for 3D or 2D.
 
-* ``warpx.shared_tilesize`` (list of `int`) optional (default `6 6 8` in 3D; `14 14` in 2D; `1s` otherwise)
+* ``artemis.shared_tilesize`` (list of `int`) optional (default `6 6 8` in 3D; `14 14` in 2D; `1s` otherwise)
      Used to tune performance when ``do_shared_mem_current_deposition`` or
      ``do_shared_mem_charge_depostion`` is enabled. ``shared_tilesize`` is the
      size of the temporary buffer allocated in shared memory for a threadblock.
@@ -2447,7 +2447,7 @@ Additional parameters
      problems. The other defaults are not optimized and should always be fine
      tuned for the problem.
 
-* ``warpx.shared_mem_current_tpb`` (`int`) optional (default `128`)
+* ``artemis.shared_mem_current_tpb`` (`int`) optional (default `128`)
      Used to tune performance when ``do_shared_mem_current_deposition`` is
      enabled. ``shared_mem_current_tpb`` controls the number of threads per
      block (tpb), i.e. the number of threads operating on a shared buffer.
@@ -2463,12 +2463,12 @@ Diagnostics and output
 In-situ visualization
 ^^^^^^^^^^^^^^^^^^^^^
 
-WarpX has four types of diagnostics:
+Artemis has four types of diagnostics:
 ``FullDiagnostics`` consist in dumps of fields and particles at given iterations,
 ``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame,
 ``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the boundary, throughout the simulation, and
 ``ReducedDiags`` allow the user to compute some reduced quantity (particle temperature, max of a field) and write a small amount of data to text files.
-Similar to what is done for physical species, WarpX has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
+Similar to what is done for physical species, Artemis has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
 This currently applies to standard diagnostics, but should be extended to back-transformed diagnostics and reduced diagnostics (and others) in a near future.
 
 .. _running-cpp-parameters-diagnostics-full:
@@ -2477,7 +2477,7 @@ Full Diagnostics
 ^^^^^^^^^^^^^^^^
 
 ``FullDiagnostics`` consist in dumps of fields and particles at given iterations.
-Similar to what is done for physical species, WarpX has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
+Similar to what is done for physical species, Artemis has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
 The user specifies the number of diagnostics and the name of each of them, and then specifies options for each of them separately.
 Note that some parameter (those that do not start with a ``<diag_name>.`` prefix) apply to all diagnostics.
 This should be changed in the future.
@@ -2512,7 +2512,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     * ``checkpoint`` for a checkpoint file, only works with ``<diag_name>.diag_type = Full``.
 
     * ``openpmd`` for OpenPMD format `openPMD <https://www.openPMD.org>`_.
-      Requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+      Requires to build Artemis with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
 
     * ``ascent`` for in-situ visualization using Ascent.
 
@@ -2532,7 +2532,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     `I/O backend <https://openpmd-api.readthedocs.io/en/latest/backends/overview.html>`_ for `openPMD <https://www.openPMD.org>`_ data dumps.
     ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
-    When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
+    When Artemis is compiled with openPMD support, the first available backend in the order given above is taken.
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
      openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.15.1/usage/concepts.html#iteration-and-series>`__.
@@ -2631,7 +2631,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
    where :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter. The sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor) that satisfy ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
    When ``<diag_name>.particle_fields.<field_name>.do_average`` is `0`, the division by the sum over particle weights is not done.
-   In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
+   In 1D or 2D, the particle coordinates will follow the Artemis convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
 
 * ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)`` (parser `string`, optional)
     Parser function returning a boolean for whether to include a particle in the diagnostic.
@@ -2664,7 +2664,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
     If ``blocking_factor`` and ``max_grid_size`` are used for the domain decomposition, as detailed in
     the :ref:`domain decomposition <usage_domain_decomposition>` section, ``coarsening_ratio`` should be an integer
-    divisor of ``blocking_factor``. If ``warpx.numprocs`` is used instead, the total number of cells in a given
+    divisor of ``blocking_factor``. If ``artemis.numprocs`` is used instead, the total number of cells in a given
     dimension must be a multiple of the ``coarsening_ratio`` multiplied by ``numprocs`` in that dimension.
 
 * ``<diag_name>.file_prefix`` (`string`) optional (default `diags/<diag_name>`)
@@ -2674,10 +2674,10 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     The minimum number of digits used for the iteration number appended to the diagnostic file names.
 
 * ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
-    Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``). Currently, when the ``diag_lo`` is different from ``warpx.dom_lo``, particle output is disabled.
+    Lower corner of the output fields (if smaller than ``artemis.dom_lo``, then set to ``artemis.dom_lo``). Currently, when the ``diag_lo`` is different from ``artemis.dom_lo``, particle output is disabled.
 
 * ``<diag_name>.diag_hi`` (list `float`, 1 per dimension) optional (default `+infinity +infinity +infinity`)
-    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``). Currently, when the ``diag_hi`` is different from ``warpx.dom_hi``, particle output is disabled.
+    Higher corner of the output fields (if larger than ``artemis.dom_hi``, then set to ``artemis.dom_hi``). Currently, when the ``diag_hi`` is different from ``artemis.dom_hi``, particle output is disabled.
 
 * ``<diag_name>.write_species`` (`0` or `1`) optional (default `1`)
     Whether to write species output or not. For checkpoint format, always set this parameter to 1.
@@ -2720,13 +2720,13 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``amrex.async_out_nfiles`` (`int`) optional (default `64`)
     The maximum number of files to write to when using asynchronous IO.
     To use asynchronous IO with more than ``amrex.async_out_nfiles`` MPI ranks,
-    WarpX must be configured with ``-DWarpX_MPI_THREAD_MULTIPLE=ON``.
+    Artemis must be configured with ``-DArtemis_MPI_THREAD_MULTIPLE=ON``.
     Please see the :ref:`data analysis section <dataanalysis-formats>` for more information.
 
-* ``warpx.field_io_nfiles`` and ``warpx.particle_io_nfiles`` (`int`) optional (default `1024`)
+* ``artemis.field_io_nfiles`` and ``artemis.particle_io_nfiles`` (`int`) optional (default `1024`)
     The maximum number of files to use when writing field and particle data to plotfile directories.
 
-* ``warpx.mffile_nstreams`` (`int`) optional (default `4`)
+* ``artemis.mffile_nstreams`` (`int`) optional (default `4`)
     Limit the number of concurrent readers per file.
 
 .. _running-cpp-parameters-diagnostics-btd:
@@ -2783,7 +2783,7 @@ Boundary Scraping Diagnostics
 
 ``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the boundaries, throughout the simulation.
 This diagnostic type is specified by setting ``<diag_name>.diag_type`` = ``BoundaryScraping``.
-Currently, the only supported output format is openPMD, so the user also needs to set ``<diag>.format=openpmd`` and WarpX must be compiled with openPMD turned on.
+Currently, the only supported output format is openPMD, so the user also needs to set ``<diag>.format=openpmd`` and Artemis must be compiled with openPMD turned on.
 The data that is to be collected and recorded is controlled per species and per boundary by setting one or more of the flags to ``1``,
 ``<species>.save_particles_at_xlo/ylo/zlo``, ``<species>.save_particles_at_xhi/yhi/zhi``, and ``<species>.save_particles_at_eb``.
 (Note that this diagnostics does not save any field ; it only saves particles.)
@@ -2802,12 +2802,12 @@ Reduced Diagnostics
 
 ``ReducedDiags`` allow the user to compute some reduced quantity (particle temperature, max of a field) and write a small amount of data to text files.
 
-* ``warpx.reduced_diags_names`` (`strings`, separated by spaces)
+* ``artemis.reduced_diags_names`` (`strings`, separated by spaces)
     The names given by the user of simple reduced diagnostics.
     Also the names of the output `.txt` files.
     This reduced diagnostics aims to produce simple outputs
     of the time history of some physical quantities.
-    If ``warpx.reduced_diags_names`` is not provided in the input file,
+    If ``artemis.reduced_diags_names`` is not provided in the input file,
     no reduced diagnostics will be done.
     This is then used in the rest of the input deck;
     in this documentation we use ``<reduced_diags_name>`` as a placeholder.
@@ -3375,12 +3375,12 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 * ``qed_qs.photon_creation_energy_threshold`` (`float`) optional (default `2`)
     Energy threshold for photon particle creation in `*me*c^2` units.
 
-* ``warpx.do_qed_schwinger`` (`bool`) optional (default `0`)
+* ``artemis.do_qed_schwinger`` (`bool`) optional (default `0`)
     If this is 1, Schwinger electron-positron pairs can be generated in vacuum in the cells where the EM field is high enough.
     Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
-    If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
+    If ``artemis.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
-    Schwinger process requires either ``warpx.grid_type = collocated`` or
+    Schwinger process requires either ``artemis.grid_type = collocated`` or
     ``algo.field_gathering=momentum-conserving`` (so that different field components are computed
     at the same location in the grid) and does not currently support mesh refinement, cylindrical
     coordinates or single precision.
@@ -3413,7 +3413,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
 Checkpoints and restart
 -----------------------
-WarpX supports checkpoints/restart via AMReX.
+Artemis supports checkpoints/restart via AMReX.
 The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.format = checkpoint``.
 
 * ``amr.restart`` (`string`)
@@ -3423,7 +3423,7 @@ The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.
 Intervals parser
 ----------------
 
-WarpX can parse time step interval expressions of the form ``start:stop:period``, e.g.
+Artemis can parse time step interval expressions of the form ``start:stop:period``, e.g.
 ``1:2:3, 4::, 5:6, :, ::10``.
 A comma is used as a separator between groups of intervals, which we call slices.
 The resulting time steps are the `union set <https://en.wikipedia.org/wiki/Union_(set_theory)>`_ of all given slices.
@@ -3471,22 +3471,22 @@ For example, ``something_intervals = -1`` deactivates ``something`` and
 Solving magnetization using LLG equation
 ----------------------------------------
 
-* ``warpx.M_ext_grid_init_style`` (string) optional (default is "default")
+* ``artemis.M_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the
     magnetization of the material. The "default" style initializes the
     magnetization (Mx,My,Mz) to (0.0, 0.0, 0.0).
     The string can be set to "constant" if a constant magnetization is
     required to be set at initialization. If set to "constant", then an
-    additional parameter, namely, ``warpx.M_external_grid`` must be specified.
+    additional parameter, namely, ``artemis.M_external_grid`` must be specified.
     If set to ``parse_M_ext_grid_function``, then a mathematical expression can
     be used to initialize the magnetization on the grid. It
     requires additional parameters in the input file, namely,
-    ``warpx.Mx_external_grid_function(x,y,z)``,
-    ``warpx.My_external_grid_function(x,y,z)``,
-    ``warpx.Mz_external_grid_function(x,y,z)`` to initialize the
+    ``artemis.Mx_external_grid_function(x,y,z)``,
+    ``artemis.My_external_grid_function(x,y,z)``,
+    ``artemis.Mz_external_grid_function(x,y,z)`` to initialize the
     magnetization for each of the three components on the grid.
     Constants required in the expression can be set using ``my_constants``.
-    For example, if ``warpx.Mx_external_grid_function(x,y,z)=Mo*x + delta*(y + z)``
+    For example, if ``artemis.Mx_external_grid_function(x,y,z)=Mo*x + delta*(y + z)``
     then the constants `Mo` and `delta` required in the above equation
     can be set using ``my_constants.Mo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first dimension
@@ -3496,22 +3496,22 @@ Solving magnetization using LLG equation
     If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
     then this input parameter must be provided.
 
-* ``warpx.H_bias_ext_grid_init_style`` (string) optional (default is "default")
+* ``artemis.H_bias_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external magnetic DC
     bias field applied to the material. The "default" style initializes the
     magnetic DC bias (Hx_bias,Hy_bias,Hz_bias) to (0.0, 0.0, 0.0).
     The string can be set to "constant" if a constant magnetic bias is
     required to be set at initialization. If set to "constant", then an
-    additional parameter, namely, ``warpx.H_bias_external_grid`` must be specified.
+    additional parameter, namely, ``artemis.H_bias_external_grid`` must be specified.
     If set to ``parse_H_bias_ext_grid_function``, then a mathematical expression can
     be used to initialize the magnetic bias on the grid. It
     requires additional parameters in the input file, namely,
-    ``warpx.Hx_bias_external_grid_function(x,y,z)``,
-    ``warpx.Hy_bias_external_grid_function(x,y,z)``,
-    ``warpx.Hz_bias_external_grid_function(x,y,z)`` to initialize the external
+    ``artemis.Hx_bias_external_grid_function(x,y,z)``,
+    ``artemis.Hy_bias_external_grid_function(x,y,z)``,
+    ``artemis.Hz_bias_external_grid_function(x,y,z)`` to initialize the external
     magnetic bias for each of the three components on the grid.
     Constants required in the expression can be set using ``my_constants``.
-    For example, if ``warpx.Hx_bias_external_grid_function(x,y,z)=Ho_bias*x + delta*(y + z)``
+    For example, if ``artemis.Hx_bias_external_grid_function(x,y,z)=Ho_bias*x + delta*(y + z)``
     then the constants `Ho_bias` and `delta` required in the above equation
     can be set using ``my_constants.Ho_bias=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first dimension
@@ -3521,9 +3521,9 @@ Solving magnetization using LLG equation
     If ``algo.em_solver_medium`` is set to macroscopic, and ``USE_LLG = TRUE``,
     then this input parameter must be provided.
 
-* ``warpx.M_external_grid`` & ``warpx.H_bias_external_grid`` (list of `double`)
-    required when ``warpx.M_ext_grid_init_style="constant"``
-    and when ``warpx.H_bias_ext_grid_init_style="constant"``, respectively.
+* ``artemis.M_external_grid`` & ``artemis.H_bias_external_grid`` (list of `double`)
+    required when ``artemis.M_ext_grid_init_style="constant"``
+    and when ``artemis.H_bias_ext_grid_init_style="constant"``, respectively.
     External uniform and constant magnetization and magnetostatic bias field added
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
@@ -3602,22 +3602,22 @@ Solving magnetization using LLG equation
 Testing and Debugging
 ---------------------
 
-When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the following options can be considered.
+When developing, testing and :ref:`debugging Artemis <debugging_artemis>`, the following options can be considered.
 
-* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
-    Controls how much information is printed to the terminal, when running WarpX.
+* ``artemis.verbose`` (``0`` or ``1``; default is ``1`` for true)
+    Controls how much information is printed to the terminal, when running Artemis.
 
-* ``warpx.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
-    If set to ``1``, WarpX immediately prints every warning message as soon as
+* ``artemis.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
+    If set to ``1``, Artemis immediately prints every warning message as soon as
     it is generated. It is mainly intended for debug purposes, in case a simulation
     crashes before a global warning report can be printed.
 
-* ``warpx.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
+* ``artemis.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
     Optional threshold to abort as soon as a warning is raised.
     If the threshold is set, warning messages with priority greater than or
     equal to the threshold trigger an immediate abort.
     It is mainly intended for debug purposes, and is best used with
-    ``warpx.always_warn_immediately=1``.
+    ``artemis.always_warn_immediately=1``.
 
 * ``amrex.abort_on_unused_inputs`` (``0`` or ``1``; default is ``0`` for false)
     When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
@@ -3627,11 +3627,11 @@ When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the follo
     Adds a synchronization at the start of communication, so any load balance will be caught there (the timer is called ``SyncBeforeComms``), then the comm operation will run.
     This will slow down the run.
 
-* ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
+* ``artemis.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
     Serialize the initial conditions for reproducible testing, e.g, in our continuous integration tests.
     Mainly whether or not to use OpenMP threading for particle initialization.
 
-* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
+* ``artemis.safe_guard_cells`` (`0` or `1`) optional (default `0`)
     Run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
 
 * ``ablastr.fillboundary_always_sync`` (`0` or `1`) optional (default `0`)

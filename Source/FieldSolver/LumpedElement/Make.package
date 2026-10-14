@@ -1,3 +1,3 @@
 CEXE_sources += Inductor.cpp
 
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/LumpedElement
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/FieldSolver/LumpedElement

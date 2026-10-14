@@ -2,7 +2,7 @@
  *           Berkeley National Laboratory (subject to receipt of any required
  *           approvals from the U.S. Dept. of Energy). All rights reserved.
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * Authors: David Grote, Axel HUebl
  * License: BSD-3-Clause-LBNL
@@ -69,7 +69,7 @@ AcceleratorLattice::ReadLattice (std::string const & root_name, amrex::ParticleR
             ReadLattice(element_name, z_location);
         }
         else {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
                 "ERROR: Unknown accelerator lattice element type " + element_type);
         }
     }
@@ -99,7 +99,7 @@ AcceleratorLattice::UpdateElementFinder (int const lev)
 }
 
 LatticeElementFinderDevice
-AcceleratorLattice::GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset) const
+AcceleratorLattice::GetFinderDeviceInstance (ArtemisParIter const& a_pti, int const a_offset) const
 {
     LatticeElementFinder & finder = (*m_element_finder)[a_pti];
     return finder.GetFinderDeviceInstance(a_pti, a_offset, *this);

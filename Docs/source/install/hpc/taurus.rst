@@ -25,32 +25,32 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
-We use the following modules and environments on the system (``$HOME/taurus_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/taurus_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/taurus-zih/taurus_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/taurus-zih/taurus_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/taurus-zih/taurus_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/taurus-zih/taurus_artemis.profile.example``.
 
-We recommend to store the above lines in a file, such as ``$HOME/taurus_warpx.profile``, and load it into your shell after a login:
-
-.. code-block:: bash
-
-   source $HOME/taurus_warpx.profile
-
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+We recommend to store the above lines in a file, such as ``$HOME/taurus_artemis.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   source $HOME/taurus_artemis.profile
+
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
+
+.. code-block:: bash
+
+   cd $HOME/src/artemis
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DArtemis_DIMS=3 -DArtemis_COMPUTE=CUDA
    cmake --build build -j 16
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -68,7 +68,7 @@ A100 GPUs (40 GB)
 
 The `alpha` partition has 34 nodes with 8 x NVIDIA A100-SXM4 Tensor Core-GPUs and 2 x AMD EPYC CPU 7352 (24 cores) @ 2.3 GHz (multithreading disabled) per node.
 
-The batch script below can be used to run a WarpX simulation on multiple nodes (change ``-N`` accordingly).
+The batch script below can be used to run a Artemis simulation on multiple nodes (change ``-N`` accordingly).
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
 Note that we run one MPI rank per GPU.
 

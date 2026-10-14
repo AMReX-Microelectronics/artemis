@@ -1,11 +1,11 @@
 /* Copyright 2020 Andrew Myers
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_PUSHER_PUSHSELECTOR_H_
-#define WARPX_PARTICLES_PUSHER_PUSHSELECTOR_H_
+#ifndef ARTEMIS_PARTICLES_PUSHER_PUSHSELECTOR_H_
+#define ARTEMIS_PARTICLES_PUSHER_PUSHSELECTOR_H_
 
 // Import low-level single-particle kernels
 #include "Particles/Pusher/UpdateMomentumBoris.H"
@@ -13,8 +13,8 @@
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
 #include "Particles/Pusher/UpdateMomentumVay.H"
 #include "Particles/Pusher/UpdatePosition.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXAlgorithmSelection.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
 
 #include <AMReX_REAL.H>
 
@@ -62,7 +62,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
                     const int pusher_algo,
                     const int do_crr,
                     const int do_copy,
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                     const amrex::Real t_chi_max,
 #endif
                     const amrex::Real dt)
@@ -72,7 +72,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
 
     if (do_copy) copyAttribs(i);
     if (do_crr) {
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         amrex::ignore_unused(t_chi_max);
         if constexpr (do_sync) {
             auto chi = QedUtils::chi_ele_pos(m*ux, m*uy, m*uz,
@@ -133,4 +133,4 @@ void doParticlePush(const GetParticlePosition& GetPosition,
 //    }
 }
 
-#endif // WARPX_PARTICLES_PUSHER_SELECTOR_H_
+#endif // ARTEMIS_PARTICLES_PUSHER_SELECTOR_H_

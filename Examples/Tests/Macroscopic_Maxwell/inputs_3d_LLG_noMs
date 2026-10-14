@@ -18,9 +18,9 @@ amr.max_level = 0
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 0.9
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 0.9
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
@@ -37,18 +37,18 @@ my_constants.L = 141.4213562373095e-6
 my_constants.c = 299792458.
 my_constants.wavelength = 64.e-6
 
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ez_external_grid_function(x,y,z) = 0.
-warpx.Ex_external_grid_function(x,y,z) = 0.
-warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)"
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ez_external_grid_function(x,y,z) = 0.
+artemis.Ex_external_grid_function(x,y,z) = 0.
+artemis.Ey_external_grid_function(x,y,z) = "1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)"
 
-warpx.H_ext_grid_init_style = parse_H_ext_grid_function
-warpx.Hx_external_grid_function(x,y,z)= "-1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)/(c*1.25663706212e-06)"
-warpx.Hy_external_grid_function(x,y,z)= 0.
-warpx.Hz_external_grid_function(x,y,z) = 0.
+artemis.H_ext_grid_init_style = parse_H_ext_grid_function
+artemis.Hx_external_grid_function(x,y,z)= "-1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)/(c*1.25663706212e-06)"
+artemis.Hy_external_grid_function(x,y,z)= 0.
+artemis.Hz_external_grid_function(x,y,z) = 0.
 
 # If you want to use a USE_LLG build with Ms=0 everywhere, uncomment these settings
-warpx.mag_M_normalization = 1
+artemis.mag_M_normalization = 1
 macroscopic.mag_Ms_init_style = constant
 macroscopic.mag_Ms = 0.
 macroscopic.mag_alpha_init_style = constant

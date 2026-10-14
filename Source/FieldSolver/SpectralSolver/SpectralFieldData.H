@@ -1,18 +1,18 @@
 /* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
  * Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRAL_FIELD_DATA_H_
-#define WARPX_SPECTRAL_FIELD_DATA_H_
+#ifndef ARTEMIS_SPECTRAL_FIELD_DATA_H_
+#define ARTEMIS_SPECTRAL_FIELD_DATA_H_
 
 #include "SpectralFieldData_fwd.H"
 
 #include "AnyFFT.H"
 #include "SpectralKSpace.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX_BaseFab.H>
 #include <AMReX_Config.H>
@@ -152,11 +152,11 @@ class SpectralFieldData
         // a cell-centered grid in real space, instead of a nodal grid
         SpectralShiftFactor xshift_FFTfromCell, xshift_FFTtoCell,
                             zshift_FFTfromCell, zshift_FFTtoCell;
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         SpectralShiftFactor yshift_FFTfromCell, yshift_FFTtoCell;
 #endif
 
         bool m_periodic_single_box;
 };
 
-#endif // WARPX_SPECTRAL_FIELD_DATA_H_
+#endif // ARTEMIS_SPECTRAL_FIELD_DATA_H_

@@ -1,11 +1,11 @@
 /* Copyright 2021 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_BACKTRANSFORMPARTICLEFUNCTOR_H_
-#define WARPX_BACKTRANSFORMPARTICLEFUNCTOR_H_
+#ifndef ARTEMIS_BACKTRANSFORMPARTICLEFUNCTOR_H_
+#define ARTEMIS_BACKTRANSFORMPARTICLEFUNCTOR_H_
 
 #include "ComputeParticleDiagFunctor.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -21,18 +21,18 @@
  */
 struct SelectParticles
 {
-    using TmpParticles = WarpXParticleContainer::TmpParticles;
+    using TmpParticles = ArtemisParticleContainer::TmpParticles;
 
     /**
      * \brief Constructor of SelectParticles functor.
      *
-     * @param[in] a_pti              WarpX particle iterator
+     * @param[in] a_pti              Artemis particle iterator
      * @param[in] tmp_particle_data  temporary particle data
      * @param[in] current_z_boost    current z-position of the slice in boosted frame
      * @param[in] old_z_boost        previous z-position of the slice in boosted frame
      * @param[in] a_offset           index offset for particles to be selected
      */
-    SelectParticles( const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
+    SelectParticles( const ArtemisParIter& a_pti, TmpParticles& tmp_particle_data,
                      amrex::Real current_z_boost, amrex::Real old_z_boost,
                      int a_offset = 0);
 
@@ -77,19 +77,19 @@ struct SelectParticles
 struct LorentzTransformParticles
 {
 
-    using TmpParticles = WarpXParticleContainer::TmpParticles;
+    using TmpParticles = ArtemisParticleContainer::TmpParticles;
 
     /**
      * \brief Constructor of the LorentzTransformParticles functor.
      *
-     * @param[in] a_pti              WarpX particle iterator
+     * @param[in] a_pti              Artemis particle iterator
      * @param[in] tmp_particle_data  temporary particle data
      * @param[in] t_boost            time in boosted frame
      * @param[in] dt                 timestep in boosted-frame
      * @param[in] t_lab              time in lab-frame
      * @param[in] a_offset           index offset for particles to be transformed
      */
-    LorentzTransformParticles ( const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
+    LorentzTransformParticles ( const ArtemisParIter& a_pti, TmpParticles& tmp_particle_data,
                                 amrex::Real t_boost, amrex::Real dt,
                                 amrex::Real t_lab, int a_offset = 0);
 
@@ -142,19 +142,19 @@ struct LorentzTransformParticles
                                       + m_uypnew[i_src] * weight_new;
         const amrex::ParticleReal uzp = uz_old_p * weight_old
                                       + uz_new_p * weight_new;
-#if defined (WARPX_DIM_3D)
+#if defined (ARTEMIS_DIM_3D)
         dst.m_aos[i_dst].pos(0) = xp;
         dst.m_aos[i_dst].pos(1) = yp;
         dst.m_aos[i_dst].pos(2) = zp;
-#elif defined (WARPX_DIM_RZ)
+#elif defined (ARTEMIS_DIM_RZ)
         dst.m_aos[i_dst].pos(0) = std::sqrt(xp*xp + yp*yp);
         dst.m_aos[i_dst].pos(1) = zp;
         dst.m_rdata[PIdx::theta][i_dst] = std::atan2(yp, xp);
-#elif defined (WARPX_DIM_XZ)
+#elif defined (ARTEMIS_DIM_XZ)
         dst.m_aos[i_dst].pos(0) = xp;
         dst.m_aos[i_dst].pos(1) = zp;
         amrex::ignore_unused(yp);
-#elif defined (WARPX_DIM_1D)
+#elif defined (ARTEMIS_DIM_1D)
         dst.m_aos[i_dst].pos(0) = zp;
         amrex::ignore_unused(xp, yp);
 #else
@@ -199,7 +199,7 @@ class
 BackTransformParticleFunctor final : public ComputeParticleDiagFunctor
 {
 public:
-    BackTransformParticleFunctor(WarpXParticleContainer *pc_src, std::string species_name, int num_buffers);
+    BackTransformParticleFunctor(ArtemisParticleContainer *pc_src, std::string species_name, int num_buffers);
     /** Computes the Lorentz transform of source particles to obtain lab-frame data in pc_dst*/
     void operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const override;
     void InitData() override;
@@ -221,7 +221,7 @@ public:
                               int snapshot_full) override;
 private:
     /** Source particle container */
-    WarpXParticleContainer* m_pc_src = nullptr;
+    ArtemisParticleContainer* m_pc_src = nullptr;
     /** String containing species name of particles being transformed*/
     std::string m_species_name;
     /** Number of buffers or snapshots*/

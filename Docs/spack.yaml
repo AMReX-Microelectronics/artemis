@@ -7,7 +7,7 @@
 # that are needed for full-feature development.
 #   https://spack.readthedocs.io/en/latest/environments.html#anonymous-environments
 #
-# Inside WarpX' Docs/ directory:
+# Inside Artemis' Docs/ directory:
 #   spack env activate -d .
 #   spack install  # only needed the first time
 #   make clean

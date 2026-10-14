@@ -8,8 +8,8 @@
 #   https://spack.readthedocs.io/en/latest/environments.html
 #
 # Inside the directory of this file
-#   spack env create warpx-rocm-dev spack-ubuntu-rocm.yaml
-#   spack env activate warpx-rocm-dev
+#   spack env create artemis-rocm-dev spack-ubuntu-rocm.yaml
+#   spack env activate artemis-rocm-dev
 #   spack install  # only needed the first time
 #
 spack:

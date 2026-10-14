@@ -1,6 +1,6 @@
 /* Copyright 2019 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,10 +8,10 @@
 
 #include "BesselRoots.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
-#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/ArtemisProfilerWrapper.H"
 
 #include <blas.hh>
 #include <lapack.hh>
@@ -25,10 +25,10 @@ HankelTransform::HankelTransform (int const hankel_order,
 : m_nr(nr), m_nk(nr)
 {
 
-    WARPX_PROFILE("HankelTransform::HankelTransform");
+    ARTEMIS_PROFILE("HankelTransform::HankelTransform");
 
     // Check that azimuthal_mode has a valid value
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(hankel_order-1 <= azimuthal_mode && azimuthal_mode <= hankel_order+1,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(hankel_order-1 <= azimuthal_mode && azimuthal_mode <= hankel_order+1,
                                      "azimuthal_mode must be either hankel_order-1, hankel_order or hankel_order+1");
 
 #ifdef AMREX_USE_GPU
@@ -198,7 +198,7 @@ void
 HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_icomp,
                                          amrex::FArrayBox      & G, int const G_icomp)
 {
-    WARPX_PROFILE("HankelTransform::HankelForwardTransform");
+    ARTEMIS_PROFILE("HankelTransform::HankelForwardTransform");
 
     amrex::Box const& F_box = F.box();
     amrex::Box const& G_box = G.box();
@@ -237,7 +237,7 @@ void
 HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_icomp,
                                          amrex::FArrayBox      & F, int const F_icomp)
 {
-    WARPX_PROFILE("HankelTransform::HankelInverseTransform");
+    ARTEMIS_PROFILE("HankelTransform::HankelInverseTransform");
 
     amrex::Box const& G_box = G.box();
     amrex::Box const& F_box = F.box();

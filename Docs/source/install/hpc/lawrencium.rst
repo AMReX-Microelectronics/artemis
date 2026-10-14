@@ -23,23 +23,23 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
-We use the following modules and environments on the system (``$HOME/lawrencium_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/lawrencium_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/lawrencium-lbnl/lawrencium_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/lawrencium-lbnl/lawrencium_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/lawrencium-lbnl/lawrencium_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/lawrencium-lbnl/lawrencium_artemis.profile.example``.
 
-We recommend to store the above lines in a file, such as ``$HOME/lawrencium_warpx.profile``, and load it into your shell after a login:
+We recommend to store the above lines in a file, such as ``$HOME/lawrencium_artemis.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   source $HOME/lawrencium_warpx.profile
+   source $HOME/lawrencium_artemis.profile
 
 And since Lawrencium does not yet provide a module for them, install ADIOS2, BLAS++ and LAPACK++:
 
@@ -76,9 +76,9 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
    python3 -m pip cache purge
-   rm -rf $HOME/sw/v100/venvs/warpx
-   python3 -m venv $HOME/sw/v100/venvs/warpx
-   source $HOME/sw/v100/venvs/warpx/bin/activate
+   rm -rf $HOME/sw/v100/venvs/artemis
+   python3 -m venv $HOME/sw/v100/venvs/artemis
+   source $HOME/sw/v100/venvs/artemis/bin/activate
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade wheel
    python3 -m pip install --upgrade cython
@@ -90,22 +90,22 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    python3 -m pip install --upgrade matplotlib
    python3 -m pip install --upgrade yt
    # optional: for libEnsemble
-   python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+   python3 -m pip install -r $HOME/src/artemis/Tools/LibEnsemble/requirements.txt
 
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON
+   cmake -S . -B build -DArtemis_DIMS=3 -DArtemis_COMPUTE=CUDA -DArtemis_PSATD=ON
    cmake --build build -j 12
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lawrencium>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lawrencium>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``/global/scratch/users/$USER/``.
 
 For a *full PICMI install*, follow the :ref:`instructions for Python (PICMI) bindings <building-cmake-python>`:
@@ -113,20 +113,20 @@ For a *full PICMI install*, follow the :ref:`instructions for Python (PICMI) bin
 .. code-block:: bash
 
    # PICMI build
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
 
    # install or update dependencies
    python3 -m pip install -r requirements.txt
 
    # compile parallel PICMI interfaces in 3D, 2D, 1D and RZ
-   WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=12 python3 -m pip install --force-reinstall --no-deps -v .
+   ARTEMIS_MPI=ON ARTEMIS_COMPUTE=CUDA ARTEMIS_PSATD=ON BUILD_PARALLEL=12 python3 -m pip install --force-reinstall --no-deps -v .
 
-Or, if you are *developing*, do a quick PICMI install of a *single geometry* (see: :ref:`WarpX_DIMS <building-cmake-options>`) using:
+Or, if you are *developing*, do a quick PICMI install of a *single geometry* (see: :ref:`Artemis_DIMS <building-cmake-options>`) using:
 
 .. code-block:: bash
 
    # find dependencies & configure
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_LIB=ON -DWarpX_DIMS=RZ
+   cmake -S . -B build -DArtemis_COMPUTE=CUDA -DArtemis_PSATD=ON -DArtemis_LIB=ON -DArtemis_DIMS=RZ
 
    # build and then call "python3 -m pip install ..."
    cmake --build build --target pip_install -j 12

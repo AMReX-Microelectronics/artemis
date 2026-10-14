@@ -44,7 +44,7 @@ USE_LLG = FALSE
 
 USE_EB = FALSE
 
-WARPX_HOME := .
-include $(WARPX_HOME)/Source/Make.WarpX
+ARTEMIS_HOME := .
+include $(ARTEMIS_HOME)/Source/Make.Artemis
 
 LIBRARIES += -lz

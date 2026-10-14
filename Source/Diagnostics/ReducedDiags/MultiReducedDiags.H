@@ -1,12 +1,12 @@
 /* Copyright 2019-2020 Maxence Thevenet, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_MULTIREDUCEDDIAGS_H_
-#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_MULTIREDUCEDDIAGS_H_
+#ifndef ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_MULTIREDUCEDDIAGS_H_
+#define ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_MULTIREDUCEDDIAGS_H_
 
 #include "MultiReducedDiags_fwd.H"
 

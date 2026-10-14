@@ -1,13 +1,13 @@
 /* Copyright 2020-2021 Michael Rowan, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "LoadBalanceEfficiency.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
@@ -64,17 +64,17 @@ void LoadBalanceEfficiency::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // get number of level
-    const auto nLevel = warpx.finestLevel() + 1;
+    const auto nLevel = artemis.finestLevel() + 1;
 
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // save data
-        m_data[lev] = warpx.getLoadBalanceEfficiency(lev);
+        m_data[lev] = artemis.getLoadBalanceEfficiency(lev);
     }
     // end loop over refinement levels
 

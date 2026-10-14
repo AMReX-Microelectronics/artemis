@@ -2,7 +2,7 @@
 
 # Copyright 2020-2022 Axel Huebl
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 #
@@ -14,9 +14,9 @@
 #BSUB -W 00:10
 #BSUB -nnodes 2
 #BSUB -alloc_flags smt4
-#BSUB -J WarpX
-#BSUB -o WarpXo.%J
-#BSUB -e WarpXe.%J
+#BSUB -J Artemis
+#BSUB -o Artemiso.%J
+#BSUB -e Artemise.%J
 
 # Work-around OpenMPI bug with chunked HDF5
 #   https://github.com/open-mpi/ompi/issues/7795
@@ -53,5 +53,5 @@ export OMP_NUM_THREADS=1
 # store out task host mapping: helps identify broken nodes at scale
 jsrun -r 4 -a1 -g 1 -c 7 -e prepended hostname > task_host_mapping.txt
 
-# run WarpX
+# run Artemis
 jsrun -r 4 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs -e prepended -M "-gpu" <path/to/executable> <input file> > output.txt

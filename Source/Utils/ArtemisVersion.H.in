@@ -1,0 +1,18 @@
+/* Copyright 2022 Axel Huebl
+ *
+ * This file is part of Artemis.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#ifndef ARTEMIS_VERSION_H_
+#define ARTEMIS_VERSION_H_
+
+#ifndef ARTEMIS_GIT_VERSION
+#   define ARTEMIS_GIT_VERSION "@Artemis_GIT_VERSION@"
+#endif
+
+#ifndef PICSAR_GIT_VERSION
+#   define PICSAR_GIT_VERSION "@PXRMP_QED_GIT_VERSION@"
+#endif
+
+#endif // ARTEMIS_VERSION_H_

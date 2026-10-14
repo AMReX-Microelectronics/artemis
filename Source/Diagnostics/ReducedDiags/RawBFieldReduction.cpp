@@ -1,6 +1,6 @@
 /* Copyright 2021 Revathi Jambunathan, Saurabh Sawant, Andrew Nonaka
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,8 +9,8 @@
 
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXUtil.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisUtil.H"
 
 #include <AMReX_Algorithm.H>
 #include <AMReX_BLassert.H>
@@ -29,7 +29,7 @@ RawBFieldReduction::RawBFieldReduction (std::string rd_name)
     using namespace amrex::literals;
 
     // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "RawBFieldReduction reduced diagnostics does not work for RZ coordinate.");
 #endif

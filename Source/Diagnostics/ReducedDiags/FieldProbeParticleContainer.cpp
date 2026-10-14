@@ -1,6 +1,6 @@
 /* Copyright 2021 Elisa Rheaume, Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -13,10 +13,10 @@
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/ParticleBoundaries_K.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -71,7 +71,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
                                             amrex::Vector<amrex::ParticleReal> const & y,
                                             amrex::Vector<amrex::ParticleReal> const & z)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
     AMREX_ALWAYS_ASSERT(x.size() == y.size());
     AMREX_ALWAYS_ASSERT(x.size() == z.size());
 
@@ -102,15 +102,15 @@ FieldProbeParticleContainer::AddNParticles (int lev,
         ParticleType p;
         p.id() = ParticleType::NextID();
         p.cpu() = ParallelDescriptor::MyProc();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         p.pos(0) = x[i];
         p.pos(1) = y[i];
         p.pos(2) = z[i];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         amrex::ignore_unused(y);
         p.pos(0) = x[i];
         p.pos(1) = z[i];
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(x, y);
         p.pos(0) = z[i];
 #endif

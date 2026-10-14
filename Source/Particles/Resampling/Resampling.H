@@ -1,15 +1,15 @@
 /* Copyright 2019-2020 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_RESAMPLING_H_
-#define WARPX_RESAMPLING_H_
+#ifndef ARTEMIS_RESAMPLING_H_
+#define ARTEMIS_RESAMPLING_H_
 
 #include "ResamplingTrigger.H"
 
-#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Particles/ArtemisParticleContainer_fwd.H"
 
 #include <AMReX_REAL.H>
 
@@ -24,7 +24,7 @@ struct ResamplingAlgorithm
     /**
      * \brief Virtual operator() of the abstract ResamplingAlgorithm class
      */
-    virtual void operator() (WarpXParIter& /*pti*/, const int /*lev*/, WarpXParticleContainer* /*pc*/) const = 0;
+    virtual void operator() (ArtemisParIter& /*pti*/, const int /*lev*/, ArtemisParticleContainer* /*pc*/) const = 0;
 
     /**
      * \brief Virtual destructor of the abstract ResamplingAlgorithm class
@@ -67,15 +67,15 @@ public:
     /**
      * \brief A method that uses the ResamplingAlgorithm object to perform resampling.
      *
-     * @param[in] pti WarpX particle iterator of the particles to resample.
+     * @param[in] pti Artemis particle iterator of the particles to resample.
      * @param[in] lev the index of the refinement level.
      * @param[in] pc a pointer to the particle container.
      */
-    void operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer * const pc) const;
+    void operator() (ArtemisParIter& pti, const int lev, ArtemisParticleContainer * const pc) const;
 
 private:
     ResamplingTrigger m_resampling_trigger;
     std::unique_ptr<ResamplingAlgorithm> m_resampling_algorithm;
 };
 
-#endif //WARPX_RESAMPLING_H_
+#endif //ARTEMIS_RESAMPLING_H_

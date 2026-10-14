@@ -1,5 +1,5 @@
-#ifndef WARPX_FULLDIAGNOSTICS_H_
-#define WARPX_FULLDIAGNOSTICS_H_
+#ifndef ARTEMIS_FULLDIAGNOSTICS_H_
+#define ARTEMIS_FULLDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
 #include "Utils/Parser/IntervalsParser.H"
@@ -83,4 +83,4 @@ private:
     void BackwardCompatibility ();
 };
 
-#endif // WARPX_FULLDIAGNOSTICS_H_
+#endif // ARTEMIS_FULLDIAGNOSTICS_H_

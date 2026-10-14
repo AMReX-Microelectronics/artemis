@@ -1,7 +1,7 @@
 /* Copyright 2019-2020 Andrew Myers, Axel Huebl,
  *                     Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -106,7 +106,7 @@ struct SmartCopy
             int* AMREX_RESTRICT dst_data;
             int* AMREX_RESTRICT src_data;
 
-            // note, in WarpX we only have runtime int data
+            // note, in Artemis we only have runtime int data
             static_assert(SrcData::NAI == 0 && DstData::NAI == 0,
                           "SmartCopy assumes all int data is runtime-added.");
 

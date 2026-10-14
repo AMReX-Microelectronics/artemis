@@ -1,5 +1,5 @@
-#ifndef WARPX_DIVEFUNCTOR_H_
-#define WARPX_DIVEFUNCTOR_H_
+#ifndef ARTEMIS_DIVEFUNCTOR_H_
+#define ARTEMIS_DIVEFUNCTOR_H_
 
 #include "ComputeDiagFunctor.H"
 
@@ -40,4 +40,4 @@ private:
     bool m_convertRZmodes2cartesian;
 };
 
-#endif // WARPX_DIVEFUNCTOR_H_
+#endif // ARTEMIS_DIVEFUNCTOR_H_

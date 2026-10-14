@@ -3,9 +3,9 @@
 Science Highlights
 ==================
 
-WarpX can be used in many domains of laser-plasma science, plasma physics, accelerator physics and beyond.
-Below, we collect a series of scientific publications that used WarpX.
-Please :ref:`acknowledge WarpX in your works <acknowledge_warpx>`, so we can find your works.
+Artemis can be used in many domains of laser-plasma science, plasma physics, accelerator physics and beyond.
+Below, we collect a series of scientific publications that used Artemis.
+Please :ref:`acknowledge Artemis in your works <acknowledge_artemis>`, so we can find your works.
 
 Is your publication missing? :ref:`Contact us <contact>` or edit this page via a pull request.
 
@@ -89,7 +89,7 @@ Scientific works in astrophysical plasma modeling.
 Microelectronics
 ****************
 
-`ARTEMIS (Adaptive mesh Refinement Time-domain ElectrodynaMIcs Solver) <https://ccse.lbl.gov/Research/Microelectronics/>`__ is based on WarpX and couples the Maxwell's equations implementation in WarpX with classical equations that describe quantum material behavior (such as, LLG equation for micromagnetics and London equation for superconducting materials) for quantifying the performance of `next-generation microelectronics <https://www.lbl.gov/research/microelectronics-and-beyond/>`__.
+`ARTEMIS (Adaptive mesh Refinement Time-domain ElectrodynaMIcs Solver) <https://ccse.lbl.gov/Research/Microelectronics/>`__ is based on Artemis and couples the Maxwell's equations implementation in Artemis with classical equations that describe quantum material behavior (such as, LLG equation for micromagnetics and London equation for superconducting materials) for quantifying the performance of `next-generation microelectronics <https://www.lbl.gov/research/microelectronics-and-beyond/>`__.
 
 #. Sawant S S, Yao Z, Jambunathan R, Nonaka A.
    **Characterization of Transmission Lines in Microelectronic Circuits Using the ARTEMIS Solver**.
@@ -111,4 +111,4 @@ High-Performance Computing and Numerics
 
 Scientific works in High-Performance Computing, applied mathematics and numerics.
 
-Please see :ref:`this section <acknowledge_warpx_all_refs>`.
+Please see :ref:`this section <acknowledge_artemis_all_refs>`.

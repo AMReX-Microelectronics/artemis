@@ -1,11 +1,11 @@
 /* Copyright 2019-2020 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRALHANKELTRANSFORMER_H_
-#define WARPX_SPECTRALHANKELTRANSFORMER_H_
+#ifndef ARTEMIS_SPECTRALHANKELTRANSFORMER_H_
+#define ARTEMIS_SPECTRALHANKELTRANSFORMER_H_
 
 #include "HankelTransform.H"
 

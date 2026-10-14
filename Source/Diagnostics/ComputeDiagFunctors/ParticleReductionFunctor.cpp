@@ -3,8 +3,8 @@
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "WarpX.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Artemis.H"
 
 #include <ablastr/coarsen/sample.H>
 
@@ -44,27 +44,27 @@ ParticleReductionFunctor::ParticleReductionFunctor (const amrex::MultiFab* mf_sr
 void
 ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/) const
 {
-    auto& warpx = WarpX::GetInstance();
+    auto& artemis = Artemis::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered
     // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
     // Temporary cell-centered, multi-component MultiFab for storing particles per cell.
-    amrex::MultiFab red_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
+    amrex::MultiFab red_mf(artemis.boxArray(m_lev), artemis.DistributionMap(m_lev), 1, ng);
     // Set value to 0, and increment the value in each cell with ppc.
     red_mf.setVal(0._rt);
-    auto& pc = warpx.GetPartContainer().GetParticleContainer(m_ispec);
+    auto& pc = artemis.GetPartContainer().GetParticleContainer(m_ispec);
     // Copy over member variables so they can be captured in the lambda
     auto map_fn = m_map_fn;
     auto filter_fn = m_filter_fn;
     const bool do_filter = m_do_filter;
     ParticleToMesh(pc, red_mf, m_lev,
-            [=] AMREX_GPU_DEVICE (const WarpXParticleContainer::SuperParticleType& p,
+            [=] AMREX_GPU_DEVICE (const ArtemisParticleContainer::SuperParticleType& p,
                 amrex::Array4<amrex::Real> const& out_array,
                 amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
                 amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi)
             {
-                // Get position in WarpX convention to use in parser. Will be different from
+                // Get position in Artemis convention to use in parser. Will be different from
                 // p.pos() for 1D and 2D simulations.
                 amrex::ParticleReal xw = 0._rt, yw = 0._rt, zw = 0._rt;
                 get_particle_position(p, xw, yw, zw);
@@ -77,12 +77,12 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::ParticleReal x = p.pos(0);
                 amrex::Real lx = (x - plo[0]) * dxi[0];
                 ii = static_cast<int>(amrex::Math::floor(lx));
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_3D)
                 amrex::ParticleReal y = p.pos(1);
                 amrex::Real ly = (y - plo[1]) * dxi[1];
                 jj = static_cast<int>(amrex::Math::floor(ly));
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 amrex::ParticleReal z = p.pos(2);
                 amrex::Real lz = (z - plo[2]) * dxi[2];
                 kk = static_cast<int>(amrex::Math::floor(lz));
@@ -98,16 +98,16 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), (amrex::Real)(p.rdata(PIdx::w) * value));
             });
     if (m_do_average) {
-        amrex::MultiFab ppc_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
+        amrex::MultiFab ppc_mf(artemis.boxArray(m_lev), artemis.DistributionMap(m_lev), 1, ng);
         ppc_mf.setVal(0._rt);
         // Add the weight for each particle -- total number of particles of this species
         ParticleToMesh(pc, ppc_mf, m_lev,
-                [=] AMREX_GPU_DEVICE (const WarpXParticleContainer::SuperParticleType& p,
+                [=] AMREX_GPU_DEVICE (const ArtemisParticleContainer::SuperParticleType& p,
                     amrex::Array4<amrex::Real> const& out_array,
                     amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
                     amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi)
                 {
-                    // Get position in WarpX convention to use in parser. Will be different from
+                    // Get position in Artemis convention to use in parser. Will be different from
                     // p.pos() for 1D and 2D simulations.
                     amrex::ParticleReal xw = 0._rt, yw = 0._rt, zw = 0._rt;
                     get_particle_position(p, xw, yw, zw);
@@ -120,12 +120,12 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                     amrex::ParticleReal x = p.pos(0);
                     amrex::Real lx = (x - plo[0]) * dxi[0];
                     ii = static_cast<int>(amrex::Math::floor(lx));
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_3D)
                     amrex::ParticleReal y = p.pos(1);
                     amrex::Real ly = (y - plo[1]) * dxi[1];
                     jj = static_cast<int>(amrex::Math::floor(ly));
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                     amrex::ParticleReal z = p.pos(2);
                     amrex::Real lz = (z - plo[2]) * dxi[2];
                     kk = static_cast<int>(amrex::Math::floor(lz));

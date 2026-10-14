@@ -1,19 +1,19 @@
 .. _libensemble:
 
-Run LibEnsemble on WarpX
+Run LibEnsemble on Artemis
 ========================
 
 `LibEnsemble <https://github.com/Libensemble>`__ is a library to coordinate the concurrent evaluation of dynamic ensembles of calculations.
-While a WarpX simulation can provide insight in some physics, it remains a single point evaluation in the space of parameters.
+While a Artemis simulation can provide insight in some physics, it remains a single point evaluation in the space of parameters.
 If you have a simulation ready for use, but would like to (i) scan over some input parameters uniformly for, e.g., a tolerance study, or (ii) have a random evaluation of the space of input parameters within a given span or (iii) tune some input parameters to optimize an output parameter, e.g., beam emittance, energy spread, etc., LibEnsemble provides these capabilities and will take care of tasks monitoring with fault tolerance on multiple platforms (LibEnsemble targets modern HPC platforms like Summit).
 
-Scripts to run LibEnsemble on WarpX simulations can be found in ``WarpX/Tools/LibEnsemble/``.
+Scripts to run LibEnsemble on Artemis simulations can be found in ``Artemis/Tools/LibEnsemble/``.
 This documentation does not aim at giving a training on LibEnsemble, so please refer to the `LibEnsemble documentation <https://libensemble.readthedocs.io/en/develop/>`__ for technical details.
 
-WarpX example problem for LibEnsemble study
+Artemis example problem for LibEnsemble study
 -------------------------------------------
 
-The WarpX example is built on a 2D input file (so that 1 simulation take < 1 min) of a 2-stage laser-wakefield simulation in a boosted frame.
+The Artemis example is built on a 2D input file (so that 1 simulation take < 1 min) of a 2-stage laser-wakefield simulation in a boosted frame.
 It aims at optimizing emittance preservation in the coupling between two consecutive plasma accelerator stages.
 Each stage accelerates an externally-injected electron beam, which charge has been tuned to show a decent amount of Ez field flattening due to longitudinal beam loading.
 Each stage has a parabolic transverse profile to guide the laser pulse, and a uniform longitudinal profile with cos-shape ramps and the entrance and at the exit.
@@ -41,7 +41,7 @@ For the latter, we are using the Asynchronously Parallel Optimization Solver for
 Install LibEnsemble
 -------------------
 
-Besides a working WarpX executable, you have to install libEnsemble and its dependencies.
+Besides a working Artemis executable, you have to install libEnsemble and its dependencies.
 
 You can either install all packages via `conda` (recommended),
 
@@ -66,32 +66,32 @@ In a nutshell, a user needs to define
     When the generator is an optimizer, it takes the simulation output called ``'f'`` as an input.
 
   - A simulation function ``sim_f`` that will take ``'x'`` as an input and return a single output value ``'f'``.
-    In our example, ``sim_f`` modifies the WarpX input file depending on ``'x'``, launches a WarpX simulation and reads the simulation output plotfile to extract ``'f'``.
+    In our example, ``sim_f`` modifies the Artemis input file depending on ``'x'``, launches a Artemis simulation and reads the simulation output plotfile to extract ``'f'``.
 
   - An allocator function ``alloc_f`` that will feed available workers with tasks.
     This is provided by LibEnsemble.
 
 The files in ``Tools/LibEnsemble/`` are:
 
-``run_libensemble_on_warpx.py``
+``run_libensemble_on_artemis.py``
    This is the main LibEnsemble script.
-   It imports ``gen_f`` and ``alloc_f`` from LibEnsemble, ``sim_f`` from file ``warpx_simf.py`` (see below), defines dictionaries for parameters of each of these objects (``gen_specs`` includes lower and upper bound of each element in the input array ``'x'``, ``alloc_specs`` and ``sim_specs`` respectively) and runs LibEnsemble.
+   It imports ``gen_f`` and ``alloc_f`` from LibEnsemble, ``sim_f`` from file ``artemis_simf.py`` (see below), defines dictionaries for parameters of each of these objects (``gen_specs`` includes lower and upper bound of each element in the input array ``'x'``, ``alloc_specs`` and ``sim_specs`` respectively) and runs LibEnsemble.
 
-``warpx_simf.py``
-   defines the ``sim_f`` function called ``run_warpx``:
+``artemis_simf.py``
+   defines the ``sim_f`` function called ``run_artemis``:
 
-   .. doxygenfunction:: run_warpx
+   .. doxygenfunction:: run_artemis
 
 ``sim/inputs``
-   WarpX input file. Some of its parameters are modified in ``run_warpx``.
+   Artemis input file. Some of its parameters are modified in ``run_artemis``.
 
 ``write_sim_input.py``
-   (util) update one WarpX input file depending on values in ``'x'`` for this run.
+   (util) update one Artemis input file depending on values in ``'x'`` for this run.
 
    .. doxygenfunction:: write_sim_input
 
 ``read_sim_output.py``
-   (util) Read WarpX plotfile and return ``'f'``.
+   (util) Read Artemis plotfile and return ``'f'``.
 
    .. doxygenfunction:: read_sim_output
 
@@ -100,27 +100,27 @@ The files in ``Tools/LibEnsemble/`` are:
 
 ``all_machine_specs.py``
    (util) dictionaries of machine-specific parameters.
-   For convenience, the maximum number of WarpX runs is defined there.
+   For convenience, the maximum number of Artemis runs is defined there.
 
 ``summit_submit_mproc.sh``
-   Submission script for LibEnsemble+WarpX on Summit.
+   Submission script for LibEnsemble+Artemis on Summit.
    Make sure to edit this file and add your project ID for allocations.
 
 Run the example
 ---------------
 
 On Summit or for a local run, LibEnsemble can run with a Random Number Generator (easiest, good as a first try) or with an optimizer (requires python package ``nlopt``).
-This is set by the variable ``generator_type`` in ``run_libensemble_on_warpx.py``.
-We hereafter assume that all Python modules required are installed and that a WarpX executable is available.
+This is set by the variable ``generator_type`` in ``run_libensemble_on_artemis.py``.
+We hereafter assume that all Python modules required are installed and that a Artemis executable is available.
 
 Run locally
 ^^^^^^^^^^^
 
-Adjust the ``local_specs`` dictionary in ``all_machine_specs.py`` to fix the path to the WarpX executable (and optionally change the number of cores and OpenMP threads), and run
+Adjust the ``local_specs`` dictionary in ``all_machine_specs.py`` to fix the path to the Artemis executable (and optionally change the number of cores and OpenMP threads), and run
 
 .. code-block:: sh
 
-    python run_libensemble_on_warpx.py --comms local --nworkers 3
+    python run_libensemble_on_artemis.py --comms local --nworkers 3
 
 This is adapted to a 4-core machine, as it will use:
 
@@ -133,9 +133,9 @@ This is adapted to a 4-core machine, as it will use:
 Run on Summit at OLCF
 ^^^^^^^^^^^^^^^^^^^^^
 
-- ``cp -r $HOME/warpx/Tools/LibEnsemble/* sim_directory``
-- modify ``run_libensemble_on_warpx.py`` to have ``machine = 'summit'``
-- modify ``all_machine_specs.py`` to put the right path to the WarpX executable
+- ``cp -r $HOME/artemis/Tools/LibEnsemble/* sim_directory``
+- modify ``run_libensemble_on_artemis.py`` to have ``machine = 'summit'``
+- modify ``all_machine_specs.py`` to put the right path to the Artemis executable
 - modify ``summit_submit_mproc.sh`` to set ``LIBE_PLOTS`` to ``false`` and set the project ID
 - ``bsub summit_submit_mproc.sh``:
 

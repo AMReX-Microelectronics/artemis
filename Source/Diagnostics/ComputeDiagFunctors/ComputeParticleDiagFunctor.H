@@ -1,13 +1,13 @@
 /* Copyright 2021 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_COMPUTEPARTICLEDIAGFUNCTOR_H_
-#define WARPX_COMPUTEPARTICLEDIAGFUNCTOR_H_
+#ifndef ARTEMIS_COMPUTEPARTICLEDIAGFUNCTOR_H_
+#define ARTEMIS_COMPUTEPARTICLEDIAGFUNCTOR_H_
 
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 #include <AMReX.H>
 #include <AMReX_AmrParticles.H>
@@ -58,4 +58,4 @@ public:
     virtual void InitData () {}
 };
 
-#endif // WARPX_COMPUTEPARTICLEDIAGFUNCTOR_H_
+#endif // ARTEMIS_COMPUTEPARTICLEDIAGFUNCTOR_H_

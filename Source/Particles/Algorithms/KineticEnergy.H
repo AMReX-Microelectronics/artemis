@@ -1,6 +1,6 @@
 /* Copyright 2021 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,7 +8,7 @@
 #ifndef PARTICLES_KINETIC_ENERGY_H_
 #define PARTICLES_KINETIC_ENERGY_H_
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include "AMReX_Extension.H"
 #include "AMReX_GpuQualifiers.H"

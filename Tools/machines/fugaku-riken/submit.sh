@@ -13,7 +13,7 @@ export NODES=48
 export MPI_RANKS=$((NODES * 12))
 export OMP_NUM_THREADS=4
 
-export EXE="./warpx"
+export EXE="./artemis"
 export INPUT="i.3d"
 
 export XOS_MMM_L_PAGING_POLICY=demand:demand:demand

@@ -1,8 +1,8 @@
 // This script was automatically generated!
 // Edit dev/Source/Utils/Physics/write_atomic_data_cpp.py instead!
 
-#ifndef WARPX_UTILS_PHYSICS_IONIZATION_TABLE_H_
-#define WARPX_UTILS_PHYSICS_IONIZATION_TABLE_H_
+#ifndef ARTEMIS_UTILS_PHYSICS_IONIZATION_TABLE_H_
+#define ARTEMIS_UTILS_PHYSICS_IONIZATION_TABLE_H_
 
 #include <AMReX_REAL.H>
 
@@ -1963,4 +1963,4 @@ namespace utils::physics
 
 }
 
-#endif // #ifndef WARPX_UTILS_PHYSICS_IONIZATION_TABLE_H_
+#endif // #ifndef ARTEMIS_UTILS_PHYSICS_IONIZATION_TABLE_H_

@@ -3,7 +3,7 @@
 Workflows
 =========
 
-This section collects typical user workflows and best practices for WarpX.
+This section collects typical user workflows and best practices for Artemis.
 
 .. toctree::
    :maxdepth: 2

@@ -1,6 +1,6 @@
 /* Copyright 2022 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,7 +9,7 @@
 #define BOSCH_HALE_FUSION_CROSS_SECTION_H
 
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_REAL.H>
 

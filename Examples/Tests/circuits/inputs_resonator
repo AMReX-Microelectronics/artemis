@@ -4,14 +4,14 @@
 
 # do not modify these
 geometry.dims = 3
-warpx.verbose = 1
+artemis.verbose = 1
 amr.max_level = 0
 amr.blocking_factor = 1024
 
 # stop at max_step or 100 periods, whichever occurs first
 max_step = 100000
 stop_time = 100 * wavelength/c
-warpx.cfl = 0.9
+artemis.cfl = 0.9
 
 # number of cells in each direction
 my_constants.ncells = 40
@@ -82,39 +82,39 @@ macroscopic.sigma_function(x,y,z) = "sigma * (
 ( (x>-Lcavity/2-tmetal) * (x<Lcavity/2+tmetal) * (y>-Lcavity/2-tmetal) * (y<Lcavity/2+tmetal) * (z>Lcavity/2) * (z<Lcavity/2+tmetal) ) )"
 
 # initial E field
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ex_external_grid_function(x,y,z) = "0."
-warpx.Ey_external_grid_function(x,y,z) = "0."
-warpx.Ez_external_grid_function(x,y,z) = "0."
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ex_external_grid_function(x,y,z) = "0."
+artemis.Ey_external_grid_function(x,y,z) = "0."
+artemis.Ez_external_grid_function(x,y,z) = "0."
 
 # initial B field
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z) = "0."
-warpx.By_external_grid_function(x,y,z) = "0."
-warpx.Bz_external_grid_function(x,y,z) = "0."
+artemis.B_ext_grid_init_style = parse_B_ext_grid_function
+artemis.Bx_external_grid_function(x,y,z) = "0."
+artemis.By_external_grid_function(x,y,z) = "0."
+artemis.Bz_external_grid_function(x,y,z) = "0."
 
 # external E excitation
-warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+artemis.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
-warpx.Ex_excitation_flag_function(x,y,z) = "0."
-warpx.Ey_excitation_flag_function(x,y,z) = "0."
-warpx.Ez_excitation_flag_function(x,y,z) = "0."
+artemis.Ex_excitation_flag_function(x,y,z) = "0."
+artemis.Ey_excitation_flag_function(x,y,z) = "0."
+artemis.Ez_excitation_flag_function(x,y,z) = "0."
 
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 # external B excitation
-warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
+artemis.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
 # 2 = soft source excitation (increment field as opposed to overwrite with a hard source)
-warpx.Bx_excitation_flag_function(x,y,z) = "2 * (x>-smalldx) * (x<smalldx) * (y>0) * (y<dy) * (z>-Lcavity/2) * (z<Lcavity/2)"
-warpx.By_excitation_flag_function(x,y,z) = "0."
-warpx.Bz_excitation_flag_function(x,y,z) = "0."
+artemis.Bx_excitation_flag_function(x,y,z) = "2 * (x>-smalldx) * (x<smalldx) * (y>0) * (y<dy) * (z>-Lcavity/2) * (z<Lcavity/2)"
+artemis.By_excitation_flag_function(x,y,z) = "0."
+artemis.Bz_excitation_flag_function(x,y,z) = "0."
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "exp(-(t-t0)*(t-t0)/(BW*BW))*sin(2*pi*f*(t-t0))"
-warpx.By_excitation_grid_function(x,y,z,t) = "0."
-warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
+artemis.Bx_excitation_grid_function(x,y,z,t) = "exp(-(t-t0)*(t-t0)/(BW*BW))*sin(2*pi*f*(t-t0))"
+artemis.By_excitation_grid_function(x,y,z,t) = "0."
+artemis.Bz_excitation_grid_function(x,y,z,t) = "0."
 
 # plotfile diagnostics
 diagnostics.diags_names = plt
@@ -124,7 +124,7 @@ plt.diag_type = Full
 plt.plot_raw_fields = 0
 
 # output diagnostics
-warpx.reduced_diags_names = Eobs1
+artemis.reduced_diags_names = Eobs1
 Eobs1.type = RawEFieldReduction
 Eobs1.reduction_type = integral
 Eobs1.integration_type = volume

@@ -1,4 +1,4 @@
-CEXE_sources += WarpXWrappers.cpp
-CEXE_sources += WarpX_py.cpp
+CEXE_sources += ArtemisWrappers.cpp
+CEXE_sources += Artemis_py.cpp
 
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Python
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/Python

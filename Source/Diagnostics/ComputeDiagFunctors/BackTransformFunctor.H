@@ -1,11 +1,11 @@
 /* Copyright 2021 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_BACKTRANSFORMFUNCTOR_H_
-#define WARPX_BACKTRANSFORMFUNCTOR_H_
+#ifndef ARTEMIS_BACKTRANSFORMFUNCTOR_H_
+#define ARTEMIS_BACKTRANSFORMFUNCTOR_H_
 
 #include "ComputeDiagFunctor.H"
 

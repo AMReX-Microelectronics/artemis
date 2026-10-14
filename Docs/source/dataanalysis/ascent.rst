@@ -7,7 +7,7 @@ It provides rendering runtimes that can leverage many-core CPUs and GPUs to rend
 
 Compiling with GNU Make
 -----------------------
-After building and installing Ascent according to the instructions at `Building Ascent <https://ascent.readthedocs.io/en/latest/BuildingAscent.html>`_, you can enable support for it in WarpX by changing the line
+After building and installing Ascent according to the instructions at `Building Ascent <https://ascent.readthedocs.io/en/latest/BuildingAscent.html>`_, you can enable support for it in Artemis by changing the line
 
 .. code-block:: bash
 
@@ -29,7 +29,7 @@ Furthermore, you must ensure that either the :code:`ASCENT_DIR` shell environmen
 Inputs File Configuration
 -------------------------
 
-Once WarpX has been compiled with Ascent support, it will need to be enabled and configured at runtime.
+Once Artemis has been compiled with Ascent support, it will need to be enabled and configured at runtime.
 This is done using our usual inputs file (read with ``amrex::ParmParse``).
 The supported parameters are part of the :ref:`FullDiagnostics <running-cpp-parameters-diagnostics>` with ``<diag_name>.format`` parameter set to ``ascent``.
 
@@ -207,7 +207,7 @@ The following block can be used in an ascent action to extract *Conduit Blueprin
             path: "conduit_blueprint"
             protocol: "blueprint/mesh/hdf5"
 
-The output in the WarpX run directory will look as in the following listing.
+The output in the Artemis run directory will look as in the following listing.
 The ``.root`` file is a metadata file and the corresponding directory contains the conduit blueprint data in an internal format that is based on HDF5.
 
 .. code-block:: bash
@@ -233,7 +233,7 @@ Run Replay
 
 For Ascent Replay, two command line tools are provided in the utilities/replay directory of the Ascent installation.
 There are two version of replay: the MPI-parallel version ``replay_mpi`` and a serial version, ``replay_ser``.
-Use an MPI-parallel replay with data sets created with MPI-parallel builds of WarpX.
+Use an MPI-parallel replay with data sets created with MPI-parallel builds of Artemis.
 Here we use ``replay_mpi`` as an example.
 
 The options for replay are:
@@ -251,12 +251,12 @@ For example, for a small data example that fits on a single computer:
 
   ./replay_ser --root=conduit_blueprint.cycle_000400.root --actions=ascent_actions.yaml
 
-Will replay the data of WarpX step 400 ("cycle" 400).
+Will replay the data of Artemis step 400 ("cycle" 400).
 A whole set of steps can be replayed with the above mentioned *cycles file*:
 
 .. code-block:: bash
 
-  ./replay_ser --cycles=warpx_list.txt --actions=ascent_actions.yaml
+  ./replay_ser --cycles=artemis_list.txt --actions=ascent_actions.yaml
 
 For larger examples, e.g. on a cluster with *Slurm* batch system, a parallel launch could look like this:
 
@@ -265,7 +265,7 @@ For larger examples, e.g. on a cluster with *Slurm* batch system, a parallel lau
   # one step
   srun -n 8 ./replay_mpi --root=conduit_blueprint.cycle_000400.root --actions=ascent_actions.yaml
   # multiple steps
-  srun -n 8 ./replay_mpi --cycles=warpx_list.txt --actions=ascent_actions.yaml
+  srun -n 8 ./replay_mpi --cycles=artemis_list.txt --actions=ascent_actions.yaml
 
 
 Example Actions
@@ -293,7 +293,7 @@ Ascent replay is helpful in the setup of an in situ visualization pipeline durin
 In the following, a Jupyter-based workflow is shown that can be used to quickly iterate on the design of a ``ascent_actions.yaml`` file, repeatedly rendering the same (small) data.
 
 First, run a small simulation, e.g. on a local computer, and create conduit blueprint files (see above).
-Second, copy the Jupyter Notebook file :download:`ascent_replay_warpx.ipynb <../../../Tools/Ascent/ascent_replay_warpx.ipynb>` into the simulation output directory.
+Second, copy the Jupyter Notebook file :download:`ascent_replay_artemis.ipynb <../../../Tools/Ascent/ascent_replay_artemis.ipynb>` into the simulation output directory.
 Third, download and start a Docker container with a prepared Jupyter installation and Ascent Python bindings from the simulation output directory:
 
 .. code-block:: bash
@@ -304,7 +304,7 @@ Third, download and start a Docker container with a prepared Jupyter installatio
 Now, access Jupyter Lab via: http://localhost:8888/lab (password: ``learn``).
 
 Inside the Jupyter Lab is a ``replay/`` directory, which mounts the outer working directory.
-You can now open ``ascent_replay_warpx.ipynb`` and execute all cells.
+You can now open ``ascent_replay_artemis.ipynb`` and execute all cells.
 The last two cells are the replay action that can be quickly iterated: change ``replay_actions.yaml`` cell and execute both.
 
 .. note::

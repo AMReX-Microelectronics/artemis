@@ -1,8 +1,8 @@
 #include "FlushFormatOpenPMD.H"
 
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -95,12 +95,12 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     engine_parameters.insert({k, v});
   }
 
-  auto & warpx = WarpX::GetInstance();
-  m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
+  auto & artemis = Artemis::GetInstance();
+  m_OpenPMDPlotWriter = std::make_unique<ArtemisOpenPMDPlot>(
     encoding, openpmd_backend,
     operator_type, operator_parameters,
     engine_type, engine_parameters,
-    warpx.getPMLdirections()
+    artemis.getPMLdirections()
   );
 }
 
@@ -118,7 +118,7 @@ FlushFormatOpenPMD::WriteToFile (
     const amrex::Geometry& full_BTD_snapshot,
     bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready) const
 {
-    WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
+    ARTEMIS_PROFILE("FlushFormatOpenPMD::WriteToFile()");
     const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
     if (!isBTD)
     {
@@ -133,7 +133,7 @@ FlushFormatOpenPMD::WriteToFile (
       }
     }
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         !plot_raw_fields && !plot_raw_fields_guards,
         "Cannot plot raw data with OpenPMD output format. Use plotfile instead.");
 

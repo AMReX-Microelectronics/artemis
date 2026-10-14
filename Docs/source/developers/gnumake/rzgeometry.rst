@@ -1,7 +1,7 @@
-Building WarpX to use RZ geometry
+Building Artemis to use RZ geometry
 =================================
 
-WarpX can be built to run with RZ geometry. Both an FDTD solver (the default)
+Artemis can be built to run with RZ geometry. Both an FDTD solver (the default)
 and a PSATD solver are available. Both solvers allow multiple azimuthal modes.
 
 To select RZ geometry, set the flag USE_RZ = TRUE when compiling:

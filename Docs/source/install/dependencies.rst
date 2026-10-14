@@ -3,7 +3,7 @@
 Dependencies
 ============
 
-WarpX depends on the following popular third party software.
+Artemis depends on the following popular third party software.
 Please see installation instructions below.
 
 - a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 8, Clang 7, NVCC 11.0, MSVC 19.15 or newer
@@ -41,7 +41,7 @@ Optional dependencies include:
 Install
 -------
 
-Pick *one* of the installation methods below to install all dependencies for WarpX development in a consistent manner.
+Pick *one* of the installation methods below to install all dependencies for Artemis development in a consistent manner.
 
 Conda (Linux/macOS/Windows)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -60,19 +60,19 @@ With MPI (only Linux/macOS):
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
-   source activate warpx-dev
+   conda create -n artemis-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
+   source activate artemis-dev
 
 Without MPI:
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
-   source activate warpx-dev
+   conda create -n artemis-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
+   source activate artemis-dev
 
-   # compile WarpX with -DWarpX_MPI=OFF
+   # compile Artemis with -DArtemis_MPI=OFF
 
-For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you also need to set:
+For legacy ``GNUmake`` builds, after each ``source activate artemis-dev``, you also need to set:
 
 .. code-block:: bash
 
@@ -93,7 +93,7 @@ For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you als
 Spack (macOS/Linux)
 ^^^^^^^^^^^^^^^^^^^
 
-First, download a `WarpX Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
+First, download a `Artemis Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
 For most desktop developments, pick the OpenMP environment for CPUs unless you have a supported GPU.
 
 * **Debian/Ubuntu** Linux:
@@ -113,7 +113,7 @@ If you already `installed Spack <https://spack.io>`__, we recommend to activate 
    spack mirror add rolling https://binaries.spack.io/develop
    spack buildcache keys --install --trust
 
-Now install the WarpX dependencies in a new WarpX development environment:
+Now install the Artemis dependencies in a new Artemis development environment:
 
 .. code-block:: bash
 
@@ -121,8 +121,8 @@ Now install the WarpX dependencies in a new WarpX development environment:
    curl -sLO https://raw.githubusercontent.com/ECP-WarpX/WarpX/development/Tools/machines/desktop/spack-${system}-${compute}.yaml
 
    # create new development environment
-   spack env create warpx-${compute}-dev spack-${system}-${compute}.yaml
-   spack env activate warpx-${compute}-dev
+   spack env create artemis-${compute}-dev spack-${system}-${compute}.yaml
+   spack env activate artemis-${compute}-dev
 
    # installation
    spack install
@@ -132,12 +132,12 @@ In new terminal sessions, re-activate the environment with
 
 .. code-block:: bash
 
-   spack env activate warpx-openmp-dev
+   spack env activate artemis-openmp-dev
 
 again.
 Replace ``openmp`` with the equivalent you chose.
 
-For legacy ``GNUmake`` builds, after each ``source activate warpx-openmp-dev``, you also need to set:
+For legacy ``GNUmake`` builds, after each ``source activate artemis-openmp-dev``, you also need to set:
 
 .. code-block:: bash
 

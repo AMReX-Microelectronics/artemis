@@ -1,13 +1,13 @@
 /* Copyright 2019 Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_UPDATE_MOMENTUM_PEREZ_ELASTIC_H_
-#define WARPX_PARTICLES_COLLISION_UPDATE_MOMENTUM_PEREZ_ELASTIC_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_UPDATE_MOMENTUM_PEREZ_ELASTIC_H_
+#define ARTEMIS_PARTICLES_COLLISION_UPDATE_MOMENTUM_PEREZ_ELASTIC_H_
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Math.H>
 #include <AMReX_Random.H>
@@ -276,4 +276,4 @@ void UpdateMomentumPerezElastic (
 
 }
 
-#endif // WARPX_PARTICLES_COLLISION_UPDATE_MOMENTUM_PEREZ_ELASTIC_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_UPDATE_MOMENTUM_PEREZ_ELASTIC_H_

@@ -1,11 +1,11 @@
 /* Copyright 2020 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_COLLISIONHANDLER_H_
-#define WARPX_PARTICLES_COLLISION_COLLISIONHANDLER_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_COLLISIONHANDLER_H_
+#define ARTEMIS_PARTICLES_COLLISION_COLLISIONHANDLER_H_
 
 #include "CollisionBase.H"
 
@@ -36,4 +36,4 @@ private:
 
 };
 
-#endif // WARPX_PARTICLES_COLLISION_COLLISIONHANDLER_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_COLLISIONHANDLER_H_

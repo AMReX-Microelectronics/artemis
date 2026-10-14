@@ -27,9 +27,9 @@ jobs:
     - name: Configure
       run: |
         cmake -S . -B build     \
-          -DWarpX_SENSEI=ON     \
-          -DWarpX_MAG_LLG=OFF   \
-          -DWarpX_COMPUTE=NOACC
+          -DArtemis_SENSEI=ON     \
+          -DArtemis_MAG_LLG=OFF   \
+          -DArtemis_COMPUTE=NOACC
     - name: Build
       run: |
         cmake --build build -j 2
@@ -50,9 +50,9 @@ jobs:
       run: |
         . /ascent_docker_setup_env.sh
         cmake -S . -B build   \
-            -DWarpX_ASCENT=ON \
-            -DWarpX_MAG_LLG=OFF \
-            -DWarpX_COMPUTE=NOACC
+            -DArtemis_ASCENT=ON \
+            -DArtemis_MAG_LLG=OFF \
+            -DArtemis_COMPUTE=NOACC
     - name: Build
       run: |
         . /ascent_docker_setup_env.sh

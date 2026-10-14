@@ -1,13 +1,13 @@
 /* Copyright 2019 David Grote, Luca Fedeli, Maxence Thevenet
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "PhotonParticleContainer.H"
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #endif
 #include "Particles/Gather/FieldGather.H"
@@ -16,9 +16,9 @@
 #include "Particles/Pusher/CopyParticleAttribs.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePositionPhoton.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -49,7 +49,7 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
 {
     ParmParse pp_species_name(species_name);
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         //Find out if Breit Wheeler process is enabled
         pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
 
@@ -63,7 +63,7 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
         //Check for processes which do not make sense for photons
         bool test_quantum_sync = false;
         pp_species_name.query("do_qed_quantum_sync", test_quantum_sync);
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         test_quantum_sync == 0,
         "ERROR: do_qed_quantum_sync can be 1 for species NOT listed in particles.photon_species only!");
         //_________________________________________________________
@@ -80,7 +80,7 @@ void PhotonParticleContainer::InitData()
 }
 
 void
-PhotonParticleContainer::PushPX (WarpXParIter& pti,
+PhotonParticleContainer::PushPX (ArtemisParIter& pti,
                                  amrex::FArrayBox const * exfab,
                                  amrex::FArrayBox const * eyfab,
                                  amrex::FArrayBox const * ezfab,
@@ -94,7 +94,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                  amrex::Real dt, ScaleFields /*scaleFields*/, DtType a_dt_type)
 {
     // Get cell size on gather_lev
-    const std::array<Real,3>& dx = WarpX::CellSize(std::max(gather_lev,0));
+    const std::array<Real,3>& dx = Artemis::CellSize(std::max(gather_lev,0));
 
     // Get box from which field is gathered.
     // If not gathering from the finest level, the box is coarsened.
@@ -102,7 +102,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     if (lev == gather_lev) {
         box = pti.tilebox();
     } else {
-        const IntVect& ref_ratio = WarpX::RefRatio(gather_lev);
+        const IntVect& ref_ratio = Artemis::RefRatio(gather_lev);
         box = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
@@ -116,7 +116,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     BreitWheelerEvolveOpticalDepth evolve_opt;
     amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_BW = nullptr;
     const bool local_has_breit_wheeler = has_breit_wheeler();
@@ -135,13 +135,13 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
+    const std::array<amrex::Real, 3>& xyzmin = Artemis::LowerCorner(box, gather_lev, 0._rt);
 
     const Dim3 lo = lbound(box);
 
-    bool galerkin_interpolation = WarpX::galerkin_interpolation;
-    int nox = WarpX::nox;
-    int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+    bool galerkin_interpolation = Artemis::galerkin_interpolation;
+    int nox = Artemis::nox;
+    int n_rz_azimuthal_modes = Artemis::n_rz_azimuthal_modes;
 
     amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
     amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
@@ -166,7 +166,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     enum qed_flags : int { no_qed, has_qed };
 
     int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     int qed_runtime_flag = (local_has_breit_wheeler) ? has_qed : no_qed;
 #else
     int qed_runtime_flag = no_qed;
@@ -199,7 +199,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                 getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
             }
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
             [[maybe_unused]] auto& evolve_opt_tmp = evolve_opt;
             [[maybe_unused]] auto p_optical_depth_BW_tmp = p_optical_depth_BW;
             [[maybe_unused]] auto ux_tmp = ux; // for nvhpc

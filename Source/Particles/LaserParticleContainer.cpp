@@ -2,22 +2,22 @@
  * Luca Fedeli, Maxence Thevenet, Remi Lehe
  * Revathi Jambunathan, Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "LaserParticleContainer.H"
 
-#include "Evolve/WarpXDtType.H"
+#include "Evolve/ArtemisDtType.H"
 #include "Laser/LaserProfiles.H"
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -69,7 +69,7 @@
 #include <type_traits>
 
 using namespace amrex;
-using namespace WarpXLaserProfiles;
+using namespace ArtemisLaserProfiles;
 
 namespace
 {
@@ -80,7 +80,7 @@ namespace
 }
 
 LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies, const std::string& name)
-    : WarpXParticleContainer(amr_core, ispecies),
+    : ArtemisParticleContainer(amr_core, ispecies),
       m_laser_name{name}
 {
     charge = 1.0;
@@ -98,11 +98,11 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     utils::parser::getArrWithParser(pp_laser_name, "direction", m_nvec);
     utils::parser::getArrWithParser(pp_laser_name, "polarization", m_p_X);
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_position.size() == 3,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(m_position.size() == 3,
         m_laser_name + ".position must have three components.");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec.size() == 3,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec.size() == 3,
         m_laser_name + ".direction must have three components.");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_p_X.size() == 3,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(m_p_X.size() == 3,
         m_laser_name + ".polarization must have three components.");
 
     utils::parser::getWithParser(pp_laser_name, "wavelength", m_wavelength);
@@ -141,11 +141,11 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     m_up_laser_profile = laser_profiles_dictionary.at(laser_type_s)();
     //__________
 
-#ifdef WARPX_DIM_XZ
+#ifdef ARTEMIS_DIM_XZ
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[1] == amrex::Real(0),
         "Laser propagation direction must be 0 along y in 2D");
 #endif
-#ifdef WARPX_DIM_1D_Z
+#ifdef ARTEMIS_DIM_1D_Z
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[0] == amrex::Real(0),
         "Laser propagation direction must be 0 along x in 1D");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[1] == amrex::Real(0),
@@ -156,16 +156,16 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     Real s = 1.0_rt / std::sqrt(m_nvec[0]*m_nvec[0] + m_nvec[1]*m_nvec[1] + m_nvec[2]*m_nvec[2]);
     m_nvec = { m_nvec[0]*s, m_nvec[1]*s, m_nvec[2]*s };
 
-    if (WarpX::gamma_boost > 1.) {
+    if (Artemis::gamma_boost > 1.) {
         // Check that the laser direction is equal to the boost direction
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(  m_nvec[0]*WarpX::boost_direction[0]
-                                         + m_nvec[1]*WarpX::boost_direction[1]
-                                         + m_nvec[2]*WarpX::boost_direction[2] - 1. < 1.e-12,
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(  m_nvec[0]*Artemis::boost_direction[0]
+                                         + m_nvec[1]*Artemis::boost_direction[1]
+                                         + m_nvec[2]*Artemis::boost_direction[2] - 1. < 1.e-12,
                                            "The Lorentz boost should be in the same direction as the laser propagation");
         // Get the position of the plane, along the boost direction, in the lab frame
         // and convert the position of the antenna to the boosted frame
         m_Z0_lab = m_nvec[0]*m_position[0] + m_nvec[1]*m_position[1] + m_nvec[2]*m_position[2];
-        Real Z0_boost = m_Z0_lab/WarpX::gamma_boost;
+        Real Z0_boost = m_Z0_lab/Artemis::gamma_boost;
         m_position[0] += (Z0_boost-m_Z0_lab)*m_nvec[0];
         m_position[1] += (Z0_boost-m_Z0_lab)*m_nvec[1];
         m_position[2] += (Z0_boost-m_Z0_lab)*m_nvec[2];
@@ -182,13 +182,13 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 
     m_p_Y = CrossProduct(m_nvec, m_p_X);   // The second polarization vector
 
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_3D) || defined(ARTEMIS_DIM_RZ)
     m_u_X = m_p_X;
     m_u_Y = m_p_Y;
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
     m_u_X = CrossProduct({0., 1., 0.}, m_nvec);
     m_u_Y = {0., 1., 0.};
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
     m_u_X = {1., 0., 0.};
     m_u_Y = {0., 1., 0.};
 #endif
@@ -212,12 +212,12 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         m_updated_position = m_position;
 
         // Sanity checks
-        int dir = WarpX::moving_window_dir;
+        int dir = Artemis::moving_window_dir;
         std::vector<Real> windir(3, 0.0);
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
         windir[2] = 1.0;
         amrex::ignore_unused(dir);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         windir[2*dir] = 1.0;
 #else
         windir[dir] = 1.0;
@@ -226,13 +226,13 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
             (m_nvec[0]-windir[0]) + (m_nvec[1]-windir[1]) + (m_nvec[2]-windir[2])
             < 1.e-12, "do_continous_injection for laser particle only works"
             " if moving window direction and laser propagation direction are the same");
-        if ( WarpX::gamma_boost>1 ){
+        if ( Artemis::gamma_boost>1 ){
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                (WarpX::boost_direction[0]-0)*(WarpX::boost_direction[0]-0) +
-                (WarpX::boost_direction[1]-0)*(WarpX::boost_direction[1]-0) +
-                (WarpX::boost_direction[2]-1)*(WarpX::boost_direction[2]-1) < 1.e-12,
+                (Artemis::boost_direction[0]-0)*(Artemis::boost_direction[0]-0) +
+                (Artemis::boost_direction[1]-0)*(Artemis::boost_direction[1]-0) +
+                (Artemis::boost_direction[2]-1)*(Artemis::boost_direction[2]-1) < 1.e-12,
                 "do_continous_injection for laser particle only works if "
-                "warpx.boost_direction = z. TODO: all directions.");
+                "artemis.boost_direction = z. TODO: all directions.");
         }
     }
 
@@ -266,14 +266,14 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
     // outdated full problem domain at t=0.
 
     // Convert updated_position to Real* to use RealBox::contains().
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const Real* p_pos = m_updated_position.dataPtr();
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     const Real p_pos[2] = {m_updated_position[0], m_updated_position[2]};
 #else
     const Real p_pos[1] = {m_updated_position[2]};
 #endif
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
     // In RZ, check if laser enters the box only along Z. This is needed
     // because the Cartesian check below (injection_box.contains(p_pos))
     // would fail in RZ, due to the fact that such a check verifies that
@@ -306,25 +306,25 @@ LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
 {
     if (!m_enabled) return;
 
-    int dir = WarpX::moving_window_dir;
-    if (do_continuous_injection and (WarpX::gamma_boost > 1)){
+    int dir = Artemis::moving_window_dir;
+    if (do_continuous_injection and (Artemis::gamma_boost > 1)){
         // In boosted-frame simulations, the antenna has moved since the last
         // call to this function, and injection position needs to be updated
-#if defined(WARPX_DIM_3D)
-        m_updated_position[dir] -= WarpX::beta_boost *
-            WarpX::boost_direction[dir] * PhysConst::c * dt;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_3D)
+        m_updated_position[dir] -= Artemis::beta_boost *
+            Artemis::boost_direction[dir] * PhysConst::c * dt;
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
         // This needs to be converted in order to index `boost_direction`
         // which has 3 components, for both 2D and 3D simulations.
-        m_updated_position[2*dir] -= WarpX::beta_boost *
-            WarpX::boost_direction[2*dir] * PhysConst::c * dt;
-#elif defined(WARPX_DIM_1D_Z)
+        m_updated_position[2*dir] -= Artemis::beta_boost *
+            Artemis::boost_direction[2*dir] * PhysConst::c * dt;
+#elif defined(ARTEMIS_DIM_1D_Z)
         // In 1D, dir=0 corresponds to z
         // This needs to be converted in order to index `boost_direction`
         // which has 3 components, for 1D, 2D, and 3D simulations.
-        m_updated_position[2] -= WarpX::beta_boost *
-            WarpX::boost_direction[2] * PhysConst::c * dt;
+        m_updated_position[2] -= Artemis::beta_boost *
+            Artemis::boost_direction[2] * PhysConst::c * dt;
         amrex::ignore_unused(dir);
 #endif
     }
@@ -367,13 +367,13 @@ LaserParticleContainer::InitData (int lev)
 
 #if (AMREX_SPACEDIM >= 2)
     auto Transform = [&](int const i, int const j) -> Vector<Real>{
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         return { m_position[0] + (S_X*(Real(i)+0.5_rt))*m_u_X[0] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[0],
                  m_position[1] + (S_X*(Real(i)+0.5_rt))*m_u_X[1] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[1],
                  m_position[2] + (S_X*(Real(i)+0.5_rt))*m_u_X[2] + (S_Y*(Real(j)+0.5_rt))*m_u_Y[2] };
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     amrex::ignore_unused(j);
-#   if defined(WARPX_DIM_RZ)
+#   if defined(ARTEMIS_DIM_RZ)
         return { m_position[0] + (S_X*(Real(i)+0.5_rt)),
                  0.0_rt,
                  m_position[2]};
@@ -388,11 +388,11 @@ LaserParticleContainer::InitData (int lev)
 
     // Given the "lab" frame coordinates, return the real coordinates in the laser plane coordinates
     auto InverseTransform = [&](const Vector<Real>& pos) -> Vector<Real>{
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         return {m_u_X[0]*(pos[0]-m_position[0])+m_u_X[1]*(pos[1]-m_position[1])+m_u_X[2]*(pos[2]-m_position[2]),
                 m_u_Y[0]*(pos[0]-m_position[0])+m_u_Y[1]*(pos[1]-m_position[1])+m_u_Y[2]*(pos[2]-m_position[2])};
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-#   if defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+#   if defined(ARTEMIS_DIM_RZ)
         return {pos[0]-m_position[0], 0.0_rt};
 #   else
         return {m_u_X[0]*(pos[0]-m_position[0])+m_u_X[2]*(pos[2]-m_position[2]), 0.0_rt};
@@ -417,7 +417,7 @@ LaserParticleContainer::InitData (int lev)
 
         const Real* prob_lo = m_laser_injection_box.lo();
         const Real* prob_hi = m_laser_injection_box.hi();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         compute_min_max(prob_lo[0], prob_lo[1], prob_lo[2]);
         compute_min_max(prob_hi[0], prob_lo[1], prob_lo[2]);
         compute_min_max(prob_lo[0], prob_hi[1], prob_lo[2]);
@@ -426,7 +426,7 @@ LaserParticleContainer::InitData (int lev)
         compute_min_max(prob_hi[0], prob_lo[1], prob_hi[2]);
         compute_min_max(prob_lo[0], prob_hi[1], prob_hi[2]);
         compute_min_max(prob_hi[0], prob_hi[1], prob_hi[2]);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         compute_min_max(prob_lo[0], 0.0, prob_lo[1]);
         compute_min_max(prob_hi[0], 0.0, prob_lo[1]);
         compute_min_max(prob_lo[0], 0.0, prob_hi[1]);
@@ -440,7 +440,7 @@ LaserParticleContainer::InitData (int lev)
     const int nprocs = ParallelDescriptor::NProcs();
     const int myproc = ParallelDescriptor::MyProc();
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const Box plane_box {IntVect(plane_lo[0],plane_lo[1],0),
                          IntVect(plane_hi[0],plane_hi[1],0)};
     BoxArray plane_ba {plane_box};
@@ -459,7 +459,7 @@ LaserParticleContainer::InitData (int lev)
             }
         }
     }
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     BoxArray plane_ba { Box {IntVect(plane_lo[0],0), IntVect(plane_hi[0],0)} };
 #else
     BoxArray plane_ba { Box {IntVect(0), IntVect(0)} };
@@ -481,16 +481,16 @@ LaserParticleContainer::InitData (int lev)
 #else
                 const Vector<Real>& pos = { 0.0_rt, 0.0_rt, m_position[2] };
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 const Real* x = pos.dataPtr();
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 const Real x[2] = {pos[0], pos[2]};
 #else
                 const Real x[1] = {pos[2]};
 #endif
                 if (m_laser_injection_box.contains(x))
                 {
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
                     for (int k = 0; k<2; ++k) {
                         particle_x.push_back(pos[0]);
                         particle_y.push_back(pos[1]);
@@ -500,7 +500,7 @@ LaserParticleContainer::InitData (int lev)
                     particle_w.push_back(-m_weight);
 #else
                     // Particles are laid out in radial spokes
-                    const int n_spokes = (WarpX::n_rz_azimuthal_modes - 1)*m_min_particles_per_mode;
+                    const int n_spokes = (Artemis::n_rz_azimuthal_modes - 1)*m_min_particles_per_mode;
                     for (int spoke = 0 ; spoke < n_spokes ; spoke++) {
                         const Real phase = 2.*MathConst::pi*spoke/n_spokes;
                         for (int k = 0; k<2; ++k) {
@@ -541,17 +541,17 @@ LaserParticleContainer::Evolve (int lev,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
                                 Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition)
 {
-    WARPX_PROFILE("LaserParticleContainer::Evolve()");
-    WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
+    ARTEMIS_PROFILE("LaserParticleContainer::Evolve()");
+    ARTEMIS_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
 
     if (!m_enabled) return;
 
     Real t_lab = t;
-    if (WarpX::gamma_boost > 1) {
+    if (Artemis::gamma_boost > 1) {
         // Convert time from the boosted to the lab-frame
         // (in order to later calculate the amplitude of the field,
         // at the position of the antenna, in the lab-frame)
-        t_lab = 1._rt/WarpX::gamma_boost*t + WarpX::beta_boost*m_Z0_lab/PhysConst::c;
+        t_lab = 1._rt/Artemis::gamma_boost*t + Artemis::beta_boost*m_Z0_lab/PhysConst::c;
     }
 
     // Update laser profile
@@ -559,7 +559,7 @@ LaserParticleContainer::Evolve (int lev,
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     const bool has_buffer = cjx;
 
@@ -575,9 +575,9 @@ LaserParticleContainer::Evolve (int lev,
 
         Gpu::DeviceVector<Real> plane_Xp, plane_Yp, amplitude_E;
 
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        for (ArtemisParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
             }
@@ -614,7 +614,7 @@ LaserParticleContainer::Evolve (int lev,
             //
             // Particle Push
             //
-            WARPX_PROFILE_VAR_START(blp_pp);
+            ARTEMIS_PROFILE_VAR_START(blp_pp);
             // Find the coordinates of the particles in the emission plane
             calculate_laser_plane_coordinates(pti, np,
                                               plane_Xp.dataPtr(),
@@ -630,7 +630,7 @@ LaserParticleContainer::Evolve (int lev,
             update_laser_particle(pti, np, uxp.dataPtr(), uyp.dataPtr(),
                                   uzp.dataPtr(), wp.dataPtr(),
                                   amplitude_E.dataPtr(), dt);
-            WARPX_PROFILE_VAR_STOP(blp_pp);
+            ARTEMIS_PROFILE_VAR_STOP(blp_pp);
 
             // Current Deposition
             if (skip_deposition == false)
@@ -667,7 +667,7 @@ LaserParticleContainer::Evolve (int lev,
             // This is necessary because of plane_Xp, plane_Yp and amplitude_E
             amrex::Gpu::synchronize();
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 wt = static_cast<Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
@@ -690,9 +690,9 @@ LaserParticleContainer::PostRestart ()
 void
 LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 {
-    const std::array<Real,3>& dx = WarpX::CellSize(lev);
+    const std::array<Real,3>& dx = Artemis::CellSize(lev);
 
-#if !defined(WARPX_DIM_RZ)
+#if !defined(ARTEMIS_DIM_RZ)
     constexpr float small_float_coeff = 1.e-25f;
     constexpr double small_double_coeff = 1.e-50;
     constexpr Real small_coeff = std::is_same<Real,float>::value ?
@@ -700,15 +700,15 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
         static_cast<Real>(small_double_coeff);
     const auto eps = static_cast<Real>(dx[0]*small_coeff);
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     Sx = std::min(std::min(dx[0]/(std::abs(m_u_X[0])+eps),
                            dx[1]/(std::abs(m_u_X[1])+eps)),
                            dx[2]/(std::abs(m_u_X[2])+eps));
     Sy = std::min(std::min(dx[0]/(std::abs(m_u_Y[0])+eps),
                            dx[1]/(std::abs(m_u_Y[1])+eps)),
                            dx[2]/(std::abs(m_u_Y[2])+eps));
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-#   if defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+#   if defined(ARTEMIS_DIM_RZ)
     Sx = dx[0];
 #   else
     Sx = std::min(dx[0]/(std::abs(m_u_X[0])+eps),
@@ -733,9 +733,9 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
     m_mobility = eps/m_e_max;
     m_weight = PhysConst::ep0 / m_mobility;
     // Multiply by particle spacing
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     m_weight *= Sx * Sy;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     m_weight *= Sx;
     amrex::ignore_unused(Sy);
 #else
@@ -743,8 +743,8 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
 #endif
     // When running in the boosted-frame, the input parameters (and in particular
     // the amplitude of the field) are given in the lab-frame.
-    // Therefore, the mobility needs to be modified by a factor WarpX::gamma_boost.
-    m_mobility = m_mobility/WarpX::gamma_boost;
+    // Therefore, the mobility needs to be modified by a factor Artemis::gamma_boost.
+    m_mobility = m_mobility/Artemis::gamma_boost;
 }
 
 void
@@ -763,7 +763,7 @@ LaserParticleContainer::PushP (int /*lev*/, Real /*dt*/,
  * in laser plane coordinate.
  */
 void
-LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& pti, const int np,
+LaserParticleContainer::calculate_laser_plane_coordinates (const ArtemisParIter& pti, const int np,
                                                            Real * AMREX_RESTRICT const pplane_Xp,
                                                            Real * AMREX_RESTRICT const pplane_Yp)
 {
@@ -774,7 +774,7 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
     Real tmp_u_X_2 = m_u_X[2];
     Real tmp_position_0 = m_position[0];
     Real tmp_position_2 = m_position[2];
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_3D) || defined(ARTEMIS_DIM_RZ)
     Real tmp_u_X_1 = m_u_X[1];
     Real tmp_u_Y_0 = m_u_Y[0];
     Real tmp_u_Y_1 = m_u_Y[1];
@@ -788,7 +788,7 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
         [=] AMREX_GPU_DEVICE (int i) {
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_3D) || defined(ARTEMIS_DIM_RZ)
             pplane_Xp[i] =
                 tmp_u_X_0 * (x - tmp_position_0) +
                 tmp_u_X_1 * (y - tmp_position_1) +
@@ -797,12 +797,12 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
                 tmp_u_Y_0 * (x - tmp_position_0) +
                 tmp_u_Y_1 * (y - tmp_position_1) +
                 tmp_u_Y_2 * (z - tmp_position_2);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             pplane_Xp[i] =
                 tmp_u_X_0 * (x - tmp_position_0) +
                 tmp_u_X_2 * (z - tmp_position_2);
             pplane_Yp[i] = 0.;
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
             pplane_Xp[i] = 0.;
             pplane_Yp[i] = 0.;
 #endif
@@ -820,7 +820,7 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
  * \param dt: time step.
  */
 void
-LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
+LaserParticleContainer::update_laser_particle (ArtemisParIter& pti,
                                                const int np,
                                                ParticleReal * AMREX_RESTRICT const puxp,
                                                ParticleReal * AMREX_RESTRICT const puyp,
@@ -841,8 +841,8 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
 
     // Copy member variables to tmp copies for GPU runs.
     Real tmp_mobility = m_mobility;
-    Real gamma_boost = WarpX::gamma_boost;
-    Real beta_boost = WarpX::beta_boost;
+    Real gamma_boost = Artemis::gamma_boost;
+    Real beta_boost = Artemis::beta_boost;
     amrex::ParallelFor(
         np,
         [=] AMREX_GPU_DEVICE (int i) {
@@ -872,10 +872,10 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             // Push the the particle positions
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
-#if !defined(WARPX_DIM_1D_Z)
+#if !defined(ARTEMIS_DIM_1D_Z)
             x += vx * dt;
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_3D) || defined(ARTEMIS_DIM_RZ)
             y += vy * dt;
 #endif
             z += vz * dt;

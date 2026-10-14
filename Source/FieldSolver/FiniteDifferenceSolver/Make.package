@@ -7,7 +7,7 @@ CEXE_sources += EvolveECTRho.cpp
 CEXE_sources += ComputeDivE.cpp
 CEXE_sources += MacroscopicEvolveE.cpp
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 CEXE_sources += MacroscopicEvolveHM.cpp
 CEXE_sources += MacroscopicEvolveHM_2nd.cpp
 CEXE_sources += EvolveHPML.cpp
@@ -20,6 +20,6 @@ CEXE_sources += MacroscopicEvolveEPML.cpp
 CEXE_sources += ApplySilverMuellerBoundary.cpp
 CEXE_sources += EvolveBLondon.cpp
 
-include $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/Make.package
+include $(ARTEMIS_HOME)/Source/FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/Make.package
 
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/FieldSolver/FiniteDifferenceSolver

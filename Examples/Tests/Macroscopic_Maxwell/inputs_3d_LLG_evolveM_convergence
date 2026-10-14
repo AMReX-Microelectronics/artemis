@@ -23,7 +23,7 @@ amr.max_grid_size = 16
 #amr.n_cell = 128 128 128
 #amr.max_grid_size = 64
 
-warpx.cfl = 0.9
+artemis.cfl = 0.9
 
 amr.blocking_factor = 16
 geometry.dims = 3
@@ -41,11 +41,11 @@ my_constants.wavelength = 0.1
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.mag_time_scheme_order = 2 # default 1
-warpx.mag_M_normalization = 1 # 1 is saturated
-warpx.mag_LLG_coupling = 1
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.mag_time_scheme_order = 2 # default 1
+artemis.mag_M_normalization = 1 # 1 is saturated
+artemis.mag_LLG_coupling = 1
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
@@ -76,25 +76,25 @@ macroscopic.mag_normalized_error = 0.1 # if M magnitude relatively changes more 
 ############ FIELDS #############
 #################################
 
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ex_external_grid_function(x,y,z) = "1e6*cos(2*pi*z/wavelength)"
-warpx.Ey_external_grid_function(x,y,z) = "1e6*cos(2*pi*x/wavelength)"
-warpx.Ez_external_grid_function(x,y,z) = "1e6*cos(2*pi*y/wavelength)"
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ex_external_grid_function(x,y,z) = "1e6*cos(2*pi*z/wavelength)"
+artemis.Ey_external_grid_function(x,y,z) = "1e6*cos(2*pi*x/wavelength)"
+artemis.Ez_external_grid_function(x,y,z) = "1e6*cos(2*pi*y/wavelength)"
 
-warpx.H_ext_grid_init_style = parse_H_ext_grid_function
-warpx.Hx_external_grid_function(x,y,z) = "1e6*cos(2*pi*y/wavelength)/(120*pi)"
-warpx.Hy_external_grid_function(x,y,z) = "1e6*cos(2*pi*z/wavelength)/(120*pi)"
-warpx.Hz_external_grid_function(x,y,z) = "1e6*cos(2*pi*x/wavelength)/(120*pi)"
+artemis.H_ext_grid_init_style = parse_H_ext_grid_function
+artemis.Hx_external_grid_function(x,y,z) = "1e6*cos(2*pi*y/wavelength)/(120*pi)"
+artemis.Hy_external_grid_function(x,y,z) = "1e6*cos(2*pi*z/wavelength)/(120*pi)"
+artemis.Hz_external_grid_function(x,y,z) = "1e6*cos(2*pi*x/wavelength)/(120*pi)"
 
-warpx.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
-warpx.Hx_bias_external_grid_function(x,y,z) = 0.
-warpx.Hy_bias_external_grid_function(x,y,z) = 0.
-warpx.Hz_bias_external_grid_function(x,y,z) = 0.
+artemis.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
+artemis.Hx_bias_external_grid_function(x,y,z) = 0.
+artemis.Hy_bias_external_grid_function(x,y,z) = 0.
+artemis.Hz_bias_external_grid_function(x,y,z) = 0.
 
-warpx.M_ext_grid_init_style = parse_M_ext_grid_function
-warpx.Mx_external_grid_function(x,y,z) = "1.e4*(1 + exp(-1000.*(x*x+y*y+z*z)))"
-warpx.My_external_grid_function(x,y,z) = 0.
-warpx.Mz_external_grid_function(x,y,z) = 0.
+artemis.M_ext_grid_init_style = parse_M_ext_grid_function
+artemis.Mx_external_grid_function(x,y,z) = "1.e4*(1 + exp(-1000.*(x*x+y*y+z*z)))"
+artemis.My_external_grid_function(x,y,z) = 0.
+artemis.Mz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = plt

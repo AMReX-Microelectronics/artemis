@@ -1,11 +1,11 @@
 /* Copyright 2019-2020 Luca Fedeli, Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_LaserProfiles_H_
-#define WARPX_LaserProfiles_H_
+#ifndef ARTEMIS_LaserProfiles_H_
+#define ARTEMIS_LaserProfiles_H_
 
 #include <AMReX_Gpu.H>
 #include <AMReX_ParmParse.H>
@@ -21,7 +21,7 @@
 #include <utility>
 
 
-namespace WarpXLaserProfiles {
+namespace ArtemisLaserProfiles {
 
 /** Common laser profile parameters
  *
@@ -385,6 +385,6 @@ laser_profiles_dictionary =
         [] () {return std::make_unique<FromTXYEFileLaserProfile>();} }
 };
 
-} //WarpXLaserProfiles
+} //ArtemisLaserProfiles
 
-#endif //WARPX_LaserProfiles_H_
+#endif //ARTEMIS_LaserProfiles_H_

@@ -1,6 +1,6 @@
 /* Copyright 2023 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,9 +9,9 @@
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_GpuAtomic.H>
 #include <AMReX_Config.H>
@@ -32,13 +32,13 @@ ChargeOnEB::ChargeOnEB (std::string rd_name)
 : ReducedDiags{rd_name}
 {
     // Only 3D is working for now
-#if !(defined WARPX_DIM_3D)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+#if !(defined ARTEMIS_DIM_3D)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "ChargeOnEB reduced diagnostics only works in 3D");
 #endif
 
 #if !(defined AMREX_USE_EB)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "ChargeOnEB reduced diagnostics only works when compiling with EB support");
 #endif
 
@@ -85,33 +85,33 @@ void ChargeOnEB::ComputeDiags (const int step)
     // Judge whether the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
-#if ((defined WARPX_DIM_3D) && (defined AMREX_USE_EB))
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+#if ((defined ARTEMIS_DIM_3D) && (defined AMREX_USE_EB))
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // Only compute the integral on level 0
     int const lev = 0;
 
     // get MultiFab data at lev
-    const amrex::MultiFab & Ex = warpx.getEfield_fp(lev,0);
-    const amrex::MultiFab & Ey = warpx.getEfield_fp(lev,1);
-    const amrex::MultiFab & Ez = warpx.getEfield_fp(lev,2);
+    const amrex::MultiFab & Ex = artemis.getEfield_fp(lev,0);
+    const amrex::MultiFab & Ey = artemis.getEfield_fp(lev,1);
+    const amrex::MultiFab & Ez = artemis.getEfield_fp(lev,2);
 
     // get EB structures
-    amrex::EBFArrayBoxFactory const& eb_box_factory = warpx.fieldEBFactory(lev);
+    amrex::EBFArrayBoxFactory const& eb_box_factory = artemis.fieldEBFactory(lev);
     amrex::FabArray<amrex::EBCellFlagFab> const& eb_flag = eb_box_factory.getMultiEBCellFlagFab();
     amrex::MultiCutFab const& eb_bnd_cent = eb_box_factory.getBndryCent();
     amrex::MultiCutFab const& eb_bnd_normal = eb_box_factory.getBndryNormal();
     amrex::Array<const amrex::MultiCutFab*,AMREX_SPACEDIM> eb_area_fraction = eb_box_factory.getAreaFrac();
 
     // get surface integration element
-    const amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> dx = warpx.Geom(lev).CellSizeArray();
+    const amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> dx = artemis.Geom(lev).CellSizeArray();
     amrex::Real const dSx = dx[1]*dx[2];
     amrex::Real const dSy = dx[2]*dx[0];
     amrex::Real const dSz = dx[0]*dx[1];
 
     // Required for parser
-    const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    const amrex::RealBox& real_box = artemis.Geom(lev).ProbDomain();
     const bool do_parser_weighting = m_do_parser_weighting;
     auto fun_weightingparser =
             utils::parser::compileParser<3>(m_parser_weighting.get());

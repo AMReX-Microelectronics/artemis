@@ -1,14 +1,14 @@
 /* Copyright 2019-2020 Andrew Myers, Maxence Thevenet, Remi Lehe
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_SORTING_SORTINGUTILS_H_
-#define WARPX_PARTICLES_SORTING_SORTINGUTILS_H_
+#ifndef ARTEMIS_PARTICLES_SORTING_SORTINGUTILS_H_
+#define ARTEMIS_PARTICLES_SORTING_SORTINGUTILS_H_
 
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 
 #include <AMReX_Gpu.H>
 #include <AMReX_Partition.H>
@@ -93,7 +93,7 @@ int iteratorDistance(ForwardIterator const first,
 class fillBufferFlag
 {
     public:
-        fillBufferFlag( WarpXParIter const& pti, amrex::iMultiFab const* bmasks,
+        fillBufferFlag( ArtemisParIter const& pti, amrex::iMultiFab const* bmasks,
                         amrex::Gpu::DeviceVector<int>& inexflag,
                         amrex::Geometry const& geom ) {
 
@@ -126,7 +126,7 @@ class fillBufferFlag
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
         amrex::Box m_domain;
         int* m_inexflag_ptr;
-        WarpXParticleContainer::ParticleType const* m_particles;
+        ArtemisParticleContainer::ParticleType const* m_particles;
         amrex::Array4<int const> m_buffer_mask;
 };
 
@@ -148,7 +148,7 @@ class fillBufferFlagRemainingParticles
 {
     public:
         fillBufferFlagRemainingParticles(
-                        WarpXParIter const& pti,
+                        ArtemisParIter const& pti,
                         amrex::iMultiFab const* bmasks,
                         amrex::Gpu::DeviceVector<int>& inexflag,
                         amrex::Geometry const& geom,
@@ -186,7 +186,7 @@ class fillBufferFlagRemainingParticles
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
         amrex::Box m_domain;
         int* m_inexflag_ptr;
-        WarpXParticleContainer::ParticleType const* m_particles;
+        ArtemisParticleContainer::ParticleType const* m_particles;
         amrex::Array4<int const> m_buffer_mask;
         long const m_start_index;
         long const* m_indices_ptr;
@@ -224,4 +224,4 @@ class copyAndReorder
         long const* m_indices_ptr;
 };
 
-#endif // WARPX_PARTICLES_SORTING_SORTINGUTILS_H_
+#endif // ARTEMIS_PARTICLES_SORTING_SORTINGUTILS_H_

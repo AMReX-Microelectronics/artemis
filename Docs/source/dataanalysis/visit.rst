@@ -3,12 +3,12 @@
 3D Visualization: VisIt
 =======================
 
-WarpX results can be visualized by VisIt, an open source visualization and analysis software. VisIt can be downloaded and installed from https://wci.llnl.gov/simulation/computer-codes/visit.
+Artemis results can be visualized by VisIt, an open source visualization and analysis software. VisIt can be downloaded and installed from https://wci.llnl.gov/simulation/computer-codes/visit.
 
 openPMD (HDF5)
 --------------
 
-WarpX' openPMD files can be visualized with VisIt 3.1.0+.
+Artemis' openPMD files can be visualized with VisIt 3.1.0+.
 VisIt supports openPMD HDF5 files and requires to rename the files from ``.h5`` to ``.opmd`` to be automatically detected.
 
 Plotfiles (AMReX)

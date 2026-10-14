@@ -1,6 +1,6 @@
 /* Copyright 2020 Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -23,7 +23,7 @@
 namespace utils
 {
     int
-    warpx_mpi_thread_required ()
+    artemis_mpi_thread_required ()
     {
         int thread_required = -1;
 #ifdef AMREX_USE_MPI
@@ -39,9 +39,9 @@ namespace utils
     }
 
     std::pair< int, int >
-    warpx_mpi_init (int argc, char* argv[])
+    artemis_mpi_init (int argc, char* argv[])
     {
-        int thread_required = warpx_mpi_thread_required();
+        int thread_required = artemis_mpi_thread_required();
         int thread_provided = -1;
 #ifdef AMREX_USE_MPI
         MPI_Init_thread(&argc, &argv, thread_required, &thread_provided);
@@ -53,7 +53,7 @@ namespace utils
 
 
     void
-    warpx_mpi_finalize ()
+    artemis_mpi_finalize ()
     {
 #ifdef AMREX_USE_MPI
         MPI_Finalize();
@@ -61,10 +61,10 @@ namespace utils
     }
 
     void
-    warpx_check_mpi_thread_level ()
+    artemis_check_mpi_thread_level ()
     {
 #ifdef AMREX_USE_MPI
-        int thread_required = warpx_mpi_thread_required();
+        int thread_required = artemis_mpi_thread_required();
         int thread_provided = -1;
         MPI_Query_thread(&thread_provided);
         auto mtn = amrex::ParallelDescriptor::mpi_level_to_string;

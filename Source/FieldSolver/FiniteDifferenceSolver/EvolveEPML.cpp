@@ -1,6 +1,6 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,7 +9,7 @@
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
 #include "BoundaryConditions/PML_current.H"
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -17,8 +17,8 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -54,9 +54,9 @@ void FiniteDifferenceSolver::EvolveEPML (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, edge_lengths);
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "PML are not implemented in cylindrical geometry.");
 #else
     if (m_grid_type == GridType::Collocated) {
@@ -75,13 +75,13 @@ void FiniteDifferenceSolver::EvolveEPML (
             Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
 
     } else {
-        WARPX_ABORT_WITH_MESSAGE("EvolveEPML: Unknown algorithm");
+        ARTEMIS_ABORT_WITH_MESSAGE("EvolveEPML: Unknown algorithm");
     }
 #endif
 }
 
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveEPMLCartesian (
@@ -95,7 +95,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
 
     Real c2 = PhysConst::c * PhysConst::c;
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
     c2 *= PhysConst::mu0;
 #endif
 
@@ -151,9 +151,9 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-#ifdef WARPX_DIM_3D
+#ifdef ARTEMIS_DIM_3D
                 if (ly(i,j,k) <= 0) return;
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
                 //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
                 amrex::ignore_unused(ly);
                 if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
@@ -224,7 +224,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             const Real* sigmaj_y = sigba[mfi].sigma[1].data();
             const Real* sigmaj_z = sigba[mfi].sigma[2].data();
             int const x_lo = sigba[mfi].sigma[0].lo();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             int const y_lo = sigba[mfi].sigma[1].lo();
             int const z_lo = sigba[mfi].sigma[2].lo();
 #else
@@ -257,4 +257,4 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
 
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to ifndef ARTEMIS_DIM_RZ

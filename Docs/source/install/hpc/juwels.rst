@@ -5,7 +5,7 @@ Juwels (JSC)
 
 .. note::
 
-   For the moment, WarpX doesn't run on Juwels with MPI_THREAD_MULTIPLE.
+   For the moment, Artemis doesn't run on Juwels with MPI_THREAD_MULTIPLE.
    Please compile with this compilation flag: ``MPI_THREAD_MULTIPLE=FALSE``.
 
 The `Juwels supercomputer <https://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/JUWELS_node.html>`_ is located at JSC.
@@ -30,40 +30,40 @@ See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`_ for
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
 We use the following modules and environments on the system.
 
-.. literalinclude:: ../../../../Tools/machines/juwels-jsc/juwels_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/juwels-jsc/juwels_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/juwels-jsc/juwels_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/juwels-jsc/juwels_artemis.profile.example``.
 
-Note that for now WarpX must rely on OpenMPI instead of the recommended MPI implementation on this platform MVAPICH2.
+Note that for now Artemis must rely on OpenMPI instead of the recommended MPI implementation on this platform MVAPICH2.
 
-We recommend to store the above lines in a file, such as ``$HOME/juwels_warpx.profile``, and load it into your shell after a login:
-
-.. code-block:: bash
-
-   source $HOME/juwels_warpx.profile
-
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+We recommend to store the above lines in a file, such as ``$HOME/juwels_artemis.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   source $HOME/juwels_artemis.profile
+
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
+
+.. code-block:: bash
+
+   cd $HOME/src/artemis
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_MPI_THREAD_MULTIPLE=OFF
+   cmake -S . -B build -DArtemis_COMPUTE=CUDA -DArtemis_PSATD=ON -DArtemis_MPI_THREAD_MULTIPLE=OFF
    cmake --build build -j 16
 
 The other :ref:`general compile-time options <install-developers>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-juwels>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-juwels>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``$SCRATCH``.
 
 .. note::

@@ -1,13 +1,13 @@
 /* Copyright 2021 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #ifndef PARTICLEBOUNDARIES_H_
 #define PARTICLEBOUNDARIES_H_
 
-#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
 
 #include <AMReX_AmrCore.H>
 #include <AMReX_Parser.H>

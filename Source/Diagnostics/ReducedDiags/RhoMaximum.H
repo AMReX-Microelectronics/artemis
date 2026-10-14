@@ -1,12 +1,12 @@
 /* Copyright 2020 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_
-#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_
+#ifndef ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_
+#define ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ReducedDiags.H"
@@ -46,4 +46,4 @@ private:
 
 };
 
-#endif // WARPX_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_
+#endif // ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_

@@ -1,7 +1,7 @@
 # Copyright 2019 Axel Huebl, Luca Fedeli, Maxence Thevenet
 #
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
@@ -49,7 +49,7 @@ def process_analysis(automated, cwd, compiler, architecture, n_node_list, start_
         dependencies += line.split()[3] + ':'
 
     batch_string = '''#!/bin/bash
-#SBATCH --job-name=warpx_1node_read
+#SBATCH --job-name=artemis_1node_read
 #SBATCH --time=00:07:00
 #SBATCH -C knl
 #SBATCH -N 1

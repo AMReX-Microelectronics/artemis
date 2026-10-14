@@ -1,11 +1,11 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     MultiParticleContainer.cpp
     ParticleBoundaries.cpp
     PhotonParticleContainer.cpp
     PhysicalParticleContainer.cpp
     RigidInjectedParticleContainer.cpp
-    WarpXParticleContainer.cpp
+    ArtemisParticleContainer.cpp
     LaserParticleContainer.cpp
     ParticleBoundaryBuffer.cpp
     SpeciesPhysicalProperties.cpp

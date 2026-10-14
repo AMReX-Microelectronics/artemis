@@ -1,14 +1,14 @@
 /* Copyright 2021 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "BackTransformFunctor.H"
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <ablastr/utils/Communication.H>
 
@@ -48,10 +48,10 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
     // Perform back-transformation only if z slice is within the domain stored as 0/1
     // in m_perform_backtransform[i_buffer]
     if ( m_perform_backtransform[i_buffer] == 1) {
-        auto& warpx = WarpX::GetInstance();
-        auto geom = warpx.Geom(m_lev);
-        amrex::Real gamma_boost = warpx.gamma_boost;
-        int moving_window_dir = warpx.moving_window_dir;
+        auto& artemis = Artemis::GetInstance();
+        auto geom = artemis.Geom(m_lev);
+        amrex::Real gamma_boost = artemis.gamma_boost;
+        int moving_window_dir = artemis.moving_window_dir;
         amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
         const bool interpolate = true;
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
@@ -93,7 +93,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         ablastr::utils::communication::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, slice->nComp(),
                                                     IntVect(AMREX_D_DECL(0, 0, 0)),
                                                     IntVect(AMREX_D_DECL(0, 0, 0)),
-                                                    WarpX::do_single_precision_comms);
+                                                    Artemis::do_single_precision_comms);
         // Now we will cherry pick only the user-defined fields from
         // tmp_slice_ptr to dst_mf
         const int k_lab = m_k_index_zlab[i_buffer];
@@ -114,19 +114,19 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
             const Box& tbx = mfi.tilebox();
             amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
             amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
-#ifdef WARPX_DIM_RZ
-            const int n_rz_comp = WarpX::ncomps;
+#ifdef ARTEMIS_DIM_RZ
+            const int n_rz_comp = Artemis::ncomps;
 #endif
             amrex::ParallelFor( tbx, ncomp_dst,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
                 {
                     // Field id that corresponds to the nth user-requested component
                     const int icomp = field_map_ptr[n];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                     dst_arr(i, j, k_lab, n) = src_arr(i, j, k, icomp);
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
                     dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp);
-#elif defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_RZ)
                     // rzcomp below gives the component id, 0 to (n_rz_comp-1) for a given field
                     const int rzcomp = n % n_rz_comp;
                     // Accessing the correct rz component from the cell-centered multifab
@@ -175,7 +175,7 @@ BackTransformFunctor::InitData ()
     m_k_index_zlab.resize( m_num_buffers );
     m_map_varnames.resize( m_varnames.size() );
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     std::map<std::string, int> m_possible_fields_to_dump = {
         {"Er", 0},
         {"Et", 1},
@@ -205,8 +205,8 @@ BackTransformFunctor::InitData ()
 
     for (int i = 0; i < m_varnames.size(); ++i)
     {
-#ifdef WARPX_DIM_RZ
-        const int field_id = i / WarpX::ncomps;
+#ifdef ARTEMIS_DIM_RZ
+        const int field_id = i / Artemis::ncomps;
         m_map_varnames[i] = m_possible_fields_to_dump[ m_varnames_fields[field_id] ];
 #else
         m_map_varnames[i] = m_possible_fields_to_dump[ m_varnames[i] ] ;
@@ -227,8 +227,8 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
         amrex::Array4< amrex::Real > arr = data[mfi].array();
         amrex::Real clight = PhysConst::c;
         amrex::Real inv_clight = 1.0_rt/clight;
-#ifdef WARPX_DIM_RZ
-        const int n_rcomps = WarpX::ncomps;
+#ifdef ARTEMIS_DIM_RZ
+        const int n_rcomps = Artemis::ncomps;
         amrex::ParallelFor( tbx,
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {

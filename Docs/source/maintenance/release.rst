@@ -3,10 +3,10 @@
 Dependencies & Releases
 =======================
 
-Update WarpX' Core Dependencies
+Update Artemis' Core Dependencies
 -------------------------------
 
-WarpX has direct dependencies on AMReX and PICSAR, which we periodically update.
+Artemis has direct dependencies on AMReX and PICSAR, which we periodically update.
 
 The following scripts automate this workflow, in case one needs a newer commit of AMReX or PICSAR between releases:
 
@@ -16,10 +16,10 @@ The following scripts automate this workflow, in case one needs a newer commit o
    ./Tools/Release/updatePICSAR.py
 
 
-Create a new WarpX release
+Create a new Artemis release
 --------------------------
 
-WarpX has one release per month.
+Artemis has one release per month.
 The version number is set at the beginning of the month and follows the format ``YY.MM``.
 
 In order to create a GitHub release, you need to:
@@ -27,7 +27,7 @@ In order to create a GitHub release, you need to:
  1. Create a new branch from ``development`` and update the version number in all source files.
     We usually wait for the AMReX release to be tagged first, then we also point to its tag.
 
-    There is a script for updating core dependencies of WarpX and the WarpX version:
+    There is a script for updating core dependencies of Artemis and the Artemis version:
 
     .. code-block:: sh
 
@@ -36,7 +36,7 @@ In order to create a GitHub release, you need to:
 
        ./Tools/Release/newVersion.sh
 
-    For a WarpX release, ideally a *git tag* of AMReX & PICSAR shall be used instead of an unnamed commit.
+    For a Artemis release, ideally a *git tag* of AMReX & PICSAR shall be used instead of an unnamed commit.
 
     Then open a PR, wait for tests to pass and then merge.
 

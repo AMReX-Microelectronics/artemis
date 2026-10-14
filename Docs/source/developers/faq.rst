@@ -60,7 +60,7 @@ What are ``#include "..._fwd.H"`` and ``#include <...Fwd.H>`` files?
 These are `C++ forward declarations <https://en.wikipedia.org/wiki/Forward_declaration>`__.
 In C++, ``#include`` statements copy the referenced header file *literally* into place, which can increase the compile time of a ``.cpp`` file to an object file significantly, especially with transitive header files including each other.
 
-In order to reduce compile time, we define :ref:`forward declarations in WarpX and AMReX <developers-cpp-includes-fwd>` for commonly used, large classes.
+In order to reduce compile time, we define :ref:`forward declarations in Artemis and AMReX <developers-cpp-includes-fwd>` for commonly used, large classes.
 The C++ standard library also uses that concept, e.g., in `iosfwd <https://en.cppreference.com/w/cpp/header/iosfwd>`__.
 
 

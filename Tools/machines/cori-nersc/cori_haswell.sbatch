@@ -17,7 +17,7 @@
 
 # each Cori Haswell node has 2 sockets of Intel Xeon E5-2698 v3
 # each Xeon CPU is divided into 2 bus rings that each have direct L3 access
-export WARPX_NMPI_PER_NODE=4
+export ARTEMIS_NMPI_PER_NODE=4
 
 # each MPI rank per half-socket has 8 physical cores
 #   or 16 logical (virtual) cores
@@ -36,6 +36,6 @@ export MPICH_MAX_THREAD_SAFETY=multiple
 
 EXE="<path/to/executable>"
 
-srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) \
+srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${ARTEMIS_NMPI_PER_NODE} )) \
   ${EXE} <input file> \
   > output.txt

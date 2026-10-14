@@ -2,16 +2,16 @@
  * Luca Fedeli, Maxence Thevenet, Remi Lehe
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_LaserParticleContainer_H_
-#define WARPX_LaserParticleContainer_H_
+#ifndef ARTEMIS_LaserParticleContainer_H_
+#define ARTEMIS_LaserParticleContainer_H_
 
-#include "Evolve/WarpXDtType.H"
+#include "Evolve/ArtemisDtType.H"
 #include "Laser/LaserProfiles.H"
-#include "WarpXParticleContainer.H"
+#include "ArtemisParticleContainer.H"
 
 #include <AMReX_Extension.H>
 #include <AMReX_Random.H>
@@ -27,18 +27,18 @@
 #include <string>
 
 /**
- * The main method to inject a laser pulse in WarpX is to use an artificial
+ * The main method to inject a laser pulse in Artemis is to use an artificial
  * antenna: particles evenly distributed in a given plane (one particle per
  * cell) move at each iteration and deposit a current J onto the grid, which
  * in turns creates an electromagnetic field on the grid. The particles'
  * displacements are prescribed to create the field requested by the user.
  *
  * These artificial particles are contained in the LaserParticleContainer.
- * LaserParticleContainer derives directly from WarpXParticleContainer. It
+ * LaserParticleContainer derives directly from ArtemisParticleContainer. It
  * requires a DepositCurrent function, but no FieldGather function.
  */
 class LaserParticleContainer
-    : public WarpXParticleContainer
+    : public ArtemisParticleContainer
 {
 public:
     LaserParticleContainer (amrex::AmrCore* amr_core, int ispecies, const std::string& name);
@@ -81,11 +81,11 @@ public:
 
     virtual void PostRestart () final;
 
-    void calculate_laser_plane_coordinates (const WarpXParIter& pti, const int np,
+    void calculate_laser_plane_coordinates (const ArtemisParIter& pti, const int np,
                                             amrex::Real * AMREX_RESTRICT const pplane_Xp,
                                             amrex::Real * AMREX_RESTRICT const pplane_Yp);
 
-    void update_laser_particle (WarpXParIter& pti, const int np, amrex::ParticleReal * AMREX_RESTRICT const puxp,
+    void update_laser_particle (ArtemisParIter& pti, const int np, amrex::ParticleReal * AMREX_RESTRICT const puxp,
                                 amrex::ParticleReal * AMREX_RESTRICT const puyp,
                                 amrex::ParticleReal * AMREX_RESTRICT const puzp,
                                 amrex::ParticleReal const * AMREX_RESTRICT const pwp,
@@ -133,7 +133,7 @@ private:
     void UpdateContinuousInjectionPosition(amrex::Real dt) override;
 
     // Unique (smart) pointer to the laser profile
-    std::unique_ptr<WarpXLaserProfiles::ILaserProfile> m_up_laser_profile;
+    std::unique_ptr<ArtemisLaserProfiles::ILaserProfile> m_up_laser_profile;
 
     // Flag to disable the laser (e.g., if e_max is 0)
     bool m_enabled = true;

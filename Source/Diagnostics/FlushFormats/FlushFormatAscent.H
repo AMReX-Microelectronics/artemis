@@ -1,5 +1,5 @@
-#ifndef WARPX_FLUSHFORMATASCENT_H_
-#define WARPX_FLUSHFORMATASCENT_H_
+#ifndef ARTEMIS_FLUSHFORMATASCENT_H_
+#define ARTEMIS_FLUSHFORMATASCENT_H_
 
 #include "FlushFormat.H"
 
@@ -56,4 +56,4 @@ public:
     ~FlushFormatAscent() {}
 };
 
-#endif // WARPX_FLUSHFORMATASCENT_H_
+#endif // ARTEMIS_FLUSHFORMATASCENT_H_

@@ -7,14 +7,14 @@ Profiling allows us to find the bottle-necks of the code as it is currently impl
 Bottle-necks are the parts of the code that may delay the simulation, making it more computationally expensive.
 Once found, we can update the related code sections and improve its efficiency.
 Profiling tools can also be used to check how load balanced the simulation is, i.e. if the work is well distributed across all MPI ranks used.
-Load balancing can be activated in WarpX by setting input parameters, see the :ref:`parallelization input parameter section <running-cpp-parameters-parallelization>`.
+Load balancing can be activated in Artemis by setting input parameters, see the :ref:`parallelization input parameter section <running-cpp-parameters-parallelization>`.
 
 .. _developers-profiling-tiny-profiler:
 
 AMReX's Tiny Profiler
 ---------------------
 
-By default, WarpX uses the AMReX baseline tool, the TINYPROFILER, to evaluate the time information for different parts of the code (functions) between the different MPI ranks.
+By default, Artemis uses the AMReX baseline tool, the TINYPROFILER, to evaluate the time information for different parts of the code (functions) between the different MPI ranks.
 The results, timers, are stored into four tables in the standard output, stdout, that are located below the simulation steps information and above the warnings regarding unused input file parameters (if there were any).
 
 The timers are displayed in tables for which the columns correspond to:
@@ -35,7 +35,7 @@ Each set of two timers show the exclusive, top, and inclusive, bottom, informati
 
 .. note::
 
-   When creating performance-related issues on the WarpX GitHub repo, please include Tiny Profiler tables (besides the usual issue description, input file and submission script), or (even better) the whole standard output.
+   When creating performance-related issues on the Artemis GitHub repo, please include Tiny Profiler tables (besides the usual issue description, input file and submission script), or (even better) the whole standard output.
 
 For more detailed information please visit the `AMReX profiling documentation <https://amrex-codes.github.io/amrex/docs_html/AMReX_Profiling_Tools_Chapter.html>`__.
 There is a script located `here <https://github.com/AMReX-Codes/amrex/tree/development/Tools/TinyProfileParser>`__ that parses the Tiny Profiler output and generates a JSON file that can be used with `Hatchet <https://hatchet.readthedocs.io/en/latest/>`__ in order to analyze performance.
@@ -47,7 +47,7 @@ The Tiny Profiler provides a summary across all MPI ranks. However, when analyzi
 load-balancing, it can be useful to have more detailed information about the
 behavior of *each* individual MPI rank. The workflow for doing so is the following:
 
-- Compile WarpX with full profiler support:
+- Compile Artemis with full profiler support:
 
     .. code-block:: bash
 
@@ -65,7 +65,7 @@ behavior of *each* individual MPI rank. The workflow for doing so is the followi
 
             cmake -S . -B build -DAMReX_BASE_PROFILE=OFF -DAMReX_TINY_PROFILE=ON
 
-- Run the simulation to be profiled. Note that the WarpX executable will create
+- Run the simulation to be profiled. Note that the Artemis executable will create
   a new folder `bl_prof`, which contains the profiling data.
 
     .. note::
@@ -145,9 +145,9 @@ You can either run this on an interactive node or use the Slurm batch script hea
          -o profiling_%q{SLURM_TASK_PID}     \
          -t mpi,cuda,nvtx,osrt,openmp        \
          --mpi-impl=mpich                    \
-       ./warpx.3d.MPI.CUDA.DP.QED            \
+       ./artemis.3d.MPI.CUDA.DP.QED            \
          inputs_3d                           \
-           warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
+           artemis.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
 
 .. warning::
 
@@ -160,7 +160,7 @@ You can either run this on an interactive node or use the Slurm batch script hea
 
     If everything went well, you will obtain as many output files named ``profiling_<number>.nsys-rep`` as active MPI ranks.
     Each MPI rank's performance trace can be analyzed with the Nsight System graphical user interface (GUI).
-    In WarpX, every MPI rank is associated with one GPU, which each creates one trace file.
+    In Artemis, every MPI rank is associated with one GPU, which each creates one trace file.
 
 .. warning::
 
@@ -178,7 +178,7 @@ Summit Example
     # nsys: a location where we can write temporary nsys files to
     export TMPDIR=$PWD/tmp-traces
     mkdir -p $TMPDIR
-    # WarpX: one OpenMP thread per MPI rank
+    # Artemis: one OpenMP thread per MPI rank
     export OMP_NUM_THREADS=1
 
     # record
@@ -187,8 +187,8 @@ Summit Example
           -o profiling_%p \
           -t mpi,cuda,nvtx,osrt,openmp   \
           --mpi-impl=openmpi             \
-        ./warpx.3d.MPI.CUDA.DP.QED inputs_3d \
-          warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
+        ./artemis.3d.MPI.CUDA.DP.QED inputs_3d \
+          artemis.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
 
 .. warning::
 
@@ -206,8 +206,8 @@ In these examples, the individual lines for recording a trace profile are:
 * ``-o``: record one profile file per MPI rank (per GPU); if you run ``mpiexec``/``mpirun`` with OpenMPI directly, replace ``SLURM_TASK_PID`` with ``OMPI_COMM_WORLD_RANK``
 * ``-t``: select a couple of APIs to trace
 * ``--mpi--impl``: optional, hint the MPI flavor
-* ``./warpx...``: select the WarpX executable and a good inputs file
-* ``warpx.numprocs=...``: make the run short, reasonably small, and run only a few steps
+* ``./artemis...``: select the Artemis executable and a good inputs file
+* ``artemis.numprocs=...``: make the run short, reasonably small, and run only a few steps
 
 Now open the created trace files (per rank) in the Nsight-Systems GUI.
 This can be done on another system than the one that recorded the traces.
@@ -252,9 +252,9 @@ node, or without a workload management system.
    ncu -f -o out \
    --target-processes all \
    --set detailed \
-   --nvtx --nvtx-include="WarpXParticleContainer::DepositCurrent::CurrentDeposition/" \
-   ./warpx input max_step=1 \
-   &> warpxOut.txt
+   --nvtx --nvtx-include="ArtemisParticleContainer::DepositCurrent::CurrentDeposition/" \
+   ./artemis input max_step=1 \
+   &> artemisOut.txt
 
 .. note::
 
@@ -279,7 +279,7 @@ In the example above, the individual lines for recording a trace profile are:
 * ``--nvtx``: collects NVTX data. See note.
 * ``--nvtx-include``: tells the profiler to only profile the given sections.
   You can also use ``-k`` to profile only a given kernel.
-* ``./warpx...``: select the WarpX executable and a good inputs file.
+* ``./artemis...``: select the Artemis executable and a good inputs file.
 
 Now open the created trace file in the Nsight-Compute GUI. As with
 Nsight-Systems,

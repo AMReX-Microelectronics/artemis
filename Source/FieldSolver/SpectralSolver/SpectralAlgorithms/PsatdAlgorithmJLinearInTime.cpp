@@ -1,14 +1,14 @@
 /* Copyright 2019
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmJLinearInTime.H"
 
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX_Array4.H>
 #include <AMReX_BLProfiler.H>
@@ -24,7 +24,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 
 using namespace amrex::literals;
 
@@ -104,7 +104,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
         const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
@@ -136,7 +136,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 
             // k vector values
             const amrex::Real kx = modified_kx_arr[i];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const amrex::Real ky = modified_ky_arr[j];
             const amrex::Real kz = modified_kz_arr[k];
 #else
@@ -275,7 +275,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
 
         // Extract pointers for the k vectors
         const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
 #endif
         const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
@@ -293,7 +293,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
                 amrex::Math::powi<2>(kx_s[i]) +
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 amrex::Math::powi<2>(ky_s[j]) + amrex::Math::powi<2>(kz_s[k]));
 #else
                 amrex::Math::powi<2>(kz_s[j]));
@@ -368,7 +368,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficientsAveraging (
 
         // Extract pointers for the k vectors
         const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
 #endif
         const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
@@ -385,7 +385,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficientsAveraging (
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
                 amrex::Math::powi<2>(kx_s[i]) +
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 amrex::Math::powi<2>(ky_s[j]) + amrex::Math::powi<2>(kz_s[k]));
 #else
                 amrex::Math::powi<2>(kz_s[j]));
@@ -430,7 +430,7 @@ void PsatdAlgorithmJLinearInTime::CurrentCorrection (SpectralFieldData& field_da
     BL_PROFILE("PsatdAlgorithmJLinearInTime::CurrentCorrection");
 
     amrex::ignore_unused(field_data);
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Current correction not implemented for multi-J PSATD algorithm");
 }
 
@@ -441,8 +441,8 @@ PsatdAlgorithmJLinearInTime::VayDeposition (SpectralFieldData& field_data)
     BL_PROFILE("PsatdAlgorithmJLinearInTime::VayDeposition()");
 
     amrex::ignore_unused(field_data);
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Vay deposition not implemented for multi-J PSATD algorithm");
 }
 
-#endif // WARPX_USE_PSATD
+#endif // ARTEMIS_USE_PSATD

@@ -1,13 +1,13 @@
 /* Copyright 2021 Lorenzo Giacomel, Neil Zaim, Yinjian Zhao
  *                Elisa Rheaume, Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
-#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
+#ifndef ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
+#define ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
 
 #include "ReducedDiags.H"
 #include "FieldProbeParticleContainer.H"
@@ -136,4 +136,4 @@ private:
     }
 };
 
-#endif // WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
+#endif // ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_

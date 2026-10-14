@@ -1,6 +1,6 @@
 /* Copyright 2021 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -10,7 +10,7 @@
 
 #include "ElasticCollisionPerez.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
 
 #include <AMReX_DenseBins.H>
@@ -25,10 +25,10 @@
  */
 class PairWiseCoulombCollisionFunc{
     // Define shortcuts for frequently-used type names
-    using ParticleType = WarpXParticleContainer::ParticleType;
+    using ParticleType = ArtemisParticleContainer::ParticleType;
     using ParticleBins = amrex::DenseBins<ParticleType>;
     using index_type = ParticleBins::index_type;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+    using SoaData_type = ArtemisParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     /**

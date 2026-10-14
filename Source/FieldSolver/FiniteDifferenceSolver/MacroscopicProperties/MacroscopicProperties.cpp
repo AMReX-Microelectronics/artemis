@@ -3,7 +3,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/cnpy.h"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -164,8 +164,8 @@ MacroscopicProperties::ReadParameters ()
             utils::parser::makeParser(m_str_mu_function,{"x","y","z"}));
     }
 
-#ifdef WARPX_MAG_LLG
-    auto &warpx = WarpX::GetInstance();
+#ifdef ARTEMIS_MAG_LLG
+    auto &artemis = Artemis::GetInstance();
     pp_macroscopic.get("mag_Ms_init_style", m_mag_Ms_s);
     if (m_mag_Ms_s == "constant") pp_macroscopic.get("mag_Ms", m_mag_Ms);
     // _mag_ such that it's clear the Ms variable is only meaningful for magnetic materials
@@ -196,7 +196,7 @@ MacroscopicProperties::ReadParameters ()
                                   utils::parser::makeParser(m_str_mag_gamma_function,{"x","y","z"}));
     }
 
-    if (warpx.mag_LLG_exchange_coupling == 1) { // spin exchange coupling turned off by default
+    if (artemis.mag_LLG_exchange_coupling == 1) { // spin exchange coupling turned off by default
         pp_macroscopic.get("mag_exchange_init_style", m_mag_exchange_s);
         if (m_mag_exchange_s == "constant") pp_macroscopic.get("mag_exchange", m_mag_exchange);
         // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
@@ -208,7 +208,7 @@ MacroscopicProperties::ReadParameters ()
         }
     }
 
-    if (warpx.mag_LLG_anisotropy_coupling == 1) { // magnetic crystal is considered as isotropic by default
+    if (artemis.mag_LLG_anisotropy_coupling == 1) { // magnetic crystal is considered as isotropic by default
         pp_macroscopic.get("mag_anisotropy_init_style", m_mag_anisotropy_s);
         if (m_mag_anisotropy_s == "constant") pp_macroscopic.get("mag_anisotropy", m_mag_anisotropy);
         // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
@@ -229,7 +229,7 @@ MacroscopicProperties::ReadParameters ()
     m_mag_tol = 0.0001;
     pp_macroscopic.query("mag_tol",m_mag_tol);
 
-    if (warpx.mag_LLG_anisotropy_coupling == 1) {
+    if (artemis.mag_LLG_anisotropy_coupling == 1) {
         amrex::Vector<amrex::Real> mag_LLG_anisotropy_axis_parser(3,0.0);
         // The anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff
         pp_macroscopic.getarr("mag_LLG_anisotropy_axis", mag_LLG_anisotropy_axis_parser);
@@ -245,13 +245,13 @@ void
 MacroscopicProperties::InitData ()
 {
     amrex::Print() << Utils::TextMsg::Info("we are in init data of macro");
-    auto & warpx = WarpX::GetInstance();
-    // Get BoxArray and DistributionMap of warpx instance.
+    auto & artemis = Artemis::GetInstance();
+    // Get BoxArray and DistributionMap of artemis instance.
     int lev = 0;
-    amrex::BoxArray ba = warpx.boxArray(lev);
-    amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
-    const amrex::IntVect ng_EB_alloc = warpx.getngEB();
-    // Define material property multifabs using ba and dmap from WarpX instance
+    amrex::BoxArray ba = artemis.boxArray(lev);
+    amrex::DistributionMapping dmap = artemis.DistributionMap(lev);
+    const amrex::IntVect ng_EB_alloc = artemis.getngEB();
+    // Define material property multifabs using ba and dmap from Artemis instance
     // sigma is cell-centered MultiFab
     m_sigma_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EB_alloc);
     // epsilon is cell-centered MultiFab
@@ -263,7 +263,7 @@ MacroscopicProperties::InitData ()
     // PEC mask
 
     // call this before setting sigma in the rest of the domain since this zeros sigma once the PEC mask is defined
-    if (warpx.use_PEC_mask) {
+    if (artemis.use_PEC_mask) {
 
         // read in the layer(s) from the numpy file(s)
         if (m_sigma_s == "parse_sigma_npy_file" || m_sigma_s == "parse_sigma_both") {
@@ -272,12 +272,12 @@ MacroscopicProperties::InitData ()
                 InitializeMacroMultiFabFromNumpy(m_sigma_mf.get(), m_sigma_npy_filename2, lev, m_npy_k_index2, m_sigma_npy_value);
             }
         } else {
-            amrex::Abort("warpx.use_PEC_mask requies a npy file");
+            amrex::Abort("artemis.use_PEC_mask requies a npy file");
         }
-        // get pointer to PEC mask in WarpX class
-        amrex::MultiFab * PECx = warpx.get_pointer_PEC_fp(lev,0);
-        amrex::MultiFab * PECy = warpx.get_pointer_PEC_fp(lev,1);
-        amrex::MultiFab * PECz = warpx.get_pointer_PEC_fp(lev,2);
+        // get pointer to PEC mask in Artemis class
+        amrex::MultiFab * PECx = artemis.get_pointer_PEC_fp(lev,0);
+        amrex::MultiFab * PECy = artemis.get_pointer_PEC_fp(lev,1);
+        amrex::MultiFab * PECz = artemis.get_pointer_PEC_fp(lev,2);
 
         PECx->setVal(1.);
         PECy->setVal(1.);
@@ -304,7 +304,7 @@ MacroscopicProperties::InitData ()
     }
 
     // Step 2: If not using PEC mask, overwrite with numpy mask in valid region if provided
-    if (!warpx.use_PEC_mask) {
+    if (!artemis.use_PEC_mask) {
         if (m_sigma_s == "parse_sigma_npy_file" || m_sigma_s == "parse_sigma_both") {
             InitializeMacroMultiFabFromNumpy(m_sigma_mf.get(), m_sigma_npy_filename, lev, m_npy_k_index, m_sigma_npy_value);
             if (!m_sigma_npy_filename2.empty()) {
@@ -353,7 +353,7 @@ MacroscopicProperties::InitData ()
         }
     }
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 
     // all magnetic macroparameters are stored on faces
     for (int i=0; i<3; ++i) {
@@ -452,19 +452,19 @@ MacroscopicProperties::InitData ()
     amrex::IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
     amrex::IntVect epsilon_stag = m_eps_mf->ixType().toIntVect();
     amrex::IntVect mu_stag = m_mu_mf->ixType().toIntVect();
-    amrex::IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
-    amrex::IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
-    amrex::IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
-    IntVect Bx_stag = warpx.getBfield_fp(0,0).ixType().toIntVect();
-    IntVect By_stag = warpx.getBfield_fp(0,1).ixType().toIntVect();
-    IntVect Bz_stag = warpx.getBfield_fp(0,2).ixType().toIntVect();
-#ifdef WARPX_MAG_LLG
-    IntVect Hx_stag = warpx.getHfield_fp(0,0).ixType().toIntVect();
-    IntVect Hy_stag = warpx.getHfield_fp(0,1).ixType().toIntVect();
-    IntVect Hz_stag = warpx.getHfield_fp(0,2).ixType().toIntVect();
-    IntVect Mx_stag = warpx.getMfield_fp(0,0).ixType().toIntVect();
-    IntVect My_stag = warpx.getMfield_fp(0,1).ixType().toIntVect();
-    IntVect Mz_stag = warpx.getMfield_fp(0,2).ixType().toIntVect();
+    amrex::IntVect Ex_stag = artemis.getEfield_fp(0,0).ixType().toIntVect();
+    amrex::IntVect Ey_stag = artemis.getEfield_fp(0,1).ixType().toIntVect();
+    amrex::IntVect Ez_stag = artemis.getEfield_fp(0,2).ixType().toIntVect();
+    IntVect Bx_stag = artemis.getBfield_fp(0,0).ixType().toIntVect();
+    IntVect By_stag = artemis.getBfield_fp(0,1).ixType().toIntVect();
+    IntVect Bz_stag = artemis.getBfield_fp(0,2).ixType().toIntVect();
+#ifdef ARTEMIS_MAG_LLG
+    IntVect Hx_stag = artemis.getHfield_fp(0,0).ixType().toIntVect();
+    IntVect Hy_stag = artemis.getHfield_fp(0,1).ixType().toIntVect();
+    IntVect Hz_stag = artemis.getHfield_fp(0,2).ixType().toIntVect();
+    IntVect Mx_stag = artemis.getMfield_fp(0,0).ixType().toIntVect();
+    IntVect My_stag = artemis.getMfield_fp(0,1).ixType().toIntVect();
+    IntVect Mz_stag = artemis.getMfield_fp(0,2).ixType().toIntVect();
 #endif
 
 
@@ -479,7 +479,7 @@ MacroscopicProperties::InitData ()
         By_IndexType[idim]      = By_stag[idim];
         Bz_IndexType[idim]      = Bz_stag[idim];
         macro_cr_ratio[idim]    = 1;
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
         Hx_IndexType[idim] = Hx_stag[idim];
         Hy_IndexType[idim] = Hy_stag[idim];
         Hz_IndexType[idim] = Hz_stag[idim];
@@ -488,7 +488,7 @@ MacroscopicProperties::InitData ()
         Mz_IndexType[idim] = Mz_stag[idim];
 #endif
     }
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         sigma_IndexType[2]   = 0;
         epsilon_IndexType[2] = 0;
         mu_IndexType[2]      = 0;
@@ -499,7 +499,7 @@ MacroscopicProperties::InitData ()
         By_IndexType[2]      = 0;
         Bz_IndexType[2]      = 0;
         macro_cr_ratio[2]    = 0;
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
         Hx_IndexType[2]              = 0;
         Hy_IndexType[2]              = 0;
         Hz_IndexType[2]              = 0;
@@ -516,9 +516,9 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                        amrex::ParserExecutor<3> const& macro_parser,
                        const int lev)
 {
-    WarpX& warpx = WarpX::GetInstance();
-    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = warpx.Geom(lev).CellSizeArray();
-    const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    Artemis& artemis = Artemis::GetInstance();
+    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = artemis.Geom(lev).CellSizeArray();
+    const amrex::RealBox& real_box = artemis.Geom(lev).ProbDomain();
     amrex::IntVect iv = macro_mf->ixType().toIntVect();
     for ( amrex::MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
@@ -529,12 +529,12 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift x, y, z position based on index type
 
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
                 const amrex::Real y = 0._rt;
                 const amrex::Real fac_z = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
                 const amrex::Real z = j * dx_lev[0] + real_box.lo(0) + fac_z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
                 const amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
                 const amrex::Real y = 0._rt;
@@ -578,8 +578,8 @@ MacroscopicProperties::InitializeMacroMultiFabFromNumpy (
     const size_t nz = arr.shape[2];
 
     // Validate array size against domain
-    WarpX& warpx = WarpX::GetInstance();
-    const amrex::Box domain_box = warpx.Geom(lev).Domain();
+    Artemis& artemis = Artemis::GetInstance();
+    const amrex::Box domain_box = artemis.Geom(lev).Domain();
     const amrex::IntVect dom_size = domain_box.size();
 
     // if (dom_size[0] != static_cast<int>(nx) ||

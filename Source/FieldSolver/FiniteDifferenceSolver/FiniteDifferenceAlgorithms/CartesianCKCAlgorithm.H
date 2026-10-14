@@ -1,14 +1,14 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
-#define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
+#ifndef ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
+#define ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -38,7 +38,7 @@ struct CartesianCKCAlgorithm {
         Real const inv_dx = 1._rt/cell_size[0];
         Real const inv_dy = 1._rt/cell_size[1];
         Real const inv_dz = 1._rt/cell_size[2];
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         Real const delta = std::max( { inv_dx,inv_dy,inv_dz } );
         Real const rx = (inv_dx/delta)*(inv_dx/delta);
         Real const ry = (inv_dy/delta)*(inv_dy/delta);
@@ -57,7 +57,7 @@ struct CartesianCKCAlgorithm {
         Real const alphax = (1._rt - 2._rt*ry*beta - 2._rt*rz*beta - 4._rt*gammax)*inv_dx;
         Real const alphay = (1._rt - 2._rt*rx*beta - 2._rt*rz*beta - 4._rt*gammay)*inv_dy;
         Real const alphaz = (1._rt - 2._rt*rx*beta - 2._rt*ry*beta - 4._rt*gammaz)*inv_dz;
-#elif defined WARPX_DIM_XZ
+#elif defined ARTEMIS_DIM_XZ
         Real const delta = std::max(inv_dx,inv_dz);
         Real const rx = (inv_dx/delta)*(inv_dx/delta);
         Real const rz = (inv_dz/delta)*(inv_dz/delta);
@@ -71,7 +71,7 @@ struct CartesianCKCAlgorithm {
         constexpr Real gammax=0._rt, gammay=0._rt, gammaz=0._rt;
         constexpr Real betaxy=0._rt, betazy=0._rt, betayx=0._rt, betayz=0._rt;
         constexpr Real alphay=0._rt;
-#elif defined WARPX_DIM_1D_Z
+#elif defined ARTEMIS_DIM_1D_Z
         Real const alphaz = inv_dz;
         // Other coefficients are 0 in 1D Cartesian
         // (and will actually not be used in the stencil)
@@ -105,7 +105,7 @@ struct CartesianCKCAlgorithm {
      * Compute the maximum timestep, for which the scheme remains stable
      * (Courant-Friedrichs-Levy limit) */
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
-#if (defined WARPX_DIM_XZ)
+#if (defined ARTEMIS_DIM_XZ)
             // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
             amrex::Real const delta_t = std::min( dx[0], dx[1] )/PhysConst::c;
 #else
@@ -132,16 +132,16 @@ struct CartesianCKCAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if (defined WARPX_DIM_3D || WARPX_DIM_XZ)
+#if (defined ARTEMIS_DIM_3D || ARTEMIS_DIM_XZ)
         amrex::Real const alphax = coefs_x[1];
         amrex::Real const betaxz = coefs_x[3];
 #endif
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         amrex::Real const betaxy = coefs_x[2];
         amrex::Real const gammax = coefs_x[4];
 #endif
 
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         return alphax * (F(i+1,j  ,k  ,ncomp) - F(i,  j,  k  ,ncomp))
              + betaxy * (F(i+1,j+1,k  ,ncomp) - F(i  ,j+1,k  ,ncomp)
                       +  F(i+1,j-1,k  ,ncomp) - F(i  ,j-1,k  ,ncomp))
@@ -151,11 +151,11 @@ struct CartesianCKCAlgorithm {
                       +  F(i+1,j-1,k+1,ncomp) - F(i  ,j-1,k+1,ncomp)
                       +  F(i+1,j+1,k-1,ncomp) - F(i  ,j+1,k-1,ncomp)
                       +  F(i+1,j-1,k-1,ncomp) - F(i  ,j-1,k-1,ncomp));
-#elif (defined WARPX_DIM_XZ)
+#elif (defined ARTEMIS_DIM_XZ)
         return alphax * (F(i+1,j  ,k  ,ncomp) - F(i,  j,  k  ,ncomp))
              + betaxz * (F(i+1,j+1,k  ,ncomp) - F(i  ,j+1,k  ,ncomp)
                       +  F(i+1,j-1,k  ,ncomp) - F(i  ,j-1,k  ,ncomp));
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_x, i, j, k, ncomp);
         return 0._rt; // 1D Cartesian: derivative along x is 0
 #endif
@@ -171,7 +171,7 @@ struct CartesianCKCAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if (defined WARPX_DIM_1D_Z)
+#if (defined ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_x, i, j, k, ncomp);
         return 0._rt; // 1D Cartesian: derivative along x is 0
 #else
@@ -189,7 +189,7 @@ struct CartesianCKCAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         Real const alphay = coefs_y[1];
         Real const betayz = coefs_y[2];
         Real const betayx = coefs_y[3];
@@ -204,7 +204,7 @@ struct CartesianCKCAlgorithm {
                       +  F(i-1,j+1,k+1,ncomp) - F(i-1,j  ,k+1,ncomp)
                       +  F(i+1,j+1,k-1,ncomp) - F(i+1,j  ,k-1,ncomp)
                        +  F(i-1,j+1,k-1,ncomp) - F(i-1,j  ,k-1,ncomp));
-#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_XZ || ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
         return 0._rt; // 1D and 2D Cartesian: derivative along y is 0
@@ -224,11 +224,11 @@ struct CartesianCKCAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         amrex::Real const inv_dy = coefs_y[0];
         amrex::ignore_unused(n_coefs_y);
         return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
-#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_XZ || ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
         return 0._rt; // 2D Cartesian: derivative along y is 0
@@ -251,14 +251,14 @@ struct CartesianCKCAlgorithm {
         amrex::ignore_unused(n_coefs_z);
 
         Real const alphaz = coefs_z[1];
-#if (defined WARPX_DIM_3D || WARPX_DIM_XZ)
+#if (defined ARTEMIS_DIM_3D || ARTEMIS_DIM_XZ)
         Real const betazx = coefs_z[2];
 #endif
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         Real const betazy = coefs_z[3];
         Real const gammaz = coefs_z[4];
 #endif
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         return alphaz * (F(i  ,j  ,k+1,ncomp) - F(i  ,j  ,k  ,ncomp))
              + betazx * (F(i+1,j  ,k+1,ncomp) - F(i+1,j  ,k  ,ncomp)
                       +  F(i-1,j  ,k+1,ncomp) - F(i-1,j  ,k  ,ncomp))
@@ -268,11 +268,11 @@ struct CartesianCKCAlgorithm {
                       +  F(i-1,j+1,k+1,ncomp) - F(i-1,j+1,k  ,ncomp)
                       +  F(i+1,j-1,k+1,ncomp) - F(i+1,j-1,k  ,ncomp)
                       +  F(i-1,j-1,k+1,ncomp) - F(i-1,j-1,k  ,ncomp));
-#elif (defined WARPX_DIM_XZ)
+#elif (defined ARTEMIS_DIM_XZ)
         return alphaz * (F(i  ,j+1,k  ,ncomp) - F(i  ,j  ,k  ,ncomp))
              + betazx * (F(i+1,j+1,k  ,ncomp) - F(i+1,j  ,k  ,ncomp)
                       +  F(i-1,j+1,k  ,ncomp) - F(i-1,j  ,k  ,ncomp));
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
         return alphaz * (F(i+1  ,j,k  ,ncomp) - F(i  ,j  ,k  ,ncomp));
 #endif
     }
@@ -287,15 +287,15 @@ struct CartesianCKCAlgorithm {
         int const i, int const j, int const k, int const ncomp=0) {
 
         amrex::Real const inv_dz = coefs_z[0];
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         return inv_dz*( F(i,j,k,ncomp) - F(i,j,k-1,ncomp) );
-#elif (defined WARPX_DIM_XZ)
+#elif (defined ARTEMIS_DIM_XZ)
         return inv_dz*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
         return inv_dz*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
 #endif
     }
 
 };
 
-#endif // WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
+#endif // ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_

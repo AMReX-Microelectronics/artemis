@@ -1,11 +1,11 @@
 /* Copyright 2022 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "LatticeElementBase.H"
-#include "Utils/WarpXUtil.H"
+#include "Utils/ArtemisUtil.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX_ParmParse.H>

@@ -6,7 +6,7 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormatAscent.H"
 #include "FlushFormats/FlushFormatCheckpoint.H"
-#ifdef WARPX_USE_OPENPMD
+#ifdef ARTEMIS_USE_OPENPMD
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "FlushFormats/FlushFormatPlotfile.H"
@@ -15,9 +15,9 @@
 #include "Utils/Algorithms/IsIn.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -47,7 +47,7 @@ Diagnostics::~Diagnostics () = default;
 bool
 Diagnostics::BaseReadParameters ()
 {
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
 
     amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
@@ -57,9 +57,9 @@ Diagnostics::BaseReadParameters ()
     pp_diag_name.query("format", m_format);
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
-#ifdef WARPX_MAG_LLG
-    const int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
-    const int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
+#ifdef ARTEMIS_MAG_LLG
+    const int mag_exchange_coupling = artemis.mag_LLG_exchange_coupling;
+    const int mag_anisotropy_coupling = artemis.mag_LLG_anisotropy_coupling;
 #endif
 
     amrex::ParmParse pp_geometry("geometry");
@@ -79,78 +79,78 @@ Diagnostics::BaseReadParameters ()
 
     // Sanity check if user requests to plot phi
     if (utils::algorithms::is_in(m_varnames_fields, "phi")){
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrame ||
-            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
+            artemis.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrame ||
+            artemis.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic,
             "plot phi only works if do_electrostatic = labframe or do_electrostatic = labframe-electromagnetostatic");
     }
 
     // Sanity check if user requests to plot A
     if (utils::algorithms::any_of_is_in(m_varnames_fields, amrex::Vector<std::string>({"Ax", "Ay", "Az", "Ar", "At"}))){
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
+            artemis.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic,
             "plot A only works if do_electrostatic = labframe-electromagnetostatic");
     }
 
     // Sanity check if user requests to plot F
     if (utils::algorithms::is_in(m_varnames_fields, "F")){
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.do_dive_cleaning,
-            "plot F only works if warpx.do_dive_cleaning = 1");
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
+            artemis.do_dive_cleaning,
+            "plot F only works if artemis.do_dive_cleaning = 1");
     }
 
-    // G can be written to file only if WarpX::do_divb_cleaning = 1
+    // G can be written to file only if Artemis::do_divb_cleaning = 1
     if (utils::algorithms::is_in(m_varnames_fields, "G"))
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.do_divb_cleaning,
-            "G can be written to file only if warpx.do_divb_cleaning = 1");
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
+            artemis.do_divb_cleaning,
+            "G can be written to file only if artemis.do_divb_cleaning = 1");
     }
 
-    // sigma can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    // sigma can be written to file only if Artemis::em_solver_medium == MediumForEM::Macroscopic
     if (utils::algorithms::is_in(m_varnames, "sigma"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            Artemis::em_solver_medium == MediumForEM::Macroscopic,
             "sigma in plotfiles only works with algo.em_solver_medium=macroscopic");
     }
 
-    // epsilon can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    // epsilon can be written to file only if Artemis::em_solver_medium == MediumForEM::Macroscopic
     if (utils::algorithms::is_in(m_varnames, "epsilon"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            Artemis::em_solver_medium == MediumForEM::Macroscopic,
             "epsilon in plotfiles only works with algo.em_solver_medium=macroscopic");
     }
 
-    // mu can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    // mu can be written to file only if Artemis::em_solver_medium == MediumForEM::Macroscopic
     if (utils::algorithms::is_in(m_varnames, "mu"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            Artemis::em_solver_medium == MediumForEM::Macroscopic,
             "mu in plotfiles only works with algo.em_solver_medium=macroscopic");
     }
 
-#ifdef WARPX_MAG_LLG
-    // mag_Ms can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+#ifdef ARTEMIS_MAG_LLG
+    // mag_Ms can be written to file only if Artemis::em_solver_medium == MediumForEM::Macroscopic
     if (utils::algorithms::is_in(m_varnames, "mag_Ms_xface") || utils::algorithms::is_in(m_varnames, "mag_Ms_yface") || utils::algorithms::is_in(m_varnames, "mag_Ms_zface"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            Artemis::em_solver_medium == MediumForEM::Macroscopic,
             "mag_Ms in plotfiles only works with algo.em_solver_medium=macroscopic");
     }
-    // mag_alpha can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    // mag_alpha can be written to file only if Artemis::em_solver_medium == MediumForEM::Macroscopic
     if (utils::algorithms::is_in(m_varnames, "mag_alpha_xface") || utils::algorithms::is_in(m_varnames, "mag_alpha_yface") || utils::algorithms::is_in(m_varnames, "mag_alpha_zface"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            Artemis::em_solver_medium == MediumForEM::Macroscopic,
             "mag_alpha in plotfiles only works with algo.em_solver_medium=macroscopic");
     }
-    // mag_exchange can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    // mag_exchange can be written to file only if Artemis::em_solver_medium == MediumForEM::Macroscopic
     if (utils::algorithms::is_in(m_varnames, "mag_exchange_xface") || utils::algorithms::is_in(m_varnames, "mag_exchange_yface") || utils::algorithms::is_in(m_varnames, "mag_exchange_zface"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            Artemis::em_solver_medium == MediumForEM::Macroscopic,
             "mag_exchange in plotfiles only works with algo.em_solver_medium=macroscopic");
         if (mag_exchange_coupling == 0){
             std::string warnMsg;
@@ -158,11 +158,11 @@ Diagnostics::BaseReadParameters ()
             ablastr::warn_manager::WMRecordWarning("Macroscopic properties", warnMsg);
         }
     }
-    // mag_anisotropy can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
+    // mag_anisotropy can be written to file only if Artemis::em_solver_medium == MediumForEM::Macroscopic
     if (utils::algorithms::is_in(m_varnames, "mag_anisotropy_xface") || utils::algorithms::is_in(m_varnames, "mag_anisotropy_yface") || utils::algorithms::is_in(m_varnames, "mag_anisotropy_zface"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            WarpX::em_solver_medium == MediumForEM::Macroscopic,
+            Artemis::em_solver_medium == MediumForEM::Macroscopic,
             "mag_anisotropy in plotfiles only works with algo.em_solver_medium=macroscopic");
         if (mag_anisotropy_coupling == 0){
             std::string warnMsg;
@@ -186,8 +186,8 @@ Diagnostics::BaseReadParameters ()
     if (!pfield_varnames_specified){
         m_pfield_varnames = {};
     }
-#ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+#ifdef ARTEMIS_DIM_RZ
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         m_pfield_varnames.size() == 0,
         "Input error: cannot use particle_fields_to_plot with RZ"
     );
@@ -205,7 +205,7 @@ Diagnostics::BaseReadParameters ()
         utils::parser::Store_parserString(
             pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             parser_str != "",
             "Input error: cannot find parser string for " + var + " in file. "
             + m_diag_name + ".particle_fields." + var + "(x,y,z,ux,uy,uz) is required"
@@ -221,7 +221,7 @@ Diagnostics::BaseReadParameters ()
     }
 
     // Names of all species in the simulation
-    m_all_species_names = warpx.GetPartContainer().GetSpeciesNames();
+    m_all_species_names = artemis.GetPartContainer().GetSpeciesNames();
 
     // Get names of species to average at each grid point
     const bool pfield_species_specified = pp_diag_name.queryarr("particle_fields_species", m_pfield_species);
@@ -245,7 +245,7 @@ Diagnostics::BaseReadParameters ()
             }
         }
         // If species name was misspelled, abort with error message
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             !p_species_name_is_wrong,
             "Input error: string " + species + " in " + m_diag_name
             + ".particle_fields_species does not match any species"
@@ -273,32 +273,32 @@ Diagnostics::BaseReadParameters ()
 
     if (!lo_specified) {
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-            m_lo[idim] = warpx.Geom(0).ProbLo(idim);
+            m_lo[idim] = artemis.Geom(0).ProbLo(idim);
        }
     }
     const bool hi_specified = utils::parser::queryArrWithParser(
         pp_diag_name, "diag_hi", m_hi, 0, AMREX_SPACEDIM);
     if (!hi_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
-            m_hi[idim] = warpx.Geom(0).ProbHi(idim);
+            m_hi[idim] = artemis.Geom(0).ProbHi(idim);
        }
     }
     // For a moving window simulation, the user-defined m_lo and m_hi must be converted.
-    if (warpx.do_moving_window) {
-#if defined(WARPX_DIM_3D)
+    if (artemis.do_moving_window) {
+#if defined(ARTEMIS_DIM_3D)
     amrex::Vector<int> dim_map {0, 1, 2};
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     amrex::Vector<int> dim_map {0, 2};
 #else
     amrex::Vector<int> dim_map {2};
 #endif
-       if (warpx.boost_direction[ dim_map[warpx.moving_window_dir] ] == 1) {
+       if (artemis.boost_direction[ dim_map[artemis.moving_window_dir] ] == 1) {
            // Convert user-defined lo and hi for diagnostics to account for boosted-frame
            // simulations with moving window
-           amrex::Real convert_factor = 1._rt/(warpx.gamma_boost * (1._rt - warpx.beta_boost) );
+           amrex::Real convert_factor = 1._rt/(artemis.gamma_boost * (1._rt - artemis.beta_boost) );
            // Assuming that the window travels with speed c
-           m_lo[warpx.moving_window_dir] *= convert_factor;
-           m_hi[warpx.moving_window_dir] *= convert_factor;
+           m_lo[artemis.moving_window_dir] *= convert_factor;
+           m_hi[artemis.moving_window_dir] *= convert_factor;
        }
     }
 
@@ -342,7 +342,7 @@ Diagnostics::BaseReadParameters ()
                 }
             }
             // If species name was misspelled, abort with error message
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 !species_name_is_wrong,
                 "Input error: string " + var + " in " + m_diag_name
                 + ".fields_to_plot does not match any species"
@@ -407,7 +407,7 @@ Diagnostics::InitDataAfterRestart ()
         InitializeParticleFunctors();
     }
    if (write_species == 0) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             m_format != "checkpoint",
             "For checkpoint format, write_species flag must be 1."
         );
@@ -447,10 +447,10 @@ Diagnostics::InitDataAfterRestart ()
 void
 Diagnostics::InitData ()
 {
-    auto& warpx = WarpX::GetInstance();
+    auto& artemis = Artemis::GetInstance();
 
     // Get current finest level available
-    const int finest_level = warpx.finestLevel();
+    const int finest_level = artemis.finestLevel();
 
     // initialize member variables and arrays in base class::Diagnostics
     InitBaseData();
@@ -487,7 +487,7 @@ Diagnostics::InitData ()
     }
 
     if (write_species == 0) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             m_format != "checkpoint",
             "For checkpoint format, write_species flag must be 1."
         );
@@ -527,22 +527,22 @@ Diagnostics::InitData ()
 void
 Diagnostics::InitBaseData ()
 {
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
     // Number of levels in the simulation at the current timestep
-    nlev = warpx.finestLevel() + 1;
+    nlev = artemis.finestLevel() + 1;
     // default number of levels to be output = nlev
     nlev_output = nlev;
     // Maximum number of levels that will be allocated in the simulation
-    nmax_lev = warpx.maxLevel() + 1;
+    nmax_lev = artemis.maxLevel() + 1;
     m_all_field_functors.resize( nmax_lev );
 
     // For restart, move the m_lo and m_hi of the diag consistent with the
     // current moving_window location
-    if (warpx.do_moving_window) {
-        int moving_dir = warpx.moving_window_dir;
-        int shift_num_base = static_cast<int>((warpx.getmoving_window_x() - m_lo[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
-        m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
-        m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
+    if (artemis.do_moving_window) {
+        int moving_dir = artemis.moving_window_dir;
+        int shift_num_base = static_cast<int>((artemis.getmoving_window_x() - m_lo[moving_dir]) / artemis.Geom(0).CellSize(moving_dir) );
+        m_lo[moving_dir] += shift_num_base * artemis.Geom(0).CellSize(moving_dir);
+        m_hi[moving_dir] += shift_num_base * artemis.Geom(0).CellSize(moving_dir);
     }
     // Construct Flush class.
     if        (m_format == "plotfile"){
@@ -555,21 +555,21 @@ Diagnostics::InitBaseData ()
     } else if (m_format == "sensei"){
 #ifdef AMREX_USE_SENSEI_INSITU
         m_flush_format = std::make_unique<FlushFormatSensei>(
-            dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
+            dynamic_cast<amrex::AmrMesh*>(const_cast<Artemis*>(&artemis)),
             m_diag_name);
 #else
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "To use SENSEI in situ, compile with USE_SENSEI=TRUE");
 #endif
     } else if (m_format == "openpmd"){
-#ifdef WARPX_USE_OPENPMD
+#ifdef ARTEMIS_USE_OPENPMD
         m_flush_format = std::make_unique<FlushFormatOpenPMD>(m_diag_name);
 #else
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "To use openpmd output format, need to compile with USE_OPENPMD=TRUE");
 #endif
     } else {
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "unknown output format");
     }
 
@@ -600,7 +600,7 @@ Diagnostics::ComputeAndPack ()
     // to determine if the transform is to be done this step.
     PrepareParticleDataForOutput();
 
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
 
     // compute the necessary fields and store result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
@@ -620,8 +620,8 @@ Diagnostics::ComputeAndPack ()
 
             // needed for contour plots of rho, i.e. ascent/sensei
             if (m_format == "sensei" || m_format == "ascent") {
-                ablastr::utils::communication::FillBoundary(m_mf_output[i_buffer][lev], WarpX::do_single_precision_comms,
-                                                            warpx.Geom(lev).periodicity());
+                ablastr::utils::communication::FillBoundary(m_mf_output[i_buffer][lev], Artemis::do_single_precision_comms,
+                                                            artemis.Geom(lev).periodicity());
             }
         }
         // Call Particle functor
@@ -637,7 +637,7 @@ Diagnostics::ComputeAndPack ()
 void
 Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
-    WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
+    ARTEMIS_PROFILE("Diagnostics::FilterComputePackFlush()");
     MovingWindowAndGalileanDomainShift (step);
 
     if ( DoComputeAndPack (step, force_flush) ) {

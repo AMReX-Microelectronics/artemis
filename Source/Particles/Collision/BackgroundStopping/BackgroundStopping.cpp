@@ -1,6 +1,6 @@
 /* Copyright 2022 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,8 +8,8 @@
 
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/ParticleUtils.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
@@ -88,15 +88,15 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
 void
 BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc)
 {
-    WARPX_PROFILE("BackgroundStopping::doCollisions()");
+    ARTEMIS_PROFILE("BackgroundStopping::doCollisions()");
     using namespace amrex::literals;
 
     auto& species = mypc->GetParticleContainerFromName(m_species_names[0]);
     amrex::ParticleReal const species_mass = species.getMass();
     amrex::ParticleReal const species_charge = species.getCharge();
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(species_mass > 0_prt, "Error: With background stopping, the species mass must be > 0");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(species_charge != 0_prt, "Error: With background stopping, the species charge must be nonzero");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(species_mass > 0_prt, "Error: With background stopping, the species mass must be > 0");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(species_charge != 0_prt, "Error: With background stopping, the species charge must be nonzero");
 
     BackgroundStoppingType background_type = m_background_type;
 
@@ -104,14 +104,14 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
     auto const flvl = species.finestLevel();
     for (int lev = 0; lev <= flvl; ++lev) {
 
-        auto cost = WarpX::getCosts(lev);
+        auto cost = Artemis::getCosts(lev);
 
         // loop over particles box by box
 #ifdef _OPENMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(species, lev); pti.isValid(); ++pti) {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        for (ArtemisParIter pti(species, lev); pti.isValid(); ++pti) {
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
             }
@@ -123,7 +123,7 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
                 doBackgroundStoppingOnIonsWithinTile(pti, dt, cur_time, species_mass, species_charge);
             }
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
@@ -134,7 +134,7 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
     }
 }
 
-void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
+void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (ArtemisParIter& pti, amrex::Real dt, amrex::Real t,
                                                                     amrex::ParticleReal species_mass, amrex::ParticleReal species_charge)
 {
     using namespace amrex::literals;
@@ -208,7 +208,7 @@ void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter
         );
 }
 
-void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
+void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (ArtemisParIter& pti, amrex::Real dt, amrex::Real t,
                                                                amrex::ParticleReal species_mass, amrex::ParticleReal species_charge)
 {
     using namespace amrex::literals;

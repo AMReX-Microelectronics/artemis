@@ -1,5 +1,5 @@
-#ifndef WARPX_CELLCENTERFUNCTOR_H_
-#define WARPX_CELLCENTERFUNCTOR_H_
+#ifndef ARTEMIS_CELLCENTERFUNCTOR_H_
+#define ARTEMIS_CELLCENTERFUNCTOR_H_
 
 #include "ComputeDiagFunctor.H"
 
@@ -54,4 +54,4 @@ private:
     int m_scomp;
 };
 
-#endif // WARPX_CELLCENTERFUNCTOR_H_
+#endif // ARTEMIS_CELLCENTERFUNCTOR_H_

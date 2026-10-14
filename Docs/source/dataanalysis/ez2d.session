@@ -5342,10 +5342,10 @@
         </Object>
         <Object name="ViewerSubject">
             <Object name="SourceMap">
-                <Field name="SOURCE00" type="string">localhost:/work/SENSEI/warpx-libsim/plotfiles/plt00100/Header</Field>
+                <Field name="SOURCE00" type="string">localhost:/work/SENSEI/artemis-libsim/plotfiles/plt00100/Header</Field>
             </Object>
             <Object name="SourcePlugins">
-                <Field name="localhost:/work/SENSEI/warpx-libsim/plotfiles/plt00100/Header" type="string">Boxlib2D_1.0</Field>
+                <Field name="localhost:/work/SENSEI/artemis-libsim/plotfiles/plt00100/Header" type="string">Boxlib2D_1.0</Field>
             </Object>
             <Object name="DatabaseCorrelationList">
                 <Field name="needPermission" type="bool">true</Field>

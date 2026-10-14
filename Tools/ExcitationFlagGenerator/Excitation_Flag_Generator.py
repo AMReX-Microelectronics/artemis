@@ -78,8 +78,8 @@ with open('exampledata_Excitation_Flag_Generator.txt') as myfile:
 
 ##### Prints datastring for normal in x, y, z #####
     print()
-    print("warpx.Ex_excitation_flag_function(x,y,z) = " + '"' + x + '"')
+    print("artemis.Ex_excitation_flag_function(x,y,z) = " + '"' + x + '"')
     print()
-    print("warpx.Ey_excitation_flag_function(x,y,z) = " + '"' + y + '"')
+    print("artemis.Ey_excitation_flag_function(x,y,z) = " + '"' + y + '"')
     print()
-    print("warpx.Ez_excitation_flag_function(x,y,z) = " + '"' + z + '"')
+    print("artemis.Ez_excitation_flag_function(x,y,z) = " + '"' + z + '"')

@@ -1,12 +1,12 @@
 /* Copyright 2022 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_UTILS_ALGORITHMS_LINEAR_INTERPOLATION_H_
-#define WARPX_UTILS_ALGORITHMS_LINEAR_INTERPOLATION_H_
+#ifndef ARTEMIS_UTILS_ALGORITHMS_LINEAR_INTERPOLATION_H_
+#define ARTEMIS_UTILS_ALGORITHMS_LINEAR_INTERPOLATION_H_
 
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
@@ -63,4 +63,4 @@ namespace utils::algorithms
     }
 }
 
-#endif //WARPX_UTILS_ALGORITHMS_LINEAR_INTERPOLATION_H_
+#endif //ARTEMIS_UTILS_ALGORITHMS_LINEAR_INTERPOLATION_H_

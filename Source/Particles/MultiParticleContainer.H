@@ -4,25 +4,25 @@
  * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
  * Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_ParticleContainer_H_
-#define WARPX_ParticleContainer_H_
+#ifndef ARTEMIS_ParticleContainer_H_
+#define ARTEMIS_ParticleContainer_H_
 
 #include "MultiParticleContainer_fwd.H"
 
-#include "Evolve/WarpXDtType.H"
+#include "Evolve/ArtemisDtType.H"
 #include "Particles/Collision/CollisionHandler.H"
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "PhysicalParticleContainer.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "WarpXParticleContainer.H"
+#include "Utils/ArtemisConst.H"
+#include "ArtemisParticleContainer.H"
 #include "ParticleBoundaries.H"
 
 #include <AMReX_BLassert.H>
@@ -49,15 +49,15 @@
 
 /**
  * The class MultiParticleContainer holds multiple instances of the polymorphic
- * class WarpXParticleContainer, stored in its member variable "allcontainers".
- * The class WarpX typically has a single (pointer to an) instance of
+ * class ArtemisParticleContainer, stored in its member variable "allcontainers".
+ * The class Artemis typically has a single (pointer to an) instance of
  * MultiParticleContainer.
  *
  * MultiParticleContainer typically has two types of functions:
- * - Functions that loop over all instances of WarpXParticleContainer in
+ * - Functions that loop over all instances of ArtemisParticleContainer in
  *   allcontainers and calls the corresponding function (for instance,
  *   MultiParticleContainer::Evolve loops over all particles containers and
- *   calls the corresponding WarpXParticleContainer::Evolve function).
+ *   calls the corresponding ArtemisParticleContainer::Evolve function).
  * - Functions that specifically handle multiple species (for instance
  *   ReadParameters or mapSpeciesProduct).
  */
@@ -70,17 +70,17 @@ public:
 
     ~MultiParticleContainer() {}
 
-    WarpXParticleContainer&
+    ArtemisParticleContainer&
     GetParticleContainer (int ispecies) const {return *allcontainers[ispecies];}
 
-    WarpXParticleContainer*
+    ArtemisParticleContainer*
     GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
 
-    WarpXParticleContainer&
+    ArtemisParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
-#ifdef WARPX_USE_OPENPMD
-    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
+#ifdef ARTEMIS_USE_OPENPMD
+    std::unique_ptr<ArtemisParticleContainer>& GetUniqueContainer(int ispecies) {
       return  allcontainers[ispecies];
     }
 #endif
@@ -181,7 +181,7 @@ public:
     */
     void doResampling (const int timestep);
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     /** If Schwinger process is activated, this function is called at every
      * timestep in Evolve and is used to create Schwinger electron-positron pairs.
      * Within this function we loop over all cells to calculate the number of
@@ -192,7 +192,7 @@ public:
     void doQEDSchwinger ();
 
     /** This function computes the box outside which Schwinger process is disabled. The box is
-     * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the warpx level 0 geometry
+     * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the artemis level 0 geometry
      * object (to make the link between Real and int quatities).
      */
     amrex::Box ComputeSchwingerGlobalBox () const;
@@ -309,7 +309,7 @@ public:
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_E;
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_B;
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     /**
     * \brief Performs QED events (Breit-Wheeler process and photon emission)
     */
@@ -326,7 +326,7 @@ public:
 
 protected:
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     /**
     * \brief Performs Breit-Wheeler process for the species for which it is enabled
     */
@@ -369,7 +369,7 @@ protected:
     std::vector<PCTypes> species_types;
 
     template<typename ...Args>
-    amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
+    amrex::MFItInfo getMFItInfo (const ArtemisParticleContainer& pc_src,
                                  Args const&... pc_dsts) const noexcept
     {
         amrex::MFItInfo info;
@@ -388,7 +388,7 @@ protected:
     }
 
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     // The QED engines
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
     std::shared_ptr<QuantumSynchrotronEngine> m_shr_p_qs_engine;
@@ -477,7 +477,7 @@ protected:
 private:
 
     // physical particles (+ laser)
-    amrex::Vector<std::unique_ptr<WarpXParticleContainer>> allcontainers;
+    amrex::Vector<std::unique_ptr<ArtemisParticleContainer>> allcontainers;
     // Temporary particle container, used e.g. for particle splitting.
     std::unique_ptr<PhysicalParticleContainer> pc_tmp;
 
@@ -487,17 +487,17 @@ private:
 
     bool m_do_back_transformed_particles = false;
 
-    void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
+    void MFItInfoCheckTiling(const ArtemisParticleContainer& /*pc_src*/) const noexcept
     {
         return;
     }
 
     template<typename First, typename ...Args>
-    void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src,
+    void MFItInfoCheckTiling(const ArtemisParticleContainer& pc_src,
                              First const& pc_dst, Args const&... others) const noexcept
     {
         if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
                 "For particle creation processes, either all or none of the "
                 "particle species must use tiling.");
         }
@@ -512,7 +512,7 @@ private:
     */
     void CheckIonizationProductSpecies();
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     /**
     * Should be called right after mapSpeciesProduct in InitData.
     * It checks the physical correctness of product particle species
@@ -523,4 +523,4 @@ private:
 
 
 };
-#endif /*WARPX_ParticleContainer_H_*/
+#endif /*ARTEMIS_ParticleContainer_H_*/

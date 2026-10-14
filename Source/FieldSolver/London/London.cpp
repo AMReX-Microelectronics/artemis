@@ -1,7 +1,7 @@
 #include "London.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
-#include "Utils/WarpXUtil.H"
-#include "WarpX.H"
+#include "Utils/ArtemisUtil.H"
+#include "Artemis.H"
 #include <ablastr/coarsen/sample.H>
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/Parser/ParserUtils.H"
@@ -39,13 +39,13 @@ London::ReadParameters ()
 void
 London::InitData()
 {
-    auto& warpx = WarpX::GetInstance();
+    auto& artemis = Artemis::GetInstance();
 
     const int lev = 0;
-    amrex::BoxArray ba = warpx.boxArray(lev);
-    amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
+    amrex::BoxArray ba = artemis.boxArray(lev);
+    amrex::DistributionMapping dmap = artemis.DistributionMap(lev);
     // number of guard cells used in EB solver
-    const amrex::IntVect ng_EB_alloc = warpx.getngEB();
+    const amrex::IntVect ng_EB_alloc = artemis.getngEB();
     // Define a nodal multifab to store if region is on super conductor (1) or not (0)
     const amrex::IntVect nodal_flag = amrex::IntVect::TheNodeVector();
     const int ncomps = 1;
@@ -53,9 +53,9 @@ London::InitData()
 
     InitializeSuperconductorMultiFabUsingParser(m_superconductor_mf.get(), m_superconductor_parser->compile<3>(), lev);
 
-    amrex::IntVect jx_stag = warpx.get_pointer_current_fp(lev,0)->ixType().toIntVect();
-    amrex::IntVect jy_stag = warpx.get_pointer_current_fp(lev,1)->ixType().toIntVect();
-    amrex::IntVect jz_stag = warpx.get_pointer_current_fp(lev,2)->ixType().toIntVect();
+    amrex::IntVect jx_stag = artemis.get_pointer_current_fp(lev,0)->ixType().toIntVect();
+    amrex::IntVect jy_stag = artemis.get_pointer_current_fp(lev,1)->ixType().toIntVect();
+    amrex::IntVect jz_stag = artemis.get_pointer_current_fp(lev,2)->ixType().toIntVect();
 
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         jx_IndexType[idim]      = jx_stag[idim];
@@ -83,18 +83,18 @@ void
 London::EvolveLondonJ (amrex::Real dt)
 {
     amrex::Print() << " evolve london J using E\n";
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
     const int lev = 0;
 
-    amrex::MultiFab * jx = warpx.get_pointer_current_fp(lev, 0);
-    amrex::MultiFab * jy = warpx.get_pointer_current_fp(lev, 1);
-    amrex::MultiFab * jz = warpx.get_pointer_current_fp(lev, 2);
+    amrex::MultiFab * jx = artemis.get_pointer_current_fp(lev, 0);
+    amrex::MultiFab * jy = artemis.get_pointer_current_fp(lev, 1);
+    amrex::MultiFab * jz = artemis.get_pointer_current_fp(lev, 2);
 
-    amrex::MultiFab * Ex = warpx.get_pointer_Efield_fp(lev, 0);
-    amrex::MultiFab * Ey = warpx.get_pointer_Efield_fp(lev, 1);
-    amrex::MultiFab * Ez = warpx.get_pointer_Efield_fp(lev, 2);
+    amrex::MultiFab * Ex = artemis.get_pointer_Efield_fp(lev, 0);
+    amrex::MultiFab * Ey = artemis.get_pointer_Efield_fp(lev, 1);
+    amrex::MultiFab * Ez = artemis.get_pointer_Efield_fp(lev, 2);
 
-    MacroscopicProperties &macroscopic = warpx.GetMacroscopicProperties();
+    MacroscopicProperties &macroscopic = artemis.GetMacroscopicProperties();
     amrex::MultiFab& mu_mf = macroscopic.getmu_mf();
     amrex::GpuArray<int, 3> const& mu_stag = macroscopic.mu_IndexType;
     amrex::GpuArray<int, 3> const& jx_stag = jx_IndexType;
@@ -156,9 +156,9 @@ London::InitializeSuperconductorMultiFabUsingParser (
 {
     using namespace amrex::literals;
 
-    WarpX& warpx = WarpX::GetInstance();
-    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = warpx.Geom(lev).CellSizeArray();
-    const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    Artemis& artemis = Artemis::GetInstance();
+    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = artemis.Geom(lev).CellSizeArray();
+    const amrex::RealBox& real_box = artemis.Geom(lev).ProbDomain();
     amrex::IntVect iv = sc_mf->ixType().toIntVect();
     for ( amrex::MFIter mfi(*sc_mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells

@@ -1,2 +1,2 @@
-INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Particles/Filter
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Particles/Filter
+INCLUDE_LOCATIONS += $(ARTEMIS_HOME)/Source/Particles/Filter
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/Particles/Filter

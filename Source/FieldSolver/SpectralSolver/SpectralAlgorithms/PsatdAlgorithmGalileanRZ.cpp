@@ -1,15 +1,15 @@
 /* Copyright 2019-2020 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmGalileanRZ.H"
 
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <cmath>
 
@@ -151,7 +151,7 @@ PsatdAlgorithmGalileanRZ::pushSpectralFields (SpectralFieldDataRZ & f)
                 rho_diff = T2*(X2 - X3)*myeps0*divE + T_rho*X2*divJ;
             }
 
-            // Update E (see WarpX online documentation: theory section)
+            // Update E (see Artemis online documentation: theory section)
             fields(i,j,k,Ep_m) = T2*C*Ep_old
                         + T2*S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old)
                         + X4*Jp + 0.5_rt*kr*rho_diff;
@@ -161,7 +161,7 @@ PsatdAlgorithmGalileanRZ::pushSpectralFields (SpectralFieldDataRZ & f)
             fields(i,j,k,Ez_m) = T2*C*Ez_old
                         + T2*S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old)
                         + X4*Jz - I*kz*rho_diff;
-            // Update B (see WarpX online documentation: theory section)
+            // Update B (see Artemis online documentation: theory section)
             // Note: here X1 is T2*x1/(ep0*c*c*k_norm*k_norm), where
             // x1 has the same definition as in the original paper
             fields(i,j,k,Bp_m) = T2*C*Bp_old
@@ -295,7 +295,7 @@ void
 PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 {
     // Profiling
-    WARPX_PROFILE( "PsatdAlgorithmGalileanRZ::CurrentCorrection" );
+    ARTEMIS_PROFILE( "PsatdAlgorithmGalileanRZ::CurrentCorrection" );
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 
@@ -364,6 +364,6 @@ PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 void
 PsatdAlgorithmGalileanRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Vay deposition not implemented in RZ geometry");
 }

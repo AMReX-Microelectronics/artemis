@@ -1,4 +1,3 @@
-# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
 
 ####################################################################################################
 ## This input file simulates the simplified TRL
@@ -82,9 +81,9 @@ my_constants.flag_ss = 2 # soft source flag
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 0.95
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 0.95
 boundary.field_lo = pml pec pml   # PML at -x to extend GND patches; PEC at -y end to superimpose waveguide port; PML at -z end to extend Si substrate;
 boundary.field_hi = pml pml pml   # PML at +x to extend GND patches; PML at +y end to extend the TRL; PML at -z end to extend Si substrate;
 particles.nspecies = 0
@@ -128,15 +127,15 @@ macroscopic.mu_function(x,y,z) = "mu_0
 
 # vertical electric voltage excitation superimposed with PEC at one end of CPW
 # in the waveform of modified Gaussian pulse
-warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+artemis.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 
-warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_hs * ( (x > w_line/2) * (x < w_line/2 + gap_cpw) + (x < -w_line/2) * (x > -w_line/2 - gap_cpw)) * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (y > -Ly/2 - tiny_excitation_dy) * (y < -Ly/2 + tiny_excitation_dy) "
+artemis.Ez_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ey_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_hs * ( (x > w_line/2) * (x < w_line/2 + gap_cpw) + (x < -w_line/2) * (x > -w_line/2 - gap_cpw)) * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (y > -Ly/2 - tiny_excitation_dy) * (y < -Ly/2 + tiny_excitation_dy) "
 
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ex_excitation_grid_function(x,y,z,t) = "cos(2*pi*t*frequency) * ((x > w_line/2) * (x < w_line/2 + gap_cpw)) +  (-1.)*cos(2*pi*t*frequency) * (x < -w_line/2) * (x > -w_line/2 - gap_cpw)"
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ex_excitation_grid_function(x,y,z,t) = "cos(2*pi*t*frequency) * ((x > w_line/2) * (x < w_line/2 + gap_cpw)) +  (-1.)*cos(2*pi*t*frequency) * (x < -w_line/2) * (x > -w_line/2 - gap_cpw)"
 
 # Diagnostics
 

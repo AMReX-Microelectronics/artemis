@@ -1,7 +1,7 @@
 /* Copyright 2022 Andrew Myers, Luca Fedeli, Maxence Thevenet
  * Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */

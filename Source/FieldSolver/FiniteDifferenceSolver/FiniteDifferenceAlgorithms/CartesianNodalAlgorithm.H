@@ -1,14 +1,14 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_
-#define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_
+#ifndef ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_
+#define ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -74,7 +74,7 @@ struct CartesianNodalAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if (defined WARPX_DIM_1D_Z)
+#if (defined ARTEMIS_DIM_1D_Z)
         ignore_unused(i, j, k, coefs_x, ncomp, F);
         return 0._rt; // 1D Cartesian: derivative along x is 0
 #else
@@ -94,7 +94,7 @@ struct CartesianNodalAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if (defined WARPX_DIM_1D_Z)
+#if (defined ARTEMIS_DIM_1D_Z)
         ignore_unused(i, j, k, coefs_x, n_coefs_x, ncomp, F);
         return 0._rt; // 1D Cartesian: derivative along x is 0
 #else
@@ -114,10 +114,10 @@ struct CartesianNodalAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         Real const inv_dy = coefs_y[0];
         return 0.5_rt*inv_dy*( F(i,j+1,k,ncomp) - F(i,j-1,k,ncomp) );
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_1D_Z)
         ignore_unused(i, j, k, coefs_y, ncomp, F);
         return 0._rt; // 1D and 2D Cartesian: derivative along y is 0
 #endif
@@ -149,11 +149,11 @@ struct CartesianNodalAlgorithm {
 
         using namespace amrex;
         Real const inv_dz = coefs_z[0];
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         return 0.5_rt*inv_dz*( F(i,j,k+1,ncomp) - F(i,j,k-1,ncomp) );
-#elif (defined WARPX_DIM_XZ)
+#elif (defined ARTEMIS_DIM_XZ)
         return 0.5_rt*inv_dz*( F(i,j+1,k,ncomp) - F(i,j-1,k,ncomp) );
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
         return 0.5_rt*inv_dz*( F(i+1,j,k,ncomp) - F(i-1,j,k,ncomp) );
 #endif
     }
@@ -174,4 +174,4 @@ struct CartesianNodalAlgorithm {
 
 };
 
-#endif // WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_
+#endif // ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_

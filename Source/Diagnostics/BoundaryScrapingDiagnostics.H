@@ -1,11 +1,11 @@
 /* Copyright 2022 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_BOUNDARYSCRAPINGDIAGNOSTICS_H_
-#define WARPX_BOUNDARYSCRAPINGDIAGNOSTICS_H_
+#ifndef ARTEMIS_BOUNDARYSCRAPINGDIAGNOSTICS_H_
+#define ARTEMIS_BOUNDARYSCRAPINGDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
 #include "Utils/Parser/IntervalsParser.H"
@@ -64,4 +64,4 @@ private:
     void InitializeParticleBuffer () override;
 
 };
-#endif // WARPX_BOUNDARYSCRAPINGDIAGNOSTICS_H_
+#endif // ARTEMIS_BOUNDARYSCRAPINGDIAGNOSTICS_H_

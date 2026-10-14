@@ -1,9 +1,9 @@
-#ifndef WARPX_PARTICLEDIAG_H_
-#define WARPX_PARTICLEDIAG_H_
+#ifndef ARTEMIS_PARTICLEDIAG_H_
+#define ARTEMIS_PARTICLEDIAG_H_
 
 #include "ParticleDiag_fwd.H"
 
-#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Particles/ArtemisParticleContainer_fwd.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <AMReX_Parser.H>
@@ -17,8 +17,8 @@
 class ParticleDiag
 {
 public:
-    ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc, PinnedMemoryParticleContainer *pinned_pc = nullptr);
-    WarpXParticleContainer* getParticleContainer() const { return m_pc; }
+    ParticleDiag(std::string diag_name, std::string name, ArtemisParticleContainer* pc, PinnedMemoryParticleContainer *pinned_pc = nullptr);
+    ArtemisParticleContainer* getParticleContainer() const { return m_pc; }
     PinnedMemoryParticleContainer* getPinnedParticleContainer() const { return m_pinned_pc; }
     std::string getSpeciesName() const { return m_name; }
     amrex::Vector<int> m_plot_flags;
@@ -36,8 +36,8 @@ public:
 private:
     std::string m_diag_name;
     std::string m_name;
-    WarpXParticleContainer* m_pc;
+    ArtemisParticleContainer* m_pc;
     PinnedMemoryParticleContainer* m_pinned_pc;
 };
 
-#endif // WARPX_PARTICLEDIAG_H_
+#endif // ARTEMIS_PARTICLEDIAG_H_

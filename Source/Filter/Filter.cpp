@@ -1,14 +1,14 @@
 /* Copyright 2019 Andrew Myers, Maxence Thevenet, Weiqun Zhang
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "Filter.H"
 
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/ArtemisProfilerWrapper.H"
 
 #include <AMReX_Array4.H>
 #include <AMReX_Box.H>
@@ -36,14 +36,14 @@ using namespace amrex;
 void
 Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int scomp, int dcomp, int ncomp)
 {
-    WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
+    ARTEMIS_PROFILE("Filter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     for (MFIter mfi(dstmf); mfi.isValid(); ++mfi)
     {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
         }
@@ -56,7 +56,7 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
         // Apply filter
         DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -77,7 +77,7 @@ void
 Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
                       const Box& tbx, int scomp, int dcomp, int ncomp)
 {
-    WARPX_PROFILE("Filter::ApplyStencil(FArrayBox)");
+    ARTEMIS_PROFILE("Filter::ApplyStencil(FArrayBox)");
     ncomp = std::min(ncomp, srcfab.nComp());
     const auto& src = srcfab.array();
     const auto& dst = dstfab.array();
@@ -96,13 +96,13 @@ void Filter::DoFilter (const Box& tbx,
 #if (AMREX_SPACEDIM >= 2)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
     Dim3 slen_local = slen;
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
@@ -132,7 +132,7 @@ void Filter::DoFilter (const Box& tbx,
 
         dst(i,j,k,dcomp+n) = d;
     });
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
@@ -158,7 +158,7 @@ void Filter::DoFilter (const Box& tbx,
 
         dst(i,j,k,dcomp+n) = d;
     });
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
@@ -183,7 +183,7 @@ void Filter::DoFilter (const Box& tbx,
         dst(i,j,k,dcomp+n) = d;
     });
 #else
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Filter not implemented for the current geometry!");
 #endif
 }
@@ -201,10 +201,10 @@ void Filter::DoFilter (const Box& tbx,
 void
 Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, const int lev, int scomp, int dcomp, int ncomp)
 {
-    WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
+    ARTEMIS_PROFILE("Filter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
 #ifdef AMREX_USE_OMP
 // never runs on GPU since in the else branch of AMREX_USE_GPU
@@ -214,7 +214,7 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
         FArrayBox tmpfab;
         for (MFIter mfi(dstmf,true); mfi.isValid(); ++mfi){
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
             }
@@ -233,7 +233,7 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
             // Apply filter
             DoFilter(tbx, tmpfab.array(), dstfab.array(), 0, dcomp, ncomp);
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
@@ -255,7 +255,7 @@ void
 Filter::ApplyStencil (amrex::FArrayBox& dstfab, const amrex::FArrayBox& srcfab,
                       const amrex::Box& tbx, int scomp, int dcomp, int ncomp)
 {
-    WARPX_PROFILE("Filter::ApplyStencil(FArrayBox)");
+    ARTEMIS_PROFILE("Filter::ApplyStencil(FArrayBox)");
     ncomp = std::min(ncomp, srcfab.nComp());
     FArrayBox tmpfab;
     const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);
@@ -280,7 +280,7 @@ void Filter::DoFilter (const Box& tbx,
 #if (AMREX_SPACEDIM >= 2)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
@@ -297,9 +297,9 @@ void Filter::DoFilter (const Box& tbx,
         for         (int iz=0; iz < slen.z; ++iz){
             for     (int iy=0; iy < slen.y; ++iy){
                 for (int ix=0; ix < slen.x; ++ix){
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                     Real sss = sx[ix]*sy[iy]*sz[iz];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                     Real sss = sx[ix]*sz[iy];
 #else
                     Real sss = sz[ix];
@@ -309,7 +309,7 @@ void Filter::DoFilter (const Box& tbx,
                         for     (int j = lo.y; j <= hi.y; ++j) {
                             AMREX_PRAGMA_SIMD
                             for (int i = lo.x; i <= hi.x; ++i) {
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k-iz,scomp+n)
                                                           +tmp(i+ix,j-iy,k-iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k-iz,scomp+n)
@@ -318,16 +318,16 @@ void Filter::DoFilter (const Box& tbx,
                                                           +tmp(i+ix,j-iy,k+iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k+iz,scomp+n)
                                                           +tmp(i+ix,j+iy,k+iz,scomp+n));
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k,scomp+n)
                                                           +tmp(i+ix,j-iy,k,scomp+n)
                                                           +tmp(i-ix,j+iy,k,scomp+n)
                                                           +tmp(i+ix,j+iy,k,scomp+n));
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j,k,scomp+n)
                                                           +tmp(i+ix,j,k,scomp+n));
 #else
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Filter not implemented for the current geometry!");
 #endif
                             }

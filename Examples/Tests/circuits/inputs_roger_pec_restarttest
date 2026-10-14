@@ -1,4 +1,3 @@
-# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
 
 ####################################################################################################
 ## This input file simulates the simplified TRL
@@ -76,9 +75,9 @@ my_constants.flag_ss = 2 # soft source flag
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 0.8
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 0.8
 boundary.field_lo = periodic pec pec   # unrealistic boundary conditions in x and z just for restart test
 boundary.field_hi = periodic pml pml
 particles.nspecies = 0
@@ -110,7 +109,7 @@ macroscopic.mu_function(x,y,z) = "mu_0
 
 # vertical electric voltage excitation superimposed with PEC at one end of CPW
 # in the waveform of modified Gaussian pulse
-warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+artemis.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 
 ###############
 # geometry
@@ -120,25 +119,25 @@ warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 # 3. right ground
 ###############
 
-warpx.Ex_excitation_flag_function(x,y,z) = "
+artemis.Ex_excitation_flag_function(x,y,z) = "
   flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)"
 
-warpx.Ey_excitation_flag_function(x,y,z) = "
+artemis.Ey_excitation_flag_function(x,y,z) = "
   flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)"
 
-warpx.Ez_excitation_flag_function(x,y,z) = "
+artemis.Ez_excitation_flag_function(x,y,z) = "
   flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)
 + flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < -Lz/2 + h_port) * (y > -tiny) * (y < tiny)"
 
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength) * (y > -tiny) * (y < tiny)"
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength) * (y > -tiny) * (y < tiny)"
 
 # Diagnostics
 

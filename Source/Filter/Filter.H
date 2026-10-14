@@ -1,6 +1,6 @@
 /* Copyright 2019 Maxence Thevenet, Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -11,8 +11,8 @@
 
 #include <AMReX_BaseFwd.H>
 
-#ifndef WARPX_FILTER_H_
-#define WARPX_FILTER_H_
+#ifndef ARTEMIS_FILTER_H_
+#define ARTEMIS_FILTER_H_
 
 class Filter
 {
@@ -50,4 +50,4 @@ protected:
 private:
 
 };
-#endif // #ifndef WARPX_FILTER_H_
+#endif // #ifndef ARTEMIS_FILTER_H_

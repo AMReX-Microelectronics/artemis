@@ -1,6 +1,6 @@
 #include "FiniteDifferenceSolver.H"
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     // currently works only for 3D
 #else
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
@@ -9,8 +9,8 @@
 #endif
 #include "MacroscopicProperties/MacroscopicProperties.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Artemis.H"
 
 #include <ablastr/coarsen/sample.H>
 
@@ -36,7 +36,7 @@ using namespace amrex;
 
 void FiniteDifferenceSolver::MacroscopicEvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
 #else
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
@@ -49,33 +49,33 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
-#    ifndef WARPX_MAG_LLG
+#ifdef ARTEMIS_DIM_RZ
+#    ifndef ARTEMIS_MAG_LLG
     amrex::ignore_unused(Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #    else
     amrex::ignore_unused(Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
-    WARPX_ABORT_WITH_MESSAGE("currently macro E-push does not work for RZ");
+    ARTEMIS_ABORT_WITH_MESSAGE("currently macro E-push does not work for RZ");
 #else
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         m_grid_type != GridType::Collocated, "Macroscopic E field solver does not work on collocated grids");
 
 
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
-        if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
+        if (Artemis::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
             MacroscopicEvolveECartesian <CartesianYeeAlgorithm, LaxWendroffAlgo>
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
                        ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
                        ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
         }
-        if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
+        if (Artemis::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianYeeAlgorithm, BackwardEulerAlgo>
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
                        ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
                        ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
@@ -87,18 +87,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
         // Note : EvolveE is the same for CKC and Yee.
         // In the templated Yee and CKC calls, the core operations for EvolveE is the same.
-        if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
+        if (Artemis::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo>
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
                        ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
                        ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #endif
-        } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
+        } else if (Artemis::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, BackwardEulerAlgo>
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
                        ( Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 #else
                        ( Efield, Hfield, Jfield, edge_lengths, dt, macroscopic_properties);
@@ -106,7 +106,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         }
 
     } else {
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "MacroscopicEvolveE: Unknown algorithm");
     }
 
@@ -114,12 +114,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 }
 
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo, typename T_MacroAlgo>
 void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
 #else
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
@@ -135,7 +135,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
     amrex::MultiFab& sigma_mf = macroscopic_properties->getsigma_mf();
     amrex::MultiFab& epsilon_mf = macroscopic_properties->getepsilon_mf();
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
     amrex::MultiFab& mu_mf = macroscopic_properties->getmu_mf();
 #endif
 
@@ -161,7 +161,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Array4<Real> const& jx = Jfield[0]->array(mfi);
         Array4<Real> const& jy = Jfield[1]->array(mfi);
         Array4<Real> const& jz = Jfield[2]->array(mfi);
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
@@ -176,7 +176,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         // material prop //
         amrex::Array4<amrex::Real> const& sigma_arr = sigma_mf.array(mfi);
         amrex::Array4<amrex::Real> const& eps_arr = epsilon_mf.array(mfi);
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
         amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi);
 #endif
 
@@ -188,7 +188,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
 
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
         // This functor computes Hx = Bx/mu
         // Note that mu is cell-centered here and will be interpolated/averaged
         // to the location where the B-field and H-field are defined
@@ -230,9 +230,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
-#ifdef WARPX_DIM_3D
+#ifdef ARTEMIS_DIM_3D
                 if (ly(i,j,k) <= 0) return;
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
                 //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
                 amrex::ignore_unused(ly);
                 if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j-1, k)<=0) return;
@@ -274,4 +274,4 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     }
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to ifndef ARTEMIS_DIM_RZ

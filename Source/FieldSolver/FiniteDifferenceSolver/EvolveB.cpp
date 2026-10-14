@@ -1,13 +1,13 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "FiniteDifferenceSolver.H"
 
-#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
-#ifndef WARPX_DIM_RZ
+#include "EmbeddedBoundary/ArtemisFaceInfoBox.H"
+#ifndef ARTEMIS_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -15,9 +15,9 @@
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -65,7 +65,7 @@ void FiniteDifferenceSolver::EvolveB (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
         ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
@@ -93,12 +93,12 @@ void FiniteDifferenceSolver::EvolveB (
 #endif
 #endif
     } else {
-        WARPX_ABORT_WITH_MESSAGE("EvolveB: Unknown algorithm");
+        ARTEMIS_ABORT_WITH_MESSAGE("EvolveB: Unknown algorithm");
     }
 }
 
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCartesian (
@@ -107,14 +107,14 @@ void FiniteDifferenceSolver::EvolveBCartesian (
     std::unique_ptr<amrex::MultiFab> const& Gfield,
     int lev, amrex::Real const dt ) {
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
         }
@@ -190,7 +190,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
             );
         }
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -211,12 +211,12 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     const int lev, amrex::Real const dt ) {
 #ifdef AMREX_USE_EB
 
-#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    WARPX_ABORT_WITH_MESSAGE(
+#if !(defined(ARTEMIS_DIM_3D) || defined(ARTEMIS_DIM_XZ))
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
 
-    amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real> *cost = Artemis::getCosts(lev);
 
     Venl[0]->setVal(0.);
     Venl[1]->setVal(0.);
@@ -228,7 +228,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 #endif
     for (MFIter mfi(*Bfield[0]); mfi.isValid(); ++mfi) {
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             amrex::Gpu::synchronize();
         }
         Real wt = amrex::second();
@@ -275,11 +275,11 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j + vec(0);
                         kp = k + vec(1);
                     }else if(idim == 1){
-#ifdef WARPX_DIM_XZ
+#ifdef ARTEMIS_DIM_XZ
                         ip = i + vec(0);
                         jp = j + vec(1);
                         kp = k;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
                         ip = i + vec(0);
                         jp = j;
                         kp = k + vec(1);
@@ -307,11 +307,11 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j + vec(0);
                         kp = k + vec(1);
                     }else if(idim == 1){
-#ifdef WARPX_DIM_XZ
+#ifdef ARTEMIS_DIM_XZ
                         ip = i + vec(0);
                         jp = j + vec(1);
                         kp = k;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
                         ip = i + vec(0);
                         jp = j;
                         kp = k + vec(1);
@@ -351,7 +351,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
             });
 
         }
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -364,7 +364,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 #endif
 }
 
-#else // corresponds to ifndef WARPX_DIM_RZ
+#else // corresponds to ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCylindrical (
@@ -372,14 +372,14 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     int lev, amrex::Real const dt ) {
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
         }
@@ -472,7 +472,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
 
         );
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -481,4 +481,4 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
     }
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to ifndef ARTEMIS_DIM_RZ

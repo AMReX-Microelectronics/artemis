@@ -7,7 +7,7 @@ import scipy.constants as scc
 import yt
 
 """
-This file is part of the suite of scripts to use LibEnsemble on top of WarpX
+This file is part of the suite of scripts to use LibEnsemble on top of Artemis
 simulations. It reads the output plotfiles of a simulation and returns beam
 quantity relevant for the LibEnsemble optimizations ('f') as well as other
 beam quantities for convenience.
@@ -108,8 +108,8 @@ def read_sim_output(workdir):
         # same impact as doubling the initial emittance.
         # we minimize f!
         f = emittance_f + emittance_i*(1.-charge_f/charge_i)*100
-        warpx_out = np.array([f, energy_std, energy_avg, charge_f, emittance_f])
+        artemis_out = np.array([f, energy_std, energy_avg, charge_f, emittance_f])
 
-        return warpx_out
+        return artemis_out
     else:
         return np.array([np.nan, np.nan, np.nan, np.nan, np.nan])

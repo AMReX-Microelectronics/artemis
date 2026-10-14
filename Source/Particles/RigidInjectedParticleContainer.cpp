@@ -3,7 +3,7 @@
  * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
  * Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -11,7 +11,7 @@
 #include "Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/PhysicalParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdateMomentumBoris.H"
 #include "Pusher/UpdateMomentumBorisWithRadiationReaction.H"
@@ -19,10 +19,10 @@
 #include "Pusher/UpdateMomentumVay.H"
 #include "RigidInjectedParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -71,7 +71,7 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
 
 void RigidInjectedParticleContainer::InitData()
 {
-    zinject_plane_levels.resize(finestLevel()+1, zinject_plane/WarpX::gamma_boost);
+    zinject_plane_levels.resize(finestLevel()+1, zinject_plane/Artemis::gamma_boost);
 
     AddParticles(0); // Note - add on level 0
 
@@ -95,7 +95,7 @@ RigidInjectedParticleContainer::RemapParticles()
         // at the start of the simulation.
         const ParticleReal t_lab = 0._prt;
 
-        const ParticleReal uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
+        const ParticleReal uz_boost = Artemis::gamma_boost*Artemis::beta_boost*PhysConst::c;
         const ParticleReal csqi = 1._prt/(PhysConst::c*PhysConst::c);
 
         vzbeam_ave_boosted = meanParticleVelocity(false)[2];
@@ -110,7 +110,7 @@ RigidInjectedParticleContainer::RemapParticles()
                 // Note that the particles are already in the boosted frame.
                 // This value is saved to advance the particles not injected yet
 
-                for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+                for (ArtemisParIter pti(*this, lev); pti.isValid(); ++pti)
                 {
                     const auto& attribs = pti.GetAttribs();
                     const auto uxp = attribs[PIdx::ux].dataPtr();
@@ -123,7 +123,7 @@ RigidInjectedParticleContainer::RemapParticles()
                     // Loop over particles
                     const long np = pti.numParticles();
                     const ParticleReal lvzbeam_ave_boosted = vzbeam_ave_boosted;
-                    const ParticleReal gamma_boost = WarpX::gamma_boost;
+                    const ParticleReal gamma_boost = Artemis::gamma_boost;
                     amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long i)
                     {
                         ParticleReal xp, yp, zp;
@@ -151,7 +151,7 @@ RigidInjectedParticleContainer::RemapParticles()
 }
 
 void
-RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
+RigidInjectedParticleContainer::PushPX (ArtemisParIter& pti,
                                         amrex::FArrayBox const * exfab,
                                         amrex::FArrayBox const * eyfab,
                                         amrex::FArrayBox const * ezfab,
@@ -173,7 +173,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     // Save the position, momentum and optical depth, making copies
     amrex::Gpu::DeviceVector<ParticleReal> xp_save, yp_save, zp_save;
     amrex::Gpu::DeviceVector<ParticleReal> uxp_save, uyp_save, uzp_save;
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     amrex::Gpu::DeviceVector<ParticleReal> optical_depth_save;
 #endif
 
@@ -184,7 +184,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     amrex::ParticleReal* const AMREX_RESTRICT uy = uyp.dataPtr() + offset;
     amrex::ParticleReal* const AMREX_RESTRICT uz = uzp.dataPtr() + offset;
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     const bool loc_has_quantum_sync = has_quantum_sync();
     amrex::ParticleReal* AMREX_RESTRICT p_optical_depth = nullptr;
     amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_save = nullptr;
@@ -209,7 +209,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal* const AMREX_RESTRICT uyp_save_ptr = uyp_save.dataPtr();
         amrex::ParticleReal* const AMREX_RESTRICT uzp_save_ptr = uzp_save.dataPtr();
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         if(loc_has_quantum_sync){
             p_optical_depth = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr()
                               + offset;
@@ -228,7 +228,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                 uxp_save_ptr[i] = ux[i];
                                 uyp_save_ptr[i] = uy[i];
                                 uzp_save_ptr[i] = uz[i];
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                                 if(loc_has_quantum_sync){
                                     p_optical_depth_save[i] = p_optical_depth[i];}
 #endif
@@ -236,7 +236,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     }
 
     const bool do_scale = not done_injecting_lev;
-    const Real v_boost = WarpX::beta_boost*PhysConst::c;
+    const Real v_boost = Artemis::beta_boost*PhysConst::c;
     PhysicalParticleContainer::PushPX(pti, exfab, eyfab, ezfab, bxfab, byfab, bzfab,
                                       ngEB, e_is_nodal, offset, np_to_push, lev, gather_lev, dt,
                                       ScaleFields(do_scale, dt, zinject_plane_lev_previous,
@@ -277,7 +277,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         zp = z_save[i] + dt*uz[i]*gi;
                                     }
                                     SetPosition(i, xp, yp, zp);
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                                     if(loc_has_quantum_sync){
                                         p_optical_depth[i] = p_optical_depth_save[i];}
 #endif
@@ -300,7 +300,7 @@ RigidInjectedParticleContainer::Evolve (int lev,
 
     // Update location of injection plane in the boosted frame
     zinject_plane_lev_previous = zinject_plane_levels[lev];
-    zinject_plane_levels[lev] -= dt*WarpX::beta_boost*PhysConst::c;
+    zinject_plane_levels[lev] -= dt*Artemis::beta_boost*PhysConst::c;
     zinject_plane_lev = zinject_plane_levels[lev];
 
     // Set the done injecting flag whan the inject plane moves out of the
@@ -309,8 +309,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
     // particles have crossed the inject plane.
     const Real* plo = Geom(lev).ProbLo();
     const Real* phi = Geom(lev).ProbHi();
-    done_injecting_lev = ((zinject_plane_levels[lev] < plo[WARPX_ZINDEX] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c >= 0.) ||
-                           (zinject_plane_levels[lev] > phi[WARPX_ZINDEX] && WarpX::moving_window_v + WarpX::beta_boost*PhysConst::c <= 0.));
+    done_injecting_lev = ((zinject_plane_levels[lev] < plo[ARTEMIS_ZINDEX] && Artemis::moving_window_v + Artemis::beta_boost*PhysConst::c >= 0.) ||
+                           (zinject_plane_levels[lev] > phi[ARTEMIS_ZINDEX] && Artemis::moving_window_v + Artemis::beta_boost*PhysConst::c <= 0.));
 
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
@@ -328,17 +328,17 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                        const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                        const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz)
 {
-    WARPX_PROFILE("RigidInjectedParticleContainer::PushP");
+    ARTEMIS_PROFILE("RigidInjectedParticleContainer::PushP");
 
     if (do_not_push) return;
 
-    const std::array<Real,3>& dx = WarpX::CellSize(std::max(lev,0));
+    const std::array<Real,3>& dx = Artemis::CellSize(std::max(lev,0));
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        for (ArtemisParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             amrex::Box box = pti.tilebox();
             box.grow(Ex.nGrowVect());
@@ -357,13 +357,13 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             const auto getExternalEB = GetExternalEBField(pti);
 
-            const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
+            const std::array<amrex::Real,3>& xyzmin = Artemis::LowerCorner(box, lev, 0._rt);
 
             const Dim3 lo = lbound(box);
 
-            bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            int nox = WarpX::nox;
-            int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+            bool galerkin_interpolation = Artemis::galerkin_interpolation;
+            int nox = Artemis::nox;
+            int n_rz_azimuthal_modes = Artemis::n_rz_azimuthal_modes;
 
             amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
             amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
@@ -404,7 +404,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const amrex::ParticleReal q = this->charge;
             const amrex::ParticleReal m = this-> mass;
 
-            const auto pusher_algo = WarpX::particle_pusher_algo;
+            const auto pusher_algo = Artemis::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;
 
             enum exteb_flags : int { no_exteb, has_exteb };

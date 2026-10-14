@@ -13,7 +13,7 @@
 # - Workers submit tasks to the nodes in the job available.
 
 # Name of calling script-
-export EXE=run_libensemble_on_warpx.py
+export EXE=run_libensemble_on_artemis.py
 
 # Communication Method
 export COMMS="--comms local"

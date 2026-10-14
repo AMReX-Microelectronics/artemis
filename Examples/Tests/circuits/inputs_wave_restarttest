@@ -15,9 +15,9 @@ boundary.field_hi = periodic pml periodic
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 0.9
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 0.9
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
@@ -47,32 +47,32 @@ my_constants.mu_r_silicon = 1.0
 
 my_constants.TP = 2.5e-14
 
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength) * (x < 0.000004) * (x > -0.000004) * (z < 0.000004) * (z > -0.000004)"
-warpx.Ey_external_grid_function(x,y,z) = "0."
-warpx.Ez_external_grid_function(x,y,z) = "0."
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ex_external_grid_function(x,y,z) = "1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength) * (x < 0.000004) * (x > -0.000004) * (z < 0.000004) * (z > -0.000004)"
+artemis.Ey_external_grid_function(x,y,z) = "0."
+artemis.Ez_external_grid_function(x,y,z) = "0."
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z) = "0."
-warpx.By_external_grid_function(x,y,z) = "0."
-warpx.Bz_external_grid_function(x,y,z) = "(-1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)/c) * (z < 0.000004) * (z > -0.000004) * (x < 0.000004) * (x > -0.000004)"
+artemis.B_ext_grid_init_style = parse_B_ext_grid_function
+artemis.Bx_external_grid_function(x,y,z) = "0."
+artemis.By_external_grid_function(x,y,z) = "0."
+artemis.Bz_external_grid_function(x,y,z) = "(-1.e5*exp(-(y)**2/(L/32)**2)*cos(2*pi*(y)/wavelength)/c) * (z < 0.000004) * (z > -0.000004) * (x < 0.000004) * (x > -0.000004)"
 
-warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+artemis.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
-warpx.Ex_excitation_flag_function(x,y,z) = "(x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= -0.000004 + (1.25e-07))
+artemis.Ex_excitation_flag_function(x,y,z) = "(x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= -0.000004 + (1.25e-07))
                                          + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= 0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
 
-warpx.Ey_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))
+artemis.Ey_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))
                                          + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))
                                          + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= -0.000004 + (1.25e-07))
                                          + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= 0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
 
-warpx.Ez_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))
+artemis.Ez_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))
                                          + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
 
-warpx.Ex_excitation_grid_function(x,y,z,t) = ".0"
-warpx.Ey_excitation_grid_function(x,y,z,t) = ".0"
-warpx.Ez_excitation_grid_function(x,y,z,t) = ".0"
+artemis.Ex_excitation_grid_function(x,y,z,t) = ".0"
+artemis.Ey_excitation_grid_function(x,y,z,t) = ".0"
+artemis.Ez_excitation_grid_function(x,y,z,t) = ".0"
 
 # Diagnostics
 diagnostics.diags_names = plt chk

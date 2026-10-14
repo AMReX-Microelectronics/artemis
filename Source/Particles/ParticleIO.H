@@ -1,13 +1,13 @@
 /* Copyright 2021 Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #ifndef PARTICLEIO_H_
 #define PARTICLEIO_H_
 
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 
 #include <AMReX_AmrParticles.H>
 #include <AMReX_ParIter.H>
@@ -15,7 +15,7 @@
 #include <AMReX_REAL.H>
 
 
-enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
+enum struct ConvertDirection{Artemis_to_SI, SI_to_Artemis};
 
 /** Convert particle momentum to/from SI
  *
@@ -27,7 +27,7 @@ enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
  * (photon_energy/(m_e * c) ) * u, where u is the photon direction (a
  * unit vector).
  *
- * @tparam T_ParticleContainer a WarpX particle container or AmrParticleContainer
+ * @tparam T_ParticleContainer a Artemis particle container or AmrParticleContainer
  * @param convert_direction convert to or from SI
  * @param pc the particle container to manipulate
  * @param mass the particle rest mass to use for conversion
@@ -41,9 +41,9 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
     // Compute conversion factor
     auto factor = 1_rt;
 
-    if (convert_direction == ConvertDirection::WarpX_to_SI){
+    if (convert_direction == ConvertDirection::Artemis_to_SI){
         factor = mass;
-    } else if (convert_direction == ConvertDirection::SI_to_WarpX){
+    } else if (convert_direction == ConvertDirection::SI_to_Artemis){
         factor = 1._rt/mass;
     }
 
@@ -58,8 +58,8 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
         {
             // - momenta are stored as a struct of array, in `attribs`
             // The GetStructOfArrays is called directly since the convenience routine GetAttribs
-            // is only available in WarpXParIter. ParIter is used here since the pc passed in
-            // will sometimes be a PinnedMemoryParticleContainer (not derived from a WarpXParticleContainer).
+            // is only available in ArtemisParIter. ParIter is used here since the pc passed in
+            // will sometimes be a PinnedMemoryParticleContainer (not derived from a ArtemisParticleContainer).
             auto& attribs = pti.GetStructOfArrays().GetRealData();
             ParticleReal* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
             ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();

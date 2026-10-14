@@ -1,6 +1,6 @@
 /* Copyright 2021 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -13,10 +13,10 @@
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_Algorithm.H>
 #include <AMReX_DenseBins.H>
@@ -35,10 +35,10 @@
  */
 class NuclearFusionFunc{
     // Define shortcuts for frequently-used type names
-    using ParticleType = WarpXParticleContainer::ParticleType;
+    using ParticleType = ArtemisParticleContainer::ParticleType;
     using ParticleBins = amrex::DenseBins<ParticleType>;
     using index_type = ParticleBins::index_type;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+    using SoaData_type = ArtemisParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     /**
@@ -171,7 +171,7 @@ public:
                 multiplier_ratio = max_N;
             }
 
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
             amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
 #endif
@@ -183,7 +183,7 @@ public:
                 const int c1k = (k%NI1 < max_N%NI1) ? c1 + 1: c1;
                 const int c2k = (k%NI2 < max_N%NI2) ? c2 + 1: c2;
 
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
                 /* In RZ geometry, macroparticles can collide with other macroparticles
                  * in the same *cylindrical* cell. For this reason, collisions between macroparticles
                  * are actually not local in space. In this case, the underlying assumption is that
@@ -208,7 +208,7 @@ public:
                     m_probability_target_value,
                     m_fusion_type, engine);
 
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
                 amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
                 u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
                 u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);

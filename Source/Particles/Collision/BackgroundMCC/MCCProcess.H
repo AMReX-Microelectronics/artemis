@@ -1,11 +1,11 @@
 /* Copyright 2021 Modern Electron
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
-#define WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_MCCPROCESS_H_
+#define ARTEMIS_PARTICLES_COLLISION_MCCPROCESS_H_
 
 #include <AMReX_Math.H>
 #include <AMReX_Vector.H>
@@ -139,4 +139,4 @@ private:
     int m_grid_size;
 };
 
-#endif // WARPX_PARTICLES_COLLISION_MCCPROCESS_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_MCCPROCESS_H_

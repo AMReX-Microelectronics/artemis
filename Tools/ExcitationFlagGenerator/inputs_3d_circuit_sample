@@ -17,10 +17,10 @@ amr.max_level = 0
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 0
-warpx.use_filter = 0
-warpx.cfl = 0.9
-warpx.do_pml = 1
+artemis.verbose = 0
+artemis.use_filter = 0
+artemis.cfl = 0.9
+artemis.do_pml = 1
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
@@ -39,27 +39,27 @@ my_constants.L = 141.4213562373095e-6
 my_constants.c = 299792458.
 my_constants.wavelength = 64.e-6
 
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ez_external_grid_function(x,y,z) = "1.0"
-warpx.Ex_external_grid_function(x,y,z) = "1.0"
-warpx.Ey_external_grid_function(x,y,z) = "1.0"
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ez_external_grid_function(x,y,z) = "1.0"
+artemis.Ex_external_grid_function(x,y,z) = "1.0"
+artemis.Ey_external_grid_function(x,y,z) = "1.0"
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z)= "1.0"
-warpx.By_external_grid_function(x,y,z)= "1.0"
-warpx.Bz_external_grid_function(x,y,z) = "1.0"
+artemis.B_ext_grid_init_style = parse_B_ext_grid_function
+artemis.Bx_external_grid_function(x,y,z)= "1.0"
+artemis.By_external_grid_function(x,y,z)= "1.0"
+artemis.Bz_external_grid_function(x,y,z) = "1.0"
 
-warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+artemis.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
-warpx.Ex_excitation_flag_function(x,y,z) = "(x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= -0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= 0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
+artemis.Ex_excitation_flag_function(x,y,z) = "(x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= -0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= 0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
 
-warpx.Ey_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= -0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= 0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
+artemis.Ey_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= -0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= 0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
 
-warpx.Ez_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
+artemis.Ez_excitation_flag_function(x,y,z) = "(x >= 0.000004 - (1.25e-07)) * (x <= 0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07)) + (x >= -0.000004 - (1.25e-07)) * (x <= -0.000004 + (1.25e-07)) * (y >= -0.000016 - (1.25e-07)) * (y <= 0.000016 + (1.25e-07)) * (z >= -0.000004 - (1.25e-07)) * (z <= 0.000004 + (1.25e-07))"
 
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 # Diagnostics
 diagnostics.diags_names = plt

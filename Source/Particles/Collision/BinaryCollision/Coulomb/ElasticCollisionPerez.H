@@ -1,16 +1,16 @@
 /* Copyright 2019 Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
-#define WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
+#define ARTEMIS_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
 
 #include "ComputeTemperature.H"
 #include "UpdateMomentumPerezElastic.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXConst.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Random.H>
 
@@ -119,7 +119,7 @@ void ElasticCollisionPerez (
                amrex::max(n1,n2), T_PR(-1.0/3.0) );
     lmdD = amrex::max(lmdD, rmin);
 
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
     T_PR * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
     T_PR * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
 #endif
@@ -130,7 +130,7 @@ void ElasticCollisionPerez (
       for (int k = 0; k < amrex::max(NI1,NI2); ++k)
       {
 
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
           /* In RZ geometry, macroparticles can collide with other macroparticles
            * in the same *cylindrical* cell. For this reason, collisions between macroparticles
            * are actually not local in space. In this case, the underlying assumption is that
@@ -153,7 +153,7 @@ void ElasticCollisionPerez (
               dt, L, lmdD,
               engine);
 
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
           T_PR const u1xbuf_new = u1x[I1[i1]];
           u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
           u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
@@ -166,4 +166,4 @@ void ElasticCollisionPerez (
 
 }
 
-#endif // WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_

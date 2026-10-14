@@ -3,9 +3,9 @@
 #include "AcceleratorLattice/AcceleratorLattice.H"
 
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_Vector.H>
 
@@ -13,20 +13,20 @@
 
 using namespace amrex::literals;
 
-GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset) noexcept
+GetExternalEBField::GetExternalEBField (const ArtemisParIter& a_pti, int a_offset) noexcept
 {
-    auto& warpx = WarpX::GetInstance();
-    auto& mypc = warpx.GetPartContainer();
+    auto& artemis = Artemis::GetInstance();
+    auto& mypc = artemis.GetPartContainer();
 
     int lev = a_pti.GetLevel();
 
-    AcceleratorLattice const & accelerator_lattice = warpx.get_accelerator_lattice(lev);
+    AcceleratorLattice const & accelerator_lattice = artemis.get_accelerator_lattice(lev);
     if (accelerator_lattice.m_lattice_defined) {
         d_lattice_element_finder = accelerator_lattice.GetFinderDeviceInstance(a_pti, a_offset);
     }
 
-    m_gamma_boost = WarpX::gamma_boost;
-    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._prt)*PhysConst::c;
+    m_gamma_boost = Artemis::gamma_boost;
+    m_uz_boost = std::sqrt(Artemis::gamma_boost*Artemis::gamma_boost - 1._prt)*PhysConst::c;
 
     m_Etype = Unknown;
     m_Btype = Unknown;
@@ -55,7 +55,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
         mypc.m_E_ext_particle_s == "repeated_plasma_lens" ||
         mypc.m_B_ext_particle_s == "repeated_plasma_lens")
     {
-        m_time = warpx.gett_new(a_pti.GetLevel());
+        m_time = artemis.gett_new(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
     }
 
@@ -82,7 +82,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     {
         if (mypc.m_E_ext_particle_s == "repeated_plasma_lens") m_Etype = RepeatedPlasmaLens;
         if (mypc.m_B_ext_particle_s == "repeated_plasma_lens") m_Btype = RepeatedPlasmaLens;
-        m_dt = warpx.getdt(a_pti.GetLevel());
+        m_dt = artemis.getdt(a_pti.GetLevel());
         auto& attribs = a_pti.GetAttribs();
         m_ux = attribs[PIdx::ux].dataPtr() + a_offset;
         m_uy = attribs[PIdx::uy].dataPtr() + a_offset;
@@ -95,7 +95,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
         m_repeated_plasma_lens_strengths_B = mypc.d_repeated_plasma_lens_strengths_B.data();
     }
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Etype != Unknown, "Unknown E_ext_particle_init_style");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Btype != Unknown, "Unknown B_ext_particle_init_style");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(m_Etype != Unknown, "Unknown E_ext_particle_init_style");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(m_Btype != Unknown, "Unknown B_ext_particle_init_style");
 
 }

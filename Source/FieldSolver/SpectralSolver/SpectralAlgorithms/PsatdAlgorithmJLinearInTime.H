@@ -1,11 +1,11 @@
 /* Copyright 2019
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
-#define WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
+#ifndef ARTEMIS_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
+#define ARTEMIS_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -20,7 +20,7 @@
 #include <array>
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 /*
  * \brief Class that updates the fields in spectral space according to the multi-J algorithm
  *        and stores the coefficients of the corresponding update equations. J is assumed to be
@@ -127,5 +127,5 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         bool m_dive_cleaning;
         bool m_divb_cleaning;
 };
-#endif // WARPX_USE_PSATD
-#endif // WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
+#endif // ARTEMIS_USE_PSATD
+#endif // ARTEMIS_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_

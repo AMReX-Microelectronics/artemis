@@ -1,11 +1,11 @@
 /* Copyright 2021 Modern Electron
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
-#define WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
+#define ARTEMIS_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
 
 #include "MCCProcess.H"
 #include "Particles/MultiParticleContainer.H"
@@ -44,7 +44,7 @@ public:
      * @param t current time
      *
      */
-    void doBackgroundCollisionsWithinTile ( WarpXParIter& pti, amrex::Real t);
+    void doBackgroundCollisionsWithinTile ( ArtemisParIter& pti, amrex::Real t);
 
     /** Perform MCC ionization interactions
      *
@@ -58,8 +58,8 @@ public:
     void doBackgroundIonization (
                                  int lev,
                                  amrex::LayoutData<amrex::Real>* cost,
-                                 WarpXParticleContainer& species1,
-                                 WarpXParticleContainer& species2,
+                                 ArtemisParticleContainer& species1,
+                                 ArtemisParticleContainer& species2,
                                  amrex::Real t
                                  );
 
@@ -89,4 +89,4 @@ private:
     amrex::ParserExecutor<4> m_background_temperature_func;
 };
 
-#endif // WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_

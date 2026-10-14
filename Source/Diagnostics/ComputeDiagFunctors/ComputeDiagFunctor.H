@@ -1,5 +1,5 @@
-#ifndef WARPX_COMPUTEDIAGFUNCTOR_H_
-#define WARPX_COMPUTEDIAGFUNCTOR_H_
+#ifndef ARTEMIS_COMPUTEDIAGFUNCTOR_H_
+#define ARTEMIS_COMPUTEDIAGFUNCTOR_H_
 
 #include "ComputeDiagFunctor_fwd.H"
 
@@ -65,4 +65,4 @@ protected:
     amrex::IntVect m_crse_ratio;
 };
 
-#endif // WARPX_COMPUTEDIAGFUNCTOR_H_
+#endif // ARTEMIS_COMPUTEDIAGFUNCTOR_H_

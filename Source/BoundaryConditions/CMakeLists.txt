@@ -1,13 +1,13 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     PML.cpp
-    WarpXEvolvePML.cpp
-    WarpXFieldBoundaries.cpp
-    WarpX_PEC.cpp
+    ArtemisEvolvePML.cpp
+    ArtemisFieldBoundaries.cpp
+    Artemis_PEC.cpp
 )
 
-if(WarpX_DIMS STREQUAL RZ)
-    target_sources(WarpX
+if(Artemis_DIMS STREQUAL RZ)
+    target_sources(Artemis
       PRIVATE
         PML_RZ.cpp
     )

@@ -1,5 +1,5 @@
-#ifndef WARPX_RHOFUNCTOR_H_
-#define WARPX_RHOFUNCTOR_H_
+#ifndef ARTEMIS_RHOFUNCTOR_H_
+#define ARTEMIS_RHOFUNCTOR_H_
 
 #include "ComputeDiagFunctor.H"
 
@@ -52,4 +52,4 @@ private:
     bool m_convertRZmodes2cartesian;
 };
 
-#endif // WARPX_RHOFUNCTOR_H_
+#endif // ARTEMIS_RHOFUNCTOR_H_

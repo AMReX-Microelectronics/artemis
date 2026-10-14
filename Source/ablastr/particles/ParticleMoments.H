@@ -1,6 +1,6 @@
 /* Copyright 2021 Axel Huebl, Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */

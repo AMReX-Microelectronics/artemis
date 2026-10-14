@@ -1,5 +1,5 @@
-#ifndef WARPX_INTERPOLATE_H_
-#define WARPX_INTERPOLATE_H_
+#ifndef ARTEMIS_INTERPOLATE_H_
+#define ARTEMIS_INTERPOLATE_H_
 
 #include <AMReX_REAL.H>
 
@@ -37,4 +37,4 @@ namespace Interpolate
 
 }
 
-#endif // WARPX_INTERPOLATE_H_
+#endif // ARTEMIS_INTERPOLATE_H_

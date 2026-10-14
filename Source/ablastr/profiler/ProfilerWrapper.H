@@ -1,6 +1,6 @@
 /* Copyright 2020-2021 Axel Huebl, Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */

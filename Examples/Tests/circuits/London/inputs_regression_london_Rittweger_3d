@@ -12,21 +12,21 @@ my_constants.prob_hi =  640.e-9
 #my_constants.nz = 256
 #amr.max_grid_size = 128
 #max_step = 200
-#warpx.cfl = 0.9
+#artemis.cfl = 0.9
 
 #my_constants.nx = 256
 #my_constants.ny = 256
 #my_constants.nz = 256
 #amr.max_grid_size = 128
 #max_step = 400
-#warpx.cfl = 0.45
+#artemis.cfl = 0.45
 
 #my_constants.nx = 256
 #my_constants.ny = 256
 #my_constants.nz = 256
 #amr.max_grid_size = 128
 #max_step = 800
-#warpx.cfl = 0.225
+#artemis.cfl = 0.225
 
 ################################
 # Space Convergence
@@ -37,21 +37,21 @@ my_constants.ny = 128
 my_constants.nz = 128
 amr.max_grid_size = 64
 max_step = 5
-warpx.cfl = 0.225
+artemis.cfl = 0.225
 
 #my_constants.nx = 256
 #my_constants.ny = 256
 #my_constants.nz = 256
 #amr.max_grid_size = 128
 #max_step = 400
-#warpx.cfl = 0.45
+#artemis.cfl = 0.45
 
 #my_constants.nx = 512
 #my_constants.ny = 512
 #my_constants.nz = 512
 #amr.max_grid_size = 128
 #max_step = 400
-#warpx.cfl = 0.9
+#artemis.cfl = 0.9
 
 # number of grid points
 amr.n_cell = nx ny nz
@@ -79,7 +79,7 @@ my_constants.dz = (prob_hi-prob_lo) / nz
 my_constants.ddz = dz/100
 
 # Verbosity
-warpx.verbose = 1
+artemis.verbose = 1
 
 # Algorithms
 algo.current_deposition = esirkepov
@@ -108,15 +108,15 @@ my_constants.L = 80.e-9
 my_constants.c = 299792458.
 my_constants.obs = -400.e-9
 
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ex_external_grid_function(x,y,z) = "exp(-z**2/L**2)"
-warpx.Ey_external_grid_function(x,y,z) = 0.
-warpx.Ez_external_grid_function(x,y,z) = 0.
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ex_external_grid_function(x,y,z) = "exp(-z**2/L**2)"
+artemis.Ey_external_grid_function(x,y,z) = 0.
+artemis.Ez_external_grid_function(x,y,z) = 0.
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z) = 0.
-warpx.By_external_grid_function(x,y,z) = "exp(-z**2/L**2)/c"
-warpx.Bz_external_grid_function(x,y,z) = 0.
+artemis.B_ext_grid_init_style = parse_B_ext_grid_function
+artemis.Bx_external_grid_function(x,y,z) = 0.
+artemis.By_external_grid_function(x,y,z) = "exp(-z**2/L**2)/c"
+artemis.Bz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = plt

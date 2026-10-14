@@ -1,6 +1,6 @@
 /* Copyright 2019-2020 Luca Fedeli, Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -30,15 +30,15 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
     m_nodal_gather = nodal_gather;
 
     // NCI Godfrey filter has fixed size, and is applied along z only.
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     stencil_length_each_dir = {1,1,5};
     slen = {1,1,5};
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     stencil_length_each_dir = {1,5};
     slen = {1,5,1};
 #else
     amrex::ignore_unused(coeff_set, cdtodz, nodal_gather);
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "NCIGodfreyFilter not implemented in 1D!");
 #endif
 }
@@ -46,14 +46,14 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
 void NCIGodfreyFilter::ComputeStencils(){
 
 #if (AMREX_SPACEDIM >= 2)
-    using namespace warpx::nci_godfrey;
+    using namespace artemis::nci_godfrey;
 
     // Sanity checks: filter length shoulz be 5 in z
-#if  defined(WARPX_DIM_3D)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+#if  defined(ARTEMIS_DIM_3D)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.z==5,"ERROR: NCI filter requires 5 points in z");
 #else
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.y==5,"ERROR: NCI filter requires 5 points in z");
 #endif
     // Interpolate coefficients from the table, and store into prestencil.
@@ -78,7 +78,7 @@ void NCIGodfreyFilter::ComputeStencils(){
                 prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_galerkin_Bx_By_Ez[index  ][i] +
                                    weight_right    *table_nci_godfrey_galerkin_Bx_By_Ez[index+1][i];
             } else {
-                WARPX_ABORT_WITH_MESSAGE(
+                ARTEMIS_ABORT_WITH_MESSAGE(
                     "m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez");
             }
         }
@@ -94,7 +94,7 @@ void NCIGodfreyFilter::ComputeStencils(){
                 prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_momentum_Bx_By_Ez[index  ][i] +
                                    weight_right    *table_nci_godfrey_momentum_Bx_By_Ez[index+1][i];
             } else {
-                WARPX_ABORT_WITH_MESSAGE(
+                ARTEMIS_ABORT_WITH_MESSAGE(
                     "m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez");
             }
         }
@@ -111,7 +111,7 @@ void NCIGodfreyFilter::ComputeStencils(){
     // so only 1 coeff, equal to 1)
     Vector<Real> h_stencil_x(1);
     h_stencil_x[0] = 1._rt;
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     Vector<Real> h_stencil_y(1);
     h_stencil_y[0] = 1._rt;
 #endif
@@ -119,25 +119,25 @@ void NCIGodfreyFilter::ComputeStencils(){
     // Due to the way Filter::DoFilter() is written,
     // coefficient 0 has to be /2
     h_stencil_x[0] /= 2._rt;
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     h_stencil_y[0] /= 2._rt;
 #endif
     h_stencil_z[0] /= 2._rt;
 
     stencil_x.resize(h_stencil_x.size());
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     stencil_y.resize(h_stencil_y.size());
 #endif
     stencil_z.resize(h_stencil_z.size());
 
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_x.begin(),h_stencil_x.end(),stencil_x.begin());
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_y.begin(),h_stencil_y.end(),stencil_y.begin());
 #endif
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_z.begin(),h_stencil_z.end(),stencil_z.begin());
 
     Gpu::synchronize();
 #else
-    WARPX_ABORT_WITH_MESSAGE("NCIGodfreyFilter not implemented in 1D!");
+    ARTEMIS_ABORT_WITH_MESSAGE("NCIGodfreyFilter not implemented in 1D!");
 #endif
 }

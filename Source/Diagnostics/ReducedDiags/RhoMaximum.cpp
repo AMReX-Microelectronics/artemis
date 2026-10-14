@@ -1,6 +1,6 @@
 /* Copyright 2020 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -10,9 +10,9 @@
 #include "Diagnostics/ComputeDiagFunctors/RhoFunctor.H"
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
@@ -33,8 +33,8 @@ RhoMaximum::RhoMaximum (std::string rd_name)
 : ReducedDiags{rd_name}
 {
     // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+#if (defined ARTEMIS_DIM_RZ)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "RhoMaximum reduced diagnostics does not work for RZ coordinate.");
 #endif
 
@@ -55,7 +55,7 @@ RhoMaximum::RhoMaximum (std::string rd_name)
     }
 
     // get MultiParticleContainer class object
-    const auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const auto & mypc = Artemis::GetInstance().GetPartContainer();
 
     // get number of species (int)
     const auto nSpecies = mypc.nSpecies();
@@ -127,11 +127,11 @@ void RhoMaximum::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // get number of levels
-    const auto nLevel = warpx.finestLevel() + 1;
+    const auto nLevel = artemis.finestLevel() + 1;
 
     const int n_charged_species = m_rho_functors[0].size() - 1;
     // Min and max of total rho + max of |rho| for each species
@@ -141,8 +141,8 @@ void RhoMaximum::ComputeDiags (int step)
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // Declare a temporary MultiFAB to store the charge densities.
-        amrex::BoxArray ba = warpx.boxArray(lev);
-        amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
+        amrex::BoxArray ba = artemis.boxArray(lev);
+        amrex::DistributionMapping dmap = artemis.DistributionMap(lev);
         constexpr int ncomp = 1;
         constexpr int ngrow = 0;
         amrex::MultiFab mf_temp(ba, dmap, ncomp, ngrow);

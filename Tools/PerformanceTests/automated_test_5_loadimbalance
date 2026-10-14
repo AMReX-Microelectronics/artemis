@@ -19,12 +19,12 @@ boundary.field_hi = pec pec periodic
 boundary.particle_lo = absorbing absorbing periodic
 boundary.particle_hi = absorbing absorbing periodic
 
-warpx.verbose = 1
+artemis.verbose = 1
 algo.load_balance_intervals = -5
 algo.particle_shape = 3
 
 # CFL
-warpx.cfl = 1.0
+artemis.cfl = 1.0
 
 particles.species_names = electrons ions
 

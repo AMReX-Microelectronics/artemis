@@ -1,5 +1,5 @@
-#ifndef WARPX_PARTPERGRIDFUNCTOR_H_
-#define WARPX_PARTPERGRIDFUNCTOR_H_
+#ifndef ARTEMIS_PARTPERGRIDFUNCTOR_H_
+#define ARTEMIS_PARTPERGRIDFUNCTOR_H_
 
 #include "ComputeDiagFunctor.H"
 
@@ -34,4 +34,4 @@ private:
     int const m_lev; /**< level on which mf_src is defined */
 };
 
-#endif // WARPX_PARTPERGRIDFUNCTOR_H_
+#endif // ARTEMIS_PARTPERGRIDFUNCTOR_H_

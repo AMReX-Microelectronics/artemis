@@ -1,12 +1,12 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "FiniteDifferenceSolver.H"
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -14,9 +14,9 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -65,7 +65,7 @@ void FiniteDifferenceSolver::EvolveE (
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
         ignore_unused(edge_lengths);
         EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
@@ -84,13 +84,13 @@ void FiniteDifferenceSolver::EvolveE (
 
 #endif
     } else {
-        WARPX_ABORT_WITH_MESSAGE("EvolveE: Unknown algorithm");
+        ARTEMIS_ABORT_WITH_MESSAGE("EvolveE: Unknown algorithm");
     }
 
 }
 
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveECartesian (
@@ -105,7 +105,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
     amrex::ignore_unused(edge_lengths);
 #endif
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
     Real constexpr c2 = PhysConst::c * PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
@@ -113,7 +113,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
         }
@@ -166,9 +166,9 @@ void FiniteDifferenceSolver::EvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-#ifdef WARPX_DIM_3D
+#ifdef ARTEMIS_DIM_3D
                 if (ly(i,j,k) <= 0) return;
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
                 //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
                 amrex::ignore_unused(ly);
                 if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
@@ -218,7 +218,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
 
         }
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -228,7 +228,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
 
 }
 
-#else // corresponds to ifndef WARPX_DIM_RZ
+#else // corresponds to ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveECylindrical (
@@ -238,14 +238,14 @@ void FiniteDifferenceSolver::EvolveECylindrical (
     std::unique_ptr<amrex::MultiFab> const& Ffield,
     int lev, amrex::Real const dt ) {
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
         }
@@ -420,7 +420,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
 
         } // end of if condition for F
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -430,4 +430,4 @@ void FiniteDifferenceSolver::EvolveECylindrical (
 
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to ifndef ARTEMIS_DIM_RZ

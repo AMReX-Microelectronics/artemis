@@ -1,6 +1,6 @@
 /* Copyright 2021 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -14,8 +14,8 @@
 #include "Particles/Collision/BinaryCollision/NuclearFusion/ProtonBoronFusionInitializeMomentum.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "WarpX.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Artemis.H"
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_GpuAtomic.H>
@@ -32,11 +32,11 @@
  */
 class ParticleCreationFunc{
     // Define shortcuts for frequently-used type names
-    using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
+    using ParticleType = ArtemisParticleContainer::ParticleType;
+    using ParticleTileType = ArtemisParticleContainer::ParticleTileType;
     using ParticleBins = amrex::DenseBins<ParticleType>;
     using index_type = ParticleBins::index_type;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+    using SoaData_type = ArtemisParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     /**
@@ -271,11 +271,11 @@ private:
  * that do not create particles.
  */
 class NoParticleCreationFunc{
-    using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
+    using ParticleType = ArtemisParticleContainer::ParticleType;
+    using ParticleTileType = ArtemisParticleContainer::ParticleTileType;
     using ParticleBins = amrex::DenseBins<ParticleType>;
     using index_type = ParticleBins::index_type;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+    using SoaData_type = ArtemisParticleContainer::ParticleTileType::ParticleTileDataType;
 
 public:
     NoParticleCreationFunc () = default;

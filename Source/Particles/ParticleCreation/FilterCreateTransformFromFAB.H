@@ -1,6 +1,6 @@
 /* Copyright 2020 Luca Fedeli, Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,7 +8,7 @@
 #ifndef FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 #define FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_TypeTraits.H>
@@ -56,21 +56,21 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const auto ncells = box.volume();
     if (ncells == 0) return 0;
 
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
     const int level_0 = 0;
-    Geometry const & geom = warpx.Geom(level_0);
+    Geometry const & geom = artemis.Geom(level_0);
 
     constexpr int spacedim = AMREX_SPACEDIM;
 
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     const Real zlo_global = geom.ProbLo(0);
     const Real dz         = geom.CellSize(0);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     const Real xlo_global = geom.ProbLo(0);
     const Real dx         = geom.CellSize(0);
     const Real zlo_global = geom.ProbLo(1);
     const Real dz         = geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
     const Real xlo_global = geom.ProbLo(0);
     const Real dx         = geom.CellSize(0);
     const Real ylo_global = geom.ProbLo(1);
@@ -106,15 +106,15 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 
             // Currently all particles are created on nodes. This makes it useless
             // to use N>1 (for now).
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
             Real const x = 0.0;
             Real const y = 0.0;
             Real const z = zlo_global + j*dz;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             Real const x = xlo_global + j*dx;
             Real const y = 0.0;
             Real const z = zlo_global + k*dz;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
             Real const x = xlo_global + j*dx;
             Real const y = ylo_global + k*dy;
             Real const z = zlo_global + l*dz;

@@ -1,13 +1,13 @@
 /* Copyright 2021 Modern Electron
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "MCCProcess.H"
 
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 MCCProcess::MCCProcess (
                         const std::string& scattering_process,
@@ -56,7 +56,7 @@ MCCProcess::init (const std::string& scattering_process, const amrex::ParticleRe
     // cost is > 0 - this is to prevent the possibility of negative left
     // over energy after a collision event
     if (m_exe_h.m_energy_penalty > 0) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             (getCrossSection(m_exe_h.m_energy_penalty) == 0),
             "Cross-section > 0 at energy cost for collision."
         );
@@ -117,7 +117,7 @@ MCCProcess::sanityCheckEnergyGrid (
     // confirm that the input data for the cross-section was provided with
     // equal energy steps, otherwise the linear interpolation will fail
     for (unsigned i = 1; i < energies.size(); i++) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                                          (std::abs(energies[i] - energies[i-1] - dE) < dE / 100.0),
                                          "Energy grid not evenly spaced."
                                          );

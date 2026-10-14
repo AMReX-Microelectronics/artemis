@@ -1,15 +1,15 @@
 /* Copyright 2019
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmJConstantInTime.H"
 
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX_Array4.H>
 #include <AMReX_BLProfiler.H>
@@ -25,7 +25,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 
 using namespace amrex;
 
@@ -50,7 +50,7 @@ PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
     // these are computed always with the assumption of centered grids
     // (argument grid_type=GridType::Collocated), for both collocated and staggered grids
     modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_x, GridType::Collocated)),
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_y, GridType::Collocated)),
     modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_z, GridType::Collocated)),
 #else
@@ -95,17 +95,17 @@ PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         !dive_cleaning || !m_is_galilean,
-        "warpx.do_dive_cleaning = 1 not implemented for Galilean PSATD algorithms"
+        "artemis.do_dive_cleaning = 1 not implemented for Galilean PSATD algorithms"
     );
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         !divb_cleaning || !m_is_galilean,
-        "warpx.do_divb_cleaning = 1 not implemented for Galilean PSATD algorithms"
+        "artemis.do_divb_cleaning = 1 not implemented for Galilean PSATD algorithms"
     );
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         !time_averaging || update_with_rho,
         "PSATD: psatd.time_averaging = 1 implemented only with psatd.update_with_rho = 1"
     );
@@ -168,7 +168,7 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* modified_kx_arr_c = modified_kx_vec_centered[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* modified_ky_arr_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
@@ -211,7 +211,7 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
             // k vector values
             const amrex::Real kx = modified_kx_arr[i];
             const amrex::Real kx_c = modified_kx_arr_c[i];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const amrex::Real ky = modified_ky_arr[j];
             const amrex::Real ky_c = modified_ky_arr_c[j];
             const amrex::Real kz = modified_kz_arr[k];
@@ -372,7 +372,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
         // Extract pointers for the k vectors
         const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* kx_c = modified_kx_vec_centered[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* ky_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
@@ -396,7 +396,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
 
         // Extract Galilean velocity
         amrex::Real vg_x = m_v_galilean[0];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         amrex::Real vg_y = m_v_galilean[1];
 #endif
         amrex::Real vg_z = m_v_galilean[2];
@@ -407,7 +407,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
                 amrex::Math::powi<2>(kx_s[i]) +
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 amrex::Math::powi<2>(ky_s[j]) + amrex::Math::powi<2>(kz_s[k]));
 #else
                 amrex::Math::powi<2>(kz_s[j]));
@@ -425,7 +425,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
             // modified k vectors, to work correctly for both collocated and staggered grids.
             // w_c = 0 always with standard PSATD (zero Galilean velocity).
             const amrex::Real w_c = kx_c[i]*vg_x +
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 ky_c[j]*vg_y + kz_c[k]*vg_z;
 #else
                 kz_c[j]*vg_z;
@@ -540,7 +540,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
         // Extract pointers for the k vectors
         const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* kx_c = modified_kx_vec_centered[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* ky_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
@@ -557,7 +557,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
 
         // Extract Galilean velocity
         amrex::Real vg_x = m_v_galilean[0];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         amrex::Real vg_y = m_v_galilean[1];
 #endif
         amrex::Real vg_z = m_v_galilean[2];
@@ -568,7 +568,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
                 amrex::Math::powi<2>(kx_s[i]) +
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 amrex::Math::powi<2>(ky_s[j]) + amrex::Math::powi<2>(kz_s[k]));
 #else
                 amrex::Math::powi<2>(kz_s[j]));
@@ -586,7 +586,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
             // modified k vectors, to work correctly for both collocated and staggered grids.
             // w_c = 0 always with standard PSATD (zero Galilean velocity).
             const amrex::Real w_c = kx_c[i]*vg_x +
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 ky_c[j]*vg_y + kz_c[k]*vg_z;
 #else
                 kz_c[j]*vg_z;
@@ -734,7 +734,7 @@ void PsatdAlgorithmJConstantInTime::CurrentCorrection (SpectralFieldData& field_
         // Extract pointers for the k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* const modified_kx_arr_c = modified_kx_vec_centered[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* const modified_ky_arr_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
@@ -762,7 +762,7 @@ void PsatdAlgorithmJConstantInTime::CurrentCorrection (SpectralFieldData& field_
             // k vector values, and coefficients
             const amrex::Real kx = modified_kx_arr[i];
             const amrex::Real kx_c = modified_kx_arr_c[i];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const amrex::Real ky = modified_ky_arr[j];
             const amrex::Real kz = modified_kz_arr[k];
             const amrex::Real ky_c = modified_ky_arr_c[j];
@@ -833,7 +833,7 @@ PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
 
         // Extract pointers for the modified k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
         const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
@@ -843,7 +843,7 @@ PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
         {
             // Shortcuts for the values of D
             const Complex Dx = fields(i,j,k,Idx.Jx_mid);
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const Complex Dy = fields(i,j,k,Idx.Jy_mid);
 #endif
             const Complex Dz = fields(i,j,k,Idx.Jz_mid);
@@ -853,7 +853,7 @@ PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
 
             // Modified k vector values
             const amrex::Real kx_mod = modified_kx_arr[i];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const amrex::Real ky_mod = modified_ky_arr[j];
             const amrex::Real kz_mod = modified_kz_arr[k];
 #else
@@ -864,7 +864,7 @@ PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
             if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx_mid) = I * Dx / kx_mod;
             else                 fields(i,j,k,Idx.Jx_mid) = 0._rt;
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             // Compute Jy
             if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy_mid) = I * Dy / ky_mod;
             else                 fields(i,j,k,Idx.Jy_mid) = 0._rt;
@@ -877,4 +877,4 @@ PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
     }
 }
 
-#endif // WARPX_USE_PSATD
+#endif // ARTEMIS_USE_PSATD

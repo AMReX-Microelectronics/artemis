@@ -34,12 +34,12 @@ my_constants.flag_ss = 2
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 0.9
-warpx.mag_time_scheme_order = 2 # default 1
-warpx.mag_M_normalization = 1 # 1 is saturated
-warpx.mag_LLG_coupling = 1
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 0.9
+artemis.mag_time_scheme_order = 2 # default 1
+artemis.mag_M_normalization = 1 # 1 is saturated
+artemis.mag_LLG_coupling = 1
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
@@ -63,35 +63,35 @@ macroscopic.mag_normalized_error = 0.1 # if M magnitude relatively changes more 
 #################################
 ############ FIELDS #############
 #################################
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ex_external_grid_function(x,y,z) = 0.
-warpx.Ey_external_grid_function(x,y,z) = 0.
-warpx.Ez_external_grid_function(x,y,z) = 0.
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ex_external_grid_function(x,y,z) = 0.
+artemis.Ey_external_grid_function(x,y,z) = 0.
+artemis.Ez_external_grid_function(x,y,z) = 0.
 
-warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0.0"
-warpx.Ey_excitation_grid_function(x,y,z,t) = "1000*(exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (z>=h) * (z<h+6.0e-4)"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0.0"
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z>=h) * (z<h+6.0e-4) + flag_none * (z<h) + flag_none * (z>=h+6.0e-4)"
-warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+artemis.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0.0"
+artemis.Ey_excitation_grid_function(x,y,z,t) = "1000*(exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (z>=h) * (z<h+6.0e-4)"
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0.0"
+artemis.Ex_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z>=h) * (z<h+6.0e-4) + flag_none * (z<h) + flag_none * (z>=h+6.0e-4)"
+artemis.Ez_excitation_flag_function(x,y,z) = "flag_none"
 
-warpx.H_ext_grid_init_style = parse_H_ext_grid_function
-warpx.Hx_external_grid_function(x,y,z)= 0.
-warpx.Hy_external_grid_function(x,y,z) = 0.
-warpx.Hz_external_grid_function(x,y,z) = 0.
+artemis.H_ext_grid_init_style = parse_H_ext_grid_function
+artemis.Hx_external_grid_function(x,y,z)= 0.
+artemis.Hy_external_grid_function(x,y,z) = 0.
+artemis.Hz_external_grid_function(x,y,z) = 0.
 
 #unit conversion: 1 Gauss = 1 Oersted = (1000/4pi) A/m
 #calculation of H_bias: H_bias (oe) = frequency / 2.8e6
-warpx.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
-warpx.Hx_bias_external_grid_function(x,y,z)= 0.
-warpx.Hy_bias_external_grid_function(x,y,z)= "3.7e4" # in A/m, equal to 464 Oersted
-warpx.Hz_bias_external_grid_function(x,y,z)= 0.
+artemis.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
+artemis.Hx_bias_external_grid_function(x,y,z)= 0.
+artemis.Hy_bias_external_grid_function(x,y,z)= "3.7e4" # in A/m, equal to 464 Oersted
+artemis.Hz_bias_external_grid_function(x,y,z)= 0.
 
-warpx.M_ext_grid_init_style = parse_M_ext_grid_function
-warpx.Mx_external_grid_function(x,y,z)= 0.
-warpx.My_external_grid_function(x,y,z)= "0."
-warpx.Mz_external_grid_function(x,y,z) = 0.
+artemis.M_ext_grid_init_style = parse_M_ext_grid_function
+artemis.Mx_external_grid_function(x,y,z)= 0.
+artemis.My_external_grid_function(x,y,z)= "0."
+artemis.Mz_external_grid_function(x,y,z) = 0.
 
 #Diagnostics
 diagnostics.diags_names = plt

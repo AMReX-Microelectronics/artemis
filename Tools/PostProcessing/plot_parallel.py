@@ -1,6 +1,6 @@
 # Copyright 2019 David Grote, Maxence Thevenet
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 '''
-This script loops over all WarpX plotfiles in a directory and, for each
+This script loops over all Artemis plotfiles in a directory and, for each
 plotfile, saves an image showing the field and particles.
 
 Requires yt>3.5 and Python3

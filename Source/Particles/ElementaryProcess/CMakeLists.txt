@@ -1,10 +1,10 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     Ionization.cpp
 )
 
-if(WarpX_QED)
-    target_sources(WarpX
+if(Artemis_QED)
+    target_sources(Artemis
       PRIVATE
         QEDPairGeneration.cpp
         QEDPhotonEmission.cpp

@@ -1,12 +1,12 @@
 /* Copyright 2021 Elisa Rheaume, Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_FieldProbeParticleContainer_H_
-#define WARPX_FieldProbeParticleContainer_H_
+#ifndef ARTEMIS_FieldProbeParticleContainer_H_
+#define ARTEMIS_FieldProbeParticleContainer_H_
 
 #include <AMReX_ParIter.H>
 #include <AMReX_Particles.H>
@@ -48,8 +48,8 @@ public:
     //! amrex iterator for our number of attributes (read-only)
     using const_iterator = amrex::ParConstIter<0, 0, FieldProbePIdx::nattribs, 0>;
 
-    //! similar to WarpXParticleContainer::AddNParticles but does not include u(x,y,z)
+    //! similar to ArtemisParticleContainer::AddNParticles but does not include u(x,y,z)
     void AddNParticles (int lev, amrex::Vector<amrex::ParticleReal> const & x, amrex::Vector<amrex::ParticleReal> const & y, amrex::Vector<amrex::ParticleReal> const & z);
 };
 
-#endif // WARPX_FieldProbeParticleContainer_H_
+#endif // ARTEMIS_FieldProbeParticleContainer_H_

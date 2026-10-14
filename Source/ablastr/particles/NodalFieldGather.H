@@ -1,6 +1,6 @@
 /* Copyright 2019-2022 Modern Electron, Axel Huebl, Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -37,7 +37,7 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
                             int& i, int& j, int& k, amrex::Real W[AMREX_SPACEDIM][2]) noexcept
 {
     using namespace amrex::literals;
-#if (defined WARPX_DIM_3D)
+#if (defined ARTEMIS_DIM_3D)
     amrex::Real x = (xp - plo[0]) * dxi[0];
     amrex::Real y = (yp - plo[1]) * dxi[1];
     amrex::Real z = (zp - plo[2]) * dxi[2];
@@ -54,14 +54,14 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
     W[1][0] = 1.0_rt - W[1][1];
     W[2][0] = 1.0_rt - W[2][1];
 
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
 
-#   if (defined WARPX_DIM_XZ)
+#   if (defined ARTEMIS_DIM_XZ)
     amrex::Real x = (xp - plo[0]) * dxi[0];
     amrex::ignore_unused(yp);
     i = static_cast<int>(amrex::Math::floor(x));
     W[0][1] = x - i;
-#   elif (defined WARPX_DIM_RZ)
+#   elif (defined ARTEMIS_DIM_RZ)
     amrex::Real r = (std::sqrt(xp*xp+yp*yp) - plo[0]) * dxi[0];
     i = static_cast<int>(amrex::Math::floor(r));
     W[0][1] = r - i;
@@ -94,7 +94,7 @@ amrex::Real interp_field_nodal (int i, int j, int k,
                                 amrex::Array4<const amrex::Real> const& scalar_field) noexcept
 {
     amrex::Real value = 0;
-#if (defined WARPX_DIM_3D)
+#if (defined ARTEMIS_DIM_3D)
     value += scalar_field(i,   j  , k  ) * W[0][0] * W[1][0] * W[2][0];
     value += scalar_field(i+1, j  , k  ) * W[0][1] * W[1][0] * W[2][0];
     value += scalar_field(i,   j+1, k  ) * W[0][0] * W[1][1] * W[2][0];
@@ -103,7 +103,7 @@ amrex::Real interp_field_nodal (int i, int j, int k,
     value += scalar_field(i+1, j  , k+1) * W[0][1] * W[1][0] * W[2][1];
     value += scalar_field(i  , j+1, k+1) * W[0][0] * W[1][1] * W[2][1];
     value += scalar_field(i+1, j+1, k+1) * W[0][1] * W[1][1] * W[2][1];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     value += scalar_field(i,   j ,  k) * W[0][0] * W[1][0];
     value += scalar_field(i+1, j ,  k) * W[0][1] * W[1][0];
     value += scalar_field(i,   j+1, k) * W[0][0] * W[1][1];

@@ -3,13 +3,13 @@
 Checksum regression tests
 =========================
 
-WarpX has checksum regression tests: as part of CI testing, when running a given test, the checksum module computes one aggregated number per field (``Ex_checksum = np.sum(np.abs(Ex))``) and compares it to a reference (benchmark). This should be sensitive enough to make the test fail if your PR causes a significant difference, print meaningful error messages, and give you a chance to fix a bug or reset the benchmark if needed.
+Artemis has checksum regression tests: as part of CI testing, when running a given test, the checksum module computes one aggregated number per field (``Ex_checksum = np.sum(np.abs(Ex))``) and compares it to a reference (benchmark). This should be sensitive enough to make the test fail if your PR causes a significant difference, print meaningful error messages, and give you a chance to fix a bug or reset the benchmark if needed.
 
 The checksum module is located in ``Regression/Checksum/``, and the benchmarks are stored as human-readable `JSON <https://www.json.org/json-en.html>`__ files in ``Regression/Checksum/benchmarks_json/``, with one file per benchmark (for instance, test ``Langmuir_2d`` has a corresponding benchmark ``Regression/Checksum/benchmarks_json/Langmuir_2d.json``).
 
 For more details on the implementation, the Python files in ``Regression/Checksum/`` should be well documented.
 
-From a user point of view, you should only need to use ``checksumAPI.py``. It contains Python functions that can be imported and used from an analysis Python script. It can also be executed directly as a Python script. Here are recipies for the main tasks related to checksum regression tests in WarpX CI.
+From a user point of view, you should only need to use ``checksumAPI.py``. It contains Python functions that can be imported and used from an analysis Python script. It can also be executed directly as a Python script. Here are recipies for the main tasks related to checksum regression tests in Artemis CI.
 
 Include a checksum regression test in an analysis Python script
 ---------------------------------------------------------------
@@ -60,4 +60,4 @@ Since this will automatically change the JSON file stored on the repo, make a se
 .. code-block:: bash
 
    git add <test name>.json
-   git commit -m "reset benchmark for <test name> because ..." --author="Tools <warpx@lbl.gov>"
+   git commit -m "reset benchmark for <test name> because ..." --author="Tools <artemis@lbl.gov>"

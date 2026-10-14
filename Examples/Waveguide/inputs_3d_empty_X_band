@@ -39,9 +39,9 @@ my_constants.flag_ss = 2 # soft source flag
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 0.8
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 0.8
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
@@ -57,14 +57,14 @@ macroscopic.mu_function(x,y,z) = "1.25663706212e-06"
 ############ FIELDS #############
 #################################
 
-warpx.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
-warpx.Bx_excitation_grid_function(x,y,z,t) = "1.25663706212e-06 * 2.5e-5 * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * cos(x/(width/2)*(pi/2)) * (z > - rjz/2 + length/2)"
+artemis.B_excitation_on_grid_style = "parse_B_excitation_grid_function"
+artemis.Bx_excitation_grid_function(x,y,z,t) = "1.25663706212e-06 * 2.5e-5 * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * cos(x/(width/2)*(pi/2)) * (z > - rjz/2 + length/2)"
 # current line source Jy = Bx at the +z end of waveguide; spanning over entire y dimension
-warpx.By_excitation_grid_function(x,y,z,t) = "0.0"
-warpx.Bz_excitation_grid_function(x,y,z,t) = "0.0"
-warpx.Bx_excitation_flag_function(x,y,z) = "flag_ss * (z > - rjz/2 + length/2) + flag_none * (z <= - rjz/2 + length/2)"
-warpx.By_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Bz_excitation_flag_function(x,y,z) = "flag_none"
+artemis.By_excitation_grid_function(x,y,z,t) = "0.0"
+artemis.Bz_excitation_grid_function(x,y,z,t) = "0.0"
+artemis.Bx_excitation_flag_function(x,y,z) = "flag_ss * (z > - rjz/2 + length/2) + flag_none * (z <= - rjz/2 + length/2)"
+artemis.By_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Bz_excitation_flag_function(x,y,z) = "flag_none"
 
 #Diagnostics
 diagnostics.diags_names = zline_BernadoFilter0126_

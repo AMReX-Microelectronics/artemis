@@ -3,7 +3,7 @@
 Python interface
 ================
 
-The Python interface provides low and high level access to much of the data in WarpX.
+The Python interface provides low and high level access to much of the data in Artemis.
 With the low level access, a user has direct access to the underlying memory contained
 in the MultiFabs and in the particle arrays.
 The high level provides a more user friendly interface.
@@ -16,14 +16,14 @@ There are two python modules that provide convenient access to the fields and th
 Fields
 ~~~~~~
 
-The ``fields`` module provides wrapper around most of the MultiFabs that are defined in the WarpX class.
-For a list of all of the available wrappers, see the file ``Python/pywarpx/fields.py``.
+The ``fields`` module provides wrapper around most of the MultiFabs that are defined in the Artemis class.
+For a list of all of the available wrappers, see the file ``Python/pyartemis/fields.py``.
 For each MultiFab, there is a function that will return a wrapper around the data.
 For instance, the function ``ExWrapper`` returns a wrapper around the ``x`` component of the MultiFab vector ``Efield_aux``.
 
 .. code-block:: python
 
-   from pywarpx import fields
+   from pyartemis import fields
    Ex = fields.ExWrapper()
 
 By default, this wraps the MultiFab for level 0. The ``level`` argument can be specified for other levels.
@@ -36,7 +36,7 @@ This example will return the ``Bz`` field at all points along ``x`` at the speci
 
 .. code-block:: python
 
-   from pywarpx import fields
+   from pyartemis import fields
    Bz = fields.BzWrapper()
    Bz_along_x = Bz[:,5,6]
 
@@ -45,7 +45,7 @@ specified ``x``. The data will be scattered appropriately to the underlying FABs
 
 .. code-block:: python
 
-   from pywarpx import fields
+   from pyartemis import fields
    Jy = fields.JyFPWrapper()
    Jy[5,6:20,8:30] = 7.
 

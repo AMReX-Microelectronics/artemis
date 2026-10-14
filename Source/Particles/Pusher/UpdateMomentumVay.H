@@ -1,14 +1,14 @@
 /* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_VAY_H_
-#define WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_VAY_H_
+#ifndef ARTEMIS_PARTICLES_PUSHER_UPDATEMOMENTUM_VAY_H_
+#define ARTEMIS_PARTICLES_PUSHER_UPDATEMOMENTUM_VAY_H_
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_FArrayBox.H>
 #include <AMReX_REAL.H>
@@ -61,4 +61,4 @@ void UpdateMomentumVay(
     uz = s*(uzpr+tz*tu+uxpr*ty-uypr*tx);
 }
 
-#endif // WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_VAY_H_
+#endif // ARTEMIS_PARTICLES_PUSHER_UPDATEMOMENTUM_VAY_H_

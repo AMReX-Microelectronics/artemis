@@ -1,5 +1,5 @@
-#ifndef WARPX_INTERP_K_H_
-#define WARPX_INTERP_K_H_
+#ifndef ARTEMIS_INTERP_K_H_
+#define ARTEMIS_INTERP_K_H_
 
 #include <AMReX_FArrayBox.H>
 
@@ -25,10 +25,10 @@ void interp (int j, int k, int l,
     Real const owy = 1.0_rt-wy;
 #endif
 
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     fine(j,k,l) = owx * crse(jg  ,0,0)
         +          wx * crse(jg+1,0,0);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     fine(j,k,l) = owx * owy * crse(jg  ,kg  ,0)
         +         owx *  wy * crse(jg  ,kg+1,0)
         +          wx * owy * crse(jg+1,kg  ,0)

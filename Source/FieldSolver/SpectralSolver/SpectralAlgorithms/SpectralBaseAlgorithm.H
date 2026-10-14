@@ -1,14 +1,14 @@
 /* Copyright 2019 Remi Lehe, Edoardo Zoni
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRAL_BASE_ALGORITHM_H_
-#define WARPX_SPECTRAL_BASE_ALGORITHM_H_
+#ifndef ARTEMIS_SPECTRAL_BASE_ALGORITHM_H_
+#define ARTEMIS_SPECTRAL_BASE_ALGORITHM_H_
 
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/Artemis_Complex.H"
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
@@ -23,7 +23,7 @@
 #include <array>
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
@@ -89,11 +89,11 @@ class SpectralBaseAlgorithm
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         KVectorComponent modified_ky_vec;
 #endif
         KVectorComponent modified_kz_vec;
 };
 
-#endif // WARPX_USE_PSATD
-#endif // WARPX_SPECTRAL_BASE_ALGORITHM_H_
+#endif // ARTEMIS_USE_PSATD
+#endif // ARTEMIS_SPECTRAL_BASE_ALGORITHM_H_

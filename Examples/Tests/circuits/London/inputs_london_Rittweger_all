@@ -12,21 +12,21 @@ my_constants.ny = 128
 my_constants.nz = 128
 amr.max_grid_size = 64
 max_step = 50
-warpx.cfl = 0.9
+artemis.cfl = 0.9
 
 #my_constants.nx = 256
 #my_constants.ny = 256
 #my_constants.nz = 256
 #amr.max_grid_size = 128
 #max_step = 100
-#warpx.cfl = 0.9
+#artemis.cfl = 0.9
 
 #my_constants.nx = 512
 #my_constants.ny = 512
 #my_constants.nz = 512
 #amr.max_grid_size = 128
 #max_step = 200
-#warpx.cfl = 0.9
+#artemis.cfl = 0.9
 
 # number of grid points
 amr.n_cell = nx ny nz
@@ -52,7 +52,7 @@ my_constants.dy = (prob_hi-prob_lo) / ny
 my_constants.dz = (prob_hi-prob_lo) / nz
 
 # Verbosity
-warpx.verbose = 1
+artemis.verbose = 1
 
 # Algorithms
 algo.current_deposition = esirkepov
@@ -79,15 +79,15 @@ my_constants.L = 80.e-9
 my_constants.c = 299792458.
 my_constants.obs = -400.e-9
 
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ex_external_grid_function(x,y,z) = "exp(-z**2/L**2)"
-warpx.Ey_external_grid_function(x,y,z) = "exp(-x**2/L**2)"
-warpx.Ez_external_grid_function(x,y,z) = "exp(-y**2/L**2)"
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ex_external_grid_function(x,y,z) = "exp(-z**2/L**2)"
+artemis.Ey_external_grid_function(x,y,z) = "exp(-x**2/L**2)"
+artemis.Ez_external_grid_function(x,y,z) = "exp(-y**2/L**2)"
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z) = "exp(-y**2/L**2)/c"
-warpx.By_external_grid_function(x,y,z) = "exp(-z**2/L**2)/c"
-warpx.Bz_external_grid_function(x,y,z) = "exp(-x**2/L**2)/c"
+artemis.B_ext_grid_init_style = parse_B_ext_grid_function
+artemis.Bx_external_grid_function(x,y,z) = "exp(-y**2/L**2)/c"
+artemis.By_external_grid_function(x,y,z) = "exp(-z**2/L**2)/c"
+artemis.Bz_external_grid_function(x,y,z) = "exp(-x**2/L**2)/c"
 
 # Diagnostics
 diagnostics.diags_names = plt
@@ -100,7 +100,7 @@ plt.fields_to_plot = Ex Ey Ez Bx By Bz
 # Remove species
 particles.nspecies = 0
 
-warpx.reduced_diags_names = Eobs
+artemis.reduced_diags_names = Eobs
 
 Eobs.type = RawEFieldReduction
 Eobs.reduction_type = integral

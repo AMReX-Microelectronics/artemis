@@ -25,39 +25,39 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
-We use the following modules and environments on the system (``$HOME/spock_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/spock_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/spock-olcf/spock_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/spock-olcf/spock_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/spock-olcf/spock_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/spock-olcf/spock_artemis.profile.example``.
 
-We recommend to store the above lines in a file, such as ``$HOME/spock_warpx.profile``, and load it into your shell after a login:
-
-.. code-block:: bash
-
-   source $HOME/spock_warpx.profile
-
-
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+We recommend to store the above lines in a file, such as ``$HOME/spock_artemis.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   source $HOME/spock_artemis.profile
+
+
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
+
+.. code-block:: bash
+
+   cd $HOME/src/artemis
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DAMReX_AMD_ARCH=gfx908 -DMPI_CXX_COMPILER=$(which CC) -DMPI_C_COMPILER=$(which cc) -DMPI_COMPILER_FLAGS="--cray-print-opts=all"
+   cmake -S . -B build -DArtemis_DIMS=3 -DArtemis_COMPUTE=HIP -DArtemis_PSATD=ON -DAMReX_AMD_ARCH=gfx908 -DMPI_CXX_COMPILER=$(which CC) -DMPI_C_COMPILER=$(which cc) -DMPI_COMPILER_FLAGS="--cray-print-opts=all"
    cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-spock-MI100-GPUs>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-spock-MI100-GPUs>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``$PROJWORK/$proj/``.
 
 
@@ -75,7 +75,7 @@ After requesting an interactive node with the ``getNode`` alias above, run a sim
 
 .. code-block:: bash
 
-   srun -n 4 -c 2 --ntasks-per-node=4 ./warpx inputs
+   srun -n 4 -c 2 --ntasks-per-node=4 ./artemis inputs
 
 Or in non-interactive runs started with ``sbatch``:
 

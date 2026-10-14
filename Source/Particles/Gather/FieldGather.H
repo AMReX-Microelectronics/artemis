@@ -1,7 +1,7 @@
 /* Copyright 2019 Axel Huebl, David Grote, Maxence Thevenet
  * Revathi Jambunathan, Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -11,7 +11,7 @@
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX.H>
 
@@ -63,15 +63,15 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 {
     using namespace amrex;
 
-#if defined(WARPX_DIM_XZ)
+#if defined(ARTEMIS_DIM_XZ)
     amrex::ignore_unused(yp);
 #endif
 
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     amrex::ignore_unused(xp,yp);
 #endif
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
@@ -79,19 +79,19 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     const amrex::Real dxi = 1.0_rt/dx[0];
 #endif
     const amrex::Real dzi = 1.0_rt/dx[2];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const amrex::Real dyi = 1.0_rt/dx[1];
 #endif
 
 #if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
     const amrex::Real zmin = xyzmin[2];
 
-    constexpr int zdir = WARPX_ZINDEX;
+    constexpr int zdir = ARTEMIS_ZINDEX;
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
@@ -103,7 +103,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 #if (AMREX_SPACEDIM >= 2)
     // x direction
     // Get particle position
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     const amrex::Real rp = std::sqrt(xp*xp + yp*yp);
     const amrex::Real x = (rp - xmin)*dxi;
 #else
@@ -149,7 +149,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int const j_bz = ((bz_type[0] == NODE) ? j_node_v : j_cell_v);
 #endif
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     // y direction
     const amrex::Real y = (yp-ymin)*dyi;
     amrex::Real sy_node[depos_order + 1];
@@ -227,7 +227,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // order can differ for each component of each field
     // when galerkin_interpolation is set to 1
 
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     // Gather field on particle Eyp from field on grid ey_arr
     // Gather field on particle Exp from field on grid ex_arr
     // Gather field on particle Bzp from field on grid bz_arr
@@ -252,7 +252,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
             by_arr(lo.x+l_by+iz, 0, 0, 0);
     }
 
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     // Gather field on particle Eyp from field on grid ey_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order; ix++){
@@ -288,7 +288,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
     }
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
 
     amrex::Real costheta;
     amrex::Real sintheta;
@@ -356,7 +356,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     Byp = costheta*Byp + sintheta*Bxp_save;
 #endif
 
-#else // defined(WARPX_DIM_3D)
+#else // defined(ARTEMIS_DIM_3D)
     // Gather field on particle Exp from field on grid ex_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){

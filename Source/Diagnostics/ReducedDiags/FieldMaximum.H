@@ -1,12 +1,12 @@
 /* Copyright 2020 Neil Zaim, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDMAXIMUM_H_
-#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDMAXIMUM_H_
+#ifndef ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_FIELDMAXIMUM_H_
+#define ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_FIELDMAXIMUM_H_
 
 #include "ReducedDiags.H"
 
@@ -35,4 +35,4 @@ public:
 
 };
 
-#endif // WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDMAXIMUM_H_
+#endif // ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_FIELDMAXIMUM_H_

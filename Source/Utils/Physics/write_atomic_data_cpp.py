@@ -3,7 +3,7 @@
 # Copyright 2019-2021 Axel Huebl, Luca Fedeli, Maxence Thevenet
 #
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
@@ -33,8 +33,8 @@ ion_offsets = np.concatenate(([0], np.cumsum(np.array(ion_atom_numbers)[:-1])), 
 # Head of CPP file
 cpp_string = '// This script was automatically generated!\n'
 cpp_string += '// Edit dev/Source/Utils/Physics/write_atomic_data_cpp.py instead!\n\n'
-cpp_string += '#ifndef WARPX_UTILS_PHYSICS_IONIZATION_TABLE_H_\n'
-cpp_string += '#define WARPX_UTILS_PHYSICS_IONIZATION_TABLE_H_\n\n'
+cpp_string += '#ifndef ARTEMIS_UTILS_PHYSICS_IONIZATION_TABLE_H_\n'
+cpp_string += '#define ARTEMIS_UTILS_PHYSICS_IONIZATION_TABLE_H_\n\n'
 cpp_string += '#include <AMReX_REAL.H>\n\n'
 cpp_string += '#include <map>\n'
 cpp_string += '#include <string>\n\n'
@@ -84,7 +84,7 @@ cpp_string += '\n    };\n\n'
 cpp_string += '}\n\n'
 
 # Write the string to file
-cpp_string += '#endif // #ifndef WARPX_UTILS_PHYSICS_IONIZATION_TABLE_H_\n'
+cpp_string += '#endif // #ifndef ARTEMIS_UTILS_PHYSICS_IONIZATION_TABLE_H_\n'
 f= open("IonizationEnergiesTable.H","w")
 f.write(cpp_string)
 f.close()

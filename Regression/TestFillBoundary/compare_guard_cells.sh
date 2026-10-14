@@ -2,12 +2,12 @@
 
 # Copyright 2020 Maxence Thevenet
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
 
-# This script compares runs WarpX with (i) default guard cell exchanges and
+# This script compares runs Artemis with (i) default guard cell exchanges and
 # (ii) exchanging all guard cells, and check that they match to a certain
 # tolerance level (typically 2.e-15). For a large number of configurations
 # (PML, moving window, nox=2 etc.) it runs both versions and applies the
@@ -23,7 +23,7 @@
 #   ./compare_guard_cells.sh manual
 #
 # In both cases, it does the following:
-# - git clone WarpX, AMReX and PICSAR (optional)
+# - git clone Artemis, AMReX and PICSAR (optional)
 # - Compile (optional)
 # - Compile fcompare (optional)
 # - Loop over many configurations and compare the results
@@ -32,7 +32,7 @@
 # The list of all comparisons that failed (and the fcompare output) is stored in failed.txt
 #
 # To use this script, create an empty directory, copy both this script and the
-# inputs.2d file in an EMPTY directory (or it may mess up with your WarpX repo and other config)
+# inputs.2d file in an EMPTY directory (or it may mess up with your Artemis repo and other config)
 # and execute it as shown above
 
 # exit if error
@@ -50,7 +50,7 @@ OMP_NUM_THREADS=1
 
 # Some general variables
 CURR_DIR=$(pwd)
-WRPX_DIR=$CURR_DIR/WarpX
+WRPX_DIR=$CURR_DIR/Artemis
 FCOMPARE=$CURR_DIR/fcompare.ex
 EXECUTABLE=$CURR_DIR/main2d.gnu.TPROF.MPI.OMP.ex
 
@@ -70,7 +70,7 @@ fi
 
 if [ $DO_GIT_CLONE == true ]; then
     # Clone all three repos
-    rm -rf WarpX picsar amrex
+    rm -rf Artemis picsar amrex
     git clone https://github.com/ECP-WarpX/WarpX.git
     git clone https://github.com/ECP-WarpX/picsar.git
     git clone --branch development https://github.com/AMReX-Codes/amrex.git
@@ -158,18 +158,18 @@ for NCI_CORR in 0 1; do
                                                 echo $SAFE_GUARD_CELLS
                                                 mpirun -np 2 $EXECUTABLE inputs.$DIM \
                                                        particles.use_fdtd_nci_corr=$NCI_CORR \
-                                                       warpx.use_filter=$FILTER \
-                                                       warpx.do_moving_window=$MOVING_WINDOW \
+                                                       artemis.use_filter=$FILTER \
+                                                       artemis.do_moving_window=$MOVING_WINDOW \
                                                        algo.particle_shape=$NOX \
                                                        algo.maxwell_solver=$SOLVER \
                                                        amr.plot_file=$WHICH/plt \
-                                                       warpx.do_pml=$PML \
+                                                       artemis.do_pml=$PML \
                                                        amr.max_level=$MAXLEV \
-                                                       warpx.do_dive_cleaning=$DIVE \
-                                                       warpx.do_subcycling=$SUBCYCLING \
-                                                       warpx.do_nodal=$NODAL \
+                                                       artemis.do_dive_cleaning=$DIVE \
+                                                       artemis.do_subcycling=$SUBCYCLING \
+                                                       artemis.do_nodal=$NODAL \
                                                        algo.field_gathering=$GATHER \
-                                                       warpx.safe_guard_cells=$SAFE_GUARD_CELLS \
+                                                       artemis.safe_guard_cells=$SAFE_GUARD_CELLS \
                                                        >  ./OUTPUT/$WHICH/$RUNNAME.txt \
                                                        2> ./ERROR/$WHICH/$RUNNAME.txt
                                                 # MPI is sometimes unhappy without this pause (??)

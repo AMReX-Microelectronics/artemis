@@ -1,6 +1,6 @@
 /* Copyright 2022 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,7 +9,7 @@
 #define TWO_PRODUCT_FUSION_UTIL_H
 
 #include "Utils/ParticleUtils.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Math.H>
 #include <AMReX_Random.H>

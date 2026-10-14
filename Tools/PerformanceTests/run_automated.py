@@ -1,7 +1,7 @@
 # Copyright 2018-2019 Axel Huebl, Luca Fedeli, Maxence Thevenet
 #
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
@@ -32,23 +32,23 @@ if os.getenv("NERSC_HOST") == 'cori':
                       process_analysis, time_min)
 
 # typical use: python run_automated.py --n_node_list='1,8,16,32' --automated
-# Assume warpx, picsar, amrex and perf_logs repos ar in the same directory and
+# Assume artemis, picsar, amrex and perf_logs repos ar in the same directory and
 # environment variable AUTOMATED_PERF_TESTS contains the path to this directory
 
 # requirements:
 # - python packages: gitpython and pandas
-# - AUTOMATED_PERF_TESTS: environment variables where warpx,
-#   amrex and picsar are installed ($AUTOMATED_PERF_TESTS/warpx etc.)
+# - AUTOMATED_PERF_TESTS: environment variables where artemis,
+#   amrex and picsar are installed ($AUTOMATED_PERF_TESTS/artemis etc.)
 # - SCRATCH: environment variable where performance results are written.
-#   This script will create folder $SCRATCH/performance_warpx/
+#   This script will create folder $SCRATCH/performance_artemis/
 
 if "AUTOMATED_PERF_TESTS" not in os.environ:
     raise ValueError("environment variable AUTOMATED_PERF_TESTS is not defined.\n"
-                     "It should contain the path to the directory where WarpX, "
+                     "It should contain the path to the directory where Artemis, "
                      "AMReX and PICSAR repos are.")
 if "SCRATCH" not in os.environ:
     raise ValueError("environment variable SCRATCH is not defined.\n"
-                     "This script will create $SCRATCH/performance_warpx/ "
+                     "This script will create $SCRATCH/performance_artemis/ "
                      "to store performance results.")
 # Handle parser
 ###############
@@ -86,7 +86,7 @@ parser.add_argument('--mode',
                     help='whether to run perftests or read their perf output. run calls read')
 parser.add_argument('--path_source',
                     default=None,
-                    help='path to parent folder containing amrex, picsar and warpx folders')
+                    help='path to parent folder containing amrex, picsar and artemis folders')
 parser.add_argument('--path_results',
                     default=None,
                     help='path to result directory, where simulations run')
@@ -128,7 +128,7 @@ if args.automated == True:
     pull_3_repos = True
     recompile = True
     source_dir_base = os.environ['AUTOMATED_PERF_TESTS']
-    res_dir_base = os.environ['SCRATCH'] + '/performance_warpx/'
+    res_dir_base = os.environ['SCRATCH'] + '/performance_artemis/'
     if machine == 'summit':
         compiler = 'gnu'
         architecture = 'gpu'
@@ -142,7 +142,7 @@ test_list = get_test_list(n_repeat)
 
 # Define directories
 # ------------------
-warpx_dir = source_dir_base + '/warpx/'
+artemis_dir = source_dir_base + '/artemis/'
 picsar_dir = source_dir_base + '/picsar/'
 amrex_dir = source_dir_base + '/amrex/'
 perf_logs_repo = source_dir_base + 'perf_logs/'
@@ -153,7 +153,7 @@ compiler_name = {'intel': 'intel', 'gnu': 'gcc', 'pgi':'pgi'}
 module_Cname = {'cpu': 'haswell', 'knl': 'knl,quad,cache', 'gpu':''}
 csv_file = {'cori':'cori_knl.csv', 'summit':'summit.csv'}
 # cwd = os.getcwd() + '/'
-cwd = warpx_dir + 'Tools/PerformanceTests/'
+cwd = artemis_dir + 'Tools/PerformanceTests/'
 
 path_hdf5 = cwd
 if args.automated:
@@ -185,18 +185,18 @@ if args.mode == 'run':
             git_repo.pull()
             git_repo = git.cmd.Git( amrex_dir  )
             git_repo.pull()
-            git_repo = git.cmd.Git( warpx_dir  )
+            git_repo = git.cmd.Git( artemis_dir  )
             git_repo.pull()
 
-        # Copy WarpX/GNUmakefile to current directory and recompile
+        # Copy Artemis/GNUmakefile to current directory and recompile
         # with specific options for automated performance tests.
         # This way, performance test compilation does not mess with user's
         # compilation
         shutil.copyfile("../../GNUmakefile","./GNUmakefile")
-        make_realclean_command = " make realclean WARPX_HOME=../.. " \
+        make_realclean_command = " make realclean ARTEMIS_HOME=../.. " \
             "AMREX_HOME=../../../amrex/ PICSAR_HOME=../../../picsar/ " \
             "EBASE=perf_tests COMP=%s" %compiler_name[compiler] + ";"
-        make_command = "make -j 16 WARPX_HOME=../.. " \
+        make_command = "make -j 16 ARTEMIS_HOME=../.. " \
             "AMREX_HOME=../../../amrex/ PICSAR_HOME=../../../picsar/ " \
             "EBASE=perf_tests COMP=%s" %compiler_name[compiler]
         if machine == 'summit':
@@ -204,13 +204,13 @@ if args.mode == 'run':
         os.system(config_command + make_realclean_command + \
                   "rm -r tmp_build_dir *.mod; " + make_command )
 
-        # Store git hashes for WarpX, AMReX and PICSAR into file, so that
+        # Store git hashes for Artemis, AMReX and PICSAR into file, so that
         # they can be read when running the analysis.
         if os.path.exists( cwd + 'store_git_hashes.txt' ):
             os.remove( cwd + 'store_git_hashes.txt' )
         store_git_hash(repo_path=picsar_dir, filename=cwd + 'store_git_hashes.txt', name='picsar')
         store_git_hash(repo_path=amrex_dir , filename=cwd + 'store_git_hashes.txt', name='amrex' )
-        store_git_hash(repo_path=warpx_dir , filename=cwd + 'store_git_hashes.txt', name='warpx' )
+        store_git_hash(repo_path=artemis_dir , filename=cwd + 'store_git_hashes.txt', name='artemis' )
 
 # Loop over the tests and run all simulations:
 # One batch job submitted per n_node. Several

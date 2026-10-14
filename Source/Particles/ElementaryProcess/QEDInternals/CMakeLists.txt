@@ -1,4 +1,4 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     BreitWheelerEngineWrapper.cpp
     QuantumSyncEngineWrapper.cpp

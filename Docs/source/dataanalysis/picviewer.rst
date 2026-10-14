@@ -6,7 +6,7 @@ PICViewer
 
 PICViewer is a visualization GUI implemented on PyQt.
 The toolkit provides various easy-to-use functions for data analysis of
-Warp/WarpX simulations.
+Warp/Artemis simulations.
 
 It works for both plotfiles and openPMD files.
 
@@ -14,7 +14,7 @@ It works for both plotfiles and openPMD files.
 Main features
 -------------
 
-* 2D/3D openPMD or WarpX data visualization,
+* 2D/3D openPMD or Artemis data visualization,
 * Multi-plot panels (up to 6 rows x 5 columns) which can be controlled independently or synchronously
 * Interactive mouse functions (panel selection, image zoom-in, local data selection, etc)
 * Animation from a single or multiple panel(s)

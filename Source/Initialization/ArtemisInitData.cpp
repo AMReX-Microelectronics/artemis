@@ -1,0 +1,1852 @@
+/* Copyright 2019-2020 Andrew Myers, Ann Almgren, Aurore Blelly
+ * Axel Huebl, Burlen Loring, Maxence Thevenet
+ * Michael Rowan, Remi Lehe, Revathi Jambunathan
+ * Weiqun Zhang
+ *
+ *
+ * This file is part of Artemis.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "Artemis.H"
+
+#include "BoundaryConditions/PML.H"
+#if (defined ARTEMIS_DIM_RZ) && (defined ARTEMIS_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
+#include "Diagnostics/MultiDiagnostics.H"
+#include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+#include "Filter/BilinearFilter.H"
+#include "Filter/NCIGodfreyFilter.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Utils/Algorithms/LinearInterpolation.H"
+#include "Utils/Logo/GetLogo.H"
+#include "Utils/MPIInitHelpers.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Utils/ArtemisUtil.H"
+#include "Python/Artemis_py.H"
+
+#include <ablastr/utils/Communication.H>
+#include <ablastr/utils/UsedInputsFile.H>
+#include <ablastr/warn_manager/WarnManager.H>
+
+#include <AMReX.H>
+#include <AMReX_AmrCore.H>
+#ifdef AMREX_USE_SENSEI_INSITU
+#   include <AMReX_AmrMeshInSituBridge.H>
+#endif
+#include <AMReX_Array.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_Config.H>
+#include <AMReX_Geometry.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_INT.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_SPACE.H>
+#include <AMReX_Vector.H>
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+
+#ifdef ARTEMIS_USE_OPENPMD
+#   include <openPMD/openPMD.hpp>
+#endif
+
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+
+using namespace amrex;
+
+void
+Artemis::PostProcessBaseGrids (BoxArray& ba0) const
+{
+    if (numprocs != 0) {
+        const Box& dom = Geom(0).Domain();
+        const IntVect& domlo = dom.smallEnd();
+        const IntVect& domlen = dom.size();
+        const IntVect sz = domlen / numprocs;
+        const IntVect extra = domlen - sz*numprocs;
+        BoxList bl;
+#if defined(ARTEMIS_DIM_3D)
+        for (int k = 0; k < numprocs[2]; ++k) {
+            // The first extra[2] blocks get one extra cell with a total of
+            // sz[2]+1.  The rest get sz[2] cells.  The docomposition in y
+            // and x directions are similar.
+            int klo = (k < extra[2]) ? k*(sz[2]+1) : (k*sz[2]+extra[2]);
+            int khi = (k < extra[2]) ? klo+(sz[2]+1)-1 : klo+sz[2]-1;
+            klo += domlo[2];
+            khi += domlo[2];
+#endif
+#if (AMREX_SPACEDIM >= 2)
+            for (int j = 0; j < numprocs[1]; ++j) {
+                int jlo = (j < extra[1]) ? j*(sz[1]+1) : (j*sz[1]+extra[1]);
+                int jhi = (j < extra[1]) ? jlo+(sz[1]+1)-1 : jlo+sz[1]-1;
+                jlo += domlo[1];
+                jhi += domlo[1];
+#endif
+                for (int i = 0; i < numprocs[0]; ++i) {
+                    int ilo = (i < extra[0]) ? i*(sz[0]+1) : (i*sz[0]+extra[0]);
+                    int ihi = (i < extra[0]) ? ilo+(sz[0]+1)-1 : ilo+sz[0]-1;
+                    ilo += domlo[0];
+                    ihi += domlo[0];
+                    bl.push_back(Box(IntVect(AMREX_D_DECL(ilo,jlo,klo)),
+                                     IntVect(AMREX_D_DECL(ihi,jhi,khi))));
+        AMREX_D_TERM(},},})
+        ba0 = BoxArray(std::move(bl));
+    }
+}
+
+void
+Artemis::PrintMainPICparameters ()
+{
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
+    amrex::Print() << "--------------------------- MAIN EM PIC PARAMETERS ----------------------------\n";
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
+
+    // print artemis build information
+    if constexpr (std::is_same<Real, float>::value) {
+      amrex::Print() << "Precision:            | SINGLE" << "\n";
+    }
+    else {
+      amrex::Print() << "Precision:            | DOUBLE" << "\n";
+    }
+    if constexpr (std::is_same<ParticleReal, float>::value) {
+      amrex::Print() << "Particle precision:   | SINGLE" << "\n";
+    }
+    else {
+      amrex::Print() << "Particle precision:   | DOUBLE" << "\n";
+    }
+
+    // Print geometry dimensionality
+    amrex::ParmParse pp_geometry("geometry");
+    std::string dims;
+    pp_geometry.query( "dims", dims );
+    if (dims=="1") {
+      amrex::Print() << "Geometry:             | 1D (Z)" << "\n";
+    }
+    else if (dims=="2") {
+      amrex::Print() << "Geometry:             | 2D (XZ)" << "\n";
+    }
+    else if (dims=="3") {
+      amrex::Print() << "Geometry:             | 3D (XYZ)" << "\n";
+    }
+    else if (dims=="RZ") {
+      amrex::Print() << "Geometry:             | 2D (RZ)" << "\n";
+    }
+
+    #ifdef ARTEMIS_DIM_RZ
+      amrex::Print() << "                      | - n_rz_azimuthal_modes = " <<
+                     Artemis::n_rz_azimuthal_modes << "\n";
+    #endif // ARTEMIS_USE_RZ
+    //Print solver's operation mode (e.g., EM or electrostatic)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - laboratory frame" << "\n";
+    }
+    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - relativistic" << "\n";
+    }
+    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic){
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - laboratory frame, electrostatic + magnetostatic" << "\n";
+    }
+    else{
+      amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
+    }
+    if (em_solver_medium == MediumForEM::Vacuum ){
+      amrex::Print() << "                      | - vacuum" << "\n";
+    }
+    else if (em_solver_medium == MediumForEM::Macroscopic ){
+      amrex::Print() << "                      | - macroscopic" << "\n";
+    }
+    if ( (em_solver_medium == MediumForEM::Macroscopic) &&
+       (Artemis::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff)){
+      amrex::Print() << "                      |  - Lax-Wendroff algorithm\n";
+      }
+    else if ((em_solver_medium == MediumForEM::Macroscopic) &&
+            (Artemis::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler)){
+      amrex::Print() << "                      |  - Backward Euler algorithm\n";
+      }
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
+    // Print type of current deposition
+    if (current_deposition_algo == CurrentDepositionAlgo::Direct){
+      amrex::Print() << "Current Deposition:   | direct \n";
+    }
+    else if (current_deposition_algo == CurrentDepositionAlgo::Vay){
+      amrex::Print() << "Current Deposition:   | Vay \n";
+    }
+    else if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov){
+      amrex::Print() << "Current Deposition:   | Esirkepov \n";
+    }
+    // Print type of particle pusher
+    if (particle_pusher_algo == ParticlePusherAlgo::Vay){
+      amrex::Print() << "Particle Pusher:      | Vay \n";
+    }
+    else if (particle_pusher_algo == ParticlePusherAlgo::HigueraCary){
+      amrex::Print() << "Particle Pusher:      | Higuera-Cary \n";
+    }
+    else if (particle_pusher_algo == ParticlePusherAlgo::Boris){
+      amrex::Print() << "Particle Pusher:      | Boris \n";
+    }
+    // Print type of charge deposition
+    if (charge_deposition_algo == ChargeDepositionAlgo::Standard){
+      amrex::Print() << "Charge Deposition:    | standard \n";
+    }
+    // Print field gathering algorithm
+    if (field_gathering_algo == GatheringAlgo::MomentumConserving){
+      amrex::Print() << "Field Gathering:      | momentum-conserving \n";
+    }
+    else{
+      amrex::Print() << "Field Gathering:      | energy-conserving \n";
+    }
+    // Print particle's shape factors
+    amrex::Print() << "Particle Shape Factor:| " << Artemis::nox << "\n";
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
+    // Print solver's type: Yee, CKC, ECT
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee){
+      amrex::Print() << "Maxwell Solver:       | Yee \n";
+    }
+    else if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC){
+      amrex::Print() << "Maxwell Solver:       | CKC \n";
+    }
+    else if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
+      amrex::Print() << "Maxwell Solver:       | ECT \n";
+    }
+  #ifdef ARTEMIS_USE_PSATD
+    // Print PSATD solver's configuration
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
+      amrex::Print() << "Maxwell Solver:       | PSATD \n";
+      }
+    if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
+      amrex::Print() << "                      | - Galilean \n" <<
+      "                      |  - v_galilean = (" << m_v_galilean[0] << "," <<
+                              m_v_galilean[1] << "," << m_v_galilean[2] << ")\n";
+      }
+    if ((m_v_comoving[0]!=0) or (m_v_comoving[1]!=0) or (m_v_comoving[2]!=0)) {
+      amrex::Print() << "                      | - comoving \n" <<
+      "                      |  - v_comoving = (" << m_v_comoving[0] << "," <<
+                              m_v_comoving[1] << "," << m_v_comoving[2] << ")\n";
+      }
+    if (Artemis::update_with_rho==1) {
+      amrex::Print() << "                      | - update with rho is ON \n";
+      }
+    if (current_correction==1) {
+      amrex::Print() << "                      | - current correction is ON \n";
+        }
+    if (Artemis::do_dive_cleaning==1) {
+      amrex::Print() << "                      | - div(E) cleaning is ON \n";
+      }
+    if (Artemis::do_divb_cleaning==1) {
+      amrex::Print() << "                      | - div(B) cleaning is ON \n";
+      }
+    if (do_multi_J == 1){
+      amrex::Print() << "                      | - multi-J deposition is ON \n";
+      amrex::Print() << "                      |   - do_multi_J_n_depositions = "
+                                        << Artemis::do_multi_J_n_depositions << "\n";
+    }
+    if (fft_do_time_averaging == 1){
+      amrex::Print()<<"                      | - time-averaged is ON \n";
+    }
+  #endif // ARTEMIS_USE_PSATD
+
+  if (grid_type == GridType::Collocated){
+    amrex::Print() << "                      | - collocated grid \n";
+  }
+  #ifdef ARTEMIS_USE_PSATD
+    if ( (grid_type == GridType::Staggered) && (field_gathering_algo == GatheringAlgo::EnergyConserving) ){
+      amrex::Print()<<"                      | - staggered grid " << "\n";
+    }
+    else if ( (grid_type == GridType::Hybrid) && (field_gathering_algo == GatheringAlgo::MomentumConserving) ){
+    amrex::Print()<<"                      | - hybrid grid " << "\n";
+    if (dims=="3"){
+      amrex::Print() << "                      |   - field_centering_nox = " << Artemis::field_centering_nox << "\n";
+      amrex::Print() << "                      |   - field_centering_noy = " << Artemis::field_centering_noy << "\n";
+      amrex::Print() << "                      |   - field_centering_noz = " << Artemis::field_centering_noz << "\n";
+      amrex::Print() << "                      |   - current_centering_nox = " << Artemis::current_centering_nox << "\n";
+      amrex::Print() << "                      |   - current_centering_noy = " << Artemis::current_centering_noy << "\n";
+      amrex::Print() << "                      |   - current_centering_noz = " << Artemis::current_centering_noz << "\n";
+    }
+    else if (dims=="2"){
+      amrex::Print() << "                      |   - field_centering_nox = " << Artemis::field_centering_nox << "\n";
+      amrex::Print() << "                      |   - field_centering_noz = " << Artemis::field_centering_noz << "\n";
+      amrex::Print() << "                      |   - current_centering_nox = " << Artemis::current_centering_nox << "\n";
+      amrex::Print() << "                      |   - current_centering_noz = " << Artemis::current_centering_noz << "\n";
+     }
+    else if (dims=="1"){
+      amrex::Print() << "                      |   - field_centering_noz = " << Artemis::field_centering_noz << "\n";
+      amrex::Print() << "                      |   - current_centering_noz = " << Artemis::current_centering_noz << "\n";
+     }
+    }
+    if (Artemis::use_hybrid_QED == true){
+      amrex::Print() << "                      | - use_hybrid_QED = true \n";
+    }
+
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
+    // Print solver's order
+      std::string psatd_nox_fft, psatd_noy_fft, psatd_noz_fft;
+      psatd_nox_fft = (nox_fft == -1) ? "inf" : std::to_string(nox_fft);
+      psatd_noy_fft = (noy_fft == -1) ? "inf" : std::to_string(noy_fft);
+      psatd_noz_fft = (noz_fft == -1) ? "inf" : std::to_string(noz_fft);
+
+      if (dims=="3" ){
+        amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
+        amrex::Print() << "                      | - psatd.noy = " << psatd_noy_fft << "\n";
+        amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
+      }
+      else if (dims=="2" and Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
+        amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
+        amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
+      }
+      else if (dims=="1" and Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
+        amrex::Print() << "Spectral order:       | - psatd.noz = " << psatd_noz_fft << "\n";
+      }
+    }
+    // Print guard cells number
+    amrex::Print() << "Guard cells           | - ng_alloc_EB = " << guard_cells.ng_alloc_EB << "\n";
+    amrex::Print() << " (allocated for E/B)  | \n";
+
+    #endif // ARTEMIS_USE_PSATD
+    amrex::Print() << "-------------------------------------------------------------------------------" << "\n";
+    //Print main boosted frame algorithm's parameters
+    if (Artemis::gamma_boost!=1){
+    amrex::Print() << "Boosted Frame:        |    ON  \n";
+    amrex::Print() << "                      |  - gamma_boost = " << Artemis::gamma_boost << "\n";
+    amrex::Print() << "                      |  - boost_direction = (" << Artemis::boost_direction[0] <<
+                             "," << Artemis::boost_direction[1] << "," << Artemis::boost_direction[2] << ")\n";
+    amrex::Print() << "------------------------------------------------------------------------------- \n";
+    }
+    //Print moving window details
+    if (Artemis::do_moving_window == 1){
+      amrex::Print() << "Moving window:        |    ON  \n";
+      if (Artemis::moving_window_dir == 0){
+        amrex::Print() << "                      |  - moving_window_dir = x \n";
+      }
+      #if defined(ARTEMIS_DIM_3D)
+      else if (Artemis::moving_window_dir == 1){
+        amrex::Print() << "                      |  - moving_window_dir = y \n";
+      }
+      #endif
+      else if (Artemis::moving_window_dir == ARTEMIS_ZINDEX) {
+        amrex::Print() << "                      |  - moving_window_dir = z \n";
+      }
+      amrex::Print() << "                      |  - moving_window_v = " << Artemis::moving_window_v << "\n";
+      amrex::Print() << "------------------------------------------------------------------------------- \n";
+    }
+}
+
+void
+Artemis::WriteUsedInputsFile () const
+{
+    std::string filename = "artemis_used_inputs";
+    ParmParse pp_artemis("artemis");
+    pp_artemis.queryAdd("used_inputs_file", filename);
+
+    ablastr::utils::write_used_inputs_file(filename);
+}
+
+void
+Artemis::InitData ()
+{
+    ARTEMIS_PROFILE("Artemis::InitData()");
+    utils::artemis_check_mpi_thread_level();
+
+#ifdef ARTEMIS_QED
+    Print() << "PICSAR (" << Artemis::PicsarVersion() << ")\n";
+#endif
+
+    Print() << "Artemis (" << Artemis::Version() << ")\n";
+
+    Print() << utils::logo::get_logo();
+
+    // Artemis::computeMaxStepBoostAccelerator
+    // needs to start from the initial zmin_domain_boost,
+    // even if restarting from a checkpoint file
+    if (do_compute_max_step_from_zmax) {
+        zmin_domain_boost_step_0 = geom[0].ProbLo(ARTEMIS_ZINDEX);
+    }
+    if (restart_chkfile.empty())
+    {
+        ComputeDt();
+        Artemis::PrintDtDxDyDz();
+        InitFromScratch();
+        if (Artemis::em_solver_medium==1) {
+            m_macroscopic_properties->InitData();
+        }
+    }
+    else
+    {
+        InitFromCheckpoint();
+        Artemis::PrintDtDxDyDz();
+        if (Artemis::em_solver_medium==1) {
+            m_macroscopic_properties->InitData();
+        }
+        PostRestart();
+    }
+
+    ComputeMaxStep();
+
+    ComputePMLFactors();
+
+    if (Artemis::use_fdtd_nci_corr) {
+        Artemis::InitNCICorrector();
+    }
+
+    BuildBufferMasks();
+
+
+    if (Artemis::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+        amrex::Print() << " calling london \n";
+        m_london->InitData();
+    }
+
+    if (restart_chkfile.empty()) {
+        InitDiagnostics();
+    } else {
+        reduced_diags->InitData();
+        multi_diags->InitData();
+    }
+
+    if (use_lumped_inductor) {
+        amrex::Print() << " calling inductor \n";
+        m_inductor->InitData();
+    }
+
+    if (ParallelDescriptor::IOProcessor()) {
+        std::cout << "\nGrids Summary:\n";
+        printGridSummary(std::cout, 0, finestLevel());
+    }
+
+    // Check that the number of guard cells is smaller than the number of valid cells for all MultiFabs
+    // (example: a box with 16 valid cells and 32 guard cells in z will not be considered valid)
+    CheckGuardCells();
+
+    PrintMainPICparameters();
+    WriteUsedInputsFile();
+
+    if (restart_chkfile.empty())
+    {
+        // Loop through species and calculate their space-charge field
+        bool const reset_fields = false; // Do not erase previous user-specified values on the grid
+        ExecutePythonCallback("beforeInitEsolve");
+        ComputeSpaceChargeField(reset_fields);
+        ExecutePythonCallback("afterInitEsolve");
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+            ComputeMagnetostaticField();
+
+        // Set up an invariant condition through the rest of
+        // execution, that any code besides the field solver that
+        // looks at field values will see the composite of the field
+        // solution and any external field
+        AddExternalFields();
+
+        // Write full diagnostics before the first iteration.
+        multi_diags->FilterComputePackFlush( -1 );
+
+        // Write reduced diagnostics before the first iteration.
+        if (reduced_diags->m_plot_rd != 0)
+        {
+            reduced_diags->ComputeDiags(-1);
+            reduced_diags->WriteToFile(-1);
+        }
+    }
+
+    PerformanceHints();
+
+    CheckKnownIssues();
+}
+
+void
+Artemis::AddExternalFields () {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        // FIXME: RZ multimode has more than one component for all these
+        if (add_external_E_field) {
+            amrex::MultiFab::Add(*Efield_fp[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][1], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_fp[lev][2], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+        }
+        if (add_external_B_field) {
+            amrex::MultiFab::Add(*Bfield_fp[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][1], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_fp[lev][2], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+        }
+    }
+}
+
+void
+Artemis::InitDiagnostics () {
+    multi_diags->InitData();
+    reduced_diags->InitData();
+}
+
+void
+Artemis::InitFromScratch ()
+{
+    const Real time = 0.0;
+
+    AmrCore::InitFromScratch(time);  // This will call MakeNewLevelFromScratch
+
+    mypc->AllocData();
+    mypc->InitData();
+
+    InitPML();
+}
+
+void
+Artemis::InitPML ()
+{
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (Artemis::field_boundary_lo[idim] == FieldBoundaryType::PML) {
+            do_pml = 1;
+            do_pml_Lo[0][idim] = 1; // on level 0
+        }
+        if (Artemis::field_boundary_hi[idim] == FieldBoundaryType::PML) {
+            do_pml = 1;
+            do_pml_Hi[0][idim] = 1; // on level 0
+        }
+    }
+    if (finest_level > 0) do_pml = 1;
+    if (do_pml)
+    {
+#if (defined ARTEMIS_DIM_RZ) && (defined ARTEMIS_USE_PSATD)
+        do_pml_Lo[0][0] = 0; // no PML at r=0, in cylindrical geometry
+        pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell, do_pml_in_domain);
+#else
+        // Note: fill_guards_fields and fill_guards_current are both set to
+        // zero (amrex::IntVect(0)) (what we do with damping BCs does not apply
+        // to the PML, for example in the presence of mesh refinement patches)
+        pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
+                             pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
+                             dt[0], nox_fft, noy_fft, noz_fft, grid_type,
+                             do_moving_window, pml_has_particles, do_pml_in_domain,
+                             psatd_solution_type, J_in_time, rho_in_time,
+                             do_pml_dive_cleaning, do_pml_divb_cleaning,
+                             amrex::IntVect(0), amrex::IntVect(0),
+                             guard_cells.ng_FieldSolver.max(),
+                             v_particle_pml,
+                             do_pml_Lo[0], do_pml_Hi[0]);
+#endif
+
+        for (int lev = 1; lev <= finest_level; ++lev)
+        {
+            do_pml_Lo[lev] = amrex::IntVect::TheUnitVector();
+            do_pml_Hi[lev] = amrex::IntVect::TheUnitVector();
+            // check if fine patch edges co-incide with domain boundary
+            amrex::Box levelBox = boxArray(lev).minimalBox();
+            // Domain box at level, lev
+            amrex::Box DomainBox = Geom(lev).Domain();
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if (levelBox.smallEnd(idim) == DomainBox.smallEnd(idim))
+                    do_pml_Lo[lev][idim] = do_pml_Lo[0][idim];
+                if (levelBox.bigEnd(idim) == DomainBox.bigEnd(idim))
+                    do_pml_Hi[lev][idim] = do_pml_Hi[0][idim];
+            }
+
+#ifdef ARTEMIS_DIM_RZ
+            //In cylindrical geometry, if the edge of the patch is at r=0, do not add PML
+            if ((max_level > 0) && (fine_tag_lo[0]==0.)) {
+                do_pml_Lo[lev][0] = 0;
+            }
+#endif
+            // Note: fill_guards_fields and fill_guards_current are both set to
+            // zero (amrex::IntVect(0)) (what we do with damping BCs does not apply
+            // to the PML, for example in the presence of mesh refinement patches)
+            pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
+                                   &Geom(lev), &Geom(lev-1),
+                                   pml_ncell, pml_delta, refRatio(lev-1),
+                                   dt[lev], nox_fft, noy_fft, noz_fft, grid_type,
+                                   do_moving_window, pml_has_particles, do_pml_in_domain,
+                                   psatd_solution_type, J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   amrex::IntVect(0), amrex::IntVect(0),
+                                   guard_cells.ng_FieldSolver.max(),
+                                   v_particle_pml,
+                                   do_pml_Lo[lev], do_pml_Hi[lev]);
+        }
+    }
+}
+
+void
+Artemis::ComputePMLFactors ()
+{
+    if (do_pml)
+    {
+        for (int lev = 0; lev <= finest_level; ++lev)
+        {
+            if (pml[lev])
+                pml[lev]->ComputePMLFactors(dt[lev]);
+        }
+    }
+}
+
+void
+Artemis::ComputeMaxStep ()
+{
+    if (do_compute_max_step_from_zmax) {
+        computeMaxStepBoostAccelerator();
+    }
+}
+
+/* \brief computes max_step for wakefield simulation in boosted frame.
+ * \param geom: Geometry object that contains simulation domain.
+ *
+ * max_step is set so that the simulation stop when the lower corner of the
+ * simulation box passes input parameter zmax_plasma_to_compute_max_step.
+ */
+void
+Artemis::computeMaxStepBoostAccelerator() {
+    // Sanity checks: can use zmax_plasma_to_compute_max_step only if
+    // the moving window and the boost are all in z direction.
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
+        Artemis::moving_window_dir == ARTEMIS_ZINDEX,
+        "Can use zmax_plasma_to_compute_max_step only if "
+        "moving window along z. TODO: all directions.");
+    if (gamma_boost > 1){
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
+            (Artemis::boost_direction[0]-0)*(Artemis::boost_direction[0]-0) +
+            (Artemis::boost_direction[1]-0)*(Artemis::boost_direction[1]-0) +
+            (Artemis::boost_direction[2]-1)*(Artemis::boost_direction[2]-1) < 1.e-12,
+            "Can use zmax_plasma_to_compute_max_step in boosted frame only if "
+            "artemis.boost_direction = z. TODO: all directions.");
+    }
+
+    // Lower end of the simulation domain. All quantities are given in boosted
+    // frame except zmax_plasma_to_compute_max_step.
+
+    // End of the plasma: Transform input argument
+    // zmax_plasma_to_compute_max_step to boosted frame.
+    const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
+    // Plasma velocity
+    const Real v_plasma_boost = -beta_boost * PhysConst::c;
+    // Get time at which the lower end of the simulation domain passes the
+    // upper end of the plasma (in the z direction).
+    const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost_step_0)/
+        (moving_window_v-v_plasma_boost);
+    // Divide by dt, and update value of max_step.
+    int computed_max_step;
+    if (do_subcycling){
+        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
+    } else {
+        computed_max_step =
+            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
+    }
+    max_step = computed_max_step;
+    Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
+           <<max_step<<std::endl;
+}
+
+void
+Artemis::InitNCICorrector ()
+{
+#if !(defined ARTEMIS_DIM_1D_Z)
+    if (Artemis::use_fdtd_nci_corr)
+    {
+        for (int lev = 0; lev <= max_level; ++lev)
+        {
+            const Geometry& gm = Geom(lev);
+            const Real* dx = gm.CellSize();
+            amrex::Real dz, cdtodz;
+#if defined(ARTEMIS_DIM_3D)
+                dz = dx[2];
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+                dz = dx[1];
+#else
+                dz = dx[0];
+#endif
+            cdtodz = PhysConst::c * dt[lev] / dz;
+
+            // Initialize Godfrey filters
+            // Same filter for fields Ex, Ey and Bz
+            const bool nodal_gather = !galerkin_interpolation;
+            nci_godfrey_filter_exeybz[lev] = std::make_unique<NCIGodfreyFilter>(
+                godfrey_coeff_set::Ex_Ey_Bz, cdtodz, nodal_gather);
+            // Same filter for fields Bx, By and Ez
+            nci_godfrey_filter_bxbyez[lev] = std::make_unique<NCIGodfreyFilter>(
+                godfrey_coeff_set::Bx_By_Ez, cdtodz, nodal_gather);
+            // Compute Godfrey filters stencils
+            nci_godfrey_filter_exeybz[lev]->ComputeStencils();
+            nci_godfrey_filter_bxbyez[lev]->ComputeStencils();
+        }
+    }
+#endif
+}
+
+void
+Artemis::InitFilter (){
+    if (Artemis::use_filter){
+        Artemis::bilinear_filter.npass_each_dir = Artemis::filter_npass_each_dir.toArray<unsigned int>();
+        Artemis::bilinear_filter.ComputeStencils();
+    }
+}
+
+void
+Artemis::PostRestart ()
+{
+    mypc->PostRestart();
+}
+
+
+void
+Artemis::InitLevelData (int lev, Real /*time*/)
+{
+
+    ParmParse pp_artemis("artemis");
+
+    // default values of E_external_grid and B_external_grid
+    // are used to set the E and B field when "constant" or
+    // "parser" is not explicitly used in the input.
+    pp_artemis.query("B_ext_grid_init_style", B_ext_grid_s);
+    std::transform(B_ext_grid_s.begin(),
+                   B_ext_grid_s.end(),
+                   B_ext_grid_s.begin(),
+                   ::tolower);
+
+#ifdef ARTEMIS_MAG_LLG
+    if (pp_artemis.query("B_ext_grid_init_style", B_ext_grid_s) ) {
+        amrex::Abort("ERROR: Initialization of B field is not allowed in the LLG simulation! \nThe initial magnetic field must be H and M! \n");
+    }
+#endif
+
+    pp_artemis.query("E_ext_grid_init_style", E_ext_grid_s);
+    std::transform(E_ext_grid_s.begin(),
+                   E_ext_grid_s.end(),
+                   E_ext_grid_s.begin(),
+                   ::tolower);
+#ifdef ARTEMIS_MAG_LLG
+    pp_artemis.query("M_ext_grid_init_style", M_ext_grid_s); // user-defined initial M
+    std::transform(M_ext_grid_s.begin(),
+                   M_ext_grid_s.end(),
+                   M_ext_grid_s.begin(),
+                   ::tolower);
+
+    pp_artemis.query("H_ext_grid_init_style", H_ext_grid_s); // user-defined initial H
+    std::transform(H_ext_grid_s.begin(),
+                   H_ext_grid_s.end(),
+                   H_ext_grid_s.begin(),
+                   ::tolower);
+
+    pp_artemis.query("H_bias_ext_grid_init_style", H_bias_ext_grid_s); // user-defined initial M
+    std::transform(H_bias_ext_grid_s.begin(),
+                   H_bias_ext_grid_s.end(),
+                   H_bias_ext_grid_s.begin(),
+                   ::tolower);
+#endif
+
+    // * Functions with the string "arr" in their names get an Array of
+    //   values from the given entry in the table.  The array argument is
+    //   resized (if necessary) to hold all the values requested.
+    //
+    // * Functions without the string "arr" in their names get single
+    //   values from the given entry in the table.
+
+    // if the input string is "constant", the values for the
+    // external grid must be provided in the input.
+    if (B_ext_grid_s == "constant")
+        utils::parser::getArrWithParser(pp_artemis, "B_external_grid", B_external_grid);
+
+    // if the input string is "constant", the values for the
+    // external grid must be provided in the input.
+    if (E_ext_grid_s == "constant")
+        utils::parser::getArrWithParser(pp_artemis, "E_external_grid", E_external_grid);
+
+
+#ifdef ARTEMIS_MAG_LLG
+    if (M_ext_grid_s == "constant")
+        utils::parser::getArrWithParser(pp_artemis, "M_external_grid", M_external_grid);
+
+    if (H_ext_grid_s == "constant")
+        utils::parser::getArrWithParser(pp_artemis, "H_external_grid", H_external_grid);
+
+    if (H_bias_ext_grid_s == "constant")
+        utils::parser::getArrWithParser(pp_artemis,"H_bias_external_grid", H_bias_external_grid);
+#endif
+    // initialize the averaged fields only if the averaged algorithm
+    // is activated ('psatd.do_time_averaging=1')
+    ParmParse pp_psatd("psatd");
+    pp_psatd.query("do_time_averaging", fft_do_time_averaging );
+
+    for (int i = 0; i < 3; ++i) {
+        current_fp[lev][i]->setVal(0.0);
+        if (lev > 0)
+           current_cp[lev][i]->setVal(0.0);
+        Bfield_sc_fp[lev][i]->setVal(0.0);
+
+        if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
+           Bfield_fp[lev][i]->setVal(B_external_grid[i]);
+           if (fft_do_time_averaging) {
+                Bfield_avg_fp[lev][i]->setVal(B_external_grid[i]);
+           }
+
+           if (lev > 0) {
+              Bfield_aux[lev][i]->setVal(B_external_grid[i]);
+              Bfield_cp[lev][i]->setVal(B_external_grid[i]);
+              if (fft_do_time_averaging) {
+                  Bfield_avg_cp[lev][i]->setVal(B_external_grid[i]);
+              }
+           }
+        }
+        if (E_ext_grid_s == "constant" || E_ext_grid_s == "default") {
+           Efield_fp[lev][i]->setVal(E_external_grid[i]);
+           if (fft_do_time_averaging) {
+               Efield_avg_fp[lev][i]->setVal(E_external_grid[i]);
+            }
+
+           if (lev > 0) {
+              Efield_aux[lev][i]->setVal(E_external_grid[i]);
+              Efield_cp[lev][i]->setVal(E_external_grid[i]);
+              if (fft_do_time_averaging) {
+                  Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
+              }
+           }
+        }
+
+#ifdef ARTEMIS_MAG_LLG
+        if (M_ext_grid_s == "constant" || M_ext_grid_s == "default"){
+            // this if condition finds out if the user-input is constant
+            // if not, set initial value to default, default = 0.0
+
+            // Set the value of num_comp components in the valid region of
+            // each FAB in the FabArray, starting at component comp to val.
+            // Also set the value of nghost boundary cells.
+            // template <class F=FAB, class = typename std::enable_if<IsBaseFab<F>::value>::type >
+            // void setVal (value_type val,
+            //              int        comp,
+            //              int        num_comp,
+            //              int        nghost = 0);
+
+            int nghost = 1;
+            for (int icomp = 0; icomp < 3; ++icomp){ // icomp is the index of components at each i face
+                Mfield_fp[lev][i]->setVal(M_external_grid[icomp], icomp, 1, nghost);
+            }
+        }
+
+        if (H_ext_grid_s == "constant" || H_ext_grid_s == "default") {
+           Hfield_fp[lev][i]->setVal(H_external_grid[i]);
+           if (lev > 0) {
+              Hfield_aux[lev][i]->setVal(H_external_grid[i]);
+              Hfield_cp[lev][i]->setVal(H_external_grid[i]);
+           }
+        }
+
+        if (H_bias_ext_grid_s == "constant" || H_bias_ext_grid_s == "default") {
+           H_biasfield_fp[lev][i]->setVal(H_bias_external_grid[i]);
+           if (lev > 0) {
+              H_biasfield_aux[lev][i]->setVal(H_bias_external_grid[i]);
+              H_biasfield_cp[lev][i]->setVal(H_bias_external_grid[i]);
+           }
+        }
+
+#endif
+   }
+
+#ifdef AMREX_USE_EB
+    InitializeEBGridData(lev);
+#endif
+
+    // if the input string for the B-field is "parse_b_ext_grid_function",
+    // then the analytical expression or function must be
+    // provided in the input file.
+    if (B_ext_grid_s == "parse_b_ext_grid_function") {
+
+#ifdef ARTEMIS_DIM_RZ
+       ARTEMIS_ABORT_WITH_MESSAGE(
+           "E and B parser for external fields does not work with RZ -- TO DO");
+#endif
+       utils::parser::Store_parserString(pp_artemis, "Bx_external_grid_function(x,y,z)",
+          str_Bx_ext_grid_function);
+       utils::parser::Store_parserString(pp_artemis, "By_external_grid_function(x,y,z)",
+          str_By_ext_grid_function);
+       utils::parser::Store_parserString(pp_artemis, "Bz_external_grid_function(x,y,z)",
+          str_Bz_ext_grid_function);
+       Bxfield_parser = std::make_unique<amrex::Parser>(
+       utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+       Byfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
+       Bzfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
+
+       // Initialize Bfield_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
+                                                 Bfield_fp[lev][1].get(),
+                                                 Bfield_fp[lev][2].get(),
+                                                 Bxfield_parser->compile<3>(),
+                                                 Byfield_parser->compile<3>(),
+                                                 Bzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'B',
+                                                 lev, PatchType::fine);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
+                                                    Bfield_aux[lev][1].get(),
+                                                    Bfield_aux[lev][2].get(),
+                                                    Bxfield_parser->compile<3>(),
+                                                    Byfield_parser->compile<3>(),
+                                                    Bzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'B',
+                                                    lev, PatchType::fine);
+
+          InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
+                                                    Bfield_cp[lev][1].get(),
+                                                    Bfield_cp[lev][2].get(),
+                                                    Bxfield_parser->compile<3>(),
+                                                    Byfield_parser->compile<3>(),
+                                                    Bzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'B',
+                                                    lev, PatchType::coarse);
+       }
+    }
+
+    // if the input string for the E-field is "parse_e_ext_grid_function",
+    // then the analytical expression or function must be
+    // provided in the input file.
+    if (E_ext_grid_s == "parse_e_ext_grid_function") {
+
+#ifdef ARTEMIS_DIM_RZ
+       ARTEMIS_ABORT_WITH_MESSAGE(
+           "E and B parser for external fields does not work with RZ -- TO DO");
+#endif
+       utils::parser::Store_parserString(pp_artemis, "Ex_external_grid_function(x,y,z)",
+           str_Ex_ext_grid_function);
+       utils::parser::Store_parserString(pp_artemis, "Ey_external_grid_function(x,y,z)",
+           str_Ey_ext_grid_function);
+       utils::parser::Store_parserString(pp_artemis, "Ez_external_grid_function(x,y,z)",
+           str_Ez_ext_grid_function);
+
+       Exfield_parser = std::make_unique<amrex::Parser>(
+           utils::parser::makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
+       Eyfield_parser = std::make_unique<amrex::Parser>(
+           utils::parser::makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
+       Ezfield_parser = std::make_unique<amrex::Parser>(
+           utils::parser::makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
+
+       // Initialize Efield_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
+                                                 Efield_fp[lev][1].get(),
+                                                 Efield_fp[lev][2].get(),
+                                                 Exfield_parser->compile<3>(),
+                                                 Eyfield_parser->compile<3>(),
+                                                 Ezfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'E',
+                                                 lev, PatchType::fine);
+
+#ifdef AMREX_USE_EB
+        // We initialize ECTRhofield consistently with the Efield
+        if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+            m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
+                                                m_face_areas[lev], ECTRhofield[lev], lev);
+
+        }
+#endif
+
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
+                                                    Efield_aux[lev][1].get(),
+                                                    Efield_aux[lev][2].get(),
+                                                    Exfield_parser->compile<3>(),
+                                                    Eyfield_parser->compile<3>(),
+                                                    Ezfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'E',
+                                                    lev, PatchType::fine);
+
+          InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
+                                                    Efield_cp[lev][1].get(),
+                                                    Efield_cp[lev][2].get(),
+                                                    Exfield_parser->compile<3>(),
+                                                    Eyfield_parser->compile<3>(),
+                                                    Ezfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'E',
+                                                    lev, PatchType::coarse);
+#ifdef AMREX_USE_EB
+           if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+               // We initialize ECTRhofield consistently with the Efield
+               m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
+                                                   m_face_areas[lev], ECTRhofield[lev], lev);
+
+           }
+#endif
+       }
+    }
+
+#ifdef ARTEMIS_MAG_LLG
+    // if the input string for the Hbias-field is "parse_h_bias_ext_grid_function",
+    // then the analytical expression or function must be
+    // provided in the input file.
+    if (H_bias_ext_grid_s == "parse_h_bias_ext_grid_function") {
+
+#ifdef ARTEMIS_DIM_RZ
+       amrex::Abort("H bias parser for external fields does not work with RZ -- TO DO");
+#endif
+       utils::parser::Store_parserString(pp_artemis, "Hx_bias_external_grid_function(x,y,z)",
+                                                    str_Hx_bias_ext_grid_function);
+       utils::parser::Store_parserString(pp_artemis, "Hy_bias_external_grid_function(x,y,z)",
+                                                    str_Hy_bias_ext_grid_function);
+       utils::parser::Store_parserString(pp_artemis, "Hz_bias_external_grid_function(x,y,z)",
+                                                    str_Hz_bias_ext_grid_function);
+
+       Hx_biasfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hx_bias_ext_grid_function,{"x","y","z"}));
+       Hy_biasfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hy_bias_ext_grid_function,{"x","y","z"}));
+       Hz_biasfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hz_bias_ext_grid_function,{"x","y","z"}));
+
+       // Initialize Efield_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(H_biasfield_fp[lev][0].get(),
+                                                 H_biasfield_fp[lev][1].get(),
+                                                 H_biasfield_fp[lev][2].get(),
+                                                 Hx_biasfield_parser->compile<3>(),
+                                                 Hy_biasfield_parser->compile<3>(),
+                                                 Hz_biasfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'H',
+                                                 lev, PatchType::fine);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(H_biasfield_aux[lev][0].get(),
+                                                    H_biasfield_aux[lev][1].get(),
+                                                    H_biasfield_aux[lev][2].get(),
+                                                    Hx_biasfield_parser->compile<3>(),
+                                                    Hy_biasfield_parser->compile<3>(),
+                                                    Hz_biasfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'H',
+                                                    lev, PatchType::coarse);
+
+          InitializeExternalFieldsOnGridUsingParser(H_biasfield_cp[lev][0].get(),
+                                                    H_biasfield_cp[lev][1].get(),
+                                                    H_biasfield_cp[lev][2].get(),
+                                                    Hx_biasfield_parser->compile<3>(),
+                                                    Hy_biasfield_parser->compile<3>(),
+                                                    Hz_biasfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'H',
+                                                    lev, PatchType::coarse);
+       }
+    }
+
+    if (H_ext_grid_s == "parse_h_ext_grid_function") {
+
+#ifdef ARTEMIS_DIM_RZ
+       amrex::Abort("H parser for external fields does not work with RZ -- TO DO");
+#endif
+       utils::parser::Store_parserString(pp_artemis, "Hx_external_grid_function(x,y,z)",
+                                                    str_Hx_ext_grid_function);
+       utils::parser::Store_parserString(pp_artemis, "Hy_external_grid_function(x,y,z)",
+                                                    str_Hy_ext_grid_function);
+       utils::parser::Store_parserString(pp_artemis, "Hz_external_grid_function(x,y,z)",
+                                                    str_Hz_ext_grid_function);
+
+       Hxfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hx_ext_grid_function,{"x","y","z"}));
+       Hyfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hy_ext_grid_function,{"x","y","z"}));
+       Hzfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hz_ext_grid_function,{"x","y","z"}));
+
+       // Initialize Hfield_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(Hfield_fp[lev][0].get(),
+                                                 Hfield_fp[lev][1].get(),
+                                                 Hfield_fp[lev][2].get(),
+                                                 Hxfield_parser->compile<3>(),
+                                                 Hyfield_parser->compile<3>(),
+                                                 Hzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'H',
+                                                 lev, PatchType::fine);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Hfield_aux[lev][0].get(),
+                                                    Hfield_aux[lev][1].get(),
+                                                    Hfield_aux[lev][2].get(),
+                                                    Hxfield_parser->compile<3>(),
+                                                    Hyfield_parser->compile<3>(),
+                                                    Hzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'H',
+                                                    lev, PatchType::coarse);
+
+          InitializeExternalFieldsOnGridUsingParser(Hfield_cp[lev][0].get(),
+                                                    Hfield_cp[lev][1].get(),
+                                                    Hfield_cp[lev][2].get(),
+                                                    Hxfield_parser->compile<3>(),
+                                                    Hyfield_parser->compile<3>(),
+                                                    Hzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'H',
+                                                    lev, PatchType::coarse);
+       }
+    }
+
+    if (M_ext_grid_s == "parse_m_ext_grid_function") {
+#ifdef ARTEMIS_DIM_RZ
+        amrex::Abort("M-field parser for external fields does not work with RZ");
+#endif
+        utils::parser::Store_parserString(pp_artemis, "Mx_external_grid_function(x,y,z)",
+                                                    str_Mx_ext_grid_function);
+        utils::parser::Store_parserString(pp_artemis, "My_external_grid_function(x,y,z)",
+                                                    str_My_ext_grid_function);
+        utils::parser::Store_parserString(pp_artemis, "Mz_external_grid_function(x,y,z)",
+                                                    str_Mz_ext_grid_function);
+
+        Mxfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser(str_Mx_ext_grid_function,{"x","y","z"}));
+        Myfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser(str_My_ext_grid_function,{"x","y","z"}));
+        Mzfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser(str_Mz_ext_grid_function,{"x","y","z"}));
+
+       // Initialize Mfield_fp with external function directly on the faces
+       InitializeExternalFieldsOnGridUsingParser(Mfield_fp[lev][0].get(),
+                                                 Mfield_fp[lev][1].get(),
+                                                 Mfield_fp[lev][2].get(),
+                                                 Mxfield_parser->compile<3>(),
+                                                 Myfield_parser->compile<3>(),
+                                                 Mzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'M',
+                                                 lev, PatchType::fine);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Mfield_aux[lev][0].get(),
+                                                    Mfield_aux[lev][1].get(),
+                                                    Mfield_aux[lev][2].get(),
+                                                    Mxfield_parser->compile<3>(),
+                                                    Myfield_parser->compile<3>(),
+                                                    Mzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'M',
+                                                    lev, PatchType::coarse);
+
+          InitializeExternalFieldsOnGridUsingParser(Mfield_cp[lev][0].get(),
+                                                    Mfield_cp[lev][1].get(),
+                                                    Mfield_cp[lev][2].get(),
+                                                    Mxfield_parser->compile<3>(),
+                                                    Myfield_parser->compile<3>(),
+                                                    Mzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'M',
+                                                    lev, PatchType::coarse);
+       }
+    }
+
+#endif //closes #ifdef ARTEMIS_MAG_LLG
+
+    // Reading external fields from data file
+    if (add_external_B_field) {
+        std::string read_fields_from_path="./";
+        pp_artemis.query("read_fields_from_path", read_fields_from_path);
+#if defined(ARTEMIS_DIM_RZ)
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "r");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "t");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
+#else
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "x");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "y");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
+#endif
+    }
+    if (add_external_E_field) {
+        std::string read_fields_from_path="./";
+        pp_artemis.query("read_fields_from_path", read_fields_from_path);
+#if defined(ARTEMIS_DIM_RZ)
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "r");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "t");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
+#else
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "x");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "y");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
+#endif
+    }
+
+    if (costs[lev]) {
+        const auto iarr = costs[lev]->IndexArray();
+        for (int i : iarr) {
+            (*costs[lev])[i] = 0.0;
+            Artemis::setLoadBalanceEfficiency(lev, -1);
+        }
+    }
+}
+
+#ifdef ARTEMIS_MAG_LLG
+void Artemis::AverageParsedMtoFaces(MultiFab& Mx_cc,
+                                  MultiFab& My_cc,
+                                  MultiFab& Mz_cc,
+                                  MultiFab& Mx_face,
+                                  MultiFab& My_face,
+                                  MultiFab& Mz_face)
+{
+    // average Mx, My, Mz to faces
+    for (MFIter mfi(Mx_face, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        amrex::IntVect x_nodal_flag = Mx_face.ixType().toIntVect();
+        amrex::IntVect y_nodal_flag = My_face.ixType().toIntVect();
+        amrex::IntVect z_nodal_flag = Mz_face.ixType().toIntVect();
+        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, Mx_face.nGrowVect() );
+        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, My_face.nGrowVect() );
+        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, Mz_face.nGrowVect() );
+
+        auto const& mx_cc = Mx_cc.array(mfi);
+        auto const& my_cc = My_cc.array(mfi);
+        auto const& mz_cc = Mz_cc.array(mfi);
+
+        auto const& mx_face = Mx_face.array(mfi);
+        auto const& my_face = My_face.array(mfi);
+        auto const& mz_face = Mz_face.array(mfi);
+
+        amrex::ParallelFor (tbx, tby, tbz,
+        [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+            mx_face(i,j,k,0) = 0.5*(mx_cc(i-1,j,k) + mx_cc(i,j,k));
+            mx_face(i,j,k,1) = 0.5*(my_cc(i-1,j,k) + my_cc(i,j,k));
+            mx_face(i,j,k,2) = 0.5*(mz_cc(i-1,j,k) + mz_cc(i,j,k));
+        },
+        [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+            my_face(i,j,k,0) = 0.5*(mx_cc(i,j-1,k) + mx_cc(i,j,k));
+            my_face(i,j,k,1) = 0.5*(my_cc(i,j-1,k) + my_cc(i,j,k));
+            my_face(i,j,k,2) = 0.5*(mz_cc(i,j-1,k) + mz_cc(i,j,k));
+        },
+        [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+            mz_face(i,j,k,0) = 0.5*(mx_cc(i,j,k-1) + mx_cc(i,j,k));
+            mz_face(i,j,k,1) = 0.5*(my_cc(i,j,k-1) + my_cc(i,j,k));
+            mz_face(i,j,k,2) = 0.5*(mz_cc(i,j,k-1) + mz_cc(i,j,k));
+        });
+    }
+}
+#endif
+
+void
+Artemis::InitializeExternalFieldsOnGridUsingParser (
+       MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
+       ParserExecutor<3> const& xfield_parser, ParserExecutor<3> const& yfield_parser,
+       ParserExecutor<3> const& zfield_parser,
+       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+       const char field,
+       const int lev, PatchType patch_type)
+{
+
+    auto dx_lev = geom[lev].CellSizeArray();
+    amrex::IntVect refratio = (lev > 0 ) ? Artemis::RefRatio(lev-1) : amrex::IntVect(1);
+    if (patch_type == PatchType::coarse) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            dx_lev[idim] = dx_lev[idim] * refratio[idim];
+        }
+    }
+
+    const RealBox& real_box = geom[lev].ProbDomain();
+    amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
+    amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
+    amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        mfx->nComp() == mfy->nComp() and mfx->nComp() == mfz->nComp(),
+        "The number of components for the three Multifabs must be equal");
+    // Number of multifab components
+#ifdef ARTEMIS_MAG_LLG
+    int ncomp = mfx->nComp();
+#endif
+
+    for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+
+       const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
+       const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
+       const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
+
+       auto const& mfxfab = mfx->array(mfi);
+       auto const& mfyfab = mfy->array(mfi);
+       auto const& mfzfab = mfz->array(mfi);
+
+#ifdef AMREX_USE_EB
+       amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+       amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
+       amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
+       amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
+       amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
+       amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
+
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+       const amrex::Dim3 lx_lo = amrex::lbound(lx);
+       const amrex::Dim3 lx_hi = amrex::ubound(lx);
+       const amrex::Dim3 lz_lo = amrex::lbound(lz);
+       const amrex::Dim3 lz_hi = amrex::ubound(lz);
+#endif
+
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+        amrex::ignore_unused(ly, Sx, Sz);
+#elif defined(ARTEMIS_DIM_1D_Z)
+        amrex::ignore_unused(lx, ly, lz, Sx, Sy, Sz);
+#endif
+
+#else
+       amrex::ignore_unused(edge_lengths, face_areas, field);
+#endif
+
+        amrex::ParallelFor (tbx, tby, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+#ifdef ARTEMIS_DIM_3D
+                if((field=='E' and lx(i, j, k)<=0) or (field=='B' and Sx(i, j, k)<=0))  return;
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+                //In XZ and RZ Ex is associated with a x-edge, while Bx is associated with a z-edge
+                if((field=='E' and lx(i, j, k)<=0) or (field=='B' and lz(i, j, k)<=0)) return;
+#endif
+#endif
+                // Shift required in the x-, y-, or z- position
+                // depending on the index type of the multifab
+#if defined(ARTEMIS_DIM_1D_Z)
+                amrex::Real x = 0._rt;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+                amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+#else
+                amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real fac_y = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - x_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+#endif
+#ifdef ARTEMIS_MAG_LLG
+                if (ncomp > 1) {
+                    // This condition is specific to Mfield, where,
+                    // x-, y-, and z-components are stored on the x-face
+                    mfxfab(i,j,k,0) = xfield_parser(x,y,z);
+                    mfxfab(i,j,k,1) = yfield_parser(x,y,z);
+                    mfxfab(i,j,k,2) = zfield_parser(x,y,z);
+                } else
+#endif
+                {
+                    mfxfab(i,j,k) = xfield_parser(x,y,z);
+                }
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+#ifdef ARTEMIS_DIM_3D
+                if((field=='E' and ly(i, j, k)<=0) or (field=='B' and Sy(i, j, k)<=0))  return;
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+                //In XZ and RZ Ey is associated with a mesh node, so we need to check if  the mesh node is covered
+                if((field=='E' and (lx(std::min(i  , lx_hi.x), std::min(j  , lx_hi.y), k)<=0
+                                 || lx(std::max(i-1, lx_lo.x), std::min(j  , lx_hi.y), k)<=0
+                                 || lz(std::min(i  , lz_hi.x), std::min(j  , lz_hi.y), k)<=0
+                                 || lz(std::min(i  , lz_hi.x), std::max(j-1, lz_lo.y), k)<=0)) or
+                   (field=='B' and Sy(i,j,k)<=0)) return;
+#endif
+#endif
+#if defined(ARTEMIS_DIM_1D_Z)
+                amrex::Real x = 0._rt;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+                amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+#elif defined(ARTEMIS_DIM_3D)
+                amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real fac_y = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - y_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+#endif
+#ifdef ARTEMIS_MAG_LLG
+                if (ncomp > 1) {
+                    // This condition is specific to Mfield, where,
+                    // x-, y-, and z-components are stored on the y-face
+                    mfyfab(i,j,k,0) = xfield_parser(x,y,z);
+                    mfyfab(i,j,k,1) = yfield_parser(x,y,z);
+                    mfyfab(i,j,k,2) = zfield_parser(x,y,z);
+                } else
+#endif
+                {
+                    mfyfab(i,j,k)  = yfield_parser(x,y,z);
+                }
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+#ifdef ARTEMIS_DIM_3D
+                if((field=='E' and lz(i, j, k)<=0) or (field=='B' and Sz(i, j, k)<=0))  return;
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+                //In XZ and RZ Ez is associated with a z-edge, while Bz is associated with a x-edge
+                if((field=='E' and lz(i, j, k)<=0) or (field=='B' and lx(i, j, k)<=0)) return;
+#endif
+#endif
+#if defined(ARTEMIS_DIM_1D_Z)
+                amrex::Real x = 0._rt;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+                amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+#elif defined(ARTEMIS_DIM_3D)
+                amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real fac_y = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - z_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+#endif
+#ifdef ARTEMIS_MAG_LLG
+                if (ncomp > 1) {
+                    // This condition is specific to Mfield, where,
+                    // x-, y-, and z-components are stored on the z-face
+                    mfzfab(i,j,k,0) = xfield_parser(x,y,z);
+                    mfzfab(i,j,k,1) = yfield_parser(x,y,z);
+                    mfzfab(i,j,k,2) = zfield_parser(x,y,z);
+                } else
+#endif
+                {
+                    mfzfab(i,j,k) = zfield_parser(x,y,z);
+                }
+            }
+        );
+    }
+}
+
+void
+Artemis::PerformanceHints ()
+{
+    // Check requested MPI ranks and available boxes
+    amrex::Long total_nboxes = 0; // on all MPI ranks
+    for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
+        total_nboxes += boxArray(ilev).size();
+    }
+    auto const nprocs = ParallelDescriptor::NProcs();
+
+    // Check: are there more MPI ranks than Boxes?
+    if (nprocs > total_nboxes) {
+        std::stringstream warnMsg;
+        warnMsg << "Too many resources / too little work!\n"
+            << "  It looks like you requested more compute resources than "
+            << "there are total number of boxes of cells available ("
+            << total_nboxes << "). "
+            << "You started with (" << nprocs
+            << ") MPI ranks, so (" << nprocs - total_nboxes
+            << ") rank(s) will have no work.\n"
+#ifdef AMREX_USE_GPU
+            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+            << "each GPU's memory sufficiently. If you do not rely on dynamic "
+            << "load-balancing, then one large box per GPU is ideal.\n"
+#endif
+            << "Consider decreasing the amr.blocking_factor and "
+            << "amr.max_grid_size parameters and/or using fewer MPI ranks.\n"
+            << "  More information:\n"
+            << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
+
+        ablastr::warn_manager::WMRecordWarning(
+          "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+    }
+
+#ifdef AMREX_USE_GPU
+    // Check: Are there more than 12 boxes per GPU?
+    if (total_nboxes > nprocs * 12) {
+        std::stringstream warnMsg;
+        warnMsg << "Too many boxes per GPU!\n"
+            << "  It looks like you split your simulation domain "
+            << "in too many boxes (" << total_nboxes << "), which "
+            << "results in an average number of ("
+            << amrex::Long(total_nboxes/nprocs) << ") per GPU. "
+            << "This causes severe overhead in the communication of "
+            << "border/guard regions.\n"
+            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+            << "each GPU's memory sufficiently. If you do not rely on dynamic "
+            << "load-balancing, then one large box per GPU is ideal.\n"
+            << "Consider increasing the amr.blocking_factor and "
+            << "amr.max_grid_size parameters and/or using more MPI ranks.\n"
+            << "  More information:\n"
+            << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
+
+        ablastr::warn_manager::WMRecordWarning(
+          "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+    }
+#endif
+
+    // TODO: warn if some ranks have disproportionally more work than all others
+    //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
+    //               all other ranks; we need to measure this with our load-balancing
+    //               routines and issue a warning only of some ranks stall all other ranks
+    // TODO: check MPI-rank to GPU ratio (should be 1:1)
+    // TODO: check memory per MPI rank, especially if GPUs are underutilized
+    // TODO: CPU tiling hints with OpenMP
+}
+
+void Artemis::CheckGuardCells()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        for (int dim = 0; dim < 3; ++dim)
+        {
+            CheckGuardCells(*Efield_fp[lev][dim]);
+            CheckGuardCells(*Bfield_fp[lev][dim]);
+            CheckGuardCells(*current_fp[lev][dim]);
+
+            if (Artemis::fft_do_time_averaging)
+            {
+                CheckGuardCells(*Efield_avg_fp[lev][dim]);
+                CheckGuardCells(*Bfield_avg_fp[lev][dim]);
+            }
+        }
+
+        if (rho_fp[lev])
+        {
+            CheckGuardCells(*rho_fp[lev]);
+        }
+
+        if (F_fp[lev])
+        {
+            CheckGuardCells(*F_fp[lev]);
+        }
+
+        if (G_fp[lev])
+        {
+            CheckGuardCells(*G_fp[lev]);
+        }
+
+        // MultiFabs on coarse patch
+        if (lev > 0)
+        {
+            for (int dim = 0; dim < 3; ++dim)
+            {
+                CheckGuardCells(*Efield_cp[lev][dim]);
+                CheckGuardCells(*Bfield_cp[lev][dim]);
+                CheckGuardCells(*current_cp[lev][dim]);
+
+                if (Artemis::fft_do_time_averaging)
+                {
+                    CheckGuardCells(*Efield_avg_cp[lev][dim]);
+                    CheckGuardCells(*Bfield_avg_cp[lev][dim]);
+                }
+            }
+
+            if (rho_cp[lev])
+            {
+                CheckGuardCells(*rho_cp[lev]);
+            }
+
+            if (F_cp[lev])
+            {
+                CheckGuardCells(*F_cp[lev]);
+            }
+
+            if (G_cp[lev])
+            {
+                CheckGuardCells(*G_cp[lev]);
+            }
+        }
+    }
+}
+
+void Artemis::CheckGuardCells(amrex::MultiFab const& mf)
+{
+    for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
+    {
+        const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
+        const amrex::IntVect gc = mf.nGrowVect();
+
+        std::stringstream ss_msg;
+        ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
+            " the number of guard cells " << gc <<
+            " is larger than or equal to the number of valid cells "
+            << vc << ", please reduce the number of guard cells" <<
+             " or increase the grid size by changing domain decomposition.";
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
+    }
+}
+
+void Artemis::InitializeEBGridData (int lev)
+{
+#ifdef AMREX_USE_EB
+    if (lev == maxLevel()) {
+
+        // Throw a warning if EB is on and particle_shape > 1
+        bool flag_eb_on = not fieldEBFactory(lev).isAllRegular();
+
+        if ((nox > 1 or noy > 1 or noz > 1) and flag_eb_on)
+        {
+            ablastr::warn_manager::WMRecordWarning("Particles",
+              "when algo.particle_shape > 1, numerical artifacts will be present when\n"
+              "particles are close to embedded boundaries");
+        }
+
+        if (Artemis::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD ) {
+
+            auto const eb_fact = fieldEBFactory(lev);
+
+            ComputeEdgeLengths(m_edge_lengths[lev], eb_fact);
+            ScaleEdges(m_edge_lengths[lev], CellSize(lev));
+            ComputeFaceAreas(m_face_areas[lev], eb_fact);
+            ScaleAreas(m_face_areas[lev], CellSize(lev));
+
+            if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+                MarkCells();
+                ComputeFaceExtensions();
+            }
+        }
+
+        ComputeDistanceToEB();
+
+    }
+#else
+    amrex::ignore_unused(lev);
+#endif
+}
+
+void Artemis::CheckKnownIssues()
+{
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD &&
+        (std::any_of(do_pml_Lo[0].begin(),do_pml_Lo[0].end(),[](const auto& ee){return ee;}) ||
+        std::any_of(do_pml_Hi[0].begin(),do_pml_Hi[0].end(),[](const auto& ee){return ee;})) )
+        {
+            ablastr::warn_manager::WMRecordWarning(
+                "PML",
+                "Using PSATD together with PML may lead to instabilities if the plasma touches the PML region. "
+                "It is recommended to leave enough empty space between the plasma boundary and the PML region.",
+                ablastr::warn_manager::WarnPriority::low);
+        }
+}
+
+#if defined(ARTEMIS_USE_OPENPMD) && !defined(ARTEMIS_DIM_1D_Z) && !defined(ARTEMIS_DIM_XZ)
+void
+Artemis::ReadExternalFieldFromFile (
+       std::string read_fields_from_path, amrex::MultiFab* mf,
+       std::string F_name, std::string F_component)
+{
+    // Get Artemis domain info
+    auto& artemis = Artemis::GetInstance();
+    amrex::Geometry const& geom0 = artemis.Geom(0);
+    const amrex::RealBox& real_box = geom0.ProbDomain();
+    const auto dx = geom0.CellSizeArray();
+    amrex::IntVect nodal_flag = mf->ixType().toIntVect();
+
+    // Read external field openPMD data
+    auto series = openPMD::Series(read_fields_from_path, openPMD::Access::READ_ONLY);
+    auto iseries = series.iterations.begin()->second;
+    auto F = iseries.meshes[F_name];
+
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(F.getAttribute("dataOrder").get<std::string>() == "C",
+                                     "Reading from files with non-C dataOrder is not implemented");
+
+    auto axisLabels = F.getAttribute("axisLabels").get<std::vector<std::string>>();
+    auto fileGeom = F.getAttribute("geometry").get<std::string>();
+
+#if defined(ARTEMIS_DIM_3D)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "3D can only read from files with cartesian geometry");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "y" && axisLabels[2] == "z",
+                                     "3D expects axisLabels {x, y, z}");
+#elif defined(ARTEMIS_DIM_XZ)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "XZ can only read from files with cartesian geometry");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "z",
+                                     "XZ expects axisLabels {x, z}");
+#elif defined(ARTEMIS_DIM_1D_Z)
+    ARTEMIS_ABORT_WITH_MESSAGE(
+           "Reading from openPMD for external fields is not known to work with 1D3V (see #3830)");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "1D3V can only read from files with cartesian geometry");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "z");
+#elif defined(ARTEMIS_DIM_RZ)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "thetaMode", "RZ can only read from files with 'thetaMode'  geometry");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "r" && axisLabels[1] == "z",
+                                     "RZ expects axisLabels {r, z}");
+#endif
+
+    auto offset = F.gridGlobalOffset();
+    amrex::Real offset0 = offset[0];
+    amrex::Real offset1 = offset[1];
+#if defined(ARTEMIS_DIM_3D)
+    amrex::Real offset2 = offset[2];
+#endif
+    auto d = F.gridSpacing<long double>();
+
+#if defined(ARTEMIS_DIM_RZ)
+    amrex::Real file_dr = d[0];
+    amrex::Real file_dz = d[1];
+#elif defined(ARTEMIS_DIM_3D)
+    amrex::Real file_dx = d[0];
+    amrex::Real file_dy = d[1];
+    amrex::Real file_dz = d[2];
+#endif
+
+    auto FC = F[F_component];
+    auto extent = FC.getExtent();
+    int extent0 = extent[0];
+    int extent1 = extent[1];
+    int extent2 = extent[2];
+
+    // Determine the chunk data that will be loaded.
+    // Now, the full range of data is loaded.
+    // Loading chunk data can speed up the process.
+    // Thus, `chunk_offset` and `chunk_extent` should be modified accordingly in another PR.
+    openPMD::Offset chunk_offset = {0,0,0};
+    openPMD::Extent chunk_extent = {extent[0], extent[1], extent[2]};
+
+    auto FC_chunk_data = FC.loadChunk<double>(chunk_offset,chunk_extent);
+    series.flush();
+    auto FC_data_host = FC_chunk_data.get();
+
+    // Load data to GPU
+    size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
+    amrex::Gpu::DeviceVector<double> FC_data_gpu(total_extent);
+    auto FC_data = FC_data_gpu.data();
+    amrex::Gpu::copy(amrex::Gpu::hostToDevice, FC_data_host, FC_data_host + total_extent, FC_data);
+
+    // Loop over boxes
+    for (MFIter mfi(*mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+        amrex::Box box = mfi.growntilebox();
+        amrex::Box tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
+        auto const& mffab = mf->array(mfi);
+
+        // Start ParallelFor
+        amrex::ParallelFor (tb,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                // i,j,k denote x,y,z indices in 3D xyz.
+                // i,j denote r,z indices in 2D rz; k is just 0
+
+                // ii is used for 2D RZ mode
+                int ii = i;
+#if defined(ARTEMIS_DIM_RZ)
+                // In 2D RZ, i denoting r can be < 0
+                // but mirrored values should be assigned.
+                // Namely, mffab(i) = FC_data[-i] when i<0.
+                if (i<0) {ii = -i;}
+#endif
+
+                // Physical coordinates of the grid point
+                // 0,1,2 denote x,y,z in 3D xyz.
+                // 0,1 denote r,z in 2D rz.
+                amrex::Real x0, x1;
+                if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
+                     { x0 = real_box.lo(0) + ii*dx[0]; }
+                else { x0 = real_box.lo(0) + ii*dx[0] + 0.5*dx[0]; }
+                if ( box.type(1)==amrex::IndexType::CellIndex::NODE )
+                     { x1 = real_box.lo(1) + j*dx[1]; }
+                else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
+
+#if defined(ARTEMIS_DIM_RZ)
+                // Get index of the external field array
+                int const ir = floor( (x0-offset0)/file_dr );
+                int const iz = floor( (x1-offset1)/file_dz );
+
+                // Get coordinates of external grid point
+                amrex::Real const xx0 = offset0 + ir * file_dr;
+                amrex::Real const xx1 = offset1 + iz * file_dz;
+
+#elif defined(ARTEMIS_DIM_3D)
+                amrex::Real x2;
+                if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
+                     { x2 = real_box.lo(2) + k*dx[2]; }
+                else { x2 = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
+
+                // Get index of the external field array
+                int const ix = floor( (x0-offset0)/file_dx );
+                int const iy = floor( (x1-offset1)/file_dy );
+                int const iz = floor( (x2-offset2)/file_dz );
+
+                // Get coordinates of external grid point
+                amrex::Real const xx0 = offset0 + ix * file_dx;
+                amrex::Real const xx1 = offset1 + iy * file_dy;
+                amrex::Real const xx2 = offset2 + iz * file_dz;
+#endif
+
+#if defined(ARTEMIS_DIM_RZ)
+                amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
+                double
+                    f00 = fc_array(0, iz  , ir  ),
+                    f01 = fc_array(0, iz  , ir+1),
+                    f10 = fc_array(0, iz+1, ir  ),
+                    f11 = fc_array(0, iz+1, ir+1);
+                mffab(i,j,k) = utils::algorithms::bilinear_interp<double>
+                    (xx0, xx0+file_dr, xx1, xx1+file_dz,
+                     f00, f01, f10, f11,
+                     x0, x1);
+#elif defined(ARTEMIS_DIM_3D)
+                amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
+                double
+                    f000 = fc_array(iz  , iy  , ix  ),
+                    f001 = fc_array(iz+1, iy  , ix  ),
+                    f010 = fc_array(iz  , iy+1, ix  ),
+                    f011 = fc_array(iz+1, iy+1, ix  ),
+                    f100 = fc_array(iz  , iy  , ix+1),
+                    f101 = fc_array(iz+1, iy  , ix+1),
+                    f110 = fc_array(iz  , iy+1, ix+1),
+                    f111 = fc_array(iz+1, iy+1, ix+1);
+                mffab(i,j,k) = utils::algorithms::trilinear_interp<double>
+                    (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
+                     f000, f001, f010, f011, f100, f101, f110, f111,
+                     x0, x1, x2);
+#endif
+
+            }
+
+        ); // End ParallelFor
+
+    } // End loop over boxes.
+
+} // End function Artemis::ReadExternalFieldFromFile
+#else // ARTEMIS_USE_OPENPMD && !ARTEMIS_DIM_1D_Z && !defined(ARTEMIS_DIM_XZ)
+void
+Artemis::ReadExternalFieldFromFile (std::string , amrex::MultiFab* ,std::string, std::string)
+{
+#if defined(ARTEMIS_DIM_1D)
+    ARTEMIS_ABORT_WITH_MESSAGE("Reading fields from openPMD files is not supported in 1D");
+#elif defined(ARTEMIS_DIM_XZ)
+    ARTEMIS_ABORT_WITH_MESSAGE("Reading from openPMD for external fields is not known to work with XZ (see #3828)");
+#elif !defined(ARTEMIS_USE_OPENPMD)
+    ARTEMIS_ABORT_WITH_MESSAGE("OpenPMD field reading requires OpenPMD support to be enabled");
+#endif
+}
+#endif // ARTEMIS_USE_OPENPMD

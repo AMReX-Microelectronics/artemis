@@ -20,12 +20,12 @@ boundary.particle_lo = absorbing absorbing absorbing
 boundary.particle_hi = absorbing absorbing absorbing
 
 # Verbosity
-warpx.verbose = 1
+artemis.verbose = 1
 
 algo.particle_shape = 3
 
 # CFL
-warpx.cfl = 1.0
+artemis.cfl = 1.0
 
 particles.species_names = electrons ions
 

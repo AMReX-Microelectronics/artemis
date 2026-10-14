@@ -1,6 +1,6 @@
 /* Copyright 2021 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,7 +9,7 @@
 
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
 
 #include <AMReX_Algorithm.H>
 #include <AMReX_BLassert.H>
@@ -28,8 +28,8 @@ FieldReduction::FieldReduction (std::string rd_name)
     using namespace amrex::literals;
 
     // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+#if (defined ARTEMIS_DIM_RZ)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldReduction reduced diagnostics does not work for RZ coordinate.");
 #endif
 
@@ -37,7 +37,7 @@ FieldReduction::FieldReduction (std::string rd_name)
     int nLevel = 0;
     amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nLevel == 0,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(nLevel == 0,
         "FieldReduction reduced diagnostics does not work with mesh refinement.");
 
     constexpr int noutputs = 1; // A single output in the Field reduction diagnostic

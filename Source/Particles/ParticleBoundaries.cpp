@@ -1,6 +1,6 @@
 /* Copyright 2021 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -57,7 +57,7 @@ bool
 ParticleBoundaries::CheckAll (ParticleBoundaryType bc)
 {
     return (data.xmin_bc == bc && data.xmax_bc == bc
-#ifdef WARPX_DIM_3D
+#ifdef ARTEMIS_DIM_3D
          && data.ymin_bc == bc && data.ymax_bc == bc
 #endif
          && data.zmin_bc == bc && data.zmax_bc == bc);
@@ -72,7 +72,7 @@ ParticleBoundaries::BuildReflectionModelParsers ()
     reflection_model_xhi_parser = std::make_unique<amrex::Parser>(
         utils::parser::makeParser(reflection_model_xhi_str, {"v"}));
     data.reflection_model_xhi = reflection_model_xhi_parser->compile<1>();
-#ifdef WARPX_DIM_3D
+#ifdef ARTEMIS_DIM_3D
     reflection_model_ylo_parser = std::make_unique<amrex::Parser>(
         utils::parser::makeParser(reflection_model_ylo_str, {"v"}));
     data.reflection_model_ylo = reflection_model_ylo_parser->compile<1>();

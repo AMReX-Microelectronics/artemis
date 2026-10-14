@@ -1,7 +1,7 @@
-#ifndef WARPX_PARTICLES_GATHER_SCALEFIELDS_H_
-#define WARPX_PARTICLES_GATHER_SCALEFIELDS_H_
+#ifndef ARTEMIS_PARTICLES_GATHER_SCALEFIELDS_H_
+#define ARTEMIS_PARTICLES_GATHER_SCALEFIELDS_H_
 
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 
 #include <AMReX_REAL.H>
 

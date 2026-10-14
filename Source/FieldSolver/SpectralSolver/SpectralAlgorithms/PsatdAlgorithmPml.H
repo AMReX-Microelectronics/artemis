@@ -1,11 +1,11 @@
 /* Copyright 2019 Axel Huebl, Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_PML_H_
-#define WARPX_PSATD_ALGORITHM_PML_H_
+#ifndef ARTEMIS_PSATD_ALGORITHM_PML_H_
+#define ARTEMIS_PSATD_ALGORITHM_PML_H_
 
 #include "SpectralBaseAlgorithm.H"
 
@@ -19,7 +19,7 @@
 #include <array>
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
@@ -74,5 +74,5 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
         bool m_divb_cleaning;
 };
 
-#endif // WARPX_USE_PSATD
-#endif // WARPX_PSATD_ALGORITHM_PML_H_
+#endif // ARTEMIS_USE_PSATD
+#endif // ARTEMIS_PSATD_ALGORITHM_PML_H_

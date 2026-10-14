@@ -1,6 +1,6 @@
 /* Copyright 2020 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -32,8 +32,8 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
     for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
         amrex::ParmParse pp_collision_name(collision_names[i]);
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
-        "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary collision module.");
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(Artemis::n_rz_azimuthal_modes==1,
+        "RZ mode `artemis.n_rz_azimuthal_modes` must be 1 when using the binary collision module.");
 
         // For legacy, pairwisecoulomb is the default
         std::string type = "pairwisecoulomb";

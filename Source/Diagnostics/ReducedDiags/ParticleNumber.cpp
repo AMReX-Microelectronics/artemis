@@ -1,6 +1,6 @@
 /* Copyright 2019-2020 Neil Zaim, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,8 +9,8 @@
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "WarpX.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Artemis.H"
 
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_PODVector.H>
@@ -30,11 +30,11 @@ using namespace amrex::literals;
 ParticleNumber::ParticleNumber (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // get MultiParticleContainer class object
-    const auto & mypc = warpx.GetPartContainer();
+    const auto & mypc = artemis.GetPartContainer();
 
     // get number of species (int)
     const auto nSpecies = mypc.nSpecies();
@@ -90,7 +90,7 @@ void ParticleNumber::ComputeDiags (int step)
     if (!m_intervals.contains(step+1)) { return; }
 
     // get MultiParticleContainer class object
-    const auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const auto & mypc = Artemis::GetInstance().GetPartContainer();
 
     // get number of species (int)
     const auto nSpecies = mypc.nSpecies();
@@ -111,13 +111,13 @@ void ParticleNumber::ComputeDiags (int step)
     // loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
-        // get WarpXParticleContainer class object
+        // get ArtemisParticleContainer class object
         const auto & myspc = mypc.GetParticleContainer(i_s);
 
         // Save total number of macroparticles for this species
         m_data[idx_first_species_macroparticles + i_s] = myspc.TotalNumberOfParticles();
 
-        using PType = typename WarpXParticleContainer::SuperParticleType;
+        using PType = typename ArtemisParticleContainer::SuperParticleType;
 
         // Reduction to compute sum of weights for this species
         auto Wtot = ReduceSum( myspc,

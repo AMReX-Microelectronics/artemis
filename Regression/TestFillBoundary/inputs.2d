@@ -13,30 +13,30 @@ geometry.prob_hi     =  20.e-6    20.e-6
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.serialize_initial_conditions = 1
-warpx.verbose = 1
-warpx.cfl = .9999
+artemis.serialize_initial_conditions = 1
+artemis.verbose = 1
+artemis.cfl = .9999
 amr.plot_int = 1000
 
-warpx.do_dive_cleaning = 1
+artemis.do_dive_cleaning = 1
 particles.use_fdtd_nci_corr = 0
-warpx.use_filter=0
-warpx.filter_npass_each_dir=1 4
-warpx.do_moving_window = 0
-warpx.moving_window_dir = z
-warpx.moving_window_v = 1.0 # units of speed of light
+artemis.use_filter=0
+artemis.filter_npass_each_dir=1 4
+artemis.do_moving_window = 0
+artemis.moving_window_dir = z
+artemis.moving_window_v = 1.0 # units of speed of light
 algo.particle_shape = 1
 algo.maxwell_solver = yee
 algo.current_deposition = esirkepov
 amr.plot_file = "plotfiles/plt"
-# warpx.plot_raw_fields = 1
-# warpx.plot_raw_fields_guards = 1
-warpx.do_pml = 0
+# artemis.plot_raw_fields = 1
+# artemis.plot_raw_fields_guards = 1
+artemis.do_pml = 0
 amr.max_level = 0
-warpx.boost_direction = z
-warpx.fine_tag_lo = -2.e-6 -8.e-6
-warpx.fine_tag_hi =  2.e-6  0.e-6
-warpx.pml_ncell=6
+artemis.boost_direction = z
+artemis.fine_tag_lo = -2.e-6 -8.e-6
+artemis.fine_tag_hi =  2.e-6  0.e-6
+artemis.pml_ncell=6
 
 #################################
 ############ PLASMA #############

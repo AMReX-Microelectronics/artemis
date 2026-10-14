@@ -1,7 +1,7 @@
 # Copyright 2019 Andrew Myers, Jean-Luc Vay, Maxence Thevenet
 # Remi Lehe, Weiqun Zhang
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 

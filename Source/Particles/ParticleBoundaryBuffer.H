@@ -1,6 +1,6 @@
 /* Copyright 2021 Andrew Myers
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,7 +8,7 @@
 #define PARTICLEBOUNDARYBUFFER_H_
 
 #include "Particles/MultiParticleContainer_fwd.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <vector>

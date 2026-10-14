@@ -2,19 +2,19 @@
 blank
 */
 
-#include "WarpX.H"
-#include "Utils/WarpXAlgorithmSelection.H"
+#include "Artemis.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
 #include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
 #include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #endif
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 #include <ablastr/coarsen/sample.H>
-#include "Utils/WarpXUtil.H"
+#include "Utils/ArtemisUtil.H"
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
@@ -23,8 +23,8 @@ using namespace amrex;
  * \brief Update H and M fields with iterative correction, over one timestep
  */
 
-#ifndef WARPX_DIM_RZ
-#ifdef WARPX_MAG_LLG
+#ifndef ARTEMIS_DIM_RZ
+#ifdef ARTEMIS_MAG_LLG
 
 void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
     // The MField here is a vector of three multifabs, with M on each face, and each multifab is a three-component multifab.
@@ -45,7 +45,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM_2nd(
     }
 } // closes function MacroscopicEvolveHM_2nd
 #endif
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 template <typename T_Algo>
 void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     int lev,
@@ -60,11 +60,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     // obtain the maximum relative amount we let M deviate from Ms before aborting
     amrex::Real mag_normalized_error = macroscopic_properties->getmag_normalized_error();
 
-    auto &warpx = WarpX::GetInstance();
-    int coupling = warpx.mag_LLG_coupling;
-    int M_normalization = warpx.mag_M_normalization;
-    int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
-    int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
+    auto &artemis = Artemis::GetInstance();
+    int coupling = artemis.mag_LLG_coupling;
+    int M_normalization = artemis.mag_M_normalization;
+    int mag_exchange_coupling = artemis.mag_LLG_exchange_coupling;
+    int mag_anisotropy_coupling = artemis.mag_LLG_anisotropy_coupling;
 
     // build temporary vector<multifab,3> Mfield_prev, Mfield_error, a_temp, a_temp_static, b_temp_static
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Hfield_old;    // H^(old_time) before the current time step
@@ -443,7 +443,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
     // begin the iteration
     while (!stop_iter){
 
-        warpx.FillBoundaryH(warpx.getngEB());
+        artemis.FillBoundaryH(artemis.getngEB());
 
         for (MFIter mfi(*Mfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi){
 
@@ -1083,7 +1083,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
             }
         }
         else{
-            const auto& period = warpx.Geom(lev).periodicity();
+            const auto& period = artemis.Geom(lev).periodicity();
             // Copy Mfield to Mfield_previous and fill periodic/interior ghost cells
             for (int i = 0; i < 3; i++){
                 MultiFab::Copy(*Mfield_prev[i], *Mfield[i], 0, 0, 3, Mfield[i]->nGrow());
@@ -1169,5 +1169,5 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
         );
     }
 }
-#endif // ifdef WARPX_MAG_LLG
-#endif // ifndef WARPX_DIM_RZ
+#endif // ifdef ARTEMIS_MAG_LLG
+#endif // ifndef ARTEMIS_DIM_RZ

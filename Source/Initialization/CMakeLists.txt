@@ -1,10 +1,10 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
-    WarpXAMReXInit.cpp
+    ArtemisAMReXInit.cpp
     InjectorDensity.cpp
     InjectorMomentum.cpp
     PlasmaInjector.cpp
-    WarpXInitData.cpp
+    ArtemisInitData.cpp
     TemperatureProperties.cpp
     VelocityProperties.cpp
     GetTemperature.cpp

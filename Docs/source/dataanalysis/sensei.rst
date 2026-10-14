@@ -99,7 +99,7 @@ The back end is selected and configured at run time using the SENSEI XML file.
 The XML sets parameters specific to SENSEI and to the chosen back end. Many of
 the back ends have sophisticated configuration mechanisms which SENSEI makes
 use of.  For example the following XML configuration was used on NERSC's Cori
-with WarpX to render 10 iso surfaces, shown in figure :numref:`lpa_visit`, using
+with Artemis to render 10 iso surfaces, shown in figure :numref:`lpa_visit`, using
 VisIt Libsim.
 
 .. code-block:: xml
@@ -248,12 +248,12 @@ First, log into cori and clone the git repo's.
 .. code-block:: bash
 
    cd $SCRATCH
-   mkdir warpx
-   cd warpx/
-   git clone https://github.com/ECP-WarpX/WarpX.git WarpX-libsim
+   mkdir artemis
+   cd artemis/
+   git clone https://github.com/ECP-WarpX/WarpX.git Artemis-libsim
    git clone https://github.com/AMReX-Codes/amrex
    git clone https://github.com/ECP-WarpX/picsar.git
-   cd WarpX-libsim
+   cd Artemis-libsim
    vim GNUmakefile
 
 Next, edit the makefile to turn the SENSEI features on.
@@ -263,7 +263,7 @@ Next, edit the makefile to turn the SENSEI features on.
    USE_SENSEI_INSITU=TRUE
 
 Then, load the SENSEI VisIt module, bring SENSEI's build requirements into the
-environment, and compile WarpX.
+environment, and compile Artemis.
 
 .. code-block:: bash
 
@@ -272,8 +272,8 @@ environment, and compile WarpX.
    source sensei_config
    make -j8
 
-Download the WarpX input deck, SENSEI XML configuration and and VisIt session
-files. The inputs file configures WarpX, the xml file configures SENSEI, and
+Download the Artemis input deck, SENSEI XML configuration and and VisIt session
+files. The inputs file configures Artemis, the xml file configures SENSEI, and
 the session file configures VisIt. The inputs and xml files are written by
 hand, while the session file is generated in VisIt gui on a representative data
 set.
@@ -284,7 +284,7 @@ set.
    wget https://data.kitware.com/api/v1/item/5c05d4588d777f2179d22f16/download -O beam_j_pin.xml
    wget https://data.kitware.com/api/v1/item/5c05d4588d777f2179d22f0e/download -O beam_j_pin.session
 
-To run the demo, submit an interactive job to the batch queue, and launch WarpX.
+To run the demo, submit an interactive job to the batch queue, and launch Artemis.
 
 .. code-block:: bash
 
@@ -299,12 +299,12 @@ First, log into cori and clone the git repo's.
 .. code-block:: bash
 
    cd $SCRATCH
-   mkdir warpx
-   cd warpx/
-   git clone https://github.com/ECP-WarpX/WarpX.git WarpX-catalyst
+   mkdir artemis
+   cd artemis/
+   git clone https://github.com/ECP-WarpX/WarpX.git Artemis-catalyst
    git clone --branch development https://github.com/AMReX-Codes/amrex
    git clone https://github.com/ECP-WarpX/picsar.git
-   cd WarpX-catalyst
+   cd Artemis-catalyst
    vim GNUmakefile
 
 Next, edit the makefile to turn the SENSEI features on.
@@ -314,7 +314,7 @@ Next, edit the makefile to turn the SENSEI features on.
    USE_SENSEI_INSITU=TRUE
 
 Then, load the SENSEI ParaView module, bring SENSEI's build requirements into the
-environment, and compile WarpX.
+environment, and compile Artemis.
 
 .. code-block:: bash
 
@@ -323,8 +323,8 @@ environment, and compile WarpX.
    source sensei_config
    make -j8
 
-Download the WarpX input deck, SENSEI XML configuration and and ParaView session
-files. The inputs file configures WarpX, the xml file configures SENSEI, and
+Download the Artemis input deck, SENSEI XML configuration and and ParaView session
+files. The inputs file configures Artemis, the xml file configures SENSEI, and
 the session file configures ParaView. The inputs and xml files are written by
 hand, while the session file is generated in ParaView gui on a representative data
 set.
@@ -335,7 +335,7 @@ set.
    wget https://data.kitware.com/api/v1/item/5c05b3fd8d777f2179d20675/download -O beam_j.xml
    wget https://data.kitware.com/api/v1/item/5c05b3fc8d777f2179d2066d/download -O beam_j.py
 
-To run the demo, submit an interactive job to the batch queue, and launch WarpX.
+To run the demo, submit an interactive job to the batch queue, and launch Artemis.
 
 .. code-block:: bash
 
@@ -377,7 +377,7 @@ Here is a template for the user provided Python code.
 :code:`Initialize` and :code:`Finalize` are optional and will be called if
 they are provided. :code:`Execute` is required. SENSEI's DataAdaptor API
 is used to obtain data and metadata from the simulation. Data is through
-VTK Object's. In WarpX the vtkOverlappingAMR VTK dataset is used.
+VTK Object's. In Artemis the vtkOverlappingAMR VTK dataset is used.
 
 The following script shows a simple integration of a scalar quantity
 over the valid cells of the mesh. The result is saved in a CSV format.

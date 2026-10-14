@@ -1,38 +1,38 @@
 # Copyright 2018-2019 Andrew Myers, Luca Fedeli, Maxence Thevenet
 # Remi Lehe
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
 import os
-# This script modifies `WarpX-test.ini` (which is used for nightly builds)
+# This script modifies `Artemis-test.ini` (which is used for nightly builds)
 # and creates the file `ci-test.ini` (which is used for continous
 # integration)
-# The subtests that are selected are controlled by WARPX_TEST_DIM
-# The architecture (CPU/GPU) is selected by WARPX_TEST_ARCH
+# The subtests that are selected are controlled by ARTEMIS_TEST_DIM
+# The architecture (CPU/GPU) is selected by ARTEMIS_TEST_ARCH
 import re
 
 # Get relevant environment variables
-arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
+arch = os.environ.get('ARTEMIS_TEST_ARCH', 'CPU')
 
-ci_regular_cartesian_1d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_1D') == 'TRUE'
-ci_regular_cartesian_2d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_2D') == 'TRUE'
-ci_regular_cartesian_3d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_3D') == 'TRUE'
-ci_psatd = os.environ.get('WARPX_CI_PSATD', 'TRUE') == 'TRUE'
-ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
-ci_rz_or_nompi = os.environ.get('WARPX_CI_RZ_OR_NOMPI') == 'TRUE'
-ci_qed = os.environ.get('WARPX_CI_QED') == 'TRUE'
-ci_eb = os.environ.get('WARPX_CI_EB') == 'TRUE'
-ci_openpmd = os.environ.get('WARPX_CI_OPENPMD') == 'TRUE'
-ci_ccache = os.environ.get('WARPX_CI_CCACHE') == 'TRUE'
-ci_num_make_jobs = os.environ.get('WARPX_CI_NUM_MAKE_JOBS', None)
+ci_regular_cartesian_1d = os.environ.get('ARTEMIS_CI_REGULAR_CARTESIAN_1D') == 'TRUE'
+ci_regular_cartesian_2d = os.environ.get('ARTEMIS_CI_REGULAR_CARTESIAN_2D') == 'TRUE'
+ci_regular_cartesian_3d = os.environ.get('ARTEMIS_CI_REGULAR_CARTESIAN_3D') == 'TRUE'
+ci_psatd = os.environ.get('ARTEMIS_CI_PSATD', 'TRUE') == 'TRUE'
+ci_single_precision = os.environ.get('ARTEMIS_CI_SINGLE_PRECISION') == 'TRUE'
+ci_rz_or_nompi = os.environ.get('ARTEMIS_CI_RZ_OR_NOMPI') == 'TRUE'
+ci_qed = os.environ.get('ARTEMIS_CI_QED') == 'TRUE'
+ci_eb = os.environ.get('ARTEMIS_CI_EB') == 'TRUE'
+ci_openpmd = os.environ.get('ARTEMIS_CI_OPENPMD') == 'TRUE'
+ci_ccache = os.environ.get('ARTEMIS_CI_CCACHE') == 'TRUE'
+ci_num_make_jobs = os.environ.get('ARTEMIS_CI_NUM_MAKE_JOBS', None)
 
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
-test_dir = re.sub('warpx/Regression', '', current_dir )
+test_dir = re.sub('artemis/Regression', '', current_dir )
 
-with open('WarpX-tests.ini') as f:
+with open('Artemis-tests.ini') as f:
     text = f.read()
 
 # Replace default folder name
@@ -74,7 +74,7 @@ if ci_ccache:
 text = re.sub('runtime_params =',
               'runtime_params = amrex.abort_on_unused_inputs=1 '+
               'amrex.fpe_trap_invalid=1 amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1 '+
-              'warpx.always_warn_immediately=1 warpx.abort_on_warning_threshold=low',
+              'artemis.always_warn_immediately=1 artemis.abort_on_warning_threshold=low',
               text)
 
 # Use less/more cores for compiling, e.g. public CI only provides 2 cores
@@ -94,7 +94,7 @@ test_blocks =  [ match[0] for match in re.findall(select_test_regex, text) ]
 text = re.sub( select_test_regex, '', text )
 
 def select_tests(blocks, match_string_list, do_test):
-    """Remove or keep tests from list in WarpX-tests.ini according to do_test variable"""
+    """Remove or keep tests from list in Artemis-tests.ini according to do_test variable"""
     if do_test not in [True, False]:
         raise ValueError("do_test must be True or False")
     if (do_test == False):

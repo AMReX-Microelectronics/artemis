@@ -1,6 +1,6 @@
 /* Copyright 2019-2021 Yinjian Zhao, Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -10,11 +10,11 @@
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_Config.H>
@@ -86,12 +86,12 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     } else if ( norm_string == "area_to_unity" ) {
         m_norm = NormalizationType::area_to_unity;
     } else {
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "Unknown ParticleHistogram normalization type.");
     }
 
     // get MultiParticleContainer class object
-    const auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const auto & mypc = Artemis::GetInstance().GetPartContainer();
     // get species names (std::vector<std::string>)
     auto const species_names = mypc.GetSpeciesNames();
     // select species
@@ -103,7 +103,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     }
     // if m_selected_species_id is not modified
     if ( m_selected_species_id == -1 ){
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "Unknown species for ParticleHistogram reduced diagnostic.");
     }
 
@@ -155,16 +155,16 @@ void ParticleHistogram::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) return;
 
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // get time at level 0
-    auto const t = warpx.gett_new(0);
+    auto const t = artemis.gett_new(0);
 
     // get MultiParticleContainer class object
-    const auto & mypc = warpx.GetPartContainer();
+    const auto & mypc = artemis.GetPartContainer();
 
-    // get WarpXParticleContainer class object
+    // get ArtemisParticleContainer class object
     auto & myspc = mypc.GetParticleContainer(m_selected_species_id);
 
     // get parser
@@ -195,7 +195,7 @@ void ParticleHistogram::ComputeDiags (int step)
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         {
-            for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
+            for (ArtemisParIter pti(myspc, lev); pti.isValid(); ++pti)
             {
                 auto const GetPosition = GetParticlePosition(pti);
 

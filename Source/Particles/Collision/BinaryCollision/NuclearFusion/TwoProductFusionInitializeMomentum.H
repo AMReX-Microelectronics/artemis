@@ -1,6 +1,6 @@
 /* Copyright 2022 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,9 +9,9 @@
 #define TWO_PRODUCT_FUSION_INITIALIZE_MOMENTUM_H
 
 #include "TwoProductFusionUtil.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/ParticleUtils.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_Random.H>
@@ -22,8 +22,8 @@
 
 namespace {
     // Define shortcuts for frequently-used type names
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
-    using ParticleType = WarpXParticleContainer::ParticleType;
+    using SoaData_type = ArtemisParticleContainer::ParticleTileType::ParticleTileDataType;
+    using ParticleType = ArtemisParticleContainer::ParticleType;
     using ParticleBins = amrex::DenseBins<ParticleType>;
     using index_type = ParticleBins::index_type;
 

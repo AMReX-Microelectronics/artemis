@@ -1,6 +1,6 @@
 /* Copyright 2021 Andrew Myers
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -37,7 +37,7 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
                                amrex::Array4<const amrex::Real> const& phi,
                                amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi) noexcept
 {
-#if (defined WARPX_DIM_3D)
+#if (defined ARTEMIS_DIM_3D)
     amrex::RealVect normal{0.0, 0.0, 0.0};
 
     normal[0] -= phi(i,   j  , k  ) * dxi[0] * W[1][0] * W[2][0];
@@ -66,7 +66,7 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
     normal[2] += phi(i  , j+1, k+1) * dxi[2] * W[0][0] * W[1][1];
     normal[2] -= phi(i+1, j+1, k  ) * dxi[2] * W[0][1] * W[1][1];
     normal[2] += phi(i+1, j+1, k+1) * dxi[2] * W[0][1] * W[1][1];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     amrex::RealVect normal{0.0, 0.0};
 
     normal[0] -= phi(i,   j  , k) * dxi[0] * W[1][0];

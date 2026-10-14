@@ -1,13 +1,13 @@
 /* Copyright 2022 Andrew Myers, Burlen Loring, Luca Fedeli
  * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_UTILS_PARSER_INTERVALSPARSER_H_
-#define WARPX_UTILS_PARSER_INTERVALSPARSER_H_
+#ifndef ARTEMIS_UTILS_PARSER_INTERVALSPARSER_H_
+#define ARTEMIS_UTILS_PARSER_INTERVALSPARSER_H_
 
 #include <limits>
 #include <string>
@@ -223,4 +223,4 @@ namespace utils::parser
     };
 }
 
-#endif // WARPX_UTILS_PARSER_INTERVALSPARSER_H_
+#endif // ARTEMIS_UTILS_PARSER_INTERVALSPARSER_H_

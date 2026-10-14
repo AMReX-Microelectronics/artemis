@@ -1,21 +1,21 @@
 /* Copyright 2019 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Python/WarpX_py.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Python/Artemis_py.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/ArtemisProfilerWrapper.H"
 
 #include <ablastr/fields/PoissonSolver.H>
 #include <ablastr/utils/Communication.H>
@@ -55,12 +55,12 @@
 using namespace amrex;
 
 void
-WarpX::ComputeSpaceChargeField (bool const reset_fields)
+Artemis::ComputeSpaceChargeField (bool const reset_fields)
 {
-    WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
+    ARTEMIS_PROFILE("Artemis::ComputeSpaceChargeField");
     if (reset_fields) {
         // Reset all E and B fields to 0, before calculating space-charge fields
-        WARPX_PROFILE("WarpX::ComputeSpaceChargeField::reset_fields");
+        ARTEMIS_PROFILE("Artemis::ComputeSpaceChargeField::reset_fields");
         for (int lev = 0; lev <= max_level; lev++) {
             for (int comp=0; comp<3; comp++) {
                 Efield_fp[lev][comp]->setVal(0);
@@ -78,7 +78,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         // Note that the fields calculated here does not include the E field
         // due to simulation boundary potentials
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-            WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+            ArtemisParticleContainer& species = mypc->GetParticleContainer(ispecies);
             if (species.initialize_self_fields ||
                 (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic)) {
                 AddSpaceChargeField(species);
@@ -97,9 +97,9 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
    E field due to that `phi` to `Efield_fp`.
 */
 void
-WarpX::AddBoundaryField ()
+Artemis::AddBoundaryField ()
 {
-    WARPX_PROFILE("WarpX::AddBoundaryField");
+    ARTEMIS_PROFILE("Artemis::AddBoundaryField");
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
@@ -137,16 +137,16 @@ WarpX::AddBoundaryField ()
 }
 
 void
-WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
+Artemis::AddSpaceChargeField (ArtemisParticleContainer& pc)
 {
-    WARPX_PROFILE("WarpX::AddSpaceChargeField");
+    ARTEMIS_PROFILE("Artemis::AddSpaceChargeField");
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
     if (!m_poisson_boundary_handler.bcs_set) m_poisson_boundary_handler.definePhiBCs();
 
-#ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+#ifdef ARTEMIS_DIM_RZ
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
@@ -191,16 +191,16 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 }
 
 void
-WarpX::AddSpaceChargeFieldLabFrame ()
+Artemis::AddSpaceChargeFieldLabFrame ()
 {
-    WARPX_PROFILE("WarpX::AddSpaceChargeFieldLabFrame");
+    ARTEMIS_PROFILE("Artemis::AddSpaceChargeFieldLabFrame");
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
     if (!m_poisson_boundary_handler.bcs_set) m_poisson_boundary_handler.definePhiBCs();
 
-#ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+#ifdef ARTEMIS_DIM_RZ
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
@@ -208,7 +208,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     mypc->DepositCharge(rho_fp, 0.0_rt);
 
     SyncRho(rho_fp, rho_cp); // Apply filter, perform MPI exchange, interpolate across levels
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
     for (int lev = 0; lev <= finestLevel(); lev++) {
         // Reflect density over PEC boundaries, if needed.
         ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
@@ -230,7 +230,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     } else {
 
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
         // Use the tridiag solver with 1D
         computePhiTriDiagonal(rho_fp, phi_fp);
 #else
@@ -272,7 +272,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
    \param[in] verbosity The verbosity setting for the MLMG solver
 */
 void
-WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+Artemis::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
@@ -291,7 +291,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 #if defined(AMREX_USE_EB)
     // EB: use AMReX to directly calculate the electric field since with EB's the
-    // simple finite difference scheme in WarpX::computeE sometimes fails
+    // simple finite difference scheme in Artemis::computeE sometimes fails
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
@@ -301,16 +301,16 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         > e_field;
         for (int lev = 0; lev <= finest_level; ++lev) {
             e_field.push_back(
-#   if defined(WARPX_DIM_1D_Z)
+#   if defined(ARTEMIS_DIM_1D_Z)
                 amrex::Array<amrex::MultiFab*, 1>{
                     get_pointer_Efield_fp(lev, 2)
                 }
-#   elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#   elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 amrex::Array<amrex::MultiFab*, 2>{
                     get_pointer_Efield_fp(lev, 0),
                     get_pointer_Efield_fp(lev, 2)
                 }
-#   elif defined(WARPX_DIM_3D)
+#   elif defined(ARTEMIS_DIM_3D)
                 amrex::Array<amrex::MultiFab *, 3>{
                     get_pointer_Efield_fp(lev, 0),
                     get_pointer_Efield_fp(lev, 1),
@@ -327,7 +327,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         amrex::EBFArrayBoxFactory const *
     > factories;
     for (int lev = 0; lev <= finest_level; ++lev) {
-        factories.push_back(&WarpX::fieldEBFactory(lev));
+        factories.push_back(&Artemis::fieldEBFactory(lev));
     }
     eb_farray_box_factory = factories;
 #else
@@ -346,7 +346,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         this->dmap,
         this->grids,
         this->m_poisson_boundary_handler,
-        WarpX::do_single_precision_comms,
+        Artemis::do_single_precision_comms,
         this->ref_ratio,
         post_phi_calculation,
         gett_new(0),
@@ -366,7 +366,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
    \param[in] idim The dimension for which the Dirichlet boundary condition is set
 */
 void
-WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
+Artemis::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
 {
     // check if any dimension has non-periodic boundary conditions
     if (!m_poisson_boundary_handler.has_non_periodic) return;
@@ -374,13 +374,13 @@ WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
     // get the boundary potentials at the current time
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
-    phi_bc_values_lo[WARPX_ZINDEX] = m_poisson_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[WARPX_ZINDEX] = m_poisson_boundary_handler.potential_zhi(gett_new(0));
-#ifndef WARPX_DIM_1D_Z
+    phi_bc_values_lo[ARTEMIS_ZINDEX] = m_poisson_boundary_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[ARTEMIS_ZINDEX] = m_poisson_boundary_handler.potential_zhi(gett_new(0));
+#ifndef ARTEMIS_DIM_1D_Z
     phi_bc_values_lo[0] = m_poisson_boundary_handler.potential_xlo(gett_new(0));
     phi_bc_values_hi[0] = m_poisson_boundary_handler.potential_xhi(gett_new(0));
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     phi_bc_values_lo[1] = m_poisson_boundary_handler.potential_ylo(gett_new(0));
     phi_bc_values_hi[1] = m_poisson_boundary_handler.potential_yhi(gett_new(0));
 #endif
@@ -447,7 +447,7 @@ WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
    \param[in] beta Represents the velocity of the source of `phi`
 */
 void
-WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
+Artemis::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                  const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
@@ -460,11 +460,11 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const Real inv_dx = 1._rt/dx[0];
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             const Real inv_dx = 1._rt/dx[0];
             const Real inv_dz = 1._rt/dx[1];
 #else
@@ -473,7 +473,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #if (AMREX_SPACEDIM >= 2)
             const Box& tbx  = mfi.tilebox( E[lev][0]->ixType().toIntVect() );
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const Box& tby  = mfi.tilebox( E[lev][1]->ixType().toIntVect() );
 #endif
             const Box& tbz  = mfi.tilebox( E[lev][2]->ixType().toIntVect() );
@@ -482,7 +482,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #if (AMREX_SPACEDIM >= 2)
             const auto& Ex_arr = (*E[lev][0])[mfi].array();
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const auto& Ey_arr = (*E[lev][1])[mfi].array();
 #endif
             const auto& Ez_arr = (*E[lev][2])[mfi].array();
@@ -493,7 +493,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
             // Calculate the electric field
             // Use discretized derivative that matches the staggering of the grid.
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
@@ -520,7 +520,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +(beta_z*beta_z-1)*inv_dz*( phi_arr(i,j,k+1)-phi_arr(i,j,k) );
                 }
             );
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             amrex::ParallelFor( tbx, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
@@ -565,7 +565,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
    \param[in] beta Represents the velocity of the source of `phi`
 */
 void
-WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
+Artemis::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
                  const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
@@ -581,11 +581,11 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const Real inv_dx = 1._rt/dx[0];
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             const Real inv_dx = 1._rt/dx[0];
             const Real inv_dz = 1._rt/dx[1];
 #else
@@ -608,7 +608,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
             // Calculate the magnetic field
             // Use discretized derivative that matches the staggering of the grid.
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bx_arr(i,j,k) += inv_c * (
@@ -632,7 +632,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                                           + phi_arr(i+1,j+1,k)-phi_arr(i,j+1,k)));
                 }
             );
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bx_arr(i,j,k) += inv_c * (
@@ -674,11 +674,11 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
    \param[out] phi The potential to be computed by this function
 */
 void
-WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+Artemis::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                               amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const
 {
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
         "The tridiagonal solver cannot be used with mesh refinement");
 
     const int lev = 0;
@@ -691,8 +691,8 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
     int nx_solve_min = 1;
     int nx_solve_max = nx_full_domain - 1;
 
-    auto field_boundary_lo0 = WarpX::field_boundary_lo[0];
-    auto field_boundary_hi0 = WarpX::field_boundary_hi[0];
+    auto field_boundary_lo0 = Artemis::field_boundary_lo[0];
+    auto field_boundary_hi0 = Artemis::field_boundary_hi[0];
     if (field_boundary_lo0 == FieldBoundaryType::Neumann || field_boundary_lo0 == FieldBoundaryType::Periodic) {
         // Neumann or periodic boundary condition
         // Solve for the point on the lower boundary
@@ -838,25 +838,25 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
 {
     int dim_start = 0;
-#ifdef WARPX_DIM_RZ
-    WarpX& warpx = WarpX::GetInstance();
-    auto geom = warpx.Geom(0);
+#ifdef ARTEMIS_DIM_RZ
+    Artemis& artemis = Artemis::GetInstance();
+    auto geom = artemis.Geom(0);
     if (geom.ProbLo(0) == 0){
         lobc[0] = LinOpBCType::Neumann;
         dirichlet_flag[0] = false;
         dim_start = 1;
 
         // handle the r_max boundary explicity
-        if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
+        if (Artemis::field_boundary_hi[0] == FieldBoundaryType::PEC) {
             hibc[0] = LinOpBCType::Dirichlet;
             dirichlet_flag[1] = true;
         }
-        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
+        else if (Artemis::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
             hibc[0] = LinOpBCType::Neumann;
             dirichlet_flag[1] = false;
         }
         else {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
                 "Field boundary condition at the outer radius must be either PEC or neumann "
                 "when using the electrostatic solver"
             );
@@ -864,8 +864,8 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
     }
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
-        if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
-             && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
+        if ( Artemis::field_boundary_lo[idim] == FieldBoundaryType::Periodic
+             && Artemis::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
             lobc[idim] = LinOpBCType::Periodic;
             hibc[idim] = LinOpBCType::Periodic;
             dirichlet_flag[idim*2] = false;
@@ -873,31 +873,31 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
         }
         else {
             has_non_periodic = true;
-            if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
+            if ( Artemis::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
                 lobc[idim] = LinOpBCType::Dirichlet;
                 dirichlet_flag[idim*2] = true;
             }
-            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
+            else if ( Artemis::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
                 lobc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2] = false;
             }
             else {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
                     "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );
             }
 
-            if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
+            if ( Artemis::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
                 hibc[idim] = LinOpBCType::Dirichlet;
                 dirichlet_flag[idim*2+1] = true;
             }
-            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
+            else if ( Artemis::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
                 hibc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2+1] = false;
             }
             else {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
                     "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );

@@ -1,7 +1,7 @@
 /* Copyright 2019-2020 Andrew Myers, Axel Huebl, Maxence Thevenet,
  * Revathi Jambunathan, Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */

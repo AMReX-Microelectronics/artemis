@@ -1,11 +1,11 @@
 /* Copyright 2019 Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_GODFREY_FILTER_H_
-#define WARPX_GODFREY_FILTER_H_
+#ifndef ARTEMIS_GODFREY_FILTER_H_
+#define ARTEMIS_GODFREY_FILTER_H_
 
 #include "NCIGodfreyFilter_fwd.H"
 
@@ -48,4 +48,4 @@ private:
     bool m_nodal_gather;
 };
 
-#endif // #ifndef WARPX_GODFREY_FILTER_H_
+#endif // #ifndef ARTEMIS_GODFREY_FILTER_H_

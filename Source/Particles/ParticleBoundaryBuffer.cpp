@@ -1,16 +1,16 @@
 /* Copyright 2021 Andrew Myers
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#include "WarpX.H"
+#include "Artemis.H"
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/ArtemisProfilerWrapper.H"
 
 #include <ablastr/particles/NodalFieldGather.H>
 
@@ -74,10 +74,10 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
         m_do_boundary_buffer[i].resize(numSpecies(), 0);
     }
 
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     constexpr auto idx_zlo = 0;
     constexpr auto idx_zhi = 1;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     constexpr auto idx_xlo = 0;
     constexpr auto idx_xhi = 1;
     constexpr auto idx_zlo = 2;
@@ -94,10 +94,10 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
     for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
     {
         amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
         pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[idx_zlo][ispecies]);
         pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[idx_zhi][ispecies]);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[idx_xlo][ispecies]);
         pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[idx_xhi][ispecies]);
         pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[idx_zlo][ispecies]);
@@ -119,10 +119,10 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
         }
     }
 
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     m_boundary_names[idx_zlo] = "zlo";
     m_boundary_names[idx_zhi] = "zhi";
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     m_boundary_names[idx_xlo] = "xlo";
     m_boundary_names[idx_xhi] = "xhi";
     m_boundary_names[idx_zlo] = "zlo";
@@ -205,11 +205,11 @@ void ParticleBoundaryBuffer::clearParticles (int const i) {
 void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                                               const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
 {
-    WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles");
+    ARTEMIS_PROFILE("ParticleBoundaryBuffer::gatherParticles");
 
     using PIter = amrex::ParConstIter<0,0,PIdx::nattribs>;
-    const auto& warpx_instance = WarpX::GetInstance();
-    const amrex::Geometry& geom = warpx_instance.Geom(0);
+    const auto& artemis_instance = Artemis::GetInstance();
+    const amrex::Geometry& geom = artemis_instance.Geom(0);
     auto plo = geom.ProbLoArray();
     auto phi = geom.ProbHiArray();
 
@@ -222,7 +222,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             for (int i = 0; i < numSpecies(); ++i)
             {
                 if (!m_do_boundary_buffer[2*idim+iside][i]) continue;
-                const WarpXParticleContainer& pc = mypc.GetParticleContainer(i);
+                const ArtemisParticleContainer& pc = mypc.GetParticleContainer(i);
                 if (!buffer[i].isDefined())
                 {
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
@@ -250,7 +250,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
                         amrex::ReduceData<int> reduce_data(reduce_op);
                         {
-                          WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_bounds");
+                          ARTEMIS_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_bounds");
 #ifdef AMREX_USE_GPU
                           const amrex::RandomEngine rng{nullptr};
 #else
@@ -262,13 +262,13 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 
                         auto dst_index = ptile_buffer.numParticles();
                         {
-                          WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::resize");
+                          ARTEMIS_PROFILE("ParticleBoundaryBuffer::gatherParticles::resize");
                           ptile_buffer.resize(dst_index + amrex::get<0>(reduce_data.value()));
                         }
                         {
-                          WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
+                          ARTEMIS_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
                           int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
-                          int timestep = warpx_instance.getistep(0);
+                          int timestep = artemis_instance.getistep(0);
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
@@ -282,7 +282,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     }
 
 #ifdef AMREX_USE_EB
-    WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::EB");
+    ARTEMIS_PROFILE("ParticleBoundaryBuffer::gatherParticles::EB");
 
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
     for (int i = 0; i < numSpecies(); ++i)
@@ -298,7 +298,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         for (int lev = 0; lev < pc.numLevels(); ++lev)
         {
             const auto& plevel = pc.GetParticles(lev);
-            auto dxi = warpx_instance.Geom(lev).InvCellSizeArray();
+            auto dxi = artemis_instance.Geom(lev).InvCellSizeArray();
             for(PIter pti(pc, lev); pti.isValid(); ++pti)
             {
                 auto phiarr = (*distance_to_eb[lev])[pti].array();  // signed distance function
@@ -312,7 +312,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 auto np = ptile.numParticles();
                 if (np == 0) continue;
 
-                using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+                using SrcData = ArtemisParticleContainer::ParticleTileType::ConstParticleTileDataType;
                 auto predicate = [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip)
                 /* NVCC 11.3.109 chokes in C++17 on this: noexcept */
                   {
@@ -330,21 +330,21 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
                 amrex::ReduceData<int> reduce_data(reduce_op);
                 {
-                  WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_boundsEB");
+                  ARTEMIS_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_boundsEB");
                   reduce_op.eval(np, reduce_data, [=] AMREX_GPU_HOST_DEVICE (int ip)
                                  { return predicate(ptile_data, ip) ? 1 : 0; });
                 }
 
                 auto dst_index = ptile_buffer.numParticles();
                 {
-                  WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::resize_eb");
+                  ARTEMIS_PROFILE("ParticleBoundaryBuffer::gatherParticles::resize_eb");
                   ptile_buffer.resize(dst_index + amrex::get<0>(reduce_data.value()));
                 }
 
                 int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
-                int timestep = warpx_instance.getistep(0);
+                int timestep = artemis_instance.getistep(0);
                 {
-                  WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
+                  ARTEMIS_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
                                                      CopyAndTimestamp{timestamp_index, timestep}, 0, dst_index);
                 }
@@ -360,7 +360,7 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
         const std::string species_name, int boundary, bool local) {
 
     auto& buffer = m_particle_containers[boundary];
-    auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
+    auto index = Artemis::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
     if (buffer[index].isDefined()) return buffer[index].TotalNumberOfParticles(false, local);
     else return 0;
@@ -370,12 +370,12 @@ PinnedMemoryParticleContainer &
 ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
-    auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
+    auto index = Artemis::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
                                      "Attempted to get particle buffer for boundary "
                                      + std::to_string(boundary) + ", which is not used!");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(buffer[index].isDefined(),
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(buffer[index].isDefined(),
                                      "Tried to get a buffer that is not defined!");
 
     return buffer[index];
@@ -385,7 +385,7 @@ PinnedMemoryParticleContainer *
 ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
-    auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
+    auto index = Artemis::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
     return &buffer[index];
 }

@@ -1,7 +1,7 @@
 /* Copyright 2019-2020 Andrew Myers, Axel Huebl, Cameron Yang,
  * Maxence Thevenet, Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -13,7 +13,7 @@
 #include "GetVelocity.H"
 #include "TemperatureProperties.H"
 #include "VelocityProperties.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX.H>
@@ -171,7 +171,7 @@ struct InjectorMomentumGaussianFlux
         if ((m_flux_normal_axis == 0) && (m_ux_m < 0)) raise_error = true;
         if ((m_flux_normal_axis == 1) && (m_uy_m < 0)) raise_error = true;
         if ((m_flux_normal_axis == 2) && (m_uz_m < 0)) raise_error = true;
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( raise_error==false,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( raise_error==false,
             "When using the `gaussianflux` distribution, the central momentum along the flux axis must be positive or zero." );
     }
 
@@ -266,7 +266,7 @@ struct InjectorMomentumBoltzmann
         // and densities can be initialized in the simulation frame.
         // The flipping method can transform any symmetric distribution from one
         // reference frame to another moving at a relative velocity of beta.
-        // An equivalent alternative to this method native to WarpX would be to
+        // An equivalent alternative to this method native to Artemis would be to
         // initialize the particle positions and densities in the frame moving
         // at speed beta, and then perform a Lorentz transform on the positions
         // and MB sampled velocities to the simulation frame.
@@ -367,7 +367,7 @@ struct InjectorMomentumJuttner
         // The flipping method can similarly transform any
         // symmetric distribution from one reference frame to another moving at
         // a relative velocity of beta.
-        // An equivalent alternative to this method native to WarpX
+        // An equivalent alternative to this method native to Artemis
         // would be to initialize the particle positions and densities in the
         // frame moving at speed beta, and then perform a Lorentz transform
         // on their positions and MJ sampled velocities to the simulation frame.

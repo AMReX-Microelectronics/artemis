@@ -1,21 +1,21 @@
 /* Copyright 2021 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "BackTransformParticleFunctor.H"
 
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_Print.H>
 #include <AMReX_BaseFwd.H>
 
-SelectParticles::SelectParticles (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
+SelectParticles::SelectParticles (const ArtemisParIter& a_pti, TmpParticles& tmp_particle_data,
                                   amrex::Real current_z_boost, amrex::Real old_z_boost,
                                   int a_offset)
     : m_current_z_boost(current_z_boost), m_old_z_boost(old_z_boost)
@@ -29,7 +29,7 @@ SelectParticles::SelectParticles (const WarpXParIter& a_pti, TmpParticles& tmp_p
 }
 
 
-LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti,
+LorentzTransformParticles::LorentzTransformParticles ( const ArtemisParIter& a_pti,
                                 TmpParticles& tmp_particle_data,
                                 amrex::Real t_boost, amrex::Real dt,
                                 amrex::Real t_lab, int a_offset)
@@ -56,8 +56,8 @@ LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti
     m_uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr();
     m_uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
 
-    m_betaboost = WarpX::beta_boost;
-    m_gammaboost = WarpX::gamma_boost;
+    m_betaboost = Artemis::beta_boost;
+    m_gammaboost = Artemis::gamma_boost;
     m_Phys_c = PhysConst::c;
     m_inv_c2 = 1._rt/(m_Phys_c * m_Phys_c);
     m_uzfrm = -m_gammaboost*m_betaboost*m_Phys_c;
@@ -68,7 +68,7 @@ LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti
  * particle buffers
  */
 BackTransformParticleFunctor::BackTransformParticleFunctor (
-                              WarpXParticleContainer *pc_src,
+                              ArtemisParticleContainer *pc_src,
                               std::string species_name,
                               int num_buffers)
     : m_pc_src(pc_src), m_species_name(species_name), m_num_buffers(num_buffers)
@@ -81,15 +81,15 @@ void
 BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int &totalParticleCounter, int i_buffer) const
 {
     if (m_perform_backtransform[i_buffer] == 0) return;
-    auto &warpx = WarpX::GetInstance();
+    auto &artemis = Artemis::GetInstance();
     // get particle slice
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
     for (int lev = 0; lev < nlevs; ++lev) {
-        amrex::Real t_boost = warpx.gett_new(0);
-        amrex::Real dt = warpx.getdt(0);
+        amrex::Real t_boost = artemis.gett_new(0);
+        amrex::Real dt = artemis.getdt(0);
 
-        for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
+        for (ArtemisParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
             pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
         }
 
@@ -103,7 +103,7 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
             amrex::Gpu::DeviceVector<int> FlagForPartCopy;
             amrex::Gpu::DeviceVector<int> IndexForPartCopy;
 
-            for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
+            for (ArtemisParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
 
                 auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
 

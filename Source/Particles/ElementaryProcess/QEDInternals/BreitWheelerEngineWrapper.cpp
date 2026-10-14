@@ -1,6 +1,6 @@
 /* Copyright 2019 Luca Fedeli, Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -12,7 +12,7 @@
 
 #include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
 //Functions needed to generate a new table
-#ifdef WARPX_QED_TABLE_GEN
+#ifdef ARTEMIS_QED_TABLE_GEN
 #   include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables_generator.hpp>
 #endif
 #include <picsar_qed/utils/serialization.hpp>
@@ -141,7 +141,7 @@ void BreitWheelerEngine::compute_lookup_tables (
     PicsarBreitWheelerCtrl ctrl,
     const amrex::ParticleReal bw_minimum_chi_phot)
 {
-#ifdef WARPX_QED_TABLE_GEN
+#ifdef ARTEMIS_QED_TABLE_GEN
     m_dndt_table = BW_dndt_table{ctrl.dndt_params};
     m_dndt_table.generate(true); //Progress bar is displayed
     m_pair_prod_table = BW_pair_prod_table{ctrl.pair_prod_params};
@@ -153,7 +153,7 @@ void BreitWheelerEngine::compute_lookup_tables (
     m_lookup_tables_initialized = true;
 #else
     amrex::ignore_unused(ctrl, bw_minimum_chi_phot);
-    amrex::Abort("WarpX was not compiled with table generation support!");
+    amrex::Abort("Artemis was not compiled with table generation support!");
 #endif
 }
 

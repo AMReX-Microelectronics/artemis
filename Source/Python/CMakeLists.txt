@@ -1,5 +1,5 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
-    WarpX_py.cpp
-    WarpXWrappers.cpp
+    Artemis_py.cpp
+    ArtemisWrappers.cpp
 )

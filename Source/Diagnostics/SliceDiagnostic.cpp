@@ -1,13 +1,13 @@
 /* Copyright 2019-2020 Luca Fedeli, Revathi Jambunathan, Weiqun Zhang
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "SliceDiagnostic.H"
 
-#include "WarpX.H"
+#include "Artemis.H"
 #include "Utils/TextMsg.H"
 
 #include <ablastr/utils/Communication.H>
@@ -71,7 +71,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     auto nlevels = static_cast<int>(dom_geom.size());
     int ncomp = (mf).nComp();
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( nlevels==1,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( nlevels==1,
        "Slice diagnostics does not work with mesh refinement yet (TO DO).");
 
     const auto conversionType = (mf).ixType();
@@ -149,7 +149,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     // Copy data from domain to slice that has same cell size as that of //
     // the domain mf. src and dst have the same number of ghost cells    //
     amrex::IntVect nghost_vect(AMREX_D_DECL(nghost, nghost, nghost));
-    ablastr::utils::communication::ParallelCopy(*smf, mf, 0, 0, ncomp, nghost_vect, nghost_vect, WarpX::do_single_precision_comms);
+    ablastr::utils::communication::ParallelCopy(*smf, mf, 0, 0, ncomp, nghost_vect, nghost_vect, Artemis::do_single_precision_comms);
 
     // inteprolate if required on refined slice //
     if (interpolate == 1 ) {
@@ -195,27 +195,27 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
               amrex::amrex_avgdown_nodes(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                          scomp, ncomp, slice_cr_ratio);
            }
-           if( SliceType == WarpX::GetInstance().getEfield(0,0).ixType().toIntVect() ) {
+           if( SliceType == Artemis::GetInstance().getEfield(0,0).ixType().toIntVect() ) {
               amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                          scomp, ncomp, slice_cr_ratio, 0);
            }
-           if( SliceType == WarpX::GetInstance().getEfield(0,1).ixType().toIntVect() ) {
+           if( SliceType == Artemis::GetInstance().getEfield(0,1).ixType().toIntVect() ) {
               amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                          scomp, ncomp, slice_cr_ratio, 1);
            }
-           if( SliceType == WarpX::GetInstance().getEfield(0,2).ixType().toIntVect() ) {
+           if( SliceType == Artemis::GetInstance().getEfield(0,2).ixType().toIntVect() ) {
               amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                          scomp, ncomp, slice_cr_ratio, 2);
            }
-           if( SliceType == WarpX::GetInstance().getBfield(0,0).ixType().toIntVect() ) {
+           if( SliceType == Artemis::GetInstance().getBfield(0,0).ixType().toIntVect() ) {
               amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                          scomp, ncomp, slice_cr_ratio, 0);
            }
-           if( SliceType == WarpX::GetInstance().getBfield(0,1).ixType().toIntVect() ) {
+           if( SliceType == Artemis::GetInstance().getBfield(0,1).ixType().toIntVect() ) {
               amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                          scomp, ncomp, slice_cr_ratio, 1);
            }
-           if( SliceType == WarpX::GetInstance().getBfield(0,2).ixType().toIntVect() ) {
+           if( SliceType == Artemis::GetInstance().getBfield(0,2).ixType().toIntVect() ) {
               amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
                                          scomp, ncomp, slice_cr_ratio, 2);
            }
@@ -229,7 +229,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
     }
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
        false, "Should not hit this return statement.");
 
     return smf;

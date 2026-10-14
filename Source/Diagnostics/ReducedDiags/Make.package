@@ -20,4 +20,4 @@ CEXE_sources += RawEFieldReduction.cpp
 CEXE_sources += RawBFieldReduction.cpp
 CEXE_sources += ChargeOnEB.cpp
 
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics/ReducedDiags
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/Diagnostics/ReducedDiags

@@ -1,17 +1,17 @@
 /* Copyright 2019 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_breit_wheeler_engine_wrapper_h_
-#define WARPX_breit_wheeler_engine_wrapper_h_
+#ifndef ARTEMIS_breit_wheeler_engine_wrapper_h_
+#define ARTEMIS_breit_wheeler_engine_wrapper_h_
 
 #include "BreitWheelerEngineWrapper_fwd.H"
 
 #include "QedChiFunctions.H"
 #include "QedWrapperCommons.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
@@ -344,7 +344,7 @@ public:
     void init_builtin_tables(const amrex::ParticleReal bw_minimum_chi_phot);
 
     /**
-     * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
+     * Computes the lookup tables. It does nothing unless Artemis is compiled with QED_TABLE_GEN=TRUE
      *
      * @param[in] ctrl control params to generate the tables
      * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
@@ -379,4 +379,4 @@ private:
 
 //============================================
 
-#endif //WARPX_breit_wheeler_engine_wrapper_H_
+#endif //ARTEMIS_breit_wheeler_engine_wrapper_H_

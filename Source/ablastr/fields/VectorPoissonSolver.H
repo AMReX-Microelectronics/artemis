@@ -1,13 +1,13 @@
 /* Copyright 2022 S. Eric Clark, LLNL
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #ifndef ABLASTR_VECTOR_POISSON_SOLVER_H
 #define ABLASTR_VECTOR_POISSON_SOLVER_H
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 #include "Utils/Parser/ParserUtils.H"
 
 #include <ablastr/utils/Communication.H>
@@ -177,7 +177,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
             linop[adim]->setEBDirichlet(0_rt);
 #endif
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
             linop[adim]->setRZ(true);
 #endif
 
@@ -196,7 +196,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
             // Synchronize the ghost cells, do halo exchange
             ablastr::utils::communication::FillBoundary(*A[lev][adim],
                                                         A[lev][adim]->nGrowVect(),
-                                                        WarpX::do_single_precision_comms,
+                                                        Artemis::do_single_precision_comms,
                                                         geom[lev].periodicity(),
                                                         false);
 

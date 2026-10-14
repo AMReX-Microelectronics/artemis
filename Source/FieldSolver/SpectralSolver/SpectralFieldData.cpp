@@ -1,15 +1,15 @@
 /* Copyright 2019 Maxence Thevenet, Remi Lehe, Revathi Jambunathan
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "SpectralFieldData.H"
 
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXUtil.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisUtil.H"
+#include "Artemis.H"
 
 #include <AMReX_Array4.H>
 #include <AMReX_BLassert.H>
@@ -29,7 +29,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 
 using namespace amrex;
 
@@ -124,8 +124,8 @@ SpectralFieldData::SpectralFieldData( const int lev,
                                       const int n_field_required,
                                       const bool periodic_single_box)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, realspace_ba, dm);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
+    bool do_costs = ArtemisUtilLoadBalance::doCosts(cost, realspace_ba, dm);
 
     m_periodic_single_box = periodic_single_box;
 
@@ -147,7 +147,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
                                     ShiftType::TransformFromCellCentered);
     xshift_FFTtoCell = k_space.getSpectralShiftFactor(dm, 0,
                                     ShiftType::TransformToCellCentered);
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     yshift_FFTfromCell = k_space.getSpectralShiftFactor(dm, 1,
                                     ShiftType::TransformFromCellCentered);
     yshift_FFTtoCell = k_space.getSpectralShiftFactor(dm, 1,
@@ -218,19 +218,19 @@ SpectralFieldData::ForwardTransform (const int lev,
                                      const MultiFab& mf, const int field_index,
                                      const int i_comp)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
+    bool do_costs = ArtemisUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space
 #if (AMREX_SPACEDIM >= 2)
     const bool is_nodal_x = mf.is_nodal(0);
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const bool is_nodal_y = mf.is_nodal(1);
     const bool is_nodal_z = mf.is_nodal(2);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     const bool is_nodal_z = mf.is_nodal(1);
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
     const bool is_nodal_z = mf.is_nodal(0);
 #endif
 
@@ -279,7 +279,7 @@ SpectralFieldData::ForwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
             const Complex* xshift_arr = xshift_FFTfromCell[mfi].dataPtr();
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const Complex* yshift_arr = yshift_FFTfromCell[mfi].dataPtr();
 #endif
             const Complex* zshift_arr = zshift_FFTfromCell[mfi].dataPtr();
@@ -293,12 +293,12 @@ SpectralFieldData::ForwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
                 if (is_nodal_x==false) spectral_field_value *= xshift_arr[i];
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 if (is_nodal_y==false) spectral_field_value *= yshift_arr[j];
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[k];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[i];
 #endif
                 // Copy field into the right index
@@ -325,33 +325,33 @@ SpectralFieldData::BackwardTransform (const int lev,
                                       const amrex::IntVect& fill_guards,
                                       const int i_comp)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
+    bool do_costs = ArtemisUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space
 #if (AMREX_SPACEDIM >= 2)
     const bool is_nodal_x = mf.is_nodal(0);
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const bool is_nodal_y = mf.is_nodal(1);
     const bool is_nodal_z = mf.is_nodal(2);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     const bool is_nodal_z = mf.is_nodal(1);
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
     const bool is_nodal_z = mf.is_nodal(0);
 #endif
 
 #if (AMREX_SPACEDIM >= 2)
     const int si = (is_nodal_x) ? 1 : 0;
 #endif
-#if   defined(WARPX_DIM_1D_Z)
+#if   defined(ARTEMIS_DIM_1D_Z)
     const int si = (is_nodal_z) ? 1 : 0;
     const int sj = 0;
     const int sk = 0;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     const int sj = (is_nodal_z) ? 1 : 0;
     const int sk = 0;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
     const int sj = (is_nodal_y) ? 1 : 0;
     const int sk = (is_nodal_z) ? 1 : 0;
 #endif
@@ -379,7 +379,7 @@ SpectralFieldData::BackwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
             const Complex* xshift_arr = xshift_FFTtoCell[mfi].dataPtr();
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const Complex* yshift_arr = yshift_FFTtoCell[mfi].dataPtr();
 #endif
             const Complex* zshift_arr = zshift_FFTtoCell[mfi].dataPtr();
@@ -393,12 +393,12 @@ SpectralFieldData::BackwardTransform (const int lev,
 #if (AMREX_SPACEDIM >= 2)
                 if (is_nodal_x==false) spectral_field_value *= xshift_arr[i];
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 if (is_nodal_y==false) spectral_field_value *= yshift_arr[j];
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[k];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[i];
 #endif
                 // Copy field into temporary array
@@ -420,25 +420,25 @@ SpectralFieldData::BackwardTransform (const int lev,
 
             // Total number of cells, including ghost cells (nj represents ny in 3D and nz in 2D)
             const int ni = mf_box.length(0);
-#if   defined(WARPX_DIM_1D_Z)
+#if   defined(ARTEMIS_DIM_1D_Z)
             constexpr int nj = 1;
             constexpr int nk = 1;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             const int nj = mf_box.length(1);
             constexpr int nk = 1;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
             const int nj = mf_box.length(1);
             const int nk = mf_box.length(2);
 #endif
             // Lower bound of the box (lo_j represents lo_y in 3D and lo_z in 2D)
             const int lo_i = amrex::lbound(mf_box).x;
-#if   defined(WARPX_DIM_1D_Z)
+#if   defined(ARTEMIS_DIM_1D_Z)
             constexpr int lo_j = 0;
             constexpr int lo_k = 0;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             const int lo_j = amrex::lbound(mf_box).y;
             constexpr int lo_k = 0;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
             const int lo_j = amrex::lbound(mf_box).y;
             const int lo_k = amrex::lbound(mf_box).z;
 #endif
@@ -476,4 +476,4 @@ SpectralFieldData::BackwardTransform (const int lev,
     }
 }
 
-#endif // WARPX_USE_PSATD
+#endif // ARTEMIS_USE_PSATD

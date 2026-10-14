@@ -8,7 +8,7 @@ spack:
   - cuda: [cuda, blaspp, lapackpp]
     when: env.get("SPACK_STACK_USE_CUDA", "1") != "1"
 
-  # basic Python dependencies for WarpX Python PICMI bindings
+  # basic Python dependencies for Artemis Python PICMI bindings
   - python: []
   - python: [python, py-pip, openpmd-api +python]
     when: env.get("SPACK_STACK_USE_PYTHON", "1") == "1"

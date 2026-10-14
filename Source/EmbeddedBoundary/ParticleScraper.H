@@ -1,6 +1,6 @@
 /* Copyright 2021 Andrew Myers
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -31,7 +31,7 @@
  *  This function detects which particles have entered into the region
  *  covered by the embedded boundaries and applies an operation on those
  *  that have. Boundary collision detection is performed using a signed
- *  distance function, which is generated automatically when WarpX is
+ *  distance function, which is generated automatically when Artemis is
  *  compiled with EB support.
  *
  *  The operation to be performed is specified by the callable function
@@ -75,7 +75,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  *  This function detects which particles have entered into the region
  *  covered by the embedded boundaries and applies an operation on those
  *  that have. Boundary collision detection is performed using a signed
- *  distance function, which is generated automatically when WarpX is
+ *  distance function, which is generated automatically when Artemis is
  *  compiled with EB support.
  *
  *  The operation to be performed is specified by the callable function
@@ -118,7 +118,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  *  This function detects which particles have entered into the region
  *  covered by the embedded boundaries and applies an operation on those
  *  that have. Boundary collision detection is performed using a signed
- *  distance function, which is generated automatically when WarpX is
+ *  distance function, which is generated automatically when Artemis is
  *  compiled with EB support.
  *
  *  The operation to be performed is specified by the callable function
@@ -161,7 +161,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     {
         const auto plo = pc.Geom(lev).ProbLoArray();
         const auto dxi = pc.Geom(lev).InvCellSizeArray();
-        for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
+        for(ArtemisParIter pti(pc, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
             auto& tile = pti.GetParticleTile();
@@ -190,17 +190,17 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
                     // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
                     amrex::RealVect pos;
-#if (defined WARPX_DIM_3D)
+#if (defined ARTEMIS_DIM_3D)
                     pos[0] = xp - normal[0]*phi_value;
                     pos[1] = yp - normal[1]*phi_value;
                     pos[2] = zp - normal[2]*phi_value;
-#elif (defined WARPX_DIM_XZ)
+#elif (defined ARTEMIS_DIM_XZ)
                     pos[0] = xp - normal[0]*phi_value;
                     pos[1] = zp - normal[1]*phi_value;
-#elif (defined WARPX_DIM_RZ)
+#elif (defined ARTEMIS_DIM_RZ)
                     pos[0] = std::sqrt(xp*xp + yp*yp) - normal[0]*phi_value;
                     pos[1] = zp - normal[1]*phi_value;
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
                     pos[0] = zp - normal[0]*phi_value;
 #endif
                     DistanceToEB::normalize(normal);

@@ -1,25 +1,25 @@
 #!/bin/bash -l
 
-# Copyright 2021-2023 WarpX
+# Copyright 2021-2023 Artemis
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # Authors: Axel Huebl
 # License: BSD-3-Clause-LBNL
 
 #SBATCH -t 00:10:00
 #SBATCH -N 2
-#SBATCH -J WarpX
+#SBATCH -J Artemis
 #SBATCH -A <proj>
 #SBATCH -q regular
 #SBATCH -C cpu
 #SBATCH --ntasks-per-node=16
 #SBATCH --exclusive
-#SBATCH -o WarpX.o%j
-#SBATCH -e WarpX.e%j
+#SBATCH -o Artemis.o%j
+#SBATCH -e Artemis.e%j
 
 # executable & inputs file or python interpreter & PICMI script here
-EXE=./warpx
+EXE=./artemis
 INPUTS=inputs_small
 
 # each CPU node on Perlmutter (NERSC) has 64 hardware cores with

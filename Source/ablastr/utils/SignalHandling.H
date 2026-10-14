@@ -1,6 +1,6 @@
 /* Copyright 2022 Philip Miller
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */

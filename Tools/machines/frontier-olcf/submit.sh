@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #SBATCH -A <project id>
-#SBATCH -J warpx
+#SBATCH -J artemis
 #SBATCH -o %x-%j.out
 #SBATCH -t 00:10:00
 #SBATCH -p batch
@@ -36,7 +36,7 @@ export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
 export ROCFFT_RTC_CACHE_PATH=/dev/null
 
 export OMP_NUM_THREADS=1
-export WARPX_NMPI_PER_NODE=8
-export TOTAL_NMPI=$(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} ))
-srun -N${SLURM_JOB_NUM_NODES} -n${TOTAL_NMPI} --ntasks-per-node=${WARPX_NMPI_PER_NODE} \
-    ./warpx inputs > output.txt
+export ARTEMIS_NMPI_PER_NODE=8
+export TOTAL_NMPI=$(( ${SLURM_JOB_NUM_NODES} * ${ARTEMIS_NMPI_PER_NODE} ))
+srun -N${SLURM_JOB_NUM_NODES} -n${TOTAL_NMPI} --ntasks-per-node=${ARTEMIS_NMPI_PER_NODE} \
+    ./artemis inputs > output.txt

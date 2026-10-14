@@ -1,13 +1,13 @@
 /* Copyright 2019 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PML_COMPONENT_H_
-#define WARPX_PML_COMPONENT_H_
+#ifndef ARTEMIS_PML_COMPONENT_H_
+#define ARTEMIS_PML_COMPONENT_H_
 
-/* In WarpX, the split fields of the PML (e.g. Eyx, Eyz) are stored as
+/* In Artemis, the split fields of the PML (e.g. Eyx, Eyz) are stored as
  * components of a MultiFab (e.g. component 0 and 1 of the MultiFab for Ey)
  * The correspondance between the component index (0,1) and its meaning
  * (yx, yz, etc.) is defined in the present file */

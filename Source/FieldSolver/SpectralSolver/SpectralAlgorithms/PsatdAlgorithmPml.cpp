@@ -1,6 +1,6 @@
 /* Copyright 2019 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,8 +9,8 @@
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -25,7 +25,7 @@
 
 #include <cmath>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 
 using namespace amrex;
 
@@ -79,7 +79,7 @@ PsatdAlgorithmPml::pushSpectralFields(SpectralFieldData& f) const {
 
         // Extract pointers for the k vectors
         const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
         const Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
@@ -156,7 +156,7 @@ PsatdAlgorithmPml::pushSpectralFields(SpectralFieldData& f) const {
 
             // k vector values, and coefficients
             const Real kx = modified_kx_arr[i];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const Real ky = modified_ky_arr[j];
             const Real kz = modified_kz_arr[k];
 #else
@@ -363,7 +363,7 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
 
         // Extract pointers for the k vectors
         const Real* modified_kx = modified_kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const Real* modified_ky = modified_ky_vec[mfi].dataPtr();
 #endif
         const Real* modified_kz = modified_kz_vec[mfi].dataPtr();
@@ -377,7 +377,7 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             const Real kx = modified_kx[i];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const Real ky = modified_ky[j];
             const Real kz = modified_kz[k];
 #else
@@ -405,15 +405,15 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
 void
 PsatdAlgorithmPml::CurrentCorrection (SpectralFieldData& /*field_data*/)
 {
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Current correction not implemented for PML PSATD");
 }
 
 void
 PsatdAlgorithmPml::VayDeposition (SpectralFieldData& /*field_data*/)
 {
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Vay deposition not implemented for PML PSATD");
 }
 
-#endif // WARPX_USE_PSATD
+#endif // ARTEMIS_USE_PSATD

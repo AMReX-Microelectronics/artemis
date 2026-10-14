@@ -1,5 +1,5 @@
-CEXE_sources += WarpXComm.cpp
-CEXE_sources += WarpXRegrid.cpp
+CEXE_sources += ArtemisComm.cpp
+CEXE_sources += ArtemisRegrid.cpp
 CEXE_sources += GuardCellManager.cpp
 
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Parallelization
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/Parallelization

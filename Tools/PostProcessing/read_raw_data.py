@@ -1,7 +1,7 @@
 # Copyright 2017-2019 Andrew Myers, Axel Huebl, Maxence Thevenet
 # Remi Lehe
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
@@ -16,7 +16,7 @@ def read_data(plt_file):
     '''
 
     This function reads the raw (i.e. not averaged to cell centers) data
-    from a WarpX plt file. The plt file must have been written with the
+    from a Artemis plt file. The plt file must have been written with the
     plot_raw_fields option turned on, so that it contains a raw_data
     sub-directory. This is only really useful for single-level data.
 
@@ -242,7 +242,7 @@ def _read_buffer(snapshot, header_fn, _component_names):
 
 def read_reduced_diags(filename, delimiter=' '):
     '''
-    Read data written by WarpX Reduced Diagnostics, and return them into Python objects
+    Read data written by Artemis Reduced Diagnostics, and return them into Python objects
     input:
     - filename name of file to open
     - delimiter (optional, default ',') delimiter between fields in header.

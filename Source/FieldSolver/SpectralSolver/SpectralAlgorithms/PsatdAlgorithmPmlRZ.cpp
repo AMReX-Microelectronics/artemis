@@ -1,15 +1,15 @@
 /* Copyright 2021 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmPmlRZ.H"
 #include "FieldSolver/SpectralSolver/SpectralHankelTransform/HankelTransform.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <cmath>
 
@@ -99,12 +99,12 @@ PsatdAlgorithmPmlRZ::pushSpectralFields (SpectralFieldDataRZ & f)
             amrex::Real const C = C_arr(i,j,k,mode);
             amrex::Real const S_ck = S_ck_arr(i,j,k,mode);
 
-            // Update E (see WarpX online documentation: theory section)
+            // Update E (see Artemis online documentation: theory section)
             fields(i,j,k,Ep_m_pml) = C*Ep_old_pml
                         + S_ck*(-c2*I*kr/2._rt*Bz_old);
             fields(i,j,k,Em_m_pml) = C*Em_old_pml
                         + S_ck*(-c2*I*kr/2._rt*Bz_old);
-            // Update B (see WarpX online documentation: theory section)
+            // Update B (see Artemis online documentation: theory section)
             fields(i,j,k,Bp_m_pml) = C*Bp_old_pml
                         - S_ck*(-I*kr/2._rt*Ez_old);
             fields(i,j,k,Bm_m_pml) = C*Bm_old_pml
@@ -163,13 +163,13 @@ void PsatdAlgorithmPmlRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ co
 void
 PsatdAlgorithmPmlRZ::CurrentCorrection (SpectralFieldDataRZ& /* field_data */)
 {
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Current correction not implemented in RZ geometry PML");
 }
 
 void
 PsatdAlgorithmPmlRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Vay deposition not implemented in RZ geometry PML");
 }

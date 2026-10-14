@@ -1,5 +1,5 @@
-#ifndef WARPX_FLUSHFORMATSENSEI_H_
-#define WARPX_FLUSHFORMATSENSEI_H_
+#ifndef ARTEMIS_FLUSHFORMATSENSEI_H_
+#define ARTEMIS_FLUSHFORMATSENSEI_H_
 
 #include "FlushFormat.H"
 
@@ -17,7 +17,7 @@ using AmrMeshParticleInSituBridge = void;
  * SENSEI.  In particular, function WriteToFile takes fields and particles as
  * input arguments, and calls amrex functions to do the in-situ visualization.
  *
- * To use the SENSEI flush format one must compile WarpX with the GNUMakefile
+ * To use the SENSEI flush format one must compile Artemis with the GNUMakefile
  * setting:  USE_SENSEI_INSITU=TRUE
  *
  * In addition to the standard controls, the following inputs file fields are
@@ -74,4 +74,4 @@ private:
     amrex::AmrMesh * m_amr_mesh = nullptr;
 };
 
-#endif // WARPX_FLUSHFORMATSENSEI_H_
+#endif // ARTEMIS_FLUSHFORMATSENSEI_H_

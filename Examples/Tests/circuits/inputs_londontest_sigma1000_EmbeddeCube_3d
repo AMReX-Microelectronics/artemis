@@ -21,7 +21,7 @@ geometry.prob_hi     =   8.e-6  8.e-6  8.e-6
 amr.max_level = 0
 
 # Verbosity
-warpx.verbose = 1
+artemis.verbose = 1
 
 # Algorithms
 algo.current_deposition = esirkepov
@@ -46,7 +46,7 @@ macroscopic.epsilon_function(x,y,z) = "8.8541878128e-12*eps_r*(z>z_mat) + 8.8541
 macroscopic.mu_function(x,y,z) = "1.25663706212e-06*mu_r*(z>z_mat) + 1.25663706212e-06*(z<=z_mat)"
 
 # CFL
-warpx.cfl = 0.9
+artemis.cfl = 0.9
 
 #London
 algo.yee_coupled_solver = MaxwellLondon
@@ -58,16 +58,16 @@ my_constants.pi = 3.14159265359
 my_constants.L = 4.0e-6
 my_constants.c = 299792458.
 my_constants.wavelength = 1.e-6
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ez_external_grid_function(x,y,z) = 0.
-warpx.Ex_external_grid_function(x,y,z) = 0.
-warpx.Ey_external_grid_function(x,y,z) = "((1.e5*exp(-(z-zo)**2/L**2)*cos(2*pi*(z)/wavelength)))"
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ez_external_grid_function(x,y,z) = 0.
+artemis.Ex_external_grid_function(x,y,z) = 0.
+artemis.Ey_external_grid_function(x,y,z) = "((1.e5*exp(-(z-zo)**2/L**2)*cos(2*pi*(z)/wavelength)))"
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z)= "((-1.e5*exp(-(z-zo)**2/L**2)*cos(2*pi*(z)/wavelength)/c)) "
-#warpx.Bx_external_grid_function(x,y,z)= "((-1.e5*exp(-(z-zo)**2/L**2)*cos(2*pi*(z)/wavelength)/c)) + -1.e5/c*exp(-(z-0.)**2/(4.e-6)**2)  "
-warpx.By_external_grid_function(x,y,z)= 0.
-warpx.Bz_external_grid_function(x,y,z) = 0.
+artemis.B_ext_grid_init_style = parse_B_ext_grid_function
+artemis.Bx_external_grid_function(x,y,z)= "((-1.e5*exp(-(z-zo)**2/L**2)*cos(2*pi*(z)/wavelength)/c)) "
+#artemis.Bx_external_grid_function(x,y,z)= "((-1.e5*exp(-(z-zo)**2/L**2)*cos(2*pi*(z)/wavelength)/c)) + -1.e5/c*exp(-(z-0.)**2/(4.e-6)**2)  "
+artemis.By_external_grid_function(x,y,z)= 0.
+artemis.Bz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = diag1

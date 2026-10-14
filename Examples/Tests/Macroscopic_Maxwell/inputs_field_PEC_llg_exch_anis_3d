@@ -20,17 +20,17 @@ geometry.prob_hi     =   4.e-6  4.e-6  4.e-6
 # Boundary condition
 boundary.field_lo = periodic periodic pec
 boundary.field_hi = periodic periodic pml
-warpx.serialize_ics = 1
+artemis.serialize_ics = 1
 
 # Verbosity
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 40000.0 # We can use a large cfl number here because the Maxwell equations are not included.
-warpx.mag_time_scheme_order = 2 # default 1
-warpx.mag_M_normalization = 1
-warpx.mag_LLG_coupling = 0
-warpx.mag_LLG_exchange_coupling = 0
-warpx.mag_LLG_anisotropy_coupling = 1
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 40000.0 # We can use a large cfl number here because the Maxwell equations are not included.
+artemis.mag_time_scheme_order = 2 # default 1
+artemis.mag_M_normalization = 1
+artemis.mag_LLG_coupling = 0
+artemis.mag_LLG_exchange_coupling = 0
+artemis.mag_LLG_anisotropy_coupling = 1
 
 # Algorithms
 algo.current_deposition = esirkepov
@@ -83,27 +83,27 @@ my_constants.flag_none = 0
 my_constants.flag_hs = 1
 my_constants.flag_ss = 2
 
-warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0.0"
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0.0"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0.0"
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
-# warpx.Ey_excitation_flag_function(x,y,z) = "flag_ss * (z > -domain_size/2.0 + thickness - domain_size/grid_number/2.0) * (z <= -domain_size/2.0 + thickness + domain_size/grid_number/2.0)"
-warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+artemis.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0.0"
+artemis.Ey_excitation_grid_function(x,y,z,t) = "0.0"
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0.0"
+artemis.Ex_excitation_flag_function(x,y,z) = "flag_none"
+# artemis.Ey_excitation_flag_function(x,y,z) = "flag_ss * (z > -domain_size/2.0 + thickness - domain_size/grid_number/2.0) * (z <= -domain_size/2.0 + thickness + domain_size/grid_number/2.0)"
+artemis.Ey_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ez_excitation_flag_function(x,y,z) = "flag_none"
 
 #unit conversion: 1 Gauss = 1 Oersted = (1000/4pi) A/m
 #calculation of H_bias: H_bias (oe) = frequency / 2.8e6
 
-warpx.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
-warpx.Hx_bias_external_grid_function(x,y,z)= 0.
-warpx.Hy_bias_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + Hy_bias_oe_sweep*1000/4/pi * (z <= -domain_size/2.0 + thickness)" # in A/m
-warpx.Hz_bias_external_grid_function(x,y,z)= 0.
+artemis.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
+artemis.Hx_bias_external_grid_function(x,y,z)= 0.
+artemis.Hy_bias_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + Hy_bias_oe_sweep*1000/4/pi * (z <= -domain_size/2.0 + thickness)" # in A/m
+artemis.Hz_bias_external_grid_function(x,y,z)= 0.
 
-warpx.M_ext_grid_init_style = parse_M_ext_grid_function
-warpx.Mx_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + 0.14 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
-warpx.My_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) - 0.98 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
-warpx.Mz_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + 0.14 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
+artemis.M_ext_grid_init_style = parse_M_ext_grid_function
+artemis.Mx_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + 0.14 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
+artemis.My_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) - 0.98 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
+artemis.Mz_external_grid_function(x,y,z)= "0.0 * (z > -domain_size/2.0 + thickness) + 0.14 * Ms_ga*1000/4/pi * (z <= -domain_size/2.0 + thickness)"
 
 
 # Diagnostics

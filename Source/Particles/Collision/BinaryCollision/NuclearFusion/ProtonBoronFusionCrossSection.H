@@ -1,6 +1,6 @@
 /* Copyright 2021 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,7 +8,7 @@
 #ifndef PROTON_BORON_FUSION_CROSS_SECTION_H
 #define PROTON_BORON_FUSION_CROSS_SECTION_H
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Math.H>
 #include <AMReX_REAL.H>

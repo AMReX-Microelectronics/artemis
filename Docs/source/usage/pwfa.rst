@@ -1,9 +1,9 @@
 In-Depth: PWFA
 ==============
 
-As described in the :doc:`../theory/intro`, one of the key applications of the WarpX exascale computing platform is in modelling future, compact and economic plasma-based accelerators.
+As described in the :doc:`../theory/intro`, one of the key applications of the Artemis exascale computing platform is in modelling future, compact and economic plasma-based accelerators.
 In this section we describe the simulation setup of a realistic *electron beam driven plasma wakefield accelerator* (PWFA) configuration.
-For illustration purposes the setup can be explored with **WarpX** using the example input file :download:`PWFA <../../../Examples/Physics_applications/plasma_acceleration/inputs_2d_boost>`.
+For illustration purposes the setup can be explored with **Artemis** using the example input file :download:`PWFA <../../../Examples/Physics_applications/plasma_acceleration/inputs_2d_boost>`.
 
 The simulation setup consists of 4 particle species: drive beam (driver), witness beam (beam), plasma electrons (plasma_e), and plasma ions (plasma_p).
 The species physical parameters are summarized in the following table.
@@ -51,14 +51,14 @@ Finite Difference Time Domain
 Cole-Karkkainen solver with Cowan coefficients
 ----------------------------------------------
 
-    There are two FDTD Maxwell field solvers that compute the field push implemented in WarpX: the Yee and Cole-Karkkainen solver with Cowan coefficients (CKC) solvers.
+    There are two FDTD Maxwell field solvers that compute the field push implemented in Artemis: the Yee and Cole-Karkkainen solver with Cowan coefficients (CKC) solvers.
     The later includes a modification that allows the numerical dispersion of light in vacuum to be exact, and that is why we choose CKC for the example.
 
 
 Lorentz boosted frame
 ---------------------
 
-    WarpX simulations can be done in the laboratory or `Lorentz-boosted <https://warpx.readthedocs.io/en/latest/theory/boosted_frame.html>`_ frames.
+    Artemis simulations can be done in the laboratory or `Lorentz-boosted <https://warpx.readthedocs.io/en/latest/theory/boosted_frame.html>`_ frames.
     In the laboratory frame, there is typically no need to model the plasma ions species, since they are mainly stationary during the short time scales associated with the motion of plasma electrons.
     In the boosted frame, that argument is no longer valid, as ions have relativistic velocities.
     The boosted frame still results in a substantial reduction to the simulation computational cost.
@@ -94,7 +94,7 @@ Resolution
 Time step
 ---------
 
-    The time step (:math:`dt`) is used to iterated over the main PIC loop and is computed by WarpX differently depending on the Maxwell field FDTD solvers used:
+    The time step (:math:`dt`) is used to iterated over the main PIC loop and is computed by Artemis differently depending on the Maxwell field FDTD solvers used:
 
     * **For Yee** is equal to the CFL parameter chosen in the input file (:doc:`parameters`) times the Courant–Friedrichs–Lewy condition (CFL) that follows the analytical expression in :doc:`../theory/picsar_theory`
     * **For CKC** is equal to CFL times the minimum between the boosted frame cell dimensions
@@ -117,7 +117,7 @@ Duration of the simulation
 Plotfiles and snapshots
 -----------------------
 
-    WarpX allows the data to be stored in different formats, such as plotfiles (following the `yt guidelines <https://yt-project.org/doc/index.html>`_), hdf5 and openPMD (following its `standard <https://github.com/openPMD>`_).
+    Artemis allows the data to be stored in different formats, such as plotfiles (following the `yt guidelines <https://yt-project.org/doc/index.html>`_), hdf5 and openPMD (following its `standard <https://github.com/openPMD>`_).
     In the example, we are dumping plotfiles with boosted frame information on the simulation particles and fields.
     We are also requesting back transformed diagnostics that transform that information back to the laboratory frame.
     The diagnostics results are analysed and stored in snapshots at each time step and so it is best to make sure that the run does not end before filling the final snapshot.

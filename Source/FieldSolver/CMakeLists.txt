@@ -1,15 +1,15 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     ElectrostaticSolver.cpp
-    WarpXPushFieldsEM.cpp
-    WarpX_QED_Field_Pushers.cpp
-    WarpXExternalEMFields.cpp
+    ArtemisPushFieldsEM.cpp
+    Artemis_QED_Field_Pushers.cpp
+    ArtemisExternalEMFields.cpp
 )
 
 add_subdirectory(FiniteDifferenceSolver)
 add_subdirectory(London)
 add_subdirectory(LumpedElement)
 add_subdirectory(MagnetostaticSolver)
-if(WarpX_PSATD)
+if(Artemis_PSATD)
     add_subdirectory(SpectralSolver)
 endif()

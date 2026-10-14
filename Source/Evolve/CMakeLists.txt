@@ -1,5 +1,5 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
-    WarpXEvolve.cpp
-    WarpXComputeDt.cpp
+    ArtemisEvolve.cpp
+    ArtemisComputeDt.cpp
 )

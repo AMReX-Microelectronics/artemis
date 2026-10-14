@@ -8,4 +8,4 @@ CEXE_sources += BackTransformFunctor.cpp
 CEXE_sources += BackTransformParticleFunctor.cpp
 CEXE_sources += ParticleReductionFunctor.cpp
 
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics/ComputeDiagFunctors
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/Diagnostics/ComputeDiagFunctors

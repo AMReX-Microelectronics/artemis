@@ -1,5 +1,5 @@
-#ifndef WARPX_MULTIDIAGNOSTICS_H_
-#define WARPX_MULTIDIAGNOSTICS_H_
+#ifndef ARTEMIS_MULTIDIAGNOSTICS_H_
+#define ARTEMIS_MULTIDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
 
@@ -49,4 +49,4 @@ private:
     std::vector<DiagTypes> diags_types;
 };
 
-#endif // WARPX_MULTIDIAGNOSTICS_H_
+#endif // ARTEMIS_MULTIDIAGNOSTICS_H_

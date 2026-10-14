@@ -19,12 +19,12 @@ amr.max_level = 0
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 1
-warpx.mag_time_scheme_order = 2 # default 1
-warpx.mag_M_normalization = 1 # 1 is saturated
-warpx.mag_LLG_coupling = 1
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 1
+artemis.mag_time_scheme_order = 2 # default 1
+artemis.mag_M_normalization = 1 # 1 is saturated
+artemis.mag_LLG_coupling = 1
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
@@ -51,24 +51,24 @@ my_constants.L = 141.4213562373095e-6
 my_constants.c = 299792458.
 my_constants.wavelength = 1.2e-1
 
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ez_external_grid_function(x,y,z) = 0.
-warpx.Ex_external_grid_function(x,y,z) = 0.
-warpx.Ey_external_grid_function(x,y,z) = 0.
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ez_external_grid_function(x,y,z) = 0.
+artemis.Ex_external_grid_function(x,y,z) = 0.
+artemis.Ey_external_grid_function(x,y,z) = 0.
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z)= 0.1759.
-warpx.By_external_grid_function(x,y,z)= 0.
-warpx.Bz_external_grid_function(x,y,z) = 0.
+artemis.B_ext_grid_init_style = parse_B_ext_grid_function
+artemis.Bx_external_grid_function(x,y,z)= 0.1759.
+artemis.By_external_grid_function(x,y,z)= 0.
+artemis.Bz_external_grid_function(x,y,z) = 0.
 
-warpx.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
-warpx.Hx_bias_external_grid_function(x,y,z)= 0.
-warpx.Hy_bias_external_grid_function(x,y,z)= 0.
-warpx.Hz_bias_external_grid_function(x,y,z)= 3e4 # in A/m, equal to 382 Oersted
+artemis.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
+artemis.Hx_bias_external_grid_function(x,y,z)= 0.
+artemis.Hy_bias_external_grid_function(x,y,z)= 0.
+artemis.Hz_bias_external_grid_function(x,y,z)= 3e4 # in A/m, equal to 382 Oersted
 #unit conversion: 1 Gauss = 1 Oersted = (1000/4pi) A/m
 #calculation of H_bias: H_bias (oe) = frequency / 2.8e6
-warpx.M_ext_grid_init_style = constant
-warpx.M_external_grid = 140000. 0. 0.
+artemis.M_ext_grid_init_style = constant
+artemis.M_external_grid = 140000. 0. 0.
 
 # Diagnostics
 diagnostics.diags_names = plt

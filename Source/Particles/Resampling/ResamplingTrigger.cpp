@@ -1,13 +1,13 @@
 /* Copyright 2019-2020 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "ResamplingTrigger.H"
 
 #include "Utils/Parser/ParserUtils.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_BoxArray.H>
 #include <AMReX_ParmParse.H>
@@ -37,10 +37,10 @@ bool ResamplingTrigger::triggered (const int timestep, const amrex::Real global_
 
 void ResamplingTrigger::initialize_global_numcells () const
 {
-    auto & warpx = WarpX::GetInstance();
-    for (int lev = 0; lev <= warpx.maxLevel(); lev++)
+    auto & artemis = Artemis::GetInstance();
+    for (int lev = 0; lev <= artemis.maxLevel(); lev++)
     {
-        m_global_numcells +=  warpx.boxArray(lev).numPts();
+        m_global_numcells +=  artemis.boxArray(lev).numPts();
     }
     m_initialized = true;
 }

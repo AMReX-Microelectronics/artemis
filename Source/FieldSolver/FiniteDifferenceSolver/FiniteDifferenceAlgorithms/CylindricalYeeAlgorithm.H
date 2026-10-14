@@ -1,14 +1,14 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CYLINDRICAL_YEE_H_
-#define WARPX_FINITE_DIFFERENCE_ALGORITHM_CYLINDRICAL_YEE_H_
+#ifndef ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CYLINDRICAL_YEE_H_
+#define ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CYLINDRICAL_YEE_H_
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -169,4 +169,4 @@ struct CylindricalYeeAlgorithm {
 
 };
 
-#endif // WARPX_FINITE_DIFFERENCE_ALGORITHM_CYLINDRICAL_YEE_H_
+#endif // ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CYLINDRICAL_YEE_H_

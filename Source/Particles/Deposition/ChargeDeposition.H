@@ -1,7 +1,7 @@
 /* Copyright 2019 Axel Huebl, Andrew Myers, David Grote, Maxence Thevenet
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -12,10 +12,10 @@
 #include "ablastr/parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#ifdef WARPX_DIM_RZ
-#   include "Utils/WarpX_Complex.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#ifdef ARTEMIS_DIM_RZ
+#   include "Utils/Artemis_Complex.H"
 #endif
 
 #include <AMReX.H>
@@ -61,22 +61,22 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
     const amrex::Real dzi = 1.0_rt/dx[2];
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     const amrex::Real invvol = dzi;
 #endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real invvol = dxi*dzi;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
     const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dyi = 1.0_rt/dx[1];
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ) || defined(ARTEMIS_DIM_3D)
     const amrex::Real xmin = xyzmin[0];
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
     const amrex::Real zmin = xyzmin[2];
@@ -88,7 +88,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     constexpr int CELL = amrex::IndexType::CELL;
 
     // Loop over particles and deposit into rho_fab
-#if defined(WARPX_USE_GPUCLOCK)
+#if defined(ARTEMIS_USE_GPUCLOCK)
     amrex::Real* cost_real = nullptr;
     if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         cost_real = (amrex::Real *) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
@@ -98,7 +98,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
-#if defined(WARPX_USE_GPUCLOCK)
+#if defined(ARTEMIS_USE_GPUCLOCK)
             const auto KernelTimer = ablastr::parallelization::KernelTimer(
                 cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
                 cost_real);
@@ -114,10 +114,10 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
             // --- Compute shape factors
             Compute_shape_factor< depos_order > const compute_shape_factor;
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ) || defined(ARTEMIS_DIM_3D)
             // x direction
             // Get particle position in grid coordinates
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
             const amrex::Real rp = std::sqrt(xp*xp + yp*yp);
             amrex::Real costheta;
             amrex::Real sintheta;
@@ -143,8 +143,8 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             } else if (rho_type[0] == CELL) {
                 i = compute_shape_factor(sx, x - 0.5_rt);
             }
-#endif //defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
-#if defined(WARPX_DIM_3D)
+#endif //defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ) || defined(ARTEMIS_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             // y direction
             const amrex::Real y = (yp - ymin)*dyi;
             amrex::Real sy[depos_order + 1] = {0._rt};
@@ -159,27 +159,27 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             const amrex::Real z = (zp - zmin)*dzi;
             amrex::Real sz[depos_order + 1] = {0._rt};
             int k = 0;
-            if (rho_type[WARPX_ZINDEX] == NODE) {
+            if (rho_type[ARTEMIS_ZINDEX] == NODE) {
                 k = compute_shape_factor(sz, z);
-            } else if (rho_type[WARPX_ZINDEX] == CELL) {
+            } else if (rho_type[ARTEMIS_ZINDEX] == CELL) {
                 k = compute_shape_factor(sz, z - 0.5_rt);
             }
 
             // Deposit charge into rho_arr
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
             for (int iz=0; iz<=depos_order; iz++){
                 amrex::Gpu::Atomic::AddNoRet(
                     &rho_arr(lo.x+k+iz, 0, 0, 0),
                     sz[iz]*wq);
             }
 #endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
                     amrex::Gpu::Atomic::AddNoRet(
                         &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 0),
                         sx[ix]*sz[iz]*wq);
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
                     Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 on the weighting comes from the normalization of the modes
@@ -190,7 +190,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
                 }
             }
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int iy=0; iy<=depos_order; iy++){
                     for (int ix=0; ix<=depos_order; ix++){
@@ -203,7 +203,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
         }
         );
-#if defined(WARPX_USE_GPUCLOCK)
+#if defined(ARTEMIS_USE_GPUCLOCK)
     if (cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         amrex::Gpu::streamSynchronize();
         *cost += *cost_real;
@@ -211,7 +211,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     }
 #endif
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 }
@@ -247,7 +247,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                                      const int n_rz_azimuthal_modes,
                                      amrex::Real* cost,
                                      const long load_balance_costs_update_algo,
-                                     const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
+                                     const amrex::DenseBins<ArtemisParticleContainer::ParticleType>& a_bins,
                                      const amrex::Box& box,
                                      const amrex::Geometry& geom,
                                      const amrex::IntVect& a_tbox_max_size)
@@ -264,22 +264,22 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
     const amrex::Real dzi = 1.0_rt/dx[2];
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     const amrex::Real invvol = dzi;
 #endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real invvol = dxi*dzi;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
     const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dyi = 1.0_rt/dx[1];
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ) || defined(ARTEMIS_DIM_3D)
     const amrex::Real xmin = xyzmin[0];
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
     const amrex::Real zmin = xyzmin[2];
@@ -292,7 +292,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     constexpr int CELL = amrex::IndexType::CELL;
 
     // Loop over particles and deposit into rho_fab
-#if defined(WARPX_USE_GPUCLOCK)
+#if defined(ARTEMIS_USE_GPUCLOCK)
     amrex::Real* cost_real = nullptr;
     if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         cost_real = (amrex::Real *) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
@@ -317,11 +317,11 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const int threads_per_block = 256;
 
     std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
-    amrex::IntVect bin_size = WarpX::shared_tilesize;
+    amrex::IntVect bin_size = Artemis::shared_tilesize;
 
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
                                      "Tile size too big for GPU shared memory charge deposition");
 #endif
 
@@ -348,15 +348,15 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         {
           ParticleReal xp, yp, zp;
           GetPosition(permutation[bin_start], xp, yp, zp);
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
           IntVect iv = IntVect(int(amrex::Math::floor((xp-plo[0])*dxiarr[0])),
                                int(amrex::Math::floor((yp-plo[1])*dxiarr[1])),
                                int(amrex::Math::floor((zp-plo[2])*dxiarr[2])));
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
           IntVect iv = IntVect(
                                int(amrex::Math::floor((xp-plo[0])*dxiarr[0])),
                                int(amrex::Math::floor((zp-plo[1])*dxiarr[1])));
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
           IntVect iv = IntVect(int(amrex::Math::floor((zp-plo[0])*dxiarr[0])));
 #endif
           iv += domain.smallEnd();
@@ -388,7 +388,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         {
             unsigned int ip = permutation[ip_orig];
 
-#if defined(WARPX_USE_GPUCLOCK)
+#if defined(ARTEMIS_USE_GPUCLOCK)
             const auto KernelTimer = ablastr::parallelization::KernelTimer(
                 cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
                 cost_real);
@@ -404,10 +404,10 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
             // --- Compute shape factors
             Compute_shape_factor< depos_order > const compute_shape_factor;
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ) || defined(ARTEMIS_DIM_3D)
             // x direction
             // Get particle position in grid coordinates
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
             const amrex::Real rp = std::sqrt(xp*xp + yp*yp);
             amrex::Real costheta;
             amrex::Real sintheta;
@@ -433,8 +433,8 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             } else if (rho_type[0] == CELL) {
                 i = compute_shape_factor(sx, x - 0.5_rt);
             }
-#endif //defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
-#if defined(WARPX_DIM_3D)
+#endif //defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ) || defined(ARTEMIS_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             // y direction
             const amrex::Real y = (yp - ymin)*dyi;
             amrex::Real sy[depos_order + 1] = {0._rt};
@@ -449,27 +449,27 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             const amrex::Real z = (zp - zmin)*dzi;
             amrex::Real sz[depos_order + 1] = {0._rt};
             int k = 0;
-            if (rho_type[WARPX_ZINDEX] == NODE) {
+            if (rho_type[ARTEMIS_ZINDEX] == NODE) {
                 k = compute_shape_factor(sz, z);
-            } else if (rho_type[WARPX_ZINDEX] == CELL) {
+            } else if (rho_type[ARTEMIS_ZINDEX] == CELL) {
                 k = compute_shape_factor(sz, z - 0.5_rt);
             }
 
             // Deposit charge into buf
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
             for (int iz=0; iz<=depos_order; iz++){
                 amrex::Gpu::Atomic::AddNoRet(
                     &buf(lo.x+k+iz, 0, 0, 0),
                     sz[iz]*wq);
             }
 #endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
                     amrex::Gpu::Atomic::AddNoRet(
                         &buf(lo.x+i+ix, lo.y+k+iz, 0, 0),
                         sx[ix]*sz[iz]*wq);
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
                     Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 on the weighting comes from the normalization of the modes
@@ -480,7 +480,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
                 }
             }
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int iy=0; iy<=depos_order; iy++){
                     for (int ix=0; ix<=depos_order; ix++){
@@ -500,7 +500,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
       }
       );
-#if defined(WARPX_USE_GPUCLOCK)
+#if defined(ARTEMIS_USE_GPUCLOCK)
         if(cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
             amrex::Gpu::streamSynchronize();
             *cost += *cost_real;
@@ -508,7 +508,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         }
 #endif
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
         amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 }

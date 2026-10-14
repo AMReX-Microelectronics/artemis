@@ -1,16 +1,16 @@
 /* Copyright 2020 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_MACROSCOPICPROPERTIES_H_
-#define WARPX_MACROSCOPICPROPERTIES_H_
+#ifndef ARTEMIS_MACROSCOPICPROPERTIES_H_
+#define ARTEMIS_MACROSCOPICPROPERTIES_H_
 
 #include "MacroscopicProperties_fwd.H"
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Extension.H>
@@ -117,7 +117,7 @@ public:
      std::unique_ptr<amrex::Parser> m_epsilon_parser;
      std::unique_ptr<amrex::Parser> m_mu_parser;
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
      /** Gpu Vector with index type of the Hx multifab */
      amrex::GpuArray<int, 3> Hx_IndexType;
      /** Gpu Vector with index type of the Hy multifab */
@@ -261,7 +261,7 @@ public:
      }
 #endif //closes ifdef MAG_LLG
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
      /** Saturation magnetization, only applies for magnetic materials */
      amrex::Real m_mag_Ms;
      /** Gilbert damping, only applies for magnetic materials */
@@ -396,4 +396,4 @@ struct BackwardEulerAlgo {
 
 };
 
-#endif // WARPX_MACROSCOPIC_PROPERTIES_H_
+#endif // ARTEMIS_MACROSCOPIC_PROPERTIES_H_

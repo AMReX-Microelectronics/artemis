@@ -6,12 +6,12 @@ GNUmake Build System (Legacy)
 :ref:`CMake <install-developers>` is our primary build system.
 In this section, we describe our legacy build scripts - do not use them unless you used them before.
 
-WarpX is built on `AMReX <https://amrex-codes.github.io>`__, which also provides support for a Linux-centric set of build scripts implemented in GNUmake.
-Since we sometimes need to move fast and test highly experimental compilers and Unix derivates on core components of WarpX, this set of build scripts is used by some of our experienced developers.
+Artemis is built on `AMReX <https://amrex-codes.github.io>`__, which also provides support for a Linux-centric set of build scripts implemented in GNUmake.
+Since we sometimes need to move fast and test highly experimental compilers and Unix derivates on core components of Artemis, this set of build scripts is used by some of our experienced developers.
 
 .. warning::
 
-   On the long-term, these scripts do not scale to the full feature set of WarpX and its dependencies.
+   On the long-term, these scripts do not scale to the full feature set of Artemis and its dependencies.
    Please see the CMake-based :ref:`developer section <install-developers>` instead.
 
 This page describes the most basic build with GNUmake files and points to instructions for more advanced builds.
@@ -19,26 +19,26 @@ This page describes the most basic build with GNUmake files and points to instru
 Downloading the source code
 ---------------------------
 
-Clone the source codes of WarpX, and its dependencies AMReX and PICSAR into one
-single directory (e.g. ``warpx_directory``):
+Clone the source codes of Artemis, and its dependencies AMReX and PICSAR into one
+single directory (e.g. ``artemis_directory``):
 
 ::
 
-    mkdir warpx_directory
-    cd warpx_directory
+    mkdir artemis_directory
+    cd artemis_directory
     git clone https://github.com/ECP-WarpX/WarpX.git
     git clone https://github.com/ECP-WarpX/picsar.git
     git clone https://github.com/ECP-WarpX/warpx-data.git
     git clone https://github.com/AMReX-Codes/amrex.git
 
 .. note::
-   The warpx-data repository is currently only needed for MCC cross-sections.
+   The artemis-data repository is currently only needed for MCC cross-sections.
 
 Basic compilation
 -----------------
 
-WarpX requires a C/C++ compiler (e.g., GNU, LLVM or Intel) and an MPI implementation (e.g., OpenMPI or MPICH).
-Start a GNUmake build by ``cd``-ing into the directory ``WarpX`` and type
+Artemis requires a C/C++ compiler (e.g., GNU, LLVM or Intel) and an MPI implementation (e.g., OpenMPI or MPICH).
+Start a GNUmake build by ``cd``-ing into the directory ``Artemis`` and type
 
 ::
 
@@ -49,7 +49,7 @@ This will generate an executable file in the ``Bin`` directory.
 Compile-time vs. run-time options
 ---------------------------------
 
-WarpX has multiple compile-time and run-time options. The compilation
+Artemis has multiple compile-time and run-time options. The compilation
 options are set in the file ``GNUmakefile``. The default
 options correspond to an optimized code for 3D geometry. The main compile-time
 options are:
