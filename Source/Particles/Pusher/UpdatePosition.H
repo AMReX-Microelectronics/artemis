@@ -1,14 +1,14 @@
 /* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_
-#define WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_
+#ifndef ARTEMIS_PARTICLES_PUSHER_UPDATEPOSITION_H_
+#define ARTEMIS_PARTICLES_PUSHER_UPDATEPOSITION_H_
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX.H>
 #include <AMReX_FArrayBox.H>
@@ -34,7 +34,7 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
 #else
     amrex::ignore_unused(x);
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) // RZ pushes particles in 3D
+#if defined(ARTEMIS_DIM_3D) || defined(ARTEMIS_DIM_RZ) // RZ pushes particles in 3D
     y += uy * inv_gamma * dt;
 #else
     amrex::ignore_unused(y);
@@ -42,4 +42,4 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
     z += uz * inv_gamma * dt;
 }
 
-#endif // WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_
+#endif // ARTEMIS_PARTICLES_PUSHER_UPDATEPOSITION_H_

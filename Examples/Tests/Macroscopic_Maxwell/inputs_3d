@@ -18,9 +18,9 @@ amr.max_level = 0
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 1.
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 1.
 
 #algo.em_solver_medium = vacuum # vacuum/macroscopic
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
@@ -38,15 +38,15 @@ my_constants.L = 141.4213562373095e-6
 my_constants.c = 299792458.
 my_constants.wavelength = 64.e-6
 
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ez_external_grid_function(x,y,z) = 0.
-warpx.Ex_external_grid_function(x,y,z) = 0.
-warpx.Ey_external_grid_function(x,y,z) = "1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)"
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ez_external_grid_function(x,y,z) = 0.
+artemis.Ex_external_grid_function(x,y,z) = 0.
+artemis.Ey_external_grid_function(x,y,z) = "1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)"
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z)= "-1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)/c"
-warpx.By_external_grid_function(x,y,z)= 0.
-warpx.Bz_external_grid_function(x,y,z) = 0.
+artemis.B_ext_grid_init_style = parse_B_ext_grid_function
+artemis.Bx_external_grid_function(x,y,z)= "-1.e5*exp(-z**2/L**2)*cos(2*pi*z/wavelength)/c"
+artemis.By_external_grid_function(x,y,z)= 0.
+artemis.Bz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = diag1

@@ -1,13 +1,13 @@
 /* Copyright 2019 Edoardo Zoni
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "SpectralBaseAlgorithm.H"
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX_Array4.H>
 #include <AMReX_BaseFab.H>
@@ -35,14 +35,14 @@ SpectralBaseAlgorithm::SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspa
         m_spectral_index(spectral_index),
     // Compute and assign the modified k vectors
         modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,grid_type)),
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,grid_type)),
         modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,2,norder_z,grid_type))
 #else
         modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,grid_type))
 #endif
     {
-#if !defined(WARPX_DIM_3D)
+#if !defined(ARTEMIS_DIM_3D)
         amrex::ignore_unused(norder_y);
 #endif
     }
@@ -73,7 +73,7 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
         Array4<Complex> fields = field_data.fields[mfi].array();
         // Extract pointers for the k vectors
         const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         const Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
         const Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
@@ -88,7 +88,7 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
             const Complex Ez = fields(i,j,k,Idx.Ez);
             // k vector values
             const Real kx = modified_kx_arr[i];
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             const Real ky = modified_ky_arr[j];
             const Real kz = modified_kz_arr[k];
 #else

@@ -17,28 +17,28 @@ jobs:
     FFTW_HOME: '/usr'
     LAPACKPP_HOME: '/usr/local'
     OMP_NUM_THREADS: 1
-    WARPX_CI_CCACHE: 'TRUE'
-    WARPX_CI_NUM_MAKE_JOBS: 2
-    WARPX_CI_OPENPMD: 'TRUE'
-    WARPX_CI_TMP: '/tmp/ci'
+    ARTEMIS_CI_CCACHE: 'TRUE'
+    ARTEMIS_CI_NUM_MAKE_JOBS: 2
+    ARTEMIS_CI_OPENPMD: 'TRUE'
+    ARTEMIS_CI_TMP: '/tmp/ci'
 
   strategy:
     matrix:
       cartesian1d:
-        WARPX_CI_REGULAR_CARTESIAN_1D: 'TRUE'
-        WARPX_CI_PSATD: 'FALSE'
+        ARTEMIS_CI_REGULAR_CARTESIAN_1D: 'TRUE'
+        ARTEMIS_CI_PSATD: 'FALSE'
       cartesian2d:
-        WARPX_CI_REGULAR_CARTESIAN_2D: 'TRUE'
+        ARTEMIS_CI_REGULAR_CARTESIAN_2D: 'TRUE'
       cartesian3d:
-        WARPX_CI_REGULAR_CARTESIAN_3D: 'TRUE'
+        ARTEMIS_CI_REGULAR_CARTESIAN_3D: 'TRUE'
       single_precision:
-        WARPX_CI_SINGLE_PRECISION: 'TRUE'
+        ARTEMIS_CI_SINGLE_PRECISION: 'TRUE'
       rz_or_nompi:
-        WARPX_CI_RZ_OR_NOMPI: 'TRUE'
+        ARTEMIS_CI_RZ_OR_NOMPI: 'TRUE'
       qed:
-        WARPX_CI_QED: 'TRUE'
+        ARTEMIS_CI_QED: 'TRUE'
       embedded_boundary:
-        WARPX_CI_EB: 'TRUE'
+        ARTEMIS_CI_EB: 'TRUE'
 
   # default: 60; maximum: 360
   timeoutInMinutes: 120
@@ -91,7 +91,7 @@ jobs:
       export PATH="$HOME/.local/bin:$PATH"
       sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
       sudo chmod a+x /usr/local/bin/cmake-easyinstall
-      if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
+      if [ "${ARTEMIS_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
         cmake-easyinstall --prefix=/usr/local                   \
           git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
           -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)         \
@@ -99,7 +99,7 @@ jobs:
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
         python3 -m pip install --upgrade openpmd-api
       fi
-      if [[ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]]; then
+      if [[ "${ARTEMIS_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]]; then
         cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \
           -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
           -DCMAKE_CXX_STANDARD=17                       \
@@ -117,6 +117,6 @@ jobs:
       set -eu -o pipefail
       df -h
       ./run_test.sh
-      rm -rf ${WARPX_CI_TMP}
+      rm -rf ${ARTEMIS_CI_TMP}
       df -h
     displayName: 'Build & test'

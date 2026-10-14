@@ -56,7 +56,7 @@ where:
 * ``[PRIORITY]`` can be ``[!  ]`` (low priority), ``[!! ]`` (medium priority) or ``[!!!]`` (high priority). It indicates the importance of the warning.
 * ``[TOPIC]`` indicates which part of the code is concerned by the warning (e.g., particles, laser, parallelization...)
 * ``MULTILINE MESSAGGE`` is an arbitrary text message. It can span multiple-lines. Text is wrapped automatically.
-* ``COUNTER`` indicates the number of times the warning was raised **across all the MPI ranks**. This means that if we run WarpX with 2048 MPI ranks and each rank raises the same warning once, the displayed message will be ``[raised 2048 times]``. Possible values are ``once``, ``twice``, ``XX times``
+* ``COUNTER`` indicates the number of times the warning was raised **across all the MPI ranks**. This means that if we run Artemis with 2048 MPI ranks and each rank raises the same warning once, the displayed message will be ``[raised 2048 times]``. Possible values are ``once``, ``twice``, ``XX times``
 * ``WHICH_RANKS`` can be either ``ALL`` or a sequence of rank IDs. It is the list of the MPI ranks which have raised the warning message.
 
 Entries are sorted first by priority (high priority first), then by topic (alphabetically) and finally by text message (alphabetically).
@@ -75,7 +75,7 @@ In the code, instead of using ``amrex::Warning`` to immediately print a warning 
 
 In this example, ``QED`` is the topic, ``Using [...]`` is the warning message and ``ablastr::warn_manager::WarnPriority::low`` is the priority.
 `RecordWarning` is **not** a collective call and should also be thread-safe (it can be called in OpenMP loops).
-In case the user wants to also print the warning messages immediately, the runtime parameter ``warpx.always_warn_immediately`` can be set to ``1``.
+In case the user wants to also print the warning messages immediately, the runtime parameter ``artemis.always_warn_immediately`` can be set to ``1``.
 The Warning manager is a singleton class defined in ``Source/ablastr/warn_manager/WarnManager.H```
 
 How to print the warning list
@@ -151,10 +151,10 @@ For instance, the following inputfile
    #################################
    ############ NUMERICS ###########
    #################################
-   warpx.serialize_initial_conditions = 1
-   warpx.verbose = 1
-   warpx.cfl = 1.0
-   warpx.use_filter = 0
+   artemis.serialize_initial_conditions = 1
+   artemis.verbose = 1
+   artemis.cfl = 1.0
+   artemis.use_filter = 0
 
    # Order of particle shape factors
    algo.particle_shape = 1
@@ -163,7 +163,7 @@ For instance, the following inputfile
    ######## DEBUG WARNINGS #########
    #################################
 
-   warpx.test_warnings = w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 w18 w19 w20 w21 w22
+   artemis.test_warnings = w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 w18 w19 w20 w21 w22
 
    w1.topic    = "Priority Sort Test"
    w1.msg      = "Test that priority is correctly sorted"

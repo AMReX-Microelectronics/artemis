@@ -1,10 +1,10 @@
-#ifndef WARPX_PARTICLES_GATHER_GETEXTERNALFIELDS_H_
-#define WARPX_PARTICLES_GATHER_GETEXTERNALFIELDS_H_
+#ifndef ARTEMIS_PARTICLES_GATHER_GETEXTERNALFIELDS_H_
+#define ARTEMIS_PARTICLES_GATHER_GETEXTERNALFIELDS_H_
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 
-#include "Particles/WarpXParticleContainer_fwd.H"
-#include "Utils/WarpXConst.H"
+#include "Particles/ArtemisParticleContainer_fwd.H"
+#include "Utils/ArtemisConst.H"
 
 #include "AcceleratorLattice/LatticeElementFinder.H"
 
@@ -27,7 +27,7 @@ struct GetExternalEBField
 
     GetExternalEBField () = default;
 
-    GetExternalEBField (const WarpXParIter& a_pti, int a_offset = 0) noexcept;
+    GetExternalEBField (const ArtemisParIter& a_pti, int a_offset = 0) noexcept;
 
     ExternalFieldInitType m_Etype;
     ExternalFieldInitType m_Btype;

@@ -1,10 +1,10 @@
 #include "ParticleDiag.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -13,7 +13,7 @@
 
 using namespace amrex;
 
-ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc, PinnedMemoryParticleContainer* pinned_pc)
+ParticleDiag::ParticleDiag(std::string diag_name, std::string name, ArtemisParticleContainer* pc, PinnedMemoryParticleContainer* pinned_pc)
     : m_diag_name(diag_name), m_name(name), m_pc(pc), m_pinned_pc(pinned_pc)
 {
     //variable to set m_plot_flags size
@@ -34,7 +34,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
             const std::map<std::string, int> existing_variable_names = pc->getParticleComps();
             for (const auto& var : variables){
                 const auto search = existing_variable_names.find(var);
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     search != existing_variable_names.end(),
                     "variables argument '" + var
                     +"' is not an existing attribute for this species");
@@ -43,7 +43,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
         }
     }
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     // Always write out theta, whether or not it's requested,
     // to be consistent with always writing out r and z.
     // TODO: openPMD does a reconstruction to Cartesian, so we can now skip force-writing this

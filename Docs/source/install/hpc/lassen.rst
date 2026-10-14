@@ -23,23 +23,23 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
-We use the following modules and environments on the system (``$HOME/lassen_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/lassen_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen_artemis.profile.example``.
 
-We recommend to store the above lines in a file, such as ``$HOME/lassen_warpx.profile``, and load it into your shell after a login:
+We recommend to store the above lines in a file, such as ``$HOME/lassen_artemis.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   source $HOME/lassen_warpx.profile
+   source $HOME/lassen_artemis.profile
 
 And since Lassen does not yet provide a module for them, install ADIOS2, BLAS++ and LAPACK++:
 
@@ -69,20 +69,20 @@ And since Lassen does not yet provide a module for them, install ADIOS2, BLAS++ 
    CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-lassen-build -Duse_cmake_find_lapack=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/lapackpp-master -DLAPACK_LIBRARIES=/usr/lib64/liblapack.so
    cmake --build src/lapackpp-lassen-build --target install --parallel 16
 
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON
+   cmake -S . -B build -DArtemis_COMPUTE=CUDA -DArtemis_PSATD=ON
    cmake --build build -j 10
 
 The other :ref:`general compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lassen>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lassen>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``/p/gpfs1/$(whoami)``.
 
 
@@ -96,7 +96,7 @@ Running
 V100 GPUs (16GB)
 ^^^^^^^^^^^^^^^^
 
-The batch script below can be used to run a WarpX simulation on 2 nodes on the supercomputer Lassen at LLNL.
+The batch script below can be used to run a Artemis simulation on 2 nodes on the supercomputer Lassen at LLNL.
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
 Note that the only option so far is to run with one MPI rank per GPU.
 

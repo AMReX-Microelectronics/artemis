@@ -1,14 +1,14 @@
 /* Copyright 2019 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "Laser/LaserProfiles.H"
 
 #include "Utils/Parser/ParserUtils.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX_Extension.H>
 #include <AMReX_GpuLaunch.H>
@@ -20,7 +20,7 @@
 using namespace amrex;
 
 void
-WarpXLaserProfiles::HarrisLaserProfile::init (
+ArtemisLaserProfiles::HarrisLaserProfile::init (
     const amrex::ParmParse& ppl,
     CommonLaserParameters params)
 {
@@ -48,7 +48,7 @@ WarpXLaserProfiles::HarrisLaserProfile::init (
  * \param amplitude: pointer to array of field amplitude.
  */
 void
-WarpXLaserProfiles::HarrisLaserProfile::fill_amplitude (
+ArtemisLaserProfiles::HarrisLaserProfile::fill_amplitude (
     const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {

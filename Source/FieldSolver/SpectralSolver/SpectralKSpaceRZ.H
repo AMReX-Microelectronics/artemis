@@ -1,11 +1,11 @@
 /* Copyright 2019-2020 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRAL_K_SPACE_RZ_H_
-#define WARPX_SPECTRAL_K_SPACE_RZ_H_
+#ifndef ARTEMIS_SPECTRAL_K_SPACE_RZ_H_
+#define ARTEMIS_SPECTRAL_K_SPACE_RZ_H_
 
 #include "SpectralKSpace.H"
 
@@ -29,4 +29,4 @@ class SpectralKSpaceRZ
 
 };
 
-#endif // WARPX_SPECTRAL_K_SPACE_RZ_H_
+#endif // ARTEMIS_SPECTRAL_K_SPACE_RZ_H_

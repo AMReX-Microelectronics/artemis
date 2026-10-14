@@ -1,6 +1,6 @@
 /* Copyright 2019 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -11,9 +11,9 @@
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "QEDInternals/QuantumSyncEngineWrapper.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -111,7 +111,7 @@ public:
         QuantumSynchrotronGetOpticalDepth opt_depth_functor,
         int const opt_depth_runtime_comp,
         QuantumSynchrotronPhotonEmission const emission_functor,
-        const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
+        const ArtemisParIter& a_pti, int lev, amrex::IntVect ngEB,
         amrex::FArrayBox const& exfab,
         amrex::FArrayBox const& eyfab,
         amrex::FArrayBox const& ezfab,

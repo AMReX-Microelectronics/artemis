@@ -1,5 +1,5 @@
-#ifndef WARPX_FLUSHFORMATPLOTFILE_H_
-#define WARPX_FLUSHFORMATPLOTFILE_H_
+#ifndef ARTEMIS_FLUSHFORMATPLOTFILE_H_
+#define ARTEMIS_FLUSHFORMATPLOTFILE_H_
 
 #include "FlushFormat.H"
 
@@ -40,8 +40,8 @@ public:
 
     /** Write general info of the run into the plotfile */
     void WriteJobInfo(const std::string& dir) const;
-    /** Write WarpX-specific plotfile header */
-    void WriteWarpXHeader(const std::string& name, amrex::Vector<amrex::Geometry>& geom) const;
+    /** Write Artemis-specific plotfile header */
+    void WriteArtemisHeader(const std::string& name, amrex::Vector<amrex::Geometry>& geom) const;
     void WriteAllRawFields (const bool plot_raw_fields, const int nlevels,
                             const std::string& plotfilename,
                             const bool plot_raw_fields_guards) const;
@@ -57,4 +57,4 @@ public:
     ~FlushFormatPlotfile() {}
 };
 
-#endif // WARPX_FLUSHFORMATPLOTFILE_H_
+#endif // ARTEMIS_FLUSHFORMATPLOTFILE_H_

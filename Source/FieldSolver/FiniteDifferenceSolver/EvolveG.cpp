@@ -1,13 +1,13 @@
 /* Copyright 2020
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
 
 #include "FiniteDifferenceSolver.H"
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -15,7 +15,7 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -42,7 +42,7 @@ void FiniteDifferenceSolver::EvolveG (
     std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
     amrex::Real const dt)
 {
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     // TODO Implement G update equation in RZ geometry
     amrex::ignore_unused(Gfield, Bfield, dt);
 #else
@@ -61,12 +61,12 @@ void FiniteDifferenceSolver::EvolveG (
     }
     else
     {
-        WARPX_ABORT_WITH_MESSAGE("EvolveG: unknown FDTD algorithm");
+        ARTEMIS_ABORT_WITH_MESSAGE("EvolveG: unknown FDTD algorithm");
     }
 #endif
 }
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveGCartesian (

@@ -1,13 +1,13 @@
 /* Copyright 2022 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_ACCELERATORLATTICE_LATTICEELEMENTS_HARDEDGED_K_H_
-#define WARPX_ACCELERATORLATTICE_LATTICEELEMENTS_HARDEDGED_K_H_
+#ifndef ARTEMIS_ACCELERATORLATTICE_LATTICEELEMENTS_HARDEDGED_K_H_
+#define ARTEMIS_ACCELERATORLATTICE_LATTICEELEMENTS_HARDEDGED_K_H_
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
@@ -47,4 +47,4 @@ amrex::ParticleReal hard_edged_fraction(const amrex::ParticleReal z,
     return frac;
 }
 
-#endif // WARPX_ACCELERATORLATTICE_LATTICEELEMENTS_HARDEDGED_K_H_
+#endif // ARTEMIS_ACCELERATORLATTICE_LATTICEELEMENTS_HARDEDGED_K_H_

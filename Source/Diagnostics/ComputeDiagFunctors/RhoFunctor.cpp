@@ -1,15 +1,15 @@
 #include "RhoFunctor.H"
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined ARTEMIS_DIM_RZ) && (defined ARTEMIS_USE_PSATD)
     #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
     #include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
-    #include "Utils/WarpXAlgorithmSelection.H"
+    #include "Utils/ArtemisAlgorithmSelection.H"
 #endif
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <ablastr/coarsen/sample.H>
 
@@ -33,7 +33,7 @@ RhoFunctor::RhoFunctor (const int lev,
 void
 RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/ ) const
 {
-    auto& warpx = WarpX::GetInstance();
+    auto& artemis = Artemis::GetInstance();
     std::unique_ptr<amrex::MultiFab> rho;
 
     // Deposit charge density
@@ -42,25 +42,25 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
 
     // Dump total rho
     if (m_species_index == -1) {
-        auto& mypc = warpx.GetPartContainer();
+        auto& mypc = artemis.GetPartContainer();
         rho = mypc.GetChargeDensity(m_lev, true);
     }
     // Dump rho per species
     else {
-        auto& mypc = warpx.GetPartContainer().GetParticleContainer(m_species_index);
+        auto& mypc = artemis.GetPartContainer().GetParticleContainer(m_species_index);
         rho = mypc.GetChargeDensity(m_lev, true);
     }
 
     // Handle the parallel transfers of guard cells and
     // apply the filtering if requested.
-    warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
+    artemis.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined ARTEMIS_DIM_RZ) && (defined ARTEMIS_USE_PSATD)
     // Apply k-space filtering when using the PSATD solver
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
-        if (WarpX::use_kspace_filter) {
-            auto & solver = warpx.get_spectral_solver_fp(m_lev);
+        if (Artemis::use_kspace_filter) {
+            auto & solver = artemis.get_spectral_solver_fp(m_lev);
             const SpectralFieldIndex& Idx = solver.m_spectral_index;
             solver.ForwardTransform(m_lev, *rho, Idx.rho_new);
             solver.ApplyFilter(m_lev, Idx.rho_new);
@@ -70,14 +70,14 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
 #endif
 
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     if (m_convertRZmodes2cartesian) {
         // In cylindrical geometry, sum real part of all modes of rho in
         // temporary MultiFab mf_dst_stag, and cell-center it to mf_dst
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             nComp()==1,
             "The RZ averaging over modes must write into one single component");
-        amrex::MultiFab mf_dst_stag( rho->boxArray(), warpx.DistributionMap(m_lev), 1, rho->nGrowVect() );
+        amrex::MultiFab mf_dst_stag( rho->boxArray(), artemis.DistributionMap(m_lev), 1, rho->nGrowVect() );
         // Mode 0
         amrex::MultiFab::Copy( mf_dst_stag, *rho, 0, 0, 1, rho->nGrowVect() );
         for (int ic=1 ; ic < rho->nComp() ; ic += 2) {

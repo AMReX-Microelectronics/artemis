@@ -3,7 +3,7 @@
  * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -17,8 +17,8 @@
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -50,7 +50,7 @@ namespace {
         std::string string;
         stringstream << var << " string '" << name << "' not recognized.";
         string = stringstream.str();
-        WARPX_ABORT_WITH_MESSAGE(string.c_str());
+        ARTEMIS_ABORT_WITH_MESSAGE(string.c_str());
     }
 }
 
@@ -71,7 +71,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #endif
 
     pp_species_name.query("radially_weighted", radially_weighted);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
     // Unlimited boundaries
     xmin = std::numeric_limits<amrex::Real>::lowest();
@@ -83,9 +83,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     zmax = std::numeric_limits<amrex::Real>::max();
 
     // NOTE: When periodic boundaries are used, default injection range is set to mother grid dimensions.
-    const amrex::Geometry& geom = WarpX::GetInstance().Geom(0);
+    const amrex::Geometry& geom = Artemis::GetInstance().Geom(0);
     if( geom.isPeriodic(0) ) {
-#       ifndef WARPX_DIM_1D_Z
+#       ifndef ARTEMIS_DIM_1D_Z
         xmin = geom.ProbLo(0);
         xmax = geom.ProbHi(0);
 #       else
@@ -94,9 +94,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #       endif
     }
 
-#   ifndef WARPX_DIM_1D_Z
+#   ifndef ARTEMIS_DIM_1D_Z
     if( geom.isPeriodic(1) ) {
-#       ifndef WARPX_DIM_3D
+#       ifndef ARTEMIS_DIM_3D
         zmin = geom.ProbLo(1);
         zmax = geom.ProbHi(1);
 #       else
@@ -106,7 +106,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
 #       endif
 
-#   ifdef WARPX_DIM_3D
+#   ifdef ARTEMIS_DIM_3D
     if( geom.isPeriodic(2) ) {
         zmin = geom.ProbLo(2);
         zmax = geom.ProbHi(2);
@@ -127,7 +127,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
     if (species_is_specified){
         const auto physical_species_from_string = species::from_string( physical_species_s );
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
             physical_species_s + " does not exist!");
         physical_species = physical_species_from_string.value();
         charge = species::get_charge( physical_species );
@@ -155,7 +155,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 species_name + ".charge' will take precedence.\n");
 
     }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         charge_is_specified ||
         species_is_specified ||
         (injection_style == "external_file"),
@@ -170,7 +170,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 species_name + ".mass' will take precedence.\n");
     }
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         mass_is_specified ||
         species_is_specified ||
         (injection_style == "external_file"),
@@ -209,7 +209,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             pp_species_name, "multiple_particles_uz", multiple_particles_uz);
         utils::parser::getArrWithParser(
             pp_species_name, "multiple_particles_weight", multiple_particles_weight);
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             ((multiple_particles_pos_x.size() == multiple_particles_pos_y.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_pos_z.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_ux.size()) &&
@@ -238,19 +238,19 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         pp_species_name.query("do_symmetrize", do_symmetrize);
         pp_species_name.query("symmetrization_order", symmetrization_order);
         std::set<int> valid_symmetries = {4,8};
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
             "Error: Symmetrization only supported to orders 4 or 8 ");
         gaussian_beam = true;
         parseMomentum(pp_species_name);
-#if defined(WARPX_DIM_XZ)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
+#if defined(ARTEMIS_DIM_XZ)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
         "Error: Gaussian beam y_rms must be strictly greater than 0 in 2D "
         "(it is used when computing the particles' weights from the total beam charge)");
-#elif defined(WARPX_DIM_1D_Z)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( x_rms > 0._rt,
+#elif defined(ARTEMIS_DIM_1D_Z)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( x_rms > 0._rt,
         "Error: Gaussian beam x_rms must be strictly greater than 0 in 1D "
         "(it is used when computing the particles' weights from the total beam charge)");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
         "Error: Gaussian beam y_rms must be strictly greater than 0 in 1D "
         "(it is used when computing the particles' weights from the total beam charge)");
 #endif
@@ -262,11 +262,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     else if (injection_style == "nrandompercell") {
         utils::parser::getWithParser(
             pp_species_name, "num_particles_per_cell", num_particles_per_cell);
-#if WARPX_DIM_RZ
-        if (WarpX::n_rz_azimuthal_modes > 1) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
-            "Error: For accurate use of WarpX cylindrical geometry the number "
+#if ARTEMIS_DIM_RZ
+        if (Artemis::n_rz_azimuthal_modes > 1) {
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
+            num_particles_per_cell>=2*Artemis::n_rz_azimuthal_modes,
+            "Error: For accurate use of Artemis cylindrical geometry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
             "(Please visit PR#765 for more information.)");
         }
@@ -281,11 +281,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         surface_flux = true;
         utils::parser::getWithParser(
             pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
-#ifdef WARPX_DIM_RZ
-        if (WarpX::n_rz_azimuthal_modes > 1) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
-            "Error: For accurate use of WarpX cylindrical geometry the number "
+#ifdef ARTEMIS_DIM_RZ
+        if (Artemis::n_rz_azimuthal_modes > 1) {
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
+            num_particles_per_cell_real>=2*Artemis::n_rz_azimuthal_modes,
+            "Error: For accurate use of Artemis cylindrical geometry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
             "(Please visit PR#765 for more information.)");
         }
@@ -299,7 +299,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         std::string flux_normal_axis_string;
         pp_species_name.get("flux_normal_axis", flux_normal_axis_string);
         flux_normal_axis = -1;
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         if      (flux_normal_axis_string == "r" || flux_normal_axis_string == "R") {
             flux_normal_axis = 0;
         }
@@ -307,13 +307,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             flux_normal_axis = 1;
         }
 #else
-#    ifndef WARPX_DIM_1D_Z
+#    ifndef ARTEMIS_DIM_1D_Z
         if      (flux_normal_axis_string == "x" || flux_normal_axis_string == "X") {
             flux_normal_axis = 0;
         }
 #    endif
 #endif
-#ifdef WARPX_DIM_3D
+#ifdef ARTEMIS_DIM_3D
         if (flux_normal_axis_string == "y" || flux_normal_axis_string == "Y") {
             flux_normal_axis = 1;
         }
@@ -321,21 +321,21 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         if (flux_normal_axis_string == "z" || flux_normal_axis_string == "Z") {
             flux_normal_axis = 2;
         }
-#ifdef WARPX_DIM_3D
+#ifdef ARTEMIS_DIM_3D
         std::string flux_normal_axis_help = "'x', 'y', or 'z'.";
 #else
-#    ifdef WARPX_DIM_RZ
+#    ifdef ARTEMIS_DIM_RZ
         std::string flux_normal_axis_help = "'r' or 'z'.";
-#    elif WARPX_DIM_XZ
+#    elif ARTEMIS_DIM_XZ
         std::string flux_normal_axis_help = "'x' or 'z'.";
 #    else
         std::string flux_normal_axis_help = "'z'.";
 #    endif
 #endif
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
             "Error: Invalid value for flux_normal_axis. It must be " + flux_normal_axis_help);
         pp_species_name.get("flux_direction", flux_direction);
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_direction == +1 || flux_direction == -1,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(flux_direction == +1 || flux_direction == -1,
             "Error: flux_direction must be -1 or +1.");
         // Construct InjectorPosition with InjectorPositionRandom.
         h_inj_pos = std::make_unique<InjectorPosition>(
@@ -348,9 +348,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
         // For 1D, only one is expected. The second and third are overwritten with 1.
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
         constexpr int num_required_ppc_each_dim = 1;
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
         constexpr int num_required_ppc_each_dim = 2;
 #else
         constexpr int num_required_ppc_each_dim = 3;
@@ -358,18 +358,18 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getArrWithParser(
             pp_species_name, "num_particles_per_cell_each_dim",
             num_particles_per_cell_each_dim, 0, num_required_ppc_each_dim);
-#if WARPX_DIM_XZ
+#if ARTEMIS_DIM_XZ
         num_particles_per_cell_each_dim.push_back(1);
 #endif
-#if WARPX_DIM_1D_Z
+#if ARTEMIS_DIM_1D_Z
         num_particles_per_cell_each_dim.push_back(1); // overwrite 2nd number with 1
         num_particles_per_cell_each_dim.push_back(1); // overwrite 3rd number with 1
 #endif
-#if WARPX_DIM_RZ
-        if (WarpX::n_rz_azimuthal_modes > 1) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            num_particles_per_cell_each_dim[1]>=2*WarpX::n_rz_azimuthal_modes,
-            "Error: For accurate use of WarpX cylindrical geometry the number "
+#if ARTEMIS_DIM_RZ
+        if (Artemis::n_rz_azimuthal_modes > 1) {
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
+            num_particles_per_cell_each_dim[1]>=2*Artemis::n_rz_azimuthal_modes,
+            "Error: For accurate use of Artemis cylindrical geometry the number "
             "of particles in the theta direction should be at least two times "
             "n_rz_azimuthal_modes (Please visit PR#765 for more information.)");
         }
@@ -387,9 +387,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseDensity(pp_species_name);
         parseMomentum(pp_species_name);
     } else if (injection_style == "external_file") {
-#ifndef WARPX_USE_OPENPMD
-        WARPX_ABORT_WITH_MESSAGE(
-            "WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
+#ifndef ARTEMIS_USE_OPENPMD
+        ARTEMIS_ABORT_WITH_MESSAGE(
+            "Artemis has to be compiled with USE_OPENPMD=TRUE to be able"
             " to read the external openPMD file with species data");
 #endif
         external_file = true;
@@ -399,28 +399,28 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::queryWithParser(pp_species_name, "q_tot", q_tot);
         utils::parser::queryWithParser(pp_species_name, "z_shift",z_shift);
 
-#ifdef WARPX_USE_OPENPMD
+#ifdef ARTEMIS_USE_OPENPMD
         if (amrex::ParallelDescriptor::IOProcessor()) {
             m_openpmd_input_series = std::make_unique<openPMD::Series>(
                 str_injection_file, openPMD::Access::READ_ONLY);
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 m_openpmd_input_series->iterations.size() == 1u,
                 "External file should contain only 1 iteration\n");
             openPMD::Iteration it = m_openpmd_input_series->iterations.begin()->second;
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 it.particles.size() == 1u,
                 "External file should contain only 1 species\n");
             std::string const ps_name = it.particles.begin()->first;
             openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 ps.contains("charge") || charge_is_specified || species_is_specified,
                 std::string("'") + ps_name +
                 ".injection_file' does not contain a 'charge' species record. "
                 "Please specify '" + ps_name + ".charge' or "
                 "'" + ps_name + ".species_type' in your input file!\n");
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 ps.contains("mass") || mass_is_specified || species_is_specified,
                 std::string("'") + ps_name +
                 ".injection_file' does not contain a 'mass' species record. "
@@ -475,10 +475,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             amrex::ParallelDescriptor::Bcast(&mass, 1,
                 amrex::ParallelDescriptor::IOProcessorNumber());
 #else
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "Plasma injection via external_file requires openPMD support: "
-            "Add USE_OPENPMD=TRUE when compiling WarpX.");
-#endif  // WARPX_USE_OPENPMD
+            "Add USE_OPENPMD=TRUE when compiling Artemis.");
+#endif  // ARTEMIS_USE_OPENPMD
 
     } else {
         StringParseAbortMessage("Injection style", injection_style);
@@ -621,7 +621,7 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussian*)nullptr,
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th));
     } else if (mom_dist_s == "gaussianflux") {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(surface_flux,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(surface_flux,
             "Error: gaussianflux can only be used with injection_style = NFluxPerCell");
         amrex::Real ux_m = 0._rt;
         amrex::Real uy_m = 0._rt;

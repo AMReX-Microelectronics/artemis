@@ -2,16 +2,16 @@
 
 # Copyright 2019 Andrew Myers, Maxence Thevenet
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
 #BSUB -P GEN109
 #BSUB -W 0:10
 #BSUB -nnodes 1
-#BSUB -J WarpX
-#BSUB -o WarpXo.%J
-#BSUB -e WarpXe.%J
+#BSUB -J Artemis
+#BSUB -o Artemiso.%J
+#BSUB -e Artemise.%J
 
 # make output group-readable by default
 umask 0027
@@ -59,4 +59,4 @@ ${JSRUN} --smpiargs="-gpu" ${EXE} inputs
 # 6. Run under nvprof and collect metrics for all kernels -- much slower!
 #${JSRUN} --smpiargs="-gpu" nvprof --profile-child-processes --analysis-metrics -o nvprof-metrics-%p.nvvp ${EXE} inputs
 
-cp ../WarpX*.${LSB_JOBID} .
+cp ../Artemis*.${LSB_JOBID} .

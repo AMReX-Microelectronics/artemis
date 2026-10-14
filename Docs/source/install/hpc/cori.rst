@@ -25,26 +25,26 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
 KNL
 ^^^
 
-We use the following modules and environments on the system (``$HOME/knl_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/knl_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/cori-nersc/knl_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/knl_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/cori-nersc/knl_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/knl_artemis.profile.example``.
 
 And install ADIOS2, BLAS++ and LAPACK++:
 
 .. code-block:: bash
 
-   source $HOME/knl_warpx.profile
+   source $HOME/knl_artemis.profile
 
    # c-blosc (I/O compression)
    git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
@@ -78,8 +78,8 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
 
-   python3 -m venv $HOME/sw/knl/venvs/knl_warpx
-   source $HOME/sw/knl/venvs/knl_warpx/bin/activate
+   python3 -m venv $HOME/sw/knl/venvs/knl_artemis
+   source $HOME/sw/knl/venvs/knl_artemis/bin/activate
 
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade wheel
@@ -92,22 +92,22 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --upgrade matplotlib
    python3 -m pip install --upgrade yt
    # optional: for libEnsemble
-   #python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+   #python3 -m pip install -r $HOME/src/artemis/Tools/LibEnsemble/requirements.txt
 
 Haswell
 ^^^^^^^
 
-We use the following modules and environments on the system (``$HOME/haswell_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/haswell_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/cori-nersc/haswell_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/haswell_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/cori-nersc/haswell_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/haswell_artemis.profile.example``.
 
 And install ADIOS2, BLAS++ and LAPACK++:
 
 .. code-block:: bash
 
-   source $HOME/haswell_warpx.profile
+   source $HOME/haswell_artemis.profile
 
    # c-blosc (I/O compression)
    git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
@@ -141,8 +141,8 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
 
-   python3 -m venv $HOME/sw/haswell/venvs/haswell_warpx
-   source $HOME/sw/haswell/venvs/haswell_warpx/bin/activate
+   python3 -m venv $HOME/sw/haswell/venvs/haswell_artemis
+   source $HOME/sw/haswell/venvs/haswell_artemis/bin/activate
 
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade wheel
@@ -155,24 +155,24 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --upgrade matplotlib
    python3 -m pip install --upgrade yt
    # optional: for libEnsemble
-   #python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+   #python3 -m pip install -r $HOME/src/artemis/Tools/LibEnsemble/requirements.txt
 
 GPU (V100)
 ^^^^^^^^^^
 
 Cori provides a partition with `18 nodes that include V100 (16 GB) GPUs <https://docs-dev.nersc.gov/cgpu/>`__.
-We use the following modules and environments on the system (``$HOME/gpu_warpx.profile``).
-You can copy this file from ``Tools/machines/cori-nersc/gpu_warpx.profile.example``:
+We use the following modules and environments on the system (``$HOME/gpu_artemis.profile``).
+You can copy this file from ``Tools/machines/cori-nersc/gpu_artemis.profile.example``:
 
-.. literalinclude:: ../../../../Tools/machines/cori-nersc/gpu_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/gpu_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/cori-nersc/gpu_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/gpu_artemis.profile.example``.
 
 And install ADIOS2:
 
 .. code-block:: bash
 
-   source $HOME/gpu_warpx.profile
+   source $HOME/gpu_artemis.profile
 
    # c-blosc (I/O compression)
    git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
@@ -193,8 +193,8 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
 
-   python3 -m venv $HOME/sw/cori_gpu/venvs/gpu_warpx
-   source $HOME/sw/cori_gpu/venvs/gpu_warpx/bin/activate
+   python3 -m venv $HOME/sw/cori_gpu/venvs/gpu_artemis
+   source $HOME/sw/cori_gpu/venvs/gpu_artemis/bin/activate
 
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade wheel
@@ -207,49 +207,49 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --upgrade matplotlib
    python3 -m pip install --upgrade yt
    # optional: for libEnsemble
-   #python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+   #python3 -m pip install -r $HOME/src/artemis/Tools/LibEnsemble/requirements.txt
 
-Building WarpX
+Building Artemis
 --------------
 
-We recommend to store the above lines in individual ``warpx.profile`` files, as suggested above.
+We recommend to store the above lines in individual ``artemis.profile`` files, as suggested above.
 If you want to run on either of the three partitions of Cori, open a new terminal, log into Cori and *source* the environment you want to work with:
 
 .. code-block:: bash
 
    # KNL:
-   source $HOME/knl_warpx.profile
+   source $HOME/knl_artemis.profile
 
    # Haswell:
-   #source $HOME/haswell_warpx.profile
+   #source $HOME/haswell_artemis.profile
 
    # GPU:
-   #source $HOME/gpu_warpx.profile
+   #source $HOME/gpu_artemis.profile
 
 .. warning::
 
    Consider that all three Cori partitions are *incompatible*.
 
-   Do not *source* multiple ``...warpx.profile`` files in the same terminal session.
+   Do not *source* multiple ``...artemis.profile`` files in the same terminal session.
    Open a new terminal and log into Cori again, if you want to switch the targeted Cori partition.
 
-   If you re-submit an already compiled simulation that you ran on another day or in another session, *make sure to source* the corresponding ``...warpx.profile`` again after login!
+   If you re-submit an already compiled simulation that you ran on another day or in another session, *make sure to source* the corresponding ``...artemis.profile`` again after login!
 
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
    rm -rf build
 
-   #                       append if you target GPUs:    -DWarpX_COMPUTE=CUDA
-   cmake -S . -B build -DWarpX_DIMS=3
+   #                       append if you target GPUs:    -DArtemis_COMPUTE=CUDA
+   cmake -S . -B build -DArtemis_DIMS=3
    cmake --build build -j 16
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-cori>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-cori>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``$SCRATCH``.
 
 The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake-python>` apply as usual:
@@ -257,13 +257,13 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
 .. code-block:: bash
 
    # PICMI build
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
 
    # install or update dependencies
    python3 -m pip install -r requirements.txt
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   WARPX_MPI=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall --no-deps -v .
+   ARTEMIS_MPI=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall --no-deps -v .
 
 
 .. _building-cori-tests:
@@ -273,16 +273,16 @@ Testing
 
 To run all tests (here on KNL), do:
 
-* change in ``Regressions/WarpX-tests.ini`` from ``mpiexec`` to ``srun``: ``MPIcommand = srun -n @nprocs@ @command@``
+* change in ``Regressions/Artemis-tests.ini`` from ``mpiexec`` to ``srun``: ``MPIcommand = srun -n @nprocs@ @command@``
 
 .. code-block:: bash
 
    # set test directory to a shared directory available on all nodes
    #   note: the tests will create the directory automatically
-   export WARPX_CI_TMP="$HOME/warpx-regression-tests"
+   export ARTEMIS_CI_TMP="$HOME/artemis-regression-tests"
 
    # compile with more cores
-   export WARPX_CI_NUM_MAKE_JOBS=16
+   export ARTEMIS_CI_NUM_MAKE_JOBS=16
 
    # run all integration tests
    #   note: we set MPICC as a build-setting for mpi4py on KNL/Haswell
@@ -299,11 +299,11 @@ Navigate (i.e. ``cd``) into one of the production directories (e.g. ``$SCRATCH``
 KNL
 ^^^
 
-The batch script below can be used to run a WarpX simulation on 2 KNL nodes on
+The batch script below can be used to run a Artemis simulation on 2 KNL nodes on
 the supercomputer Cori at NERSC. Replace descriptions between chevrons ``<>``
 by relevant values, for instance ``<job name>`` could be ``laserWakefield``.
 
-Do not forget to first ``source $HOME/knl_warpx.profile`` if you have not done so already for this terminal session.
+Do not forget to first ``source $HOME/knl_artemis.profile`` if you have not done so already for this terminal session.
 
 For PICMI Python runs, the ``<path/to/executable>`` has to read ``python3`` and the ``<input file>`` is the path to your PICMI input script.
 
@@ -336,9 +336,9 @@ regime), the following set of parameters provided good performance:
 Haswell
 ^^^^^^^
 
-The batch script below can be used to run a WarpX simulation on 1 `Haswell node <https://docs.nersc.gov/systems/cori/>`_ on the supercomputer Cori at NERSC.
+The batch script below can be used to run a Artemis simulation on 1 `Haswell node <https://docs.nersc.gov/systems/cori/>`_ on the supercomputer Cori at NERSC.
 
-Do not forget to first ``source $HOME/haswell_warpx.profile`` if you have not done so already for this terminal session.
+Do not forget to first ``source $HOME/haswell_artemis.profile`` if you have not done so already for this terminal session.
 
 .. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_haswell.sbatch
    :language: bash
@@ -363,7 +363,7 @@ regime), the following set of parameters provided good performance:
 GPU (V100)
 ^^^^^^^^^^
 
-Do not forget to first ``source $HOME/gpu_warpx.profile`` if you have not done so already for this terminal session.
+Do not forget to first ``source $HOME/gpu_artemis.profile`` if you have not done so already for this terminal session.
 
 Due to the limited amount of GPU development nodes, just request a single node with the above defined ``getNode`` function.
 For single-node runs, try to run one grid per GPU.

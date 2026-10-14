@@ -1,7 +1,7 @@
 /* Copyright 2019-2020 Axel Huebl, Ligia Diana Amorim, Maxence Thevenet
  * Revathi Jambunathan, Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -53,7 +53,7 @@ InjectorDensityPredefined::InjectorDensityPredefined (
     // Read parameters for the predefined plasma profile.
     utils::parser::getArrWithParser(
         pp_species_name, "predefined_profile_params", v);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                      "Too many parameters for InjectorDensityPredefined");
     for (int i = 0; i < static_cast<int>(v.size()); ++i) {
         p[i] = v[i];
@@ -66,7 +66,7 @@ InjectorDensityPredefined::InjectorDensityPredefined (
                    which_profile_s.begin(), ::tolower);
     if (which_profile_s == "parabolic_channel"){
         profile = Profile::parabolic_channel;
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() > 5,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(v.size() > 5,
             "InjectorDensityPredefined::parabolic_channel: not enough parameters");
     }
 }

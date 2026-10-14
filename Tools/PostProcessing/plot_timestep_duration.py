@@ -83,9 +83,9 @@ def plot_cumulative_duration(time_data, name):
 
 
 def do_plot_timestep_duration():
-    parser = argparse.ArgumentParser(description='Generates plots of timestep duration from WarpX standard output logs')
+    parser = argparse.ArgumentParser(description='Generates plots of timestep duration from Artemis standard output logs')
     parser.add_argument('file_name', metavar='file_name', type=str, nargs=1,
-        help='the name of the WarpX output log to process')
+        help='the name of the Artemis output log to process')
 
     args = parser.parse_args()
     log_file_name = args.file_name[0]

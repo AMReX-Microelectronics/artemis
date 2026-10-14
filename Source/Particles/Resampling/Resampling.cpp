@@ -1,6 +1,6 @@
 /* Copyright 2019-2020 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -32,7 +32,7 @@ bool Resampling::triggered (const int timestep, const amrex::Real global_numpart
     return m_resampling_trigger.triggered(timestep, global_numparts);
 }
 
-void Resampling::operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer * const pc) const
+void Resampling::operator() (ArtemisParIter& pti, const int lev, ArtemisParticleContainer * const pc) const
 {
     (*m_resampling_algorithm)(pti, lev, pc);
 }

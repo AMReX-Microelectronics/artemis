@@ -1,12 +1,12 @@
 /* Copyright 2019-2020 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "LevelingThinning.H"
 
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/TextMsg.H"
@@ -36,7 +36,7 @@ LevelingThinning::LevelingThinning (const std::string species_name)
     amrex::ParmParse pp_species_name(species_name);
     utils::parser::queryWithParser(
         pp_species_name, "resampling_algorithm_target_ratio", m_target_ratio);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_target_ratio > 0._rt,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( m_target_ratio > 0._rt,
                                     "Resampling target ratio should be strictly greater than 0");
     if (m_target_ratio <= 1._rt)
     {
@@ -48,19 +48,19 @@ LevelingThinning::LevelingThinning (const std::string species_name)
 
     utils::parser::queryWithParser(
         pp_species_name, "resampling_algorithm_min_ppc", m_min_ppc);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_min_ppc >= 1,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(m_min_ppc >= 1,
                                      "Resampling min_ppc should be greater than or equal to 1");
 }
 
-void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
-                                   WarpXParticleContainer * const pc) const
+void LevelingThinning::operator() (ArtemisParIter& pti, const int lev,
+                                   ArtemisParticleContainer * const pc) const
 {
     using namespace amrex::literals;
 
     auto& ptile = pc->ParticlesAt(lev, pti);
     auto& soa = ptile.GetStructOfArrays();
     amrex::ParticleReal * const AMREX_RESTRICT w = soa.GetRealData(PIdx::w).data();
-    WarpXParticleContainer::ParticleType * const AMREX_RESTRICT
+    ArtemisParticleContainer::ParticleType * const AMREX_RESTRICT
                                  particle_ptr = ptile.GetArrayOfStructs()().data();
 
     // Using this function means that we must loop over the cells in the ParallelFor. In the case

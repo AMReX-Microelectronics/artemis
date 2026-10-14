@@ -1,12 +1,12 @@
 /* Copyright 2020 Remi Lehe, Lorenzo Giacomel
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "FiniteDifferenceSolver.H"
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -14,9 +14,9 @@
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -53,7 +53,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
     const int lev) {
 
-#if !defined(WARPX_DIM_RZ) and defined(AMREX_USE_EB)
+#if !defined(ARTEMIS_DIM_RZ) and defined(AMREX_USE_EB)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
 
         EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, ECTRhofield, lev);
@@ -65,7 +65,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
 }
 
 // If we implement ECT in 1D we will need to take care of this #ifndef differently
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
@@ -73,19 +73,19 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
 #ifdef AMREX_USE_EB
 
-#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    WARPX_ABORT_WITH_MESSAGE(
+#if !(defined(ARTEMIS_DIM_3D) || defined(ARTEMIS_DIM_XZ))
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
 #endif
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(*ECTRhofield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             amrex::Gpu::synchronize();
         }
         amrex::Real wt = amrex::second();
@@ -115,7 +115,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
                 if (Sx(i, j, k) <= 0) return;
 
 // If we implement ECT in 1D we will need to take care of this #ifndef differently
-#ifndef WARPX_DIM_XZ
+#ifndef ARTEMIS_DIM_XZ
                 Rhox(i, j, k) = (Ey(i, j, k) * ly(i, j, k) - Ey(i, j, k + 1) * ly(i, j, k + 1) +
                     Ez(i, j + 1, k) * lz(i, j + 1, k) - Ez(i, j, k) * lz(i, j, k)) / Sx(i, j, k);
 #endif
@@ -124,10 +124,10 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sy(i, j, k) <= 0) return;
 
-#ifdef WARPX_DIM_XZ
+#ifdef ARTEMIS_DIM_XZ
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j + 1, k) * lx(i, j + 1, k) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
 #else
@@ -139,20 +139,20 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
                 if (Sz(i, j, k) <= 0) return;
 
 // If we implement ECT in 1D we will need to take care of this #ifndef differently
-#ifndef WARPX_DIM_XZ
+#ifndef ARTEMIS_DIM_XZ
                 Rhoz(i, j, k) =  (Ex(i, j, k) * lx(i, j, k) - Ex(i, j + 1, k) * lx(i, j + 1, k) +
                     Ey(i + 1, j, k) * ly(i + 1, j, k) - Ey(i, j, k) * ly(i, j, k)) / Sz(i, j, k);
 #endif
             }
         );
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
-#ifdef WARPX_DIM_XZ
+#ifdef ARTEMIS_DIM_XZ
         amrex::ignore_unused(Ey, Rhox, Rhoz, ly);
 #endif
     }

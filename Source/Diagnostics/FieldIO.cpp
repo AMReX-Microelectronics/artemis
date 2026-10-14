@@ -1,7 +1,7 @@
 /* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote, Maxence Thevenet,
  * Remi Lehe, Revathi Jambunathan, Weiqun Zhang, Edoardo Zoni
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -119,7 +119,7 @@ getReversedVec( const Real* v )
   return u;
 }
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
 void
 ConstructTotalRZVectorField (const std::array< std::unique_ptr<MultiFab>, 3 >& vector_total,
                              const std::array< std::unique_ptr<MultiFab>, 3 >& vector_field)
@@ -159,11 +159,11 @@ AverageAndPackVectorField( MultiFab& mf_avg,
                            const DistributionMapping& dm,
                            const int dcomp, const IntVect ngrow )
 {
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
     (void)dm;
 #endif
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     // Note that vector_total is declared in the same way as
     // vector_field so that it can be handled the same way.
     std::array<std::unique_ptr<MultiFab>,3> vector_total;
@@ -201,7 +201,7 @@ AverageAndPackScalarField (MultiFab& mf_avg,
 {
     const MultiFab *scalar_total = &scalar_field;
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     MultiFab tmp;
     if (scalar_field.nComp() > 1) {
         // With the RZ solver, there are more than one component, so the total
@@ -223,6 +223,6 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         // - Fully nodal
         ablastr::coarsen::sample::Coarsen(mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
     } else {
-        WARPX_ABORT_WITH_MESSAGE("Unknown staggering.");
+        ARTEMIS_ABORT_WITH_MESSAGE("Unknown staggering.");
     }
 }

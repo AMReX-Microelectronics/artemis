@@ -2,9 +2,9 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
 #include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
 #include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
@@ -12,9 +12,9 @@
 #include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #endif
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 #include <ablastr/coarsen/sample.H>
-#include "Utils/WarpXUtil.H"
+#include "Utils/ArtemisUtil.H"
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
@@ -23,8 +23,8 @@ using namespace amrex;
  * \brief Update H and M fields without iterative correction, over one timestep
  */
 
-#ifndef WARPX_DIM_RZ
-#ifdef WARPX_MAG_LLG
+#ifndef ARTEMIS_DIM_RZ
+#ifdef ARTEMIS_MAG_LLG
 
 void FiniteDifferenceSolver::MacroscopicEvolveHM(
     // The MField here is a vector of three multifabs, with M on each face.
@@ -49,7 +49,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHM(
 } // closes function EvolveM
 #endif
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 template <typename T_Algo>
 void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
@@ -61,11 +61,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
     std::unique_ptr<MacroscopicProperties> const &macroscopic_properties)
 {
 
-    auto &warpx = WarpX::GetInstance();
-    int coupling = warpx.mag_LLG_coupling;
-    int M_normalization = warpx.mag_M_normalization;
-    int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
-    int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
+    auto &artemis = Artemis::GetInstance();
+    int coupling = artemis.mag_LLG_coupling;
+    int M_normalization = artemis.mag_M_normalization;
+    int mag_exchange_coupling = artemis.mag_LLG_exchange_coupling;
+    int mag_anisotropy_coupling = artemis.mag_LLG_anisotropy_coupling;
 
     // temporary Multifab storing M from previous timestep (old_time) before updating to M(new_time)
     std::array<std::unique_ptr<amrex::MultiFab>, 3> Mfield_old; // Mfield_old is M(old_time)
@@ -682,5 +682,5 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian(
             });
     }
 }
-#endif // ifdef WARPX_MAG_LLG
-#endif // ifndef WARPX_DIM_RZ
+#endif // ifdef ARTEMIS_MAG_LLG
+#endif // ifndef ARTEMIS_DIM_RZ

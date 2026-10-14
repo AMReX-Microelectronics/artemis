@@ -1,6 +1,6 @@
 /* Copyright 2016-2020 Maxence Thevenet, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,22 +8,22 @@
 #define FILTERFUNCTORS_H
 
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX_Gpu.H>
 #include <AMReX_Parser.H>
 #include <AMReX_Random.H>
 
-using SuperParticleType = typename WarpXParticleContainer::SuperParticleType;
+using SuperParticleType = typename ArtemisParticleContainer::SuperParticleType;
 
 /**
  *  \brief Used to keep track of what inputs units a filter function should expect.
- *         "WarpX units" means the momentum is "gamma*v" (aka proper velocity)
+ *         "Artemis units" means the momentum is "gamma*v" (aka proper velocity)
  *         "SI" means the momentum is mass*gamma*v.
  */
-enum struct InputUnits{WarpX, SI};
+enum struct InputUnits{Artemis, SI};
 
 /**
  * \brief Functor that returns 0 or 1 depending on a random draw per particle
@@ -100,8 +100,8 @@ struct ParserFilter
                  amrex::Real a_mass)
         : m_is_active(a_is_active), m_function_partparser(a_filter_parser), m_mass(a_mass)
     {
-        m_t = WarpX::GetInstance().gett_new(0);
-        m_units = InputUnits::WarpX;
+        m_t = Artemis::GetInstance().gett_new(0);
+        m_units = InputUnits::Artemis;
     }
 
     /**

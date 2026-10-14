@@ -1,6 +1,6 @@
 /* Copyright 2019 Maxence Thevenet, Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -26,7 +26,7 @@ struct InjectorDensityCustom
         // Read parameters for custom density profile from file
         amrex::ParmParse pp_species_name(species_name);
         std::vector<amrex::Real> v;
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                          "Too many parameters for InjectorDensityCustom");
         utils::parser::getArrWithParser(
             pp_species_name, "custom_profile_params", v);

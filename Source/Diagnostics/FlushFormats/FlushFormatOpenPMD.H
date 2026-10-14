@@ -1,7 +1,7 @@
-#ifndef WARPX_FLUSHFORMATOPENPMD_H_
-#define WARPX_FLUSHFORMATOPENPMD_H_
+#ifndef ARTEMIS_FLUSHFORMATOPENPMD_H_
+#define ARTEMIS_FLUSHFORMATOPENPMD_H_
 
-#include "Diagnostics/WarpXOpenPMD.H"
+#include "Diagnostics/ArtemisOpenPMD.H"
 #include "FlushFormat.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
@@ -47,7 +47,7 @@ public:
 
 private:
     /** This is responsible for dumping to file */
-    std::unique_ptr< WarpXOpenPMDPlot > m_OpenPMDPlotWriter;
+    std::unique_ptr< ArtemisOpenPMDPlot > m_OpenPMDPlotWriter;
 };
 
-#endif // WARPX_FLUSHFORMATOPENPMD_H_
+#endif // ARTEMIS_FLUSHFORMATOPENPMD_H_

@@ -1,11 +1,11 @@
 /* Copyright 2020 Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_RELATIVE_CELL_POSITION_H_
-#define WARPX_RELATIVE_CELL_POSITION_H_
+#ifndef ARTEMIS_RELATIVE_CELL_POSITION_H_
+#define ARTEMIS_RELATIVE_CELL_POSITION_H_
 
 #include <AMReX_BaseFwd.H>
 
@@ -25,4 +25,4 @@ namespace utils
     getRelativeCellPosition (amrex::MultiFab const& mf);
 }
 
-#endif // WARPX_RELATIVE_CELL_POSITION_H_
+#endif // ARTEMIS_RELATIVE_CELL_POSITION_H_

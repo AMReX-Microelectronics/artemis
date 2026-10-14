@@ -2,7 +2,7 @@
  * Michael Rowan
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -10,7 +10,7 @@
 #define INJECTOR_DENSITY_H_
 
 #include "CustomDensityProb.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Array.H>

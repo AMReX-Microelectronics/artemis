@@ -1,14 +1,14 @@
 ####################################################################################################
 ## This input file includes an uncoupled system to test the M evolution driven by an H_bias field. ##
 ## The coupling between the LLG equation and Maxwell equations is turned off by setting the value ##
-## warpx.mag_LLG_coupling = 0.                                                                    ##
-## The CFL factor warpx.cfl is set to be 4000 (much larger than 1),   because there is no wave    ##
+## artemis.mag_LLG_coupling = 0.                                                                    ##
+## The CFL factor artemis.cfl is set to be 4000 (much larger than 1),   because there is no wave    ##
 ## propagating in these demo cases, thus the size of the time step is constrained by the Nyquist  ##
 ## rate only.                                                                                     ##
 ## The user can select the first-order or second-order algorithm for the time scheme of LLG, by   ##
-## setting the value of warpx.mag_time_scheme_order to be 1 or 2, respectively.                   ##
+## setting the value of artemis.mag_time_scheme_order to be 1 or 2, respectively.                   ##
 ## The user can also change the strategy of normalizing M amplitude by changing the value of      ##
-## warpx.mag_M_normalization. Select the value with reference to the following list:              ##
+## artemis.mag_M_normalization. Select the value with reference to the following list:              ##
 ## mag_M_normalization==0                    unsaturated materials, i.e. M_magnitude <= mag_Ms.   ##
 ## mag_M_normalization==1                    saturated materials, i.e. M_magnitude = mag_Ms.      ##
 ##                                           in the second-order algorithm, normalize M_magnitude ##
@@ -41,12 +41,12 @@ amr.max_level = 0
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 4000
-warpx.mag_time_scheme_order = 1 # default 1
-warpx.mag_M_normalization = 2
-warpx.mag_LLG_coupling = 0
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 4000
+artemis.mag_time_scheme_order = 1 # default 1
+artemis.mag_M_normalization = 2
+artemis.mag_LLG_coupling = 0
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 
@@ -79,27 +79,27 @@ my_constants.L = 141.4213562373095e-6
 my_constants.c = 299792458.
 my_constants.wavelength = 1.2e-1
 
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
 
-warpx.Ex_external_grid_function(x,y,z) = 0.
-warpx.Ey_external_grid_function(x,y,z) = 0.
-warpx.Ez_external_grid_function(x,y,z) = 0.
+artemis.Ex_external_grid_function(x,y,z) = 0.
+artemis.Ey_external_grid_function(x,y,z) = 0.
+artemis.Ez_external_grid_function(x,y,z) = 0.
 
-warpx.H_ext_grid_init_style = parse_H_ext_grid_function
-warpx.Hx_external_grid_function(x,y,z)= 0.
-warpx.Hy_external_grid_function(x,y,z)= 0.
-warpx.Hz_external_grid_function(x,y,z) = 0.
+artemis.H_ext_grid_init_style = parse_H_ext_grid_function
+artemis.Hx_external_grid_function(x,y,z)= 0.
+artemis.Hy_external_grid_function(x,y,z)= 0.
+artemis.Hz_external_grid_function(x,y,z) = 0.
 
 #unit conversion: 1 Gauss = 1 Oersted = (1000/4pi) A/m
 #calculation of H_bias: H_bias (oe) = frequency / 2.8e6
 
-warpx.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
-warpx.Hx_bias_external_grid_function(x,y,z)= 0.
-warpx.Hy_bias_external_grid_function(x,y,z)= 0.
-warpx.Hz_bias_external_grid_function(x,y,z)= 3e4 # in A/m, equal to 382 Oersted
+artemis.H_bias_ext_grid_init_style = parse_H_bias_ext_grid_function
+artemis.Hx_bias_external_grid_function(x,y,z)= 0.
+artemis.Hy_bias_external_grid_function(x,y,z)= 0.
+artemis.Hz_bias_external_grid_function(x,y,z)= 3e4 # in A/m, equal to 382 Oersted
 
-warpx.M_ext_grid_init_style = constant
-warpx.M_external_grid = 140000. 0. 0.
+artemis.M_ext_grid_init_style = constant
+artemis.M_external_grid = 140000. 0. 0.
 
 #Diagnostics
 diagnostics.diags_names = plt

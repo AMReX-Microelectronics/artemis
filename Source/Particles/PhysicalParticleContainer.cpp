@@ -4,7 +4,7 @@
  * Michael Rowan, Remi Lehe, Revathi Jambunathan
  * Weiqun Zhang, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -15,7 +15,7 @@
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
 #include "MultiParticleContainer.H"
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
 #endif
@@ -30,15 +30,15 @@
 #include "Particles/Pusher/UpdateMomentumVay.H"
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/Physics/IonizationEnergiesTable.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -92,7 +92,7 @@
 #   include <omp.h>
 #endif
 
-#ifdef WARPX_USE_OPENPMD
+#ifdef ARTEMIS_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif
 
@@ -112,7 +112,7 @@ using namespace amrex;
 
 namespace
 {
-    using ParticleType = WarpXParticleContainer::ParticleType;
+    using ParticleType = ArtemisParticleContainer::ParticleType;
 
     // Since the user provides the density distribution
     // at t_lab=0 and in the lab-frame coordinates,
@@ -158,16 +158,16 @@ namespace
                          const XDim3& r, const IntVect& iv) noexcept
     {
         XDim3 pos;
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
         pos.y = lo_corner[1] + (iv[1]+r.y)*dx[1];
         pos.z = lo_corner[2] + (iv[2]+r.z)*dx[2];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
         pos.y = 0.0_rt;
-#if   defined WARPX_DIM_XZ
+#if   defined ARTEMIS_DIM_XZ
         pos.z = lo_corner[1] + (iv[1]+r.y)*dx[1];
-#elif defined WARPX_DIM_RZ
+#elif defined ARTEMIS_DIM_RZ
         // Note that for RZ, r.y will be theta
         pos.z = lo_corner[1] + (iv[1]+r.z)*dx[1];
 #endif
@@ -199,7 +199,7 @@ namespace
     void ZeroInitializeAndSetNegativeID (
         ParticleType& p, const GpuArray<ParticleReal*,PIdx::nattribs>& pa, long& ip,
         const bool& do_field_ionization, int* pi
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         ,const bool& has_quantum_sync, amrex::ParticleReal* p_optical_depth_QSR
         ,const bool& has_breit_wheeler, amrex::ParticleReal* p_optical_depth_BW
 #endif
@@ -209,18 +209,18 @@ namespace
 #if (AMREX_SPACEDIM >= 2)
         p.pos(1) = 0._rt;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         p.pos(2) = 0._rt;
 #endif
         pa[PIdx::w ][ip] = 0._rt;
         pa[PIdx::ux][ip] = 0._rt;
         pa[PIdx::uy][ip] = 0._rt;
         pa[PIdx::uz][ip] = 0._rt;
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         pa[PIdx::theta][ip] = 0._rt;
 #endif
         if (do_field_ionization) {pi[ip] = 0;}
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         if (has_quantum_sync) {p_optical_depth_QSR[ip] = 0._rt;}
         if (has_breit_wheeler) {p_optical_depth_BW[ip] = 0._rt;}
 #endif
@@ -231,7 +231,7 @@ namespace
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int ispecies,
                                                       const std::string& name)
-    : WarpXParticleContainer(amr_core, ispecies),
+    : ArtemisParticleContainer(amr_core, ispecies),
       species_name(name)
 {
     BackwardCompatibility();
@@ -273,7 +273,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
         !(AmIA<PhysicalSpecies::electron>() ||
         AmIA<PhysicalSpecies::positron>() )),
@@ -281,13 +281,13 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             + species_name + "'.");
 
     //Only Boris pusher is compatible with radiation reaction
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
-        WarpX::particle_pusher_algo != ParticlePusherAlgo::Boris),
+        Artemis::particle_pusher_algo != ParticlePusherAlgo::Boris),
         "Radiation reaction can be enabled only if Boris pusher is used");
     //_____________________________
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
     if (m_do_qed_quantum_sync)
         AddRealComp("opticalDepthQSR");
@@ -338,11 +338,11 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #if (AMREX_SPACEDIM >= 2)
         AddRealComp("prev_x");
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         AddRealComp("prev_y");
 #endif
         AddRealComp("prev_z");
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
       amrex::Abort("Saving previous particle positions not yet implemented in RZ");
 #endif
     }
@@ -364,7 +364,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
-    : WarpXParticleContainer(amr_core, 0)
+    : ArtemisParticleContainer(amr_core, 0)
 {
     plasma_injector = std::make_unique<PlasmaInjector>();
 }
@@ -404,21 +404,21 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
     // at the start of the simulation.
     const ParticleReal t_lab = 0._prt;
 
-    const ParticleReal uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
+    const ParticleReal uz_boost = Artemis::gamma_boost*Artemis::beta_boost*PhysConst::c;
 
     // tpr is the particle's time in the boosted frame
-    ParticleReal tpr = WarpX::gamma_boost*t_lab - uz_boost*z/(PhysConst::c*PhysConst::c);
+    ParticleReal tpr = Artemis::gamma_boost*t_lab - uz_boost*z/(PhysConst::c*PhysConst::c);
 
     // The particle's transformed location in the boosted frame
     ParticleReal xpr = x;
     ParticleReal ypr = y;
-    ParticleReal zpr = WarpX::gamma_boost*z - uz_boost*t_lab;
+    ParticleReal zpr = Artemis::gamma_boost*z - uz_boost*t_lab;
 
     // transform u and gamma to the boosted frame
     ParticleReal gamma_lab = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
     // ux = ux;
     // uy = uy;
-    uz = WarpX::gamma_boost*uz - uz_boost*gamma_lab;
+    uz = Artemis::gamma_boost*uz - uz_boost*gamma_lab;
     ParticleReal gammapr = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
 
     ParticleReal vxpr = ux/gammapr;
@@ -466,17 +466,17 @@ PhysicalParticleContainer::AddGaussianBeam (
             npart /= symmetrization_order;
         }
         for (long i = 0; i < npart; ++i) {
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_3D) || defined(ARTEMIS_DIM_RZ)
             const Real weight = q_tot/(npart*charge);
             const Real x = amrex::RandomNormal(x_m, x_rms);
             const Real y = amrex::RandomNormal(y_m, y_rms);
             const Real z = amrex::RandomNormal(z_m, z_rms);
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
             const Real x = amrex::RandomNormal(x_m, x_rms);
             constexpr Real y = 0._prt;
             const Real z = amrex::RandomNormal(z_m, z_rms);
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
             const Real weight = q_tot/(npart*charge*x_rms*y_rms);
             constexpr Real x = 0._prt;
             constexpr Real y = 0._prt;
@@ -572,10 +572,10 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
     Gpu::HostVector<ParticleReal> particle_y;
     Gpu::HostVector<ParticleReal> particle_uy;
 
-#ifdef WARPX_USE_OPENPMD
+#ifdef ARTEMIS_USE_OPENPMD
     //TODO: Make changes for read/write in multiple MPI ranks
     if (ParallelDescriptor::IOProcessor()) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
                                          "AddPlasmaFromFile: plasma injector not initialized.\n");
         // take ownership of the series and close it when done
         auto series = std::move(plasma_injector->m_openpmd_input_series);
@@ -586,13 +586,13 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
         auto const npart = ps["position"]["x"].getExtent()[0];
-#if !defined(WARPX_DIM_1D_Z)  // 2D, 3D, and RZ
+#if !defined(ARTEMIS_DIM_1D_Z)  // 2D, 3D, and RZ
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         std::shared_ptr<ParticleReal> ptr_offset_x = ps["positionOffset"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
         double const position_offset_unit_x = ps["positionOffset"]["x"].unitSI();
 #endif
-#if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
+#if !(defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_1D_Z))
         std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
         std::shared_ptr<ParticleReal> ptr_offset_y = ps["positionOffset"]["y"].loadChunk<ParticleReal>();
         double const position_unit_y = ps["position"]["y"].unitSI();
@@ -627,12 +627,12 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
             ParticleReal const weight = ptr_w.get()[i]*w_unit;
 
-#if !defined(WARPX_DIM_1D_Z)
+#if !defined(ARTEMIS_DIM_1D_Z)
             ParticleReal const x = ptr_x.get()[i]*position_unit_x + ptr_offset_x.get()[i]*position_offset_unit_x;
 #else
             ParticleReal const x = 0.0_prt;
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_3D) || defined(ARTEMIS_DIM_RZ)
             ParticleReal const y = ptr_y.get()[i]*position_unit_y + ptr_offset_y.get()[i]*position_offset_unit_y;
 #else
             ParticleReal const y = 0.0_prt;
@@ -664,7 +664,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                   particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(), 0, nullptr, 1);
-#endif // WARPX_USE_OPENPMD
+#endif // ARTEMIS_USE_OPENPMD
 
     ignore_unused(q_tot, z_shift);
 
@@ -693,9 +693,9 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
         const amrex::ParticleReal* AMREX_RESTRICT uy = soa.m_rdata[PIdx::uy];
         const amrex::ParticleReal* AMREX_RESTRICT uz = soa.m_rdata[PIdx::uz];
         constexpr int lev = 0;
-        const amrex::Real t = WarpX::GetInstance().gett_new(lev);
+        const amrex::Real t = Artemis::GetInstance().gett_new(lev);
 
-#ifndef WARPX_QED
+#ifndef ARTEMIS_QED
         amrex::ignore_unused(engine);
 #endif
 
@@ -703,7 +703,7 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
         for (int j = PIdx::nattribs + n_external_attr_real; j < NumRealComps() ; ++j)
         {
             amrex::Vector<amrex::ParticleReal> attr_temp(np, 0.0_prt);
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
             // Current runtime comp is quantum synchrotron optical depth
             if (particle_comps.find("opticalDepthQSR") != particle_comps.end() &&
                 particle_comps["opticalDepthQSR"] == j)
@@ -797,7 +797,7 @@ PhysicalParticleContainer::CheckAndAddParticle (
     Gpu::HostVector<ParticleReal>& particle_uz,
     Gpu::HostVector<ParticleReal>& particle_w)
 {
-    if (WarpX::gamma_boost > 1.) {
+    if (Artemis::gamma_boost > 1.) {
         MapParticletoBoostedFrame(x, y, z, ux, uy, uz);
     }
     particle_x.push_back(x);
@@ -812,10 +812,10 @@ PhysicalParticleContainer::CheckAndAddParticle (
 void
 PhysicalParticleContainer::AddParticles (int lev)
 {
-    WARPX_PROFILE("PhysicalParticleContainer::AddParticles()");
+    ARTEMIS_PROFILE("PhysicalParticleContainer::AddParticles()");
 
     if (plasma_injector->add_single_particle) {
-        if (WarpX::gamma_boost > 1.) {
+        if (Artemis::gamma_boost > 1.) {
             MapParticletoBoostedFrame(plasma_injector->single_particle_pos[0],
                                       plasma_injector->single_particle_pos[1],
                                       plasma_injector->single_particle_pos[2],
@@ -835,7 +835,7 @@ PhysicalParticleContainer::AddParticles (int lev)
     }
 
     if (plasma_injector->add_multiple_particles) {
-        if (WarpX::gamma_boost > 1.) {
+        if (Artemis::gamma_boost > 1.) {
             for (int i=0 ; i < plasma_injector->multiple_particles_pos_x.size() ; i++) {
                 MapParticletoBoostedFrame(plasma_injector->multiple_particles_pos_x[i],
                                           plasma_injector->multiple_particles_pos_y[i],
@@ -889,14 +889,14 @@ PhysicalParticleContainer::AddParticles (int lev)
 void
 PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 {
-    WARPX_PROFILE("PhysicalParticleContainer::AddPlasma()");
+    ARTEMIS_PROFILE("PhysicalParticleContainer::AddPlasma()");
 
     // If no part_realbox is provided, initialize particles in the whole domain
     const Geometry& geom = Geom(lev);
     if (!part_realbox.ok()) part_realbox = geom.ProbDomain();
 
     int num_ppc = plasma_injector->num_particles_per_cell;
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     Real rmax = std::min(plasma_injector->xmax, part_realbox.hi(0));
 #endif
 
@@ -905,7 +905,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     defineAllParticleTiles();
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     const int nlevs = numLevels();
     static bool refine_injection = false;
@@ -913,13 +913,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
     // This does not work if the mesh is dynamic.  But in that case, we should
     // not use refined injected either.  We also assume there is only one fine level.
-    if (WarpX::moving_window_active(WarpX::GetInstance().getistep(0)+1) and WarpX::refine_plasma
+    if (Artemis::moving_window_active(Artemis::GetInstance().getistep(0)+1) and Artemis::refine_plasma
         and do_continuous_injection and nlevs == 2)
     {
         refine_injection = true;
         fine_injection_box = ParticleBoxArray(1).minimalBox();
-        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest()/2);
-        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max()/2);
+        fine_injection_box.setSmall(Artemis::moving_window_dir, std::numeric_limits<int>::lowest()/2);
+        fine_injection_box.setBig(Artemis::moving_window_dir, std::numeric_limits<int>::max()/2);
         rrfac = m_gdb->refRatio(0);
         fine_injection_box.coarsen(rrfac);
     }
@@ -927,14 +927,14 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
     InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
-    Real gamma_boost = WarpX::gamma_boost;
-    Real beta_boost = WarpX::beta_boost;
-    Real t = WarpX::GetInstance().gett_new(lev);
+    Real gamma_boost = Artemis::gamma_boost;
+    Real beta_boost = Artemis::beta_boost;
+    Real t = Artemis::GetInstance().gett_new(lev);
     Real density_min = plasma_injector->density_min;
     Real density_max = plasma_injector->density_max;
 
-#ifdef WARPX_DIM_RZ
-    const int nmodes = WarpX::n_rz_azimuthal_modes;
+#ifdef ARTEMIS_DIM_RZ
+    const int nmodes = Artemis::n_rz_azimuthal_modes;
     bool radially_weighted = plasma_injector->radially_weighted;
 #endif
 
@@ -944,18 +944,18 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     }
 #ifdef AMREX_USE_OMP
     info.SetDynamic(true);
-#pragma omp parallel if (not WarpX::serialize_initial_conditions)
+#pragma omp parallel if (not Artemis::serialize_initial_conditions)
 #endif
     for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
     {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
         }
         Real wt = amrex::second();
 
         const Box& tile_box = mfi.tilebox();
-        const RealBox tile_realbox = WarpX::getRealBox(tile_box, lev);
+        const RealBox tile_realbox = Artemis::getRealBox(tile_box, lev);
 
         // Find the cells of part_box that overlap with tile_realbox
         // If there is no overlap, just go to the next tile in the loop
@@ -1048,10 +1048,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pcounts[index] = 0;
                 }
             }
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             amrex::ignore_unused(k);
 #endif
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
             amrex::ignore_unused(j,k);
 #endif
         });
@@ -1069,7 +1069,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             static_cast<Long>(pid + max_new_particles) < LastParticleID,
             "ERROR: overflow on particle id numbers");
 
@@ -1137,7 +1137,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pi = soa.GetIntData(particle_icomps["ionizationLevel"]).data() + old_size;
         }
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         //Pointer to the optical depth component
         amrex::ParticleReal* p_optical_depth_QSR = nullptr;
         amrex::ParticleReal* p_optical_depth_BW  = nullptr;
@@ -1174,7 +1174,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
         const auto poffset = offset.data();
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         const bool rz_random_theta = m_rz_random_theta;
 #endif
         amrex::ParallelForRNG(overlap_box,
@@ -1182,18 +1182,18 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         {
             IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
             Real theta_offset = 0._rt;
             if (rz_random_theta) theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi;
 #endif
 
             Real scale_fac = 0.0_rt;
             if( pcounts[index] != 0) {
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 scale_fac = dx[0]*dx[1]*dx[2]/pcounts[index];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 scale_fac = dx[0]*dx[1]/pcounts[index];
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
                 scale_fac = dx[0]/pcounts[index];
 #endif
             }
@@ -1211,21 +1211,21 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                   inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
                     ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
 #endif
                                                    );
                     continue;
                 }
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
                     ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
 #endif
@@ -1236,7 +1236,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 amrex::ignore_unused(j,k);
                 if (!tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt})) {
                     ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
 #endif
@@ -1246,11 +1246,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
 
                 // Save the x and y values to use in the insideBounds checks.
-                // This is needed with WARPX_DIM_RZ since x and y are modified.
+                // This is needed with ARTEMIS_DIM_RZ since x and y are modified.
                 Real xb = pos.x;
                 Real yb = pos.y;
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
                 Real theta;
@@ -1278,7 +1278,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                                                              beta_boost, t);
                     if (!inj_pos->insideBounds(xb, yb, z0)) {
                         ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
 #endif
@@ -1292,7 +1292,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
                         ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
 #endif
@@ -1310,7 +1310,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // go to the next generated particle.
                     if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
                         ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
 #endif
@@ -1322,7 +1322,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
                         ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
 #endif
@@ -1347,7 +1347,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pi[ip] = loc_ionization_initial_level;
                 }
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                 if(loc_has_quantum_sync){
                     p_optical_depth_QSR[ip] = quantum_sync_get_opt(engine);
                 }
@@ -1370,7 +1370,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 u.z *= PhysConst::c;
 
                 Real weight = dens * scale_fac;
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
                 if (radially_weighted) {
                     weight *= 2._rt*MathConst::pi*xb;
                 } else {
@@ -1385,12 +1385,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 pa[PIdx::uy][ip] = u.y;
                 pa[PIdx::uz][ip] = u.z;
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 p.pos(0) = pos.x;
                 p.pos(1) = pos.y;
                 p.pos(2) = pos.z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-#ifdef WARPX_DIM_RZ
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+#ifdef ARTEMIS_DIM_RZ
                 pa[PIdx::theta][ip] = theta;
 #endif
                 p.pos(0) = xb;
@@ -1403,7 +1403,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         amrex::Gpu::synchronize();
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
@@ -1416,13 +1416,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 void
 PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 {
-    WARPX_PROFILE("PhysicalParticleContainer::AddPlasmaFlux()");
+    ARTEMIS_PROFILE("PhysicalParticleContainer::AddPlasmaFlux()");
 
     const Geometry& geom = Geom(0);
     const amrex::RealBox& part_realbox = geom.ProbDomain();
 
     amrex::Real num_ppc_real = plasma_injector->num_particles_per_cell_real;
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     Real rmax = std::min(plasma_injector->xmax, geom.ProbDomain().hi(0));
 #endif
 
@@ -1431,9 +1431,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
     Real scale_fac = 0._rt;
     // Scale particle weight by the area of the emitting surface, within one cell
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     scale_fac = dx[0]*dx[1]*dx[2]/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
-#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_RZ) || defined(ARTEMIS_DIM_XZ)
     scale_fac = dx[0]*dx[1]/num_ppc_real;
     // When emission is in the r direction, the emitting surface is a cylinder.
     // The factor 2*pi*r is added later below.
@@ -1443,17 +1443,17 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[1];
     // When emission is in the theta direction (flux_normal_axis == 1),
     // the emitting surface is a rectangle, within the plane of the simulation
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
     scale_fac = dx[0]/num_ppc_real;
     if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[0];
 #endif
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(0);
 
     // Create temporary particle container to which particles will be added;
     // we will then call Redistribute on this new container and finally
     // add the new particles to the original container.
-    PhysicalParticleContainer tmp_pc(&WarpX::GetInstance());
+    PhysicalParticleContainer tmp_pc(&Artemis::GetInstance());
     for (int ic = 0; ic < NumRuntimeRealComps(); ++ic) { tmp_pc.AddRealComp(0); }
     for (int ic = 0; ic < NumRuntimeIntComps(); ++ic) { tmp_pc.AddIntComp(0); }
     tmp_pc.defineAllParticleTiles();
@@ -1464,7 +1464,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
     // This does not work if the mesh is dynamic.  But in that case, we should
     // not use refined injected either.  We also assume there is only one fine level.
-    if (WarpX::refine_plasma && nlevs == 2)
+    if (Artemis::refine_plasma && nlevs == 2)
     {
         refine_injection = true;
         fine_injection_box = ParticleBoxArray(1).minimalBox();
@@ -1478,10 +1478,10 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     const amrex::Real density_min = plasma_injector->density_min;
     const amrex::Real density_max = plasma_injector->density_max;
     constexpr int level_zero = 0;
-    const amrex::Real t = WarpX::GetInstance().gett_new(level_zero);
+    const amrex::Real t = Artemis::GetInstance().gett_new(level_zero);
 
-#ifdef WARPX_DIM_RZ
-    const int nmodes = WarpX::n_rz_azimuthal_modes;
+#ifdef ARTEMIS_DIM_RZ
+    const int nmodes = Artemis::n_rz_azimuthal_modes;
     bool radially_weighted = plasma_injector->radially_weighted;
 #endif
 
@@ -1495,14 +1495,14 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 #endif
     for (MFIter mfi = MakeMFIter(0, info); mfi.isValid(); ++mfi)
     {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
         }
         Real wt = amrex::second();
 
         const Box& tile_box = mfi.tilebox();
-        const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
+        const RealBox tile_realbox = Artemis::getRealBox(tile_box, 0);
 
         // Find the cells of part_realbox that overlap with tile_realbox
         // If there is no overlap, just go to the next tile in the loop
@@ -1512,14 +1512,14 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         bool no_overlap = false;
 
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
-#if (defined(WARPX_DIM_3D))
+#if (defined(ARTEMIS_DIM_3D))
             if (dir == plasma_injector->flux_normal_axis) {
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             if (2*dir == plasma_injector->flux_normal_axis) {
             // The above formula captures the following cases:
             // - flux_normal_axis=0 (emission along x/r) and dir=0
             // - flux_normal_axis=2 (emission along z) and dir=1
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
             if ( (dir==0) && (plasma_injector->flux_normal_axis==2) ) {
 #endif
                 if (plasma_injector->flux_direction > 0) {
@@ -1604,9 +1604,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
                 pcounts[index] = num_ppc_int*r;
             }
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             amrex::ignore_unused(k);
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
             amrex::ignore_unused(j,k);
 #endif
         });
@@ -1624,7 +1624,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             static_cast<Long>(pid + max_new_particles) < LastParticleID,
             "overflow on particle id numbers");
 
@@ -1689,7 +1689,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             p_ion_level = soa.GetIntData(particle_icomps["ionizationLevel"]).data() + old_size;
         }
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         //Pointer to the optical depth component
         amrex::ParticleReal* p_optical_depth_QSR = nullptr;
         amrex::ParticleReal* p_optical_depth_BW  = nullptr;
@@ -1720,7 +1720,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         bool loc_do_field_ionization = do_field_ionization;
         int loc_ionization_initial_level = ionization_initial_level;
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         int const loc_flux_normal_axis = plasma_injector->flux_normal_axis;
 #endif
 
@@ -1762,12 +1762,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // The containsInclusive is used to allow the case of the flux surface
                 // being on the boundary of the domain. After the UpdatePosition below,
                 // the particles will be within the domain.
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.y,ppos.z})) {
                     p.id() = -1;
                     continue;
                 }
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 amrex::ignore_unused(k);
                 if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.z,0.0_prt})) {
                     p.id() = -1;
@@ -1788,7 +1788,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     continue;
                 }
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
                 // Conversion from cylindrical to Cartesian coordinates
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
@@ -1831,7 +1831,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     p_ion_level[ip] = loc_ionization_initial_level;
                 }
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                 if(loc_has_quantum_sync){
                     p_optical_depth_QSR[ip] = quantum_sync_get_opt(engine);
                 }
@@ -1850,7 +1850,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
 
                 Real weight = dens * scale_fac * dt;
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
                 // The particle weight is proportional to the user-specified
                 // flux (denoted as `dens` here) and the emission surface within
                 // one cell (captured partially by `scale_fac`).
@@ -1878,15 +1878,15 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 const amrex::Real t_fract = amrex::Random(engine)*dt;
                 UpdatePosition(ppos.x, ppos.y, ppos.z, pu.x, pu.y, pu.z, t_fract);
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
                 p.pos(0) = ppos.x;
                 p.pos(1) = ppos.y;
                 p.pos(2) = ppos.z;
-#elif defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_RZ)
                 pa[PIdx::theta][ip] = std::atan2(ppos.y, ppos.x);
                 p.pos(0) = std::sqrt(ppos.x*ppos.x + ppos.y*ppos.y);
                 p.pos(1) = ppos.z;
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
                 p.pos(0) = ppos.x;
                 p.pos(1) = ppos.z;
 #else
@@ -1897,7 +1897,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         amrex::Gpu::synchronize();
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
@@ -1943,21 +1943,21 @@ PhysicalParticleContainer::Evolve (int lev,
                                    Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition)
 {
 
-    WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
-    WARPX_PROFILE_VAR_NS("PhysicalParticleContainer::Evolve::GatherAndPush", blp_fg);
+    ARTEMIS_PROFILE("PhysicalParticleContainer::Evolve()");
+    ARTEMIS_PROFILE_VAR_NS("PhysicalParticleContainer::Evolve::GatherAndPush", blp_fg);
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
-    const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
-    const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
+    const iMultiFab* current_masks = Artemis::CurrentBufferMasks(lev);
+    const iMultiFab* gather_masks = Artemis::GatherBufferMasks(lev);
 
     bool has_buffer = cEx || cjx;
 
     if (m_do_back_transformed_particles)
     {
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        for (ArtemisParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             const auto np = pti.numParticles();
             const auto t_lev = pti.GetLevel();
@@ -1981,9 +1981,9 @@ PhysicalParticleContainer::Evolve (int lev,
         FArrayBox filtered_Ex, filtered_Ey, filtered_Ez;
         FArrayBox filtered_Bx, filtered_By, filtered_Bz;
 
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        for (ArtemisParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
             }
@@ -2010,7 +2010,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 
-            if (WarpX::use_fdtd_nci_corr)
+            if (Artemis::use_fdtd_nci_corr)
             {
                 // Filter arrays Ex[pti], store the result in
                 // filtered_Ex and update pointer exfab so that it
@@ -2067,7 +2067,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 //
                 // Gather and push for particles not in the buffer
                 //
-                WARPX_PROFILE_VAR_START(blp_fg);
+                ARTEMIS_PROFILE_VAR_START(blp_fg);
                 PushPX(pti, exfab, eyfab, ezfab,
                        bxfab, byfab, bzfab,
                        Ex.nGrowVect(), e_is_nodal,
@@ -2075,7 +2075,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
                 if (np_gather < np)
                 {
-                    const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
+                    const IntVect& ref_ratio = Artemis::RefRatio(lev-1);
                     const Box& cbox = amrex::coarsen(box,ref_ratio);
 
                     // Data on the grid
@@ -2086,7 +2086,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     FArrayBox const* cbyfab = &(*cBy)[pti];
                     FArrayBox const* cbzfab = &(*cBz)[pti];
 
-                    if (WarpX::use_fdtd_nci_corr)
+                    if (Artemis::use_fdtd_nci_corr)
                     {
                         // Filter arrays (*cEx)[pti], store the result in
                         // filtered_Ex and update pointer cexfab so that it
@@ -2109,7 +2109,7 @@ PhysicalParticleContainer::Evolve (int lev,
                            lev, lev-1, dt, ScaleFields(false), a_dt_type);
                 }
 
-                WARPX_PROFILE_VAR_STOP(blp_fg);
+                ARTEMIS_PROFILE_VAR_STOP(blp_fg);
 
                 // Current Deposition
                 if (skip_deposition == false)
@@ -2141,7 +2141,7 @@ PhysicalParticleContainer::Evolve (int lev,
             if (rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
-                if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
+                if (Artemis::electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
                     int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
                         ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
@@ -2159,7 +2159,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             amrex::Gpu::synchronize();
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
@@ -2193,18 +2193,18 @@ PhysicalParticleContainer::applyNCIFilter (
 {
 
     // Get instances of NCI Godfrey filters
-    const auto& nci_godfrey_filter_exeybz = WarpX::GetInstance().nci_godfrey_filter_exeybz;
-    const auto& nci_godfrey_filter_bxbyez = WarpX::GetInstance().nci_godfrey_filter_bxbyez;
+    const auto& nci_godfrey_filter_exeybz = Artemis::GetInstance().nci_godfrey_filter_exeybz;
+    const auto& nci_godfrey_filter_bxbyez = Artemis::GetInstance().nci_godfrey_filter_bxbyez;
 
-#if defined(WARPX_DIM_1D_Z)
-    const Box& tbox = amrex::grow(box, static_cast<int>(WarpX::noz));
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    const Box& tbox = amrex::grow(box, {static_cast<int>(WarpX::nox),
-                static_cast<int>(WarpX::noz)});
+#if defined(ARTEMIS_DIM_1D_Z)
+    const Box& tbox = amrex::grow(box, static_cast<int>(Artemis::noz));
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
+    const Box& tbox = amrex::grow(box, {static_cast<int>(Artemis::nox),
+                static_cast<int>(Artemis::noz)});
 #else
-    const Box& tbox = amrex::grow(box, {static_cast<int>(WarpX::nox),
-                static_cast<int>(WarpX::noy),
-                static_cast<int>(WarpX::noz)});
+    const Box& tbox = amrex::grow(box, {static_cast<int>(Artemis::nox),
+                static_cast<int>(Artemis::noy),
+                static_cast<int>(Artemis::noz)});
 #endif
 
     // Filter Ex (Both 2D and 3D)
@@ -2228,7 +2228,7 @@ PhysicalParticleContainer::applyNCIFilter (
     byeli = filtered_By.elixir();
     nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_By, By, filtered_By.box());
     by_ptr = &filtered_By;
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     // Filter Ey
     filtered_Ey.resize(amrex::convert(tbox,Ey.box().ixType()));
     eyeli = filtered_Ey.elixir();
@@ -2258,7 +2258,7 @@ PhysicalParticleContainer::applyNCIFilter (
 void
 PhysicalParticleContainer::SplitParticles (int lev)
 {
-    auto& mypc = WarpX::GetInstance().GetPartContainer();
+    auto& mypc = Artemis::GetInstance().GetPartContainer();
     auto& pctmp_split = mypc.GetPCtmp();
     RealVector psplit_x, psplit_y, psplit_z, psplit_w;
     RealVector psplit_ux, psplit_uy, psplit_uz;
@@ -2266,9 +2266,9 @@ PhysicalParticleContainer::SplitParticles (int lev)
     long np_split;
     if(split_type==0)
     {
-        #if defined(WARPX_DIM_3D)
+        #if defined(ARTEMIS_DIM_3D)
            np_split = 8;
-        #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        #elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
            np_split = 4;
         #else
            np_split = 2;
@@ -2278,12 +2278,12 @@ PhysicalParticleContainer::SplitParticles (int lev)
     }
 
     // Loop over particle interator
-    for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+    for (ArtemisParIter pti(*this, lev); pti.isValid(); ++pti)
     {
         const auto GetPosition = GetParticlePosition(pti);
 
         const amrex::Vector<int> ppc_nd = plasma_injector->num_particles_per_cell_each_dim;
-        const std::array<Real,3>& dx = WarpX::CellSize(lev);
+        const std::array<Real,3>& dx = Artemis::CellSize(lev);
         amrex::Vector<Real> split_offset = {dx[0]/2._rt,
                                             dx[1]/2._rt,
                                             dx[2]/2._rt};
@@ -2312,7 +2312,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                 // If particle is tagged, split it and put the
                 // split particles in local arrays psplit_x etc.
                 np_split_to_add += np_split;
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
                 // Split particle in two along z axis
                 // 2 particles in 1d, split_type doesn't matter? Discuss with Remi
                 for (int ishift = -1; ishift < 2; ishift +=2 ){
@@ -2325,7 +2325,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                     psplit_uz.push_back( uzp[i] );
                     psplit_w.push_back( wp[i]/np_split );
                 }
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 if (split_type==0){
                     // Split particle in two along each diagonals
                     // 4 particles in 2d
@@ -2363,7 +2363,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                         psplit_w.push_back( wp[i]/np_split );
                     }
                 }
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
                 if (split_type==0){
                     // Split particle in two along each diagonals
                     // 8 particles in 3d
@@ -2446,17 +2446,17 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                   const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                   const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz)
 {
-    WARPX_PROFILE("PhysicalParticleContainer::PushP()");
+    ARTEMIS_PROFILE("PhysicalParticleContainer::PushP()");
 
     if (do_not_push) return;
 
-    const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev,0));
+    const std::array<amrex::Real,3>& dx = Artemis::CellSize(std::max(lev,0));
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        for (ArtemisParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             amrex::Box box = pti.tilebox();
             box.grow(Ex.nGrowVect());
@@ -2475,13 +2475,13 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto getExternalEB = GetExternalEBField(pti);
 
-            const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
+            const std::array<amrex::Real,3>& xyzmin = Artemis::LowerCorner(box, lev, 0._rt);
 
             const Dim3 lo = lbound(box);
 
-            bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            int nox = WarpX::nox;
-            int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+            bool galerkin_interpolation = Artemis::galerkin_interpolation;
+            int nox = Artemis::nox;
+            int n_rz_azimuthal_modes = Artemis::n_rz_azimuthal_modes;
 
             amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
             amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
@@ -2514,7 +2514,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const amrex::Real q = this->charge;
             const amrex::Real m = this-> mass;
 
-            const auto pusher_algo = WarpX::particle_pusher_algo;
+            const auto pusher_algo = Artemis::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;
 
             const auto t_do_not_gather = do_not_gather;
@@ -2611,7 +2611,7 @@ PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real d
  *
  */
 void
-PhysicalParticleContainer::PushPX (WarpXParIter& pti,
+PhysicalParticleContainer::PushPX (ArtemisParIter& pti,
                                    amrex::FArrayBox const * exfab,
                                    amrex::FArrayBox const * eyfab,
                                    amrex::FArrayBox const * ezfab,
@@ -2625,14 +2625,14 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    amrex::Real dt, ScaleFields scaleFields,
                                    DtType a_dt_type)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
     if (np_to_push == 0) return;
 
     // Get cell size on gather_lev
-    const std::array<Real,3>& dx = WarpX::CellSize(std::max(gather_lev,0));
+    const std::array<Real,3>& dx = Artemis::CellSize(std::max(gather_lev,0));
 
     // Get box from which field is gathered.
     // If not gathering from the finest level, the box is coarsened.
@@ -2640,7 +2640,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     if (lev == gather_lev) {
         box = pti.tilebox();
     } else {
-        const IntVect& ref_ratio = WarpX::RefRatio(gather_lev);
+        const IntVect& ref_ratio = Artemis::RefRatio(gather_lev);
         box = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
@@ -2653,13 +2653,13 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
+    const std::array<amrex::Real, 3>& xyzmin = Artemis::LowerCorner(box, gather_lev, 0._rt);
 
     const Dim3 lo = lbound(box);
 
-    bool galerkin_interpolation = WarpX::galerkin_interpolation;
-    int nox = WarpX::nox;
-    int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+    bool galerkin_interpolation = Artemis::galerkin_interpolation;
+    int nox = Artemis::nox;
+    int n_rz_azimuthal_modes = Artemis::n_rz_azimuthal_modes;
 
     amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
     amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
@@ -2704,7 +2704,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #else
     amrex::ignore_unused(x_old);
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr() + offset;
 #else
     amrex::ignore_unused(y_old);
@@ -2716,9 +2716,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const amrex::ParticleReal q = this->charge;
     const amrex::ParticleReal m = this-> mass;
 
-    const auto pusher_algo = WarpX::particle_pusher_algo;
+    const auto pusher_algo = Artemis::particle_pusher_algo;
     const auto do_crr = do_classical_radiation_reaction;
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     const auto do_sync = m_do_qed_quantum_sync;
     amrex::Real t_chi_max = 0.0;
     if (do_sync) t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
@@ -2738,7 +2738,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     enum qed_flags : int { no_qed, has_qed };
 
     int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     int qed_runtime_flag = (local_has_quantum_sync || do_sync) ? has_qed : no_qed;
 #else
     int qed_runtime_flag = no_qed;
@@ -2760,7 +2760,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #if (AMREX_SPACEDIM >= 2)
             x_old[ip] = xp;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             y_old[ip] = yp;
 #endif
             z_old[ip] = zp;
@@ -2785,7 +2785,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         if (!do_sync)
 #endif
         {
@@ -2794,12 +2794,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                               Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                               ion_lev ? ion_lev[ip] : 0,
                               m, q, pusher_algo, do_crr, do_copy,
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
                               t_chi_max,
 #endif
                               dt);
         }
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         else {
             if constexpr (qed_control == has_qed) {
                 doParticlePush<1>(getPosition, setPosition, copyAttribs, ip,
@@ -2813,7 +2813,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         }
 #endif
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         [[maybe_unused]] auto foo_local_has_quantum_sync = local_has_quantum_sync;
         [[maybe_unused]] auto foo_podq = p_optical_depth_QSR;
         [[maybe_unused]] auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
@@ -2867,7 +2867,7 @@ PhysicalParticleContainer::InitIonizationModule ()
     constexpr Real UH = utils::physics::table_ionization_energies[0];
     const Real l_eff = std::sqrt(UH/h_ionization_energies[0]) - 1._rt;
 
-    const Real dt = WarpX::GetInstance().getdt(0);
+    const Real dt = Artemis::GetInstance().getdt(0);
 
     ionization_energies.resize(ion_atomic_number);
     adk_power.resize(ion_atomic_number);
@@ -2897,7 +2897,7 @@ PhysicalParticleContainer::InitIonizationModule ()
 }
 
 IonizationFilterFunc
-PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
+PhysicalParticleContainer::getIonizationFunc (const ArtemisParIter& pti,
                                               int lev,
                                               amrex::IntVect ngEB,
                                               const amrex::FArrayBox& Ex,
@@ -2907,7 +2907,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                               const amrex::FArrayBox& By,
                                               const amrex::FArrayBox& Bz)
 {
-    WARPX_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
+    ARTEMIS_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
 
     return IonizationFilterFunc(pti, lev, ngEB, Ex, Ey, Ez, Bx, By, Bz,
                                 ionization_energies.dataPtr(),
@@ -2924,33 +2924,33 @@ void PhysicalParticleContainer::resample (const int timestep)
     // the time at the MPI synchronization in TotalNumberOfParticles(). Having two profiler entries
     // here is thus useful to avoid confusing time spent waiting for other processes with time
     // spent doing actual resampling.
-    WARPX_PROFILE_VAR_NS("MultiParticleContainer::doResampling::MPI_synchronization",
+    ARTEMIS_PROFILE_VAR_NS("MultiParticleContainer::doResampling::MPI_synchronization",
                          blp_resample_synchronization);
-    WARPX_PROFILE_VAR_NS("MultiParticleContainer::doResampling::ActualResampling",
+    ARTEMIS_PROFILE_VAR_NS("MultiParticleContainer::doResampling::ActualResampling",
                          blp_resample_actual);
 
-    WARPX_PROFILE_VAR_START(blp_resample_synchronization);
+    ARTEMIS_PROFILE_VAR_START(blp_resample_synchronization);
     const amrex::Real global_numparts = TotalNumberOfParticles();
-    WARPX_PROFILE_VAR_STOP(blp_resample_synchronization);
+    ARTEMIS_PROFILE_VAR_STOP(blp_resample_synchronization);
 
-    WARPX_PROFILE_VAR_START(blp_resample_actual);
+    ARTEMIS_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
         amrex::Print() << Utils::TextMsg::Info("Resampling " + species_name);
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
-            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+            for (ArtemisParIter pti(*this, lev); pti.isValid(); ++pti)
             {
                 m_resampler(pti, lev, this);
             }
         }
     }
-    WARPX_PROFILE_VAR_STOP(blp_resample_actual);
+    ARTEMIS_PROFILE_VAR_STOP(blp_resample_actual);
 
 }
 
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
 
 
 bool PhysicalParticleContainer::has_quantum_sync () const
@@ -2980,14 +2980,14 @@ set_quantum_sync_engine_ptr (std::shared_ptr<QuantumSynchrotronEngine> ptr)
 PhotonEmissionFilterFunc
 PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
 {
-    WARPX_PROFILE("PhysicalParticleContainer::getPhotonEmissionFunc()");
+    ARTEMIS_PROFILE("PhysicalParticleContainer::getPhotonEmissionFunc()");
     return PhotonEmissionFilterFunc{particle_runtime_comps["opticalDepthQSR"]};
 }
 
 PairGenerationFilterFunc
 PhysicalParticleContainer::getPairGenerationFilterFunc ()
 {
-    WARPX_PROFILE("PhysicalParticleContainer::getPairGenerationFunc()");
+    ARTEMIS_PROFILE("PhysicalParticleContainer::getPairGenerationFunc()");
     return PairGenerationFilterFunc{particle_runtime_comps["opticalDepthBW"]};
 }
 

@@ -1,6 +1,6 @@
 /* Copyright 2019 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -14,11 +14,11 @@
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/ArtemisProfilerWrapper.H"
 
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 
 SpectralSolver::SpectralSolver(
                 const int lev,
@@ -77,13 +77,13 @@ SpectralSolver::SpectralSolver(
         }
         else if (psatd_solution_type == PSATDSolutionType::FirstOrder)
         {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 !fft_do_time_averaging,
                 "psatd.do_time_averaging=1 not supported when psatd.solution_type=first-order");
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 (!dive_cleaning && !divb_cleaning) || (dive_cleaning && divb_cleaning),
-                "warpx.do_dive_cleaning and warpx.do_divb_cleaning must be equal when psatd.solution_type=first-order");
+                "artemis.do_dive_cleaning and artemis.do_divb_cleaning must be equal when psatd.solution_type=first-order");
 
             const bool div_cleaning = (dive_cleaning && divb_cleaning);
 
@@ -120,7 +120,7 @@ SpectralSolver::ForwardTransform (const int lev,
                                   const int field_index,
                                   const int i_comp)
 {
-    WARPX_PROFILE("SpectralSolver::ForwardTransform");
+    ARTEMIS_PROFILE("SpectralSolver::ForwardTransform");
     field_data.ForwardTransform(lev, mf, field_index, i_comp);
 }
 
@@ -131,17 +131,17 @@ SpectralSolver::BackwardTransform( const int lev,
                                    const amrex::IntVect& fill_guards,
                                    const int i_comp )
 {
-    WARPX_PROFILE("SpectralSolver::BackwardTransform");
+    ARTEMIS_PROFILE("SpectralSolver::BackwardTransform");
     field_data.BackwardTransform(lev, mf, field_index, fill_guards, i_comp);
 }
 
 void
 SpectralSolver::pushSpectralFields(){
-    WARPX_PROFILE("SpectralSolver::pushSpectralFields");
+    ARTEMIS_PROFILE("SpectralSolver::pushSpectralFields");
     // Virtual function: the actual function used here depends
     // on the sub-class of `SpectralBaseAlgorithm` that was
     // initialized in the constructor of `SpectralSolver`
     algorithm->pushSpectralFields( field_data );
 }
 
-#endif // WARPX_USE_PSATD
+#endif // ARTEMIS_USE_PSATD

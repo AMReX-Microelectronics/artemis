@@ -1,6 +1,6 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,7 +8,7 @@
 
 #include "BoundaryConditions/PMLComponent.H"
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -16,7 +16,7 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -48,9 +48,9 @@ void FiniteDifferenceSolver::EvolveBPML (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     amrex::ignore_unused(Bfield, Efield, dt, dive_cleaning);
-   WARPX_ABORT_WITH_MESSAGE(
+   ARTEMIS_ABORT_WITH_MESSAGE(
         "PML are not implemented in cylindrical geometry.");
 #else
     if (m_grid_type == GridType::Collocated) {
@@ -66,14 +66,14 @@ void FiniteDifferenceSolver::EvolveBPML (
         EvolveBPMLCartesian <CartesianCKCAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else {
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "EvolveBPML: Unknown algorithm");
     }
 #endif
 }
 
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBPMLCartesian (
@@ -181,4 +181,4 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
 
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to ifndef ARTEMIS_DIM_RZ

@@ -1,17 +1,17 @@
 macro(find_amrex)
-    if(WarpX_amrex_src)
+    if(Artemis_amrex_src)
         message(STATUS "Compiling local AMReX ...")
-        message(STATUS "AMReX source path: ${WarpX_amrex_src}")
-    elseif(WarpX_amrex_internal)
+        message(STATUS "AMReX source path: ${Artemis_amrex_src}")
+    elseif(Artemis_amrex_internal)
         message(STATUS "Downloading AMReX ...")
-        message(STATUS "AMReX repository: ${WarpX_amrex_repo} (${WarpX_amrex_branch})")
+        message(STATUS "AMReX repository: ${Artemis_amrex_repo} (${Artemis_amrex_branch})")
         include(FetchContent)
     endif()
-    if(WarpX_amrex_internal OR WarpX_amrex_src)
+    if(Artemis_amrex_internal OR Artemis_amrex_src)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
         # see https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options
-        if(WarpX_ASCENT)
+        if(Artemis_ASCENT)
             set(AMReX_ASCENT ON CACHE INTERNAL "")
             set(AMReX_CONDUIT ON CACHE INTERNAL "")
         endif()
@@ -25,26 +25,26 @@ macro(find_amrex)
             set(AMReX_FPE OFF CACHE BOOL "")
         endif()
 
-        if(WarpX_COMPUTE STREQUAL OMP)
+        if(Artemis_COMPUTE STREQUAL OMP)
             set(AMReX_GPU_BACKEND  "NONE" CACHE INTERNAL "")
             set(AMReX_OMP          ON     CACHE INTERNAL "")
-        elseif(WarpX_COMPUTE STREQUAL NOACC)
+        elseif(Artemis_COMPUTE STREQUAL NOACC)
             set(AMReX_GPU_BACKEND  "NONE" CACHE INTERNAL "")
             set(AMReX_OMP          OFF    CACHE INTERNAL "")
         else()
-            set(AMReX_GPU_BACKEND  "${WarpX_COMPUTE}" CACHE INTERNAL "")
+            set(AMReX_GPU_BACKEND  "${Artemis_COMPUTE}" CACHE INTERNAL "")
             set(AMReX_OMP          OFF    CACHE INTERNAL "")
         endif()
 
-        if(WarpX_EB)
+        if(Artemis_EB)
             set(AMReX_EB ON CACHE INTERNAL "")
         else()
             set(AMReX_EB OFF CACHE INTERNAL "")
         endif()
 
-        if(WarpX_MPI)
+        if(Artemis_MPI)
             set(AMReX_MPI ON CACHE INTERNAL "")
-            if(WarpX_MPI_THREAD_MULTIPLE)
+            if(Artemis_MPI_THREAD_MULTIPLE)
                 set(AMReX_MPI_THREAD_MULTIPLE ON CACHE INTERNAL "")
             else()
                 set(AMReX_MPI_THREAD_MULTIPLE OFF CACHE INTERNAL "")
@@ -53,19 +53,19 @@ macro(find_amrex)
             set(AMReX_MPI OFF CACHE INTERNAL "")
         endif()
 
-        if(WarpX_PRECISION STREQUAL "DOUBLE")
+        if(Artemis_PRECISION STREQUAL "DOUBLE")
             set(AMReX_PRECISION "DOUBLE" CACHE INTERNAL "")
         else()
             set(AMReX_PRECISION "SINGLE" CACHE INTERNAL "")
         endif()
 
-        if(WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+        if(Artemis_PARTICLE_PRECISION STREQUAL "DOUBLE")
             set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
         else()
             set(AMReX_PARTICLES_PRECISION "SINGLE" CACHE INTERNAL "")
         endif()
 
-        if(WarpX_SENSEI)
+        if(Artemis_SENSEI)
             set(AMReX_SENSEI ON CACHE INTERNAL "")
         endif()
 
@@ -83,7 +83,7 @@ macro(find_amrex)
         set(AMReX_PROBINIT OFF CACHE INTERNAL "")
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
 
-        if(WarpX_ASCENT OR WarpX_SENSEI)
+        if(Artemis_ASCENT OR Artemis_SENSEI)
             set(AMReX_GPU_RDC ON CACHE BOOL "")
         else()
             # we don't need RDC and disabling it simplifies the build
@@ -93,35 +93,35 @@ macro(find_amrex)
 
         # shared libs, i.e. for Python bindings, need relocatable code
         #   openPMD: currently triggers shared libs (TODO)
-        if(WarpX_LIB OR ABLASTR_POSITION_INDEPENDENT_CODE OR BUILD_SHARED_LIBS OR WarpX_OPENPMD)
+        if(Artemis_LIB OR ABLASTR_POSITION_INDEPENDENT_CODE OR BUILD_SHARED_LIBS OR Artemis_OPENPMD)
             set(AMReX_PIC ON CACHE INTERNAL "")
         endif()
 
         # IPO/LTO
-        if(WarpX_IPO)
+        if(Artemis_IPO)
             set(AMReX_IPO ON CACHE INTERNAL "")
-            if(WarpX_COMPUTE STREQUAL CUDA)
+            if(Artemis_COMPUTE STREQUAL CUDA)
                 set(AMReX_CUDA_LTO ON CACHE BOOL "")
             endif()
         endif()
 
-        if(WarpX_DIMS STREQUAL RZ)
+        if(Artemis_DIMS STREQUAL RZ)
             set(AMReX_SPACEDIM 2 CACHE INTERNAL "")
         else()
-            set(AMReX_SPACEDIM ${WarpX_DIMS} CACHE INTERNAL "")
+            set(AMReX_SPACEDIM ${Artemis_DIMS} CACHE INTERNAL "")
         endif()
 
-        if(WarpX_amrex_src)
-            list(APPEND CMAKE_MODULE_PATH "${WarpX_amrex_src}/Tools/CMake")
-            if(WarpX_COMPUTE STREQUAL CUDA)
+        if(Artemis_amrex_src)
+            list(APPEND CMAKE_MODULE_PATH "${Artemis_amrex_src}/Tools/CMake")
+            if(Artemis_COMPUTE STREQUAL CUDA)
                 enable_language(CUDA)
                 # AMReX 21.06+ supports CUDA_ARCHITECTURES
             endif()
-            add_subdirectory(${WarpX_amrex_src} _deps/localamrex-build/)
+            add_subdirectory(${Artemis_amrex_src} _deps/localamrex-build/)
         else()
             FetchContent_Declare(fetchedamrex
-                GIT_REPOSITORY ${WarpX_amrex_repo}
-                GIT_TAG        ${WarpX_amrex_branch}
+                GIT_REPOSITORY ${Artemis_amrex_repo}
+                GIT_TAG        ${Artemis_amrex_branch}
                 BUILD_IN_SOURCE 0
             )
             FetchContent_GetProperties(fetchedamrex)
@@ -129,7 +129,7 @@ macro(find_amrex)
             if(NOT fetchedamrex_POPULATED)
                 FetchContent_Populate(fetchedamrex)
                 list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
-                if(WarpX_COMPUTE STREQUAL CUDA)
+                if(Artemis_COMPUTE STREQUAL CUDA)
                     enable_language(CUDA)
                     # AMReX 21.06+ supports CUDA_ARCHITECTURES
                 endif()
@@ -145,7 +145,7 @@ macro(find_amrex)
             mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED_FETCHEDAMREX)
         endif()
 
-        # AMReX options not relevant to most WarpX users
+        # AMReX options not relevant to most Artemis users
         mark_as_advanced(AMREX_BUILD_DATETIME)
         mark_as_advanced(AMReX_DIFFERENT_COMPILER)
         mark_as_advanced(AMReX_ENABLE_TESTS)
@@ -199,32 +199,32 @@ macro(find_amrex)
     else()
         message(STATUS "Searching for pre-installed AMReX ...")
         # https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#importing-amrex-into-your-cmake-project
-        if(WarpX_ASCENT)
+        if(Artemis_ASCENT)
             set(COMPONENT_ASCENT ASCENT CONDUIT)
         else()
             set(COMPONENT_ASCENT)
         endif()
-        if(WarpX_DIMS STREQUAL RZ)
+        if(Artemis_DIMS STREQUAL RZ)
             set(COMPONENT_DIM 2D)
         else()
-            set(COMPONENT_DIM ${WarpX_DIMS}D)
+            set(COMPONENT_DIM ${Artemis_DIMS}D)
         endif()
-        if(WarpX_EB)
+        if(Artemis_EB)
             set(COMPONENT_EB EB)
         else()
             set(COMPONENT_EB)
         endif()
-        if(WarpX_LIB)
+        if(Artemis_LIB)
             set(COMPONENT_PIC PIC)
         else()
             set(COMPONENT_PIC)
         endif()
-        if(WarpX_SENSEI)
+        if(Artemis_SENSEI)
             set(COMPONENT_SENSEI SENSEI)
         else()
             set(COMPONENT_SENSEI)
         endif()
-        set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
+        set(COMPONENT_PRECISION ${Artemis_PRECISION} P${Artemis_PARTICLE_PRECISION})
 
         find_package(AMReX 23.04 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
@@ -232,22 +232,22 @@ macro(find_amrex)
 endmacro()
 
 # local source-tree
-set(WarpX_amrex_src ""
+set(Artemis_amrex_src ""
     CACHE PATH
     "Local path to AMReX source directory (preferred if set)")
 
 # Git fetcher
-set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
+set(Artemis_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
-    "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
+    "Repository URI to pull and build AMReX from if(Artemis_amrex_internal)")
 
 # Parse AMReX version and commit information
-file(READ "${WarpX_SOURCE_DIR}/dependencies.json" dependencies_data)
+file(READ "${Artemis_SOURCE_DIR}/dependencies.json" dependencies_data)
 string(JSON amrex_version GET "${dependencies_data}" version_amrex)
 string(JSON amrex_commit GET "${dependencies_data}" commit_amrex)
 
-set(WarpX_amrex_branch ${amrex_commit}
+set(Artemis_amrex_branch ${amrex_commit}
     CACHE STRING
-    "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
+    "Repository branch for Artemis_amrex_repo if(Artemis_amrex_internal)")
 
 find_amrex()

@@ -1,6 +1,6 @@
 /* Copyright 2019-2020 Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,8 +9,8 @@
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX_Array4.H>
 #include <AMReX_Config.H>
@@ -79,34 +79,34 @@ void FieldEnergy::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // get number of level
-    const auto nLevel = warpx.finestLevel() + 1;
+    const auto nLevel = artemis.finestLevel() + 1;
 
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // get MultiFab data at lev
-        const MultiFab & Ex = warpx.getEfield(lev,0);
-        const MultiFab & Ey = warpx.getEfield(lev,1);
-        const MultiFab & Ez = warpx.getEfield(lev,2);
-        const MultiFab & Bx = warpx.getBfield(lev,0);
-        const MultiFab & By = warpx.getBfield(lev,1);
-        const MultiFab & Bz = warpx.getBfield(lev,2);
+        const MultiFab & Ex = artemis.getEfield(lev,0);
+        const MultiFab & Ey = artemis.getEfield(lev,1);
+        const MultiFab & Ez = artemis.getEfield(lev,2);
+        const MultiFab & Bx = artemis.getBfield(lev,0);
+        const MultiFab & By = artemis.getBfield(lev,1);
+        const MultiFab & Bz = artemis.getBfield(lev,2);
 
         // get cell size
-        Geometry const & geom = warpx.Geom(lev);
-#if defined(WARPX_DIM_1D_Z)
+        Geometry const & geom = artemis.Geom(lev);
+#if defined(ARTEMIS_DIM_1D_Z)
         auto dV = geom.CellSize(0);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
         amrex::Real const tmpEx = ComputeNorm2RZ(Ex, lev);
         amrex::Real const tmpEy = ComputeNorm2RZ(Ey, lev);
         amrex::Real const tmpEz = ComputeNorm2RZ(Ez, lev);
@@ -158,10 +158,10 @@ void FieldEnergy::ComputeDiags (int step)
 amrex::Real
 FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
 {
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
-    Geometry const & geom = warpx.Geom(lev);
+    Geometry const & geom = artemis.Geom(lev);
     const amrex::Real dr = geom.CellSize(0);
 
     amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
@@ -180,7 +180,7 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
         amrex::Box tb = convert(tilebox, field.ixType().toIntVect());
 
         // Lower corner of tile box physical domain
-        const std::array<amrex::Real, 3>& xyzmin = warpx.LowerCorner(tilebox, lev, 0._rt);
+        const std::array<amrex::Real, 3>& xyzmin = artemis.LowerCorner(tilebox, lev, 0._rt);
         const Dim3 lo = lbound(tilebox);
         const Dim3 hi = ubound(tilebox);
         const Real rmin = xyzmin[0] + (tb.ixType().nodeCentered(0) ? 0._rt : 0.5_rt*dr);
@@ -190,7 +190,7 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
         int const ncomp = field.nComp();
 
         for (int idir=0 ; idir < AMREX_SPACEDIM ; idir++) {
-            if (warpx.field_boundary_hi[idir] == FieldBoundaryType::Periodic) {
+            if (artemis.field_boundary_hi[idir] == FieldBoundaryType::Periodic) {
                 // For periodic boundaries, do not include the data in the nodes
                 // on the upper edge of the domain
                 tb.enclosedCells(idir);

@@ -14,7 +14,7 @@ all: $(SRC_FILES) clean
 
 clean:
 	rm -f ../theory/intro.rst
-	rm -f ../theory/warpx_theory.rst
+	rm -f ../theory/artemis_theory.rst
 	rm -f ../theory/picsar_theory.rst
 	rm -f ../theory/PIC.png
 	rm -f ../theory/Yee_grid.png

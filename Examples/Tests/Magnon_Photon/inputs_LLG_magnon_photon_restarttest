@@ -96,17 +96,17 @@ my_constants.flag_ss = 2 # soft source flag
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 0.9
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 0.9
 boundary.field_lo = pml pml pml   # PML at -x to extend GND patches; PEC at -y end to superimpose waveguide port; PML at -z end to extend Si substrate;
 boundary.field_hi = pml pml pml   # PML at +x to extend GND patches; PML at +y end to extend the TRL; PML at -z end to extend Si substrate;
 
-warpx.mag_time_scheme_order = 2 # default 1
-warpx.mag_M_normalization = 1
-warpx.mag_LLG_coupling = 1
-warpx.mag_LLG_exchange_coupling = 0 # zero_th order FMR, no exchange
-warpx.mag_LLG_anisotropy_coupling = 0
+artemis.mag_time_scheme_order = 2 # default 1
+artemis.mag_M_normalization = 1
+artemis.mag_LLG_coupling = 1
+artemis.mag_LLG_exchange_coupling = 0 # zero_th order FMR, no exchange
+artemis.mag_LLG_anisotropy_coupling = 0
 
 algo.em_solver_medium = macroscopic           # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff   # laxwendroff or backwardeuler
@@ -178,45 +178,45 @@ macroscopic.mag_normalized_error = 0.1 # if M magnitude relatively changes more 
 
 # vertical electric voltage excitation superimposed with PEC at one end of CPW
 # in the waveform of modified Gaussian pulse
-warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+artemis.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
 
-# warpx.Ex_excitation_flag_function(x,y,z) = "0."
-# warpx.Ey_excitation_flag_function(x,y,z) = "0."
-# warpx.Ez_excitation_flag_function(x,y,z) = "flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < h_port) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation)"
+# artemis.Ex_excitation_flag_function(x,y,z) = "0."
+# artemis.Ey_excitation_flag_function(x,y,z) = "0."
+# artemis.Ez_excitation_flag_function(x,y,z) = "flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < h_port) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation)"
 
-# warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-# warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-# warpx.Ez_excitation_grid_function(x,y,z,t) = "1.0e-3 * exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t) "
-# # warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*frequency*t) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation)"
+# artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
+# artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+# artemis.Ez_excitation_grid_function(x,y,z,t) = "1.0e-3 * exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t) "
+# # artemis.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*frequency*t) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation)"
 
 
-warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_ss * ( (x > w_line/2) * (x < w_line/2 + w_gap) + (x < -w_line/2) * (x > -w_line/2 - w_gap)) * (z < th_si + th_nb) * (z > th_si) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation) "
-#warpx.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_hs * ( (x > w_line/2) * (x < w_line/2 + w_gap) ) * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation) "
-#warpx.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation)"
+artemis.Ez_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ey_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_ss * ( (x > w_line/2) * (x < w_line/2 + w_gap) + (x < -w_line/2) * (x > -w_line/2 - w_gap)) * (z < th_si + th_nb) * (z > th_si) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation) "
+#artemis.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_hs * ( (x > w_line/2) * (x < w_line/2 + w_gap) ) * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation) "
+#artemis.Ex_excitation_flag_function(x,y,z) = "flag_none + flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < -Lz/2 + th_si + th_nb) * (z > -Lz/2 + th_si) * (y > -Ly/2 - tiny_excitation) * (y < -Ly/2 + tiny_excitation)"
 
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-#warpx.Ez_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
-# warpx.Ex_excitation_grid_function(x,y,z,t) = "1.0e-3 * exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t) * ((x > w_line/2) * (x < w_line/2 + w_gap) +  (-1.) * (x < -w_line/2) * (x > -w_line/2 - w_gap))"
-warpx.Ex_excitation_grid_function(x,y,z,t) = "1.0e-3 * sin(2*pi*frequency*t) * ((x > w_line/2) * (x < w_line/2 + w_gap) +  (-1.) * (x < -w_line/2) * (x > -w_line/2 - w_gap))"
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+#artemis.Ez_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
+# artemis.Ex_excitation_grid_function(x,y,z,t) = "1.0e-3 * exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t) * ((x > w_line/2) * (x < w_line/2 + w_gap) +  (-1.) * (x < -w_line/2) * (x > -w_line/2 - w_gap))"
+artemis.Ex_excitation_grid_function(x,y,z,t) = "1.0e-3 * sin(2*pi*frequency*t) * ((x > w_line/2) * (x < w_line/2 + w_gap) +  (-1.) * (x < -w_line/2) * (x > -w_line/2 - w_gap))"
 
 # set up magnetic sample fields
-warpx.H_bias_excitation_on_grid_style = "parse_H_bias_excitation_grid_function"
-warpx.Hx_bias_excitation_grid_function(x,y,z,t)= "0.0" # in A/m
-warpx.Hy_bias_excitation_grid_function(x,y,z,t)= "0.0 + Hbias*1000/4/pi"
-#warpx.Hz_bias_excitation_grid_function(x,y,z,t)= "0.0 + Hbias*10000*1000/4/pi * (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (z > -length/2.0) * (z < length/2.0) * (y < th_ferrite)" # in A/m
-warpx.Hz_bias_excitation_grid_function(x,y,z,t)= "0.0" # in A/m
+artemis.H_bias_excitation_on_grid_style = "parse_H_bias_excitation_grid_function"
+artemis.Hx_bias_excitation_grid_function(x,y,z,t)= "0.0" # in A/m
+artemis.Hy_bias_excitation_grid_function(x,y,z,t)= "0.0 + Hbias*1000/4/pi"
+#artemis.Hz_bias_excitation_grid_function(x,y,z,t)= "0.0 + Hbias*10000*1000/4/pi * (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (z > -length/2.0) * (z < length/2.0) * (y < th_ferrite)" # in A/m
+artemis.Hz_bias_excitation_grid_function(x,y,z,t)= "0.0" # in A/m
 
-warpx.Hx_bias_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Hy_bias_excitation_flag_function(x,y,z) = "flag_hs"
-warpx.Hz_bias_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Hx_bias_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Hy_bias_excitation_flag_function(x,y,z) = "flag_hs"
+artemis.Hz_bias_excitation_flag_function(x,y,z) = "flag_none"
 
-warpx.M_ext_grid_init_style = parse_M_ext_grid_function
-warpx.Mx_external_grid_function(x,y,z)= "0.0"
-warpx.My_external_grid_function(x,y,z)= "0.0 + Ms_ga*1000/4/pi * (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (y > -l_ferrite/2.0) * (y < l_ferrite/2.0) * (z < th_ferrite + th_nb + th_si) * (z > th_nb + th_si)"
-warpx.Mz_external_grid_function(x,y,z)= "0.0"
+artemis.M_ext_grid_init_style = parse_M_ext_grid_function
+artemis.Mx_external_grid_function(x,y,z)= "0.0"
+artemis.My_external_grid_function(x,y,z)= "0.0 + Ms_ga*1000/4/pi * (x > -w_ferrite/2.0) * (x < w_ferrite/2.0) * (y > -l_ferrite/2.0) * (y < l_ferrite/2.0) * (z < th_ferrite + th_nb + th_si) * (z > th_nb + th_si)"
+artemis.Mz_external_grid_function(x,y,z)= "0.0"
 
 # Diagnostics
 

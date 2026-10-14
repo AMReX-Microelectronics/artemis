@@ -1,12 +1,12 @@
 /* Copyright 2019-2020 Neil Zaim, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "ParticleUtils.H"
 
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_Algorithm.H>
 #include <AMReX_Array.H>
@@ -26,8 +26,8 @@ namespace ParticleUtils {
 
     using namespace amrex;
     // Define shortcuts for frequently-used type names
-    using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
+    using ParticleType = ArtemisParticleContainer::ParticleType;
+    using ParticleTileType = ArtemisParticleContainer::ParticleTileType;
     using ParticleBins = DenseBins<ParticleType>;
     using index_type = ParticleBins::index_type;
 
@@ -42,7 +42,7 @@ namespace ParticleUtils {
         ParticleType const* particle_ptr = ptile.GetArrayOfStructs()().data();
 
         // Extract box properties
-        Geometry const& geom = WarpX::GetInstance().Geom(lev);
+        Geometry const& geom = Artemis::GetInstance().Geom(lev);
         Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
         const auto lo = lbound(cbx);
         const auto dxi = geom.InvCellSizeArray();

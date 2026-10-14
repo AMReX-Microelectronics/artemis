@@ -5,7 +5,7 @@
 #SBATCH -t 24:00:00
 #SBATCH -A <allocation ID>
 
-#SBATCH -J WarpX
+#SBATCH -J Artemis
 #SBATCH -q pbatch
 #SBATCH --qos=normal
 #SBATCH --license=lustre1,lustre2
@@ -20,7 +20,7 @@
 
 # each Quartz node has 1 socket of Intel Xeon E5-2695 v4
 # each Xeon CPU is divided into 2 bus rings that each have direct L3 access
-export WARPX_NMPI_PER_NODE=2
+export ARTEMIS_NMPI_PER_NODE=2
 
 # each MPI rank per half-socket has 9 physical cores
 #   or 18 logical (virtual) cores
@@ -35,6 +35,6 @@ export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
 export OMP_NUM_THREADS=18
 
-EXE="<path/to/executable>"  # e.g. ./warpx
+EXE="<path/to/executable>"  # e.g. ./artemis
 
-srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) ${EXE} <input file>
+srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${ARTEMIS_NMPI_PER_NODE} )) ${EXE} <input file>

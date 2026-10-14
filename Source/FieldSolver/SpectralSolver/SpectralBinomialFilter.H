@@ -1,11 +1,11 @@
 /* Copyright 2020 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRAL_BINOMIAL_FILTER_H_
-#define WARPX_SPECTRAL_BINOMIAL_FILTER_H_
+#ifndef ARTEMIS_SPECTRAL_BINOMIAL_FILTER_H_
+#define ARTEMIS_SPECTRAL_BINOMIAL_FILTER_H_
 
 #include "SpectralHankelTransform/HankelTransform.H"
 #include "SpectralKSpace.H"

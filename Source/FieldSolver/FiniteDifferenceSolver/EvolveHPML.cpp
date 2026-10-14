@@ -1,13 +1,13 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
@@ -20,8 +20,8 @@
 #include <AMReX.H>
 
 using namespace amrex;
-#ifndef WARPX_DIM_RZ
-#ifdef WARPX_MAG_LLG
+#ifndef ARTEMIS_DIM_RZ
+#ifdef ARTEMIS_MAG_LLG
 /**
  * \brief Update the H field, over one timestep
  */
@@ -33,7 +33,7 @@ void FiniteDifferenceSolver::EvolveHPML (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     amrex::ignore_unused(Hfield, Efield, dt, dive_cleaning);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
@@ -164,5 +164,5 @@ void FiniteDifferenceSolver::EvolveHPMLCartesian (
 
 }
 
-#endif // corresponds to ifdef WARPX_MAG_LLG
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to ifdef ARTEMIS_MAG_LLG
+#endif // corresponds to ifndef ARTEMIS_DIM_RZ

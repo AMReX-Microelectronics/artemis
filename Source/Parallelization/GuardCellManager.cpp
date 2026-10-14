@@ -1,13 +1,13 @@
 /* Copyright 2019-2020 Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
 #include "GuardCellManager.H"
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
@@ -17,8 +17,8 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Config.H>
 #include <AMReX_INT.H>
@@ -56,7 +56,7 @@ guardCellManager::Init (
     const bool use_filter,
     const amrex::IntVect& bilinear_filter_stencil_length)
 {
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
     amrex::ignore_unused(do_multi_J, fft_do_time_averaging);
 #endif
     // When using subcycling, the particles on the fine level perform two pushes
@@ -104,7 +104,7 @@ guardCellManager::Init (
     // the fine grid by a number of cells equal to the ref_ratio in the moving
     // window direction.
     if (do_moving_window) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
         const int nlevs = ref_ratios.size()+1;
         int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
@@ -117,13 +117,13 @@ guardCellManager::Init (
         ngJz = std::max(ngJz,max_r);
     }
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     ng_alloc_EB = IntVect(ngx,ngy,ngz);
     ng_alloc_J = IntVect(ngJx,ngJy,ngJz);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     ng_alloc_EB = IntVect(ngx,ngz);
     ng_alloc_J = IntVect(ngJx,ngJz);
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
     ng_alloc_EB = IntVect(ngz);
     ng_alloc_J = IntVect(ngJz);
 #endif
@@ -131,13 +131,13 @@ guardCellManager::Init (
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
     // now takes into account the time step (see code block below). However, this does seem to be
     // necessary in order to avoid some remaining instances of out-of-bound array access in
-    // simulations with large time steps (revealed by building WarpX with BOUND_CHECK = TRUE).
+    // simulations with large time steps (revealed by building Artemis with BOUND_CHECK = TRUE).
     ng_alloc_Rho = ng_alloc_J+1;
 
     // Electromagnetic simulations: account for change in particle positions within half a time step
     // for current deposition and within one time step for charge deposition (since rho is needed
     // both at the beginning and at the end of the PIC iteration)
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
     if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None)
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
@@ -178,7 +178,7 @@ guardCellManager::Init (
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
-    // Used if warpx.do_divb_cleaning = 1
+    // Used if artemis.do_divb_cleaning = 1
     int ng_alloc_G_int = (do_moving_window) ? 2 : 1;
     // TODO Does the CKC solver require one additional guard cell (as for F)?
     ng_alloc_G = IntVect(AMREX_D_DECL(ng_alloc_G_int, ng_alloc_G_int, ng_alloc_G_int));
@@ -210,15 +210,15 @@ guardCellManager::Init (
         utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
         utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
         IntVect ngFFT = IntVect(ngFFt_z);
 #endif
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         if (do_pml) {
             if (!do_pml_in_domain) {
                 ngFFT[0] = std::max(ngFFT[0], pml_ncell);
@@ -255,7 +255,7 @@ guardCellManager::Init (
         ng_FieldSolverF = ng_alloc_EB;
         ng_FieldSolverG = ng_alloc_EB;
     }
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
              electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee) {
         ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
@@ -312,7 +312,7 @@ guardCellManager::Init (
         // If NCI filter, add guard cells in the z direction
         IntVect ng_NCIFilter = IntVect::TheZeroVector();
         if (do_fdtd_nci_corr)
-            ng_NCIFilter[WARPX_ZINDEX] = NCIGodfreyFilter::m_stencil_width;
+            ng_NCIFilter[ARTEMIS_ZINDEX] = NCIGodfreyFilter::m_stencil_width;
         // Note: communications of guard cells for bilinear filter are handled
         // separately.
         ng_FieldGather = ng_FieldGather_noNCI + ng_NCIFilter;

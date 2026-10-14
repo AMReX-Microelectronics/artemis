@@ -1,13 +1,13 @@
 # Copyright 2019-2020 Luca Fedeli, Maxence Thevenet
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
 import numpy as np
 
 '''
-This Python script helps a user to parallelize a WarpX simulation.
+This Python script helps a user to parallelize a Artemis simulation.
 
 The user specifies the minimal size of the physical domain and the resolution
 in each dimension, and the scripts computes:

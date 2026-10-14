@@ -1,15 +1,15 @@
 /* Copyright 2021 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_BTDIAGNOSTICS_H_
-#define WARPX_BTDIAGNOSTICS_H_
+#ifndef ARTEMIS_BTDIAGNOSTICS_H_
+#define ARTEMIS_BTDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 #include "Utils/Parser/IntervalsParser.H"
 
 #include <AMReX_Box.H>
@@ -148,16 +148,16 @@ private:
      */
     bool m_do_back_transformed_particles = true;
 
-    /** m_gamma_boost, is a copy of warpx.gamma_boost
+    /** m_gamma_boost, is a copy of artemis.gamma_boost
      *  That is, the Lorentz factor of the boosted frame in which the simulation is run.
      *  The direction for Lorentz transformation is assumed to be along
-     *  ``warpx.boost_direction``, which is the same as the moving window direction.
+     *  ``artemis.boost_direction``, which is the same as the moving window direction.
      *  Currently, back-transformed diagnostics only works if the boost-direction and
      *  moving window direction are along the z-direction in Cartesian co-ordinates.
      */
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
-    /** m_moving_window_dir is a copy of warpx.moving_window_dir
+    /** m_moving_window_dir is a copy of artemis.moving_window_dir
      *  Currently, back-transformed diagnostics only works if moving window is
      *  in z-direction for both 2D and 3D simulations in the Cartesian frame of reference.
      */
@@ -356,7 +356,7 @@ private:
      *  All the fields are stored regardless of the specific fields to plot selected
      *  by the user.
      */
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     amrex::Vector< std::string > m_cellcenter_varnames = {"Er", "Et", "Ez",
                                                           "Br", "Bt", "Bz",
                                                           "jr", "jt", "jz", "rho"};
@@ -425,4 +425,4 @@ private:
     int get_snapshot_full_flag ( int i_buffer) override { return m_snapshot_full[i_buffer]; }
     void set_snapshot_full ( int i_buffer, int snapshot_full) override { m_snapshot_full[i_buffer] = snapshot_full; }
 };
-#endif // WARPX_BTDIAGNOSTICS_H_
+#endif // ARTEMIS_BTDIAGNOSTICS_H_

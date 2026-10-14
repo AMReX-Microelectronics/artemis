@@ -2,10 +2,10 @@
 #
 # Copyright 2021 Axel Huebl
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 
-# This file is a maintainer tool to bump the versions inside WarpX'
+# This file is a maintainer tool to bump the versions inside Artemis'
 # source directory at all places where necessary.
 #
 # Note: this script is only tested with GNUtools (Linux)
@@ -15,8 +15,8 @@ set -eu -o pipefail
 
 # Maintainer Inputs ###########################################################
 
-echo "Hi there, this is a WarpX maintainer tool to update the source"
-echo "code of WarpX to a new version number on all places where"
+echo "Hi there, this is a Artemis maintainer tool to update the source"
+echo "code of Artemis to a new version number on all places where"
 echo "necessary."
 echo "For it to work, you need write access on the source directory and"
 echo "you should be working in a clean git branch without ongoing"
@@ -86,14 +86,14 @@ fi
 # Updates #####################################################################
 
 # CMake scripts
-#   CMakeLists.txt: project(WarpX VERSION YY.MM)
+#   CMakeLists.txt: project(Artemis VERSION YY.MM)
 sed -i -E "s/"\
-"(project\(WarpX VERSION[[:blank:]]+)(.*)(\))/"\
+"(project\(Artemis VERSION[[:blank:]]+)(.*)(\))/"\
 "\1${VERSION_STR_NOSUFFIX}\3/g" \
     ${REPO_DIR}/CMakeLists.txt
 
 #   cmake/dependencies/AMReX.cmake:
-#     set(WarpX_amrex_branch "development" ... (future)
+#     set(Artemis_amrex_branch "development" ... (future)
 #     find_package(AMReX YY.MM CONFIG ...
 sed -i -E "s/"\
 "(find_package\(AMReX[[:blank:]]+)(.*)([[:blank:]]+CONFIG.+)/"\
@@ -126,16 +126,16 @@ sed -i "s/"\
     ${REPO_DIR}/Docs/source/conf.py
 
 # LICENSE
-#   LICENSE.txt: WarpX vYY.MM Copyright (c) 20YY, The Regents of ...
+#   LICENSE.txt: Artemis vYY.MM Copyright (c) 20YY, The Regents of ...
 sed -i -E "s/"\
-"(WarpX v)(.*)([[:blank:]]+Copyright \(c\) 2018-)(.*)(, The Regents of.*)/"\
+"(Artemis v)(.*)([[:blank:]]+Copyright \(c\) 2018-)(.*)(, The Regents of.*)/"\
 "\1${VERSION_STR_NOSUFFIX}\3$(date +%Y)\5/g" \
     ${REPO_DIR}/LICENSE.txt
 
 # README.md
-#   README.md: WarpX Copyright (c) 2018-2021, The Regents of ...
+#   README.md: Artemis Copyright (c) 2018-2021, The Regents of ...
 sed -i -E "s/"\
-"(WarpX Copyright \(c\) 2018-)(.*)(, The Regents of.*)/"\
+"(Artemis Copyright \(c\) 2018-)(.*)(, The Regents of.*)/"\
 "\1$(date +%Y)\3/g" \
     ${REPO_DIR}/README.md
 

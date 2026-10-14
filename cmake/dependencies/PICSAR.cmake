@@ -1,22 +1,22 @@
 function(find_picsar)
-    if(WarpX_picsar_src)
+    if(Artemis_picsar_src)
         message(STATUS "Compiling local PICSAR ...")
-        message(STATUS "PICSAR source path: ${WarpX_picsar_src}")
-    elseif(WarpX_picsar_internal)
+        message(STATUS "PICSAR source path: ${Artemis_picsar_src}")
+    elseif(Artemis_picsar_internal)
         message(STATUS "Downloading PICSAR ...")
-        message(STATUS "PICSAR repository: ${WarpX_picsar_repo} (${WarpX_picsar_branch})")
+        message(STATUS "PICSAR repository: ${Artemis_picsar_repo} (${Artemis_picsar_branch})")
         include(FetchContent)
     endif()
-    if(WarpX_picsar_internal OR WarpX_picsar_src)
+    if(Artemis_picsar_internal OR Artemis_picsar_src)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
         # Enable or disable QED lookup tables generation
 
         # If table generation is enabled, enable or disable
-        # openMP support depending on WarpX_COMPUTE
-        if(WarpX_QED_TABLE_GEN)
+        # openMP support depending on Artemis_COMPUTE
+        if(Artemis_QED_TABLE_GEN)
             set(PXRMP_QED_TABLEGEN ON CACHE INTERNAL "")
-            if(WarpX_COMPUTE STREQUAL OMP)
+            if(Artemis_COMPUTE STREQUAL OMP)
                 set(PXRMP_QED_OMP ON CACHE INTERNAL "")
             else()
                 set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
@@ -29,20 +29,20 @@ function(find_picsar)
         # Always disable tests
         set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
 
-        if(WarpX_COMPUTE STREQUAL SYCL)
+        if(Artemis_COMPUTE STREQUAL SYCL)
             set (PXRMP_DPCPP_FIX ON CACHE INTERNAL "")
         endif()
 
-        if(WarpX_picsar_src)
+        if(Artemis_picsar_src)
             add_subdirectory(
-                ${WarpX_picsar_src}/multi_physics/QED
+                ${Artemis_picsar_src}/multi_physics/QED
                 _deps/localpicsar-build/
             )
-            get_source_version(PXRMP_QED ${WarpX_picsar_src})
+            get_source_version(PXRMP_QED ${Artemis_picsar_src})
         else()
             FetchContent_Declare(fetchedpicsar
-                GIT_REPOSITORY ${WarpX_picsar_repo}
-                GIT_TAG        ${WarpX_picsar_branch}
+                GIT_REPOSITORY ${Artemis_picsar_repo}
+                GIT_TAG        ${Artemis_picsar_branch}
                 BUILD_IN_SOURCE 0
             )
             FetchContent_GetProperties(fetchedpicsar)
@@ -56,7 +56,7 @@ function(find_picsar)
             endif()
             get_source_version(PXRMP_QED ${fetchedpicsar_SOURCE_DIR})
             if(NOT PXRMP_QED_GIT_VERSION)
-                set(PXRMP_QED_GIT_VERSION "${WarpX_picsar_branch}" CACHE INTERNAL "")
+                set(PXRMP_QED_GIT_VERSION "${Artemis_picsar_branch}" CACHE INTERNAL "")
             endif()
 
             # advanced fetch options
@@ -68,7 +68,7 @@ function(find_picsar)
             mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED_FETCHEDPICSAR)
         endif()
 
-        # PICSAR options not relevant to WarpX users
+        # PICSAR options not relevant to Artemis users
         mark_as_advanced(DIM)
         mark_as_advanced(USE_XSDK_DEFAULTS)
         mark_as_advanced(PXRMP_QED_TABLEGEN)
@@ -87,33 +87,33 @@ function(find_picsar)
         message(FATAL_ERROR "PICSAR: Cannot be used as externally installed "
             "library yet. "
             "Note that you can point to an external source tree with "
-            "-DWarpX_picsar_src=<path>"
+            "-DArtemis_picsar_src=<path>"
         )
     endif()
 endfunction()
 
-if(WarpX_QED)
+if(Artemis_QED)
     # local source-tree
-    set(WarpX_picsar_src ""
+    set(Artemis_picsar_src ""
         CACHE PATH
         "Local path to PICSAR source directory (preferred if set)")
 
     # Git fetcher
-    option(WarpX_picsar_internal   "Download & build PICSAR" ON)
-    set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
+    option(Artemis_picsar_internal   "Download & build PICSAR" ON)
+    set(Artemis_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
         CACHE STRING
-        "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
+        "Repository URI to pull and build PICSAR from if(Artemis_picsar_internal)")
     # Parse PICSAR version and commit information
-    file(READ "${WarpX_SOURCE_DIR}/dependencies.json" dependencies_data)
+    file(READ "${Artemis_SOURCE_DIR}/dependencies.json" dependencies_data)
     string(JSON picsar_version GET "${dependencies_data}" version_picsar)
     string(JSON picsar_commit GET "${dependencies_data}" commit_picsar)
 
-    set(WarpX_picsar_branch ${picsar_commit}
+    set(Artemis_picsar_branch ${picsar_commit}
         CACHE STRING
-        "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
+        "Repository branch for Artemis_picsar_repo if(Artemis_picsar_internal)")
 
-    cmake_dependent_option(WarpX_QED_TABLE_GEN "generate QED lookup tables (requires boost)"
-        ON "WarpX_QED" OFF)
+    cmake_dependent_option(Artemis_QED_TABLE_GEN "generate QED lookup tables (requires boost)"
+        ON "Artemis_QED" OFF)
 
     find_picsar()
 endif()

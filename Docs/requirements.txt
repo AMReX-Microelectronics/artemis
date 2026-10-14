@@ -1,10 +1,10 @@
 # Copyright 2019 Axel Huebl, Maxence Thevenet
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
-# WarpX PICMI bindings w/o C++ component (used for autoclass docs)
+# Artemis PICMI bindings w/o C++ component (used for autoclass docs)
 -e Python
 breathe
 docutils>=0.17.1

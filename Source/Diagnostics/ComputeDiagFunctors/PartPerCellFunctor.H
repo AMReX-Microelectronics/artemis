@@ -1,5 +1,5 @@
-#ifndef WARPX_PARTPERCELLFUNCTOR_H_
-#define WARPX_PARTPERCELLFUNCTOR_H_
+#ifndef ARTEMIS_PARTPERCELLFUNCTOR_H_
+#define ARTEMIS_PARTPERCELLFUNCTOR_H_
 
 #include "ComputeDiagFunctor.H"
 
@@ -34,4 +34,4 @@ private:
     int const m_lev; /**< level on which mf_src is defined */
 };
 
-#endif // WARPX_PARTPERCELLFUNCTOR_H_
+#endif // ARTEMIS_PARTPERCELLFUNCTOR_H_

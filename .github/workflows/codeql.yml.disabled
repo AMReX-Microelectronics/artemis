@@ -44,12 +44,12 @@ jobs:
       - name: Configure (C++)
         if: ${{ matrix.language == 'cpp' }}
         run: |
-          $CMAKE -S . -B build -DWarpX_OPENPMD=ON
+          $CMAKE -S . -B build -DArtemis_OPENPMD=ON
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
-          config-file: ./.github/codeql/warpx-codeql.yml
+          config-file: ./.github/codeql/artemis-codeql.yml
           languages: ${{ matrix.language }}
           queries: +security-and-quality
 

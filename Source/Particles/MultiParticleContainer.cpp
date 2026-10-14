@@ -5,13 +5,13 @@
  * Yinjian Zhao
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
 #include "Particles/ElementaryProcess/Ionization.H"
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
 #   include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
@@ -21,7 +21,7 @@
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/NamedComponentParticleContainer.H"
 #include "Particles/ParticleCreation/FilterCopyTransform.H"
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
 #   include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
 #endif
 #include "Particles/ParticleCreation/SmartCopy.H"
@@ -30,18 +30,18 @@
 #include "Particles/PhotonParticleContainer.H"
 #include "Particles/PhysicalParticleContainer.H"
 #include "Particles/RigidInjectedParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "SpeciesPhysicalProperties.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Utils/ArtemisUtil.H"
 #ifdef AMREX_USE_EB
 #   include "EmbeddedBoundary/ParticleScraper.H"
 #   include "EmbeddedBoundary/ParticleBoundaryProcess.H"
 #endif
 
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -232,7 +232,7 @@ MultiParticleContainer::ReadParameters ()
             utils::parser::getWithParser(
                 pp_particles, "repeated_plasma_lens_period",
                 m_repeated_plasma_lens_period);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_repeated_plasma_lens_period > 0._rt,
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(m_repeated_plasma_lens_period > 0._rt,
                                              "The period of the repeated plasma lens must be greater than zero");
             utils::parser::getArrWithParser(
                 pp_particles, "repeated_plasma_lens_starts",
@@ -289,7 +289,7 @@ MultiParticleContainer::ReadParameters ()
             pp_particles.queryarr("deposit_on_main_grid", tmp);
             for (auto const& name : tmp) {
                 auto it = std::find(species_names.begin(), species_names.end(), name);
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     it != species_names.end(),
                     "species '" + name
                     + "' in particles.deposit_on_main_grid must be part of particles.species_names");
@@ -302,7 +302,7 @@ MultiParticleContainer::ReadParameters ()
             pp_particles.queryarr("gather_from_main_grid", tmp_gather);
             for (auto const& name : tmp_gather) {
                 auto it = std::find(species_names.begin(), species_names.end(), name);
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                     it != species_names.end(),
                     "species '" + name
                         + "' in particles.gather_from_main_grid must be part of particles.species_names");
@@ -318,7 +318,7 @@ MultiParticleContainer::ReadParameters ()
             if (!rigid_injected_species.empty()) {
                 for (auto const& name : rigid_injected_species) {
                     auto it = std::find(species_names.begin(), species_names.end(), name);
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                         it != species_names.end(),
                         "species '" + name
                         + "' in particles.rigid_injected_species must be part of particles.species_names");
@@ -332,7 +332,7 @@ MultiParticleContainer::ReadParameters ()
             if (!photon_species.empty()) {
                 for (auto const& name : photon_species) {
                     auto it = std::find(species_names.begin(), species_names.end(), name);
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                         it != species_names.end(),
                         "species '" + name
                         + "' in particles.photon_species must be part of particles.species_names");
@@ -342,13 +342,13 @@ MultiParticleContainer::ReadParameters ()
             }
 
         }
-        pp_particles.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
-#ifdef WARPX_DIM_RZ
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
+        pp_particles.query("use_fdtd_nci_corr", Artemis::use_fdtd_nci_corr);
+#ifdef ARTEMIS_DIM_RZ
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(Artemis::use_fdtd_nci_corr==0,
                             "ERROR: use_fdtd_nci_corr is not supported in RZ");
 #endif
-#ifdef WARPX_DIM_1D_Z
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
+#ifdef ARTEMIS_DIM_1D_Z
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(Artemis::use_fdtd_nci_corr==0,
                             "ERROR: use_fdtd_nci_corr is not supported in 1D");
 #endif
 
@@ -361,7 +361,7 @@ MultiParticleContainer::ReadParameters ()
         pp_lasers.queryarr("deposit_on_main_grid", tmp);
         for (auto const& name : tmp) {
             auto it = std::find(lasers_names.begin(), lasers_names.end(), name);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 it != lasers_names.end(),
                 "laser '" + name
                 + "' in lasers.deposit_on_main_grid must be part of lasers.lasers_names");
@@ -370,15 +370,15 @@ MultiParticleContainer::ReadParameters ()
         }
 
 
-#ifdef WARPX_QED
-        ParmParse pp_warpx("warpx");
-        pp_warpx.query("do_qed_schwinger", m_do_qed_schwinger);
+#ifdef ARTEMIS_QED
+        ParmParse pp_artemis("artemis");
+        pp_artemis.query("do_qed_schwinger", m_do_qed_schwinger);
 
         if (m_do_qed_schwinger) {
             ParmParse pp_qed_schwinger("qed_schwinger");
             pp_qed_schwinger.get("ele_product_species", m_qed_schwinger_ele_product_name);
             pp_qed_schwinger.get("pos_product_species", m_qed_schwinger_pos_product_name);
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             utils::parser::getWithParser(
                 pp_qed_schwinger, "y_size",m_qed_schwinger_y_size);
 #endif
@@ -389,7 +389,7 @@ MultiParticleContainer::ReadParameters ()
                 pp_qed_schwinger, "xmin", m_qed_schwinger_xmin);
             utils::parser::queryWithParser(
                 pp_qed_schwinger, "xmax", m_qed_schwinger_xmax);
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             utils::parser::queryWithParser(
                 pp_qed_schwinger, "ymin", m_qed_schwinger_ymin);
             utils::parser::queryWithParser(
@@ -405,11 +405,11 @@ MultiParticleContainer::ReadParameters ()
     }
 }
 
-WarpXParticleContainer&
+ArtemisParticleContainer&
 MultiParticleContainer::GetParticleContainerFromName (const std::string& name) const
 {
     auto it = std::find(species_names.begin(), species_names.end(), name);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         it != species_names.end(),
         "unknown species name");
     int i = std::distance(species_names.begin(), it);
@@ -460,7 +460,7 @@ MultiParticleContainer::InitMultiPhysicsModules ()
     // This is used for ionization and pair creation processes.
     mapSpeciesProduct();
     CheckIonizationProductSpecies();
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     CheckQEDProductSpecies();
     InitQED();
 #endif
@@ -514,21 +514,21 @@ MultiParticleContainer::PushP (int lev, Real dt,
 std::unique_ptr<MultiFab>
 MultiParticleContainer::GetZeroChargeDensity (const int lev)
 {
-    WarpX& warpx = WarpX::GetInstance();
+    Artemis& artemis = Artemis::GetInstance();
 
-    BoxArray nba = warpx.boxArray(lev);
-    DistributionMapping dmap = warpx.DistributionMap(lev);
-    const int ng_rho = warpx.get_ng_depos_rho().max();
+    BoxArray nba = artemis.boxArray(lev);
+    DistributionMapping dmap = artemis.DistributionMap(lev);
+    const int ng_rho = artemis.get_ng_depos_rho().max();
 
     bool is_PSATD_RZ = false;
-#ifdef WARPX_DIM_RZ
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
+#ifdef ARTEMIS_DIM_RZ
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         is_PSATD_RZ = true;
 #endif
     if( !is_PSATD_RZ )
         nba.surroundingNodes();
 
-    auto zero_rho = std::make_unique<MultiFab>(nba, dmap, WarpX::ncomps, ng_rho);
+    auto zero_rho = std::make_unique<MultiFab>(nba, dmap, Artemis::ncomps, ng_rho);
     zero_rho->setVal(amrex::Real(0.0));
     return zero_rho;
 }
@@ -552,10 +552,10 @@ MultiParticleContainer::DepositCurrent (
         pc->DepositCurrent(J, dt, relative_time);
     }
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     for (int lev = 0; lev < J.size(); ++lev)
     {
-        WarpX::GetInstance().ApplyInverseVolumeScalingToCurrentDensity(
+        Artemis::GetInstance().ApplyInverseVolumeScalingToCurrentDensity(
             J[lev][0].get(), J[lev][1].get(), J[lev][2].get(), lev);
     }
 #endif
@@ -590,10 +590,10 @@ MultiParticleContainer::DepositCharge (
     // Push the particles back in time
     if (relative_time != 0.) PushX(-relative_time);
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     for (int lev = 0; lev < rho.size(); ++lev)
     {
-        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
+        Artemis::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
     }
 #endif
 }
@@ -610,7 +610,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
     }
     if (!local) {
         const Geometry& gm = allcontainers[0]->Geom(lev);
-        ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
+        ablastr::utils::communication::SumBoundary(*rho, Artemis::do_single_precision_comms, gm.periodicity());
     }
 
     return rho;
@@ -620,8 +620,8 @@ void
 MultiParticleContainer::SortParticlesByBin (amrex::IntVect bin_size)
 {
     for (auto& pc : allcontainers) {
-        if (WarpX::sort_particles_for_deposition) {
-            pc->SortParticlesForDeposition(WarpX::sort_idx_type);
+        if (Artemis::sort_particles_for_deposition) {
+            pc->SortParticlesForDeposition(Artemis::sort_idx_type);
         } else {
             pc->SortParticlesByBin(bin_size);
         }
@@ -663,8 +663,8 @@ MultiParticleContainer::ApplyBoundaryConditions ()
 Vector<Long>
 MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
 {
-    WarpX& warpx = WarpX::GetInstance();
-    const int num_boxes = warpx.boxArray(lev).size();
+    Artemis& artemis = Artemis::GetInstance();
+    const int num_boxes = artemis.boxArray(lev).size();
     const Vector<Long> r(num_boxes, 0);
     return r;
 }
@@ -718,7 +718,7 @@ MultiParticleContainer::SetParticleDistributionMap (int lev, DistributionMapping
 
 /* \brief Continuous injection for particles initially outside of the domain.
  * \param injection_box: Domain where new particles should be injected.
- * Loop over all WarpXParticleContainer in MultiParticleContainer and
+ * Loop over all ArtemisParticleContainer in MultiParticleContainer and
  * calls virtual function ContinuousInjection.
  */
 void
@@ -733,7 +733,7 @@ MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 
 /* \brief Update position of continuous injection parameters.
  * \param dt: simulation time step (level 0)
- * All classes inherited from WarpXParticleContainer do not have
+ * All classes inherited from ArtemisParticleContainer do not have
  * a position to update (PhysicalParticleContainer does not do anything).
  */
 void
@@ -749,17 +749,17 @@ MultiParticleContainer::UpdateContinuousInjectionPosition (Real dt) const
 int
 MultiParticleContainer::doContinuousInjection () const
 {
-    int warpx_do_continuous_injection = 0;
+    int artemis_do_continuous_injection = 0;
     for (auto& pc : allcontainers){
         if (pc->do_continuous_injection){
-            warpx_do_continuous_injection = 1;
+            artemis_do_continuous_injection = 1;
         }
     }
-    return warpx_do_continuous_injection;
+    return artemis_do_continuous_injection;
 }
 
 /* \brief Continuous injection of a flux of particles
- * Loop over all WarpXParticleContainer in MultiParticleContainer and
+ * Loop over all ArtemisParticleContainer in MultiParticleContainer and
  * calls virtual function ContinuousFluxInjection.
  */
 void
@@ -787,7 +787,7 @@ MultiParticleContainer::mapSpeciesProduct ()
             pc->ionization_product = i_product;
         }
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
         if (pc->has_breit_wheeler()){
             const int i_product_ele = getSpeciesID(
                 pc->m_qed_breit_wheeler_ele_product_name);
@@ -807,7 +807,7 @@ MultiParticleContainer::mapSpeciesProduct ()
 
     }
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     if (m_do_qed_schwinger) {
     m_qed_schwinger_ele_product =
         getSpeciesID(m_qed_schwinger_ele_product_name);
@@ -835,7 +835,7 @@ MultiParticleContainer::getSpeciesID (std::string product_str) const
         }
     }
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         found != 0,
         "could not find the ID of product species '"
         + product_str + "'" + ". Wrong name?");
@@ -861,7 +861,7 @@ MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name,
            pc->SetDoBackTransformedParticles(do_back_transformed_particles);
         }
     }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         found != 0,
         "ERROR: could not find the ID of product species '"
         + species_name + "'" + ". Wrong name?");
@@ -876,9 +876,9 @@ MultiParticleContainer::doFieldIonization (int lev,
                                            const MultiFab& By,
                                            const MultiFab& Bz)
 {
-    WARPX_PROFILE("MultiParticleContainer::doFieldIonization()");
+    ARTEMIS_PROFILE("MultiParticleContainer::doFieldIonization()");
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
@@ -902,9 +902,9 @@ MultiParticleContainer::doFieldIonization (int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        for (ArtemisParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
             }
@@ -923,7 +923,7 @@ MultiParticleContainer::doFieldIonization (int lev,
 
             setNewParticleIDs(dst_tile, np_dst, num_added);
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
@@ -937,7 +937,7 @@ MultiParticleContainer::doFieldIonization (int lev,
 void
 MultiParticleContainer::doCollisions ( Real cur_time, amrex::Real dt )
 {
-    WARPX_PROFILE("MultiParticleContainer::doCollisions()");
+    ARTEMIS_PROFILE("MultiParticleContainer::doCollisions()");
     collisionhandler->doCollisions(cur_time, dt, this);
 }
 */
@@ -957,7 +957,7 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
 {
     for (int i=0; i < static_cast<int>(species_names.size()); i++){
         if (allcontainers[i]->do_field_ionization){
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != allcontainers[i]->ionization_product,
                 "ERROR: ionization product cannot be the same species");
         }
@@ -975,7 +975,7 @@ void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::M
 #endif
 }
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
 void MultiParticleContainer::InitQED ()
 {
     m_shr_p_qs_engine = std::make_shared<QuantumSynchrotronEngine>();
@@ -1040,7 +1040,7 @@ void MultiParticleContainer::InitQuantumSync ()
         ablastr::warn_manager::WMRecordWarning("QED",
             "A new Quantum Synchrotron table will be generated.",
             ablastr::warn_manager::WarnPriority::low);
-#ifndef WARPX_QED_TABLE_GEN
+#ifndef ARTEMIS_QED_TABLE_GEN
         amrex::Error("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
 #else
         QuantumSyncGenerateTable();
@@ -1098,7 +1098,7 @@ void MultiParticleContainer::InitBreitWheeler ()
         ablastr::warn_manager::WMRecordWarning("QED",
             "A new Breit Wheeler table will be generated.",
             ablastr::warn_manager::WarnPriority::low);
-#ifndef WARPX_QED_TABLE_GEN
+#ifndef ARTEMIS_QED_TABLE_GEN
         amrex::Error("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
 #else
         BreitWheelerGenerateTable();
@@ -1207,7 +1207,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         m_shr_p_qs_engine->compute_lookup_tables(ctrl, qs_minimum_chi_part);
         const auto data = m_shr_p_qs_engine->export_lookup_tables_data();
-        WarpXUtilIO::WriteBinaryDataOnFile(table_name,
+        ArtemisUtilIO::WriteBinaryDataOnFile(table_name,
             Vector<char>{data.begin(), data.end()});
     }
 
@@ -1291,7 +1291,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         m_shr_p_bw_engine->compute_lookup_tables(ctrl, bw_minimum_chi_part);
         const auto data = m_shr_p_bw_engine->export_lookup_tables_data();
-        WarpXUtilIO::WriteBinaryDataOnFile(table_name,
+        ArtemisUtilIO::WriteBinaryDataOnFile(table_name,
             Vector<char>{data.begin(), data.end()});
     }
 
@@ -1311,44 +1311,44 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 void
 MultiParticleContainer::doQEDSchwinger ()
 {
-    WARPX_PROFILE("MultiParticleContainer::doQEDSchwinger()");
+    ARTEMIS_PROFILE("MultiParticleContainer::doQEDSchwinger()");
 
     if (!m_do_qed_schwinger) {return;}
 
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.grid_type == GridType::Collocated ||
-       warpx.field_gathering_algo == GatheringAlgo::MomentumConserving,
-          "ERROR: Schwinger process only implemented for warpx.grid_type=collocated"
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(artemis.grid_type == GridType::Collocated ||
+       artemis.field_gathering_algo == GatheringAlgo::MomentumConserving,
+          "ERROR: Schwinger process only implemented for artemis.grid_type=collocated"
                                  "or algo.field_gathering = momentum-conserving");
 
     constexpr int level_0 = 0;
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.maxLevel() == level_0,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(artemis.maxLevel() == level_0,
         "ERROR: Schwinger process not implemented with mesh refinement");
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     amrex::Abort("Schwinger process not implemented in rz geometry");
 #endif
-#ifdef WARPX_DIM_1D_Z
+#ifdef ARTEMIS_DIM_1D_Z
     amrex::Abort("Schwinger process not implemented in 1D geometry");
 #endif
 
 // Get cell volume. In 2D the transverse size is
 // chosen by the user in the input file.
-    amrex::Geometry const & geom = warpx.Geom(level_0);
-#if defined(WARPX_DIM_1D_Z)
+    amrex::Geometry const & geom = artemis.Geom(level_0);
+#if defined(ARTEMIS_DIM_1D_Z)
     const auto dV = geom.CellSize(0); // TODO: scale properly
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     const auto dV = geom.CellSize(0) * geom.CellSize(1)
         * m_qed_schwinger_y_size;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
     const auto dV = geom.CellSize(0) * geom.CellSize(1)
         * geom.CellSize(2);
 #endif
 
    // Get the temporal step
-   const auto dt =  warpx.getdt(level_0);
+   const auto dt =  artemis.getdt(level_0);
 
     auto& pc_product_ele =
             allcontainers[m_qed_schwinger_ele_product];
@@ -1358,12 +1358,12 @@ MultiParticleContainer::doQEDSchwinger ()
     pc_product_ele->defineAllParticleTiles();
     pc_product_pos->defineAllParticleTiles();
 
-    const MultiFab & Ex = warpx.getEfield(level_0,0);
-    const MultiFab & Ey = warpx.getEfield(level_0,1);
-    const MultiFab & Ez = warpx.getEfield(level_0,2);
-    const MultiFab & Bx = warpx.getBfield(level_0,0);
-    const MultiFab & By = warpx.getBfield(level_0,1);
-    const MultiFab & Bz = warpx.getBfield(level_0,2);
+    const MultiFab & Ex = artemis.getEfield(level_0,0);
+    const MultiFab & Ey = artemis.getEfield(level_0,1);
+    const MultiFab & Ez = artemis.getEfield(level_0,2);
+    const MultiFab & Bx = artemis.getBfield(level_0,0);
+    const MultiFab & By = artemis.getBfield(level_0,1);
+    const MultiFab & Bz = artemis.getBfield(level_0,2);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -1416,11 +1416,11 @@ MultiParticleContainer::doQEDSchwinger ()
 amrex::Box
 MultiParticleContainer::ComputeSchwingerGlobalBox () const
 {
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
     constexpr int level_0 = 0;
-    amrex::Geometry const & geom = warpx.Geom(level_0);
+    amrex::Geometry const & geom = artemis.Geom(level_0);
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const amrex::Array<amrex::Real,3> schwinger_min{m_qed_schwinger_xmin,
                                                     m_qed_schwinger_ymin,
                                                     m_qed_schwinger_zmin};
@@ -1484,7 +1484,7 @@ void MultiParticleContainer::doQedEvents (int lev,
                                           const MultiFab& By,
                                           const MultiFab& Bz)
 {
-    WARPX_PROFILE("MultiParticleContainer::doQedEvents()");
+    ARTEMIS_PROFILE("MultiParticleContainer::doQedEvents()");
 
     doQedBreitWheeler(lev, Ex, Ey, Ez, Bx, By, Bz);
     doQedQuantumSync(lev, Ex, Ey, Ez, Bx, By, Bz);
@@ -1498,9 +1498,9 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
                                                 const MultiFab& By,
                                                 const MultiFab& Bz)
 {
-    WARPX_PROFILE("MultiParticleContainer::doQedBreitWheeler()");
+    ARTEMIS_PROFILE("MultiParticleContainer::doQedBreitWheeler()");
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     // Loop over all species.
     // Photons undergoing Breit Wheeler process create electrons
@@ -1534,9 +1534,9 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        for (ArtemisParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
             }
@@ -1561,7 +1561,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
             setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
@@ -1579,9 +1579,9 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                                                const MultiFab& By,
                                                const MultiFab& Bz)
 {
-    WARPX_PROFILE("MultiParticleContainer::doQedQuantumSync()");
+    ARTEMIS_PROFILE("MultiParticleContainer::doQedQuantumSync()");
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
     // Loop over all species.
     // Electrons or positrons undergoing Quantum photon emission process
@@ -1609,9 +1609,9 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        for (ArtemisParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
         {
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
             }
@@ -1640,7 +1640,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                                   dst_tile, np_dst, num_added,
                                   m_quantum_sync_photon_creation_energy_threshold);
 
-            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
@@ -1656,15 +1656,15 @@ void MultiParticleContainer::CheckQEDProductSpecies()
     for (int i=0; i<nspecies; i++){
         const auto& pc = allcontainers[i];
         if (pc->has_breit_wheeler()){
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != pc->m_qed_breit_wheeler_ele_product,
                 "ERROR: Breit Wheeler product cannot be the same species");
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != pc->m_qed_breit_wheeler_pos_product,
                 "ERROR: Breit Wheeler product cannot be the same species");
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 allcontainers[pc->m_qed_breit_wheeler_ele_product]->
                     AmIA<PhysicalSpecies::electron>()
                 &&
@@ -1674,11 +1674,11 @@ void MultiParticleContainer::CheckQEDProductSpecies()
         }
 
         if(pc->has_quantum_sync()){
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != pc->m_qed_quantum_sync_phot_product,
                 "ERROR: Quantum Synchrotron product cannot be the same species");
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 allcontainers[pc->m_qed_quantum_sync_phot_product]->
                     AmIA<PhysicalSpecies::photon>(),
                 "ERROR: Quantum Synchrotron product species is of wrong type");
@@ -1686,7 +1686,7 @@ void MultiParticleContainer::CheckQEDProductSpecies()
     }
 
     if (m_do_qed_schwinger) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 allcontainers[m_qed_schwinger_ele_product]->
                     AmIA<PhysicalSpecies::electron>()
                 &&

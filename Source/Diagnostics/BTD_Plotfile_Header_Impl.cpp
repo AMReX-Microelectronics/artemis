@@ -1,13 +1,13 @@
 /* Copyright 2021 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "BTD_Plotfile_Header_Impl.H"
 
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_FileSystem.H>
@@ -37,7 +37,7 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
     iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         iss,"Failed to load BTD MultiFabHeader"
     );
 
@@ -71,7 +71,7 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
     for (int idim = 0; idim < m_spacedim; ++idim) {
         is >> m_prob_hi[idim];
     }
-    WarpX::GotoNextLine(is);
+    Artemis::GotoNextLine(is);
 
     is >> m_prob_domain;
 
@@ -192,7 +192,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         iss, "Failed to load BTD MultiFabHeader"
     );
 
@@ -232,7 +232,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     for (int ifab = 0; ifab < m_ba.size(); ++ifab) {
         is >> m_FabOnDiskPrefix[ifab] >> m_fabname[ifab] >> m_fabhead[ifab];
     }
-    WarpX::GotoNextLine(is);
+    Artemis::GotoNextLine(is);
     char ch;
     is >> in_hash >> ch >> in_hash;
     m_minval.resize(m_ba.size());
@@ -243,7 +243,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
             if( ch != ',' ) amrex::Error("Expected a ',' got something else");
         }
     }
-    WarpX::GotoNextLine(is);
+    Artemis::GotoNextLine(is);
     is >> in_hash >> ch >> in_hash;
     m_maxval.resize(m_ba.size());
     for (int ifab = 0; ifab < m_ba.size(); ++ifab) {

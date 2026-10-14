@@ -1,11 +1,11 @@
 /* Copyright 2019 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 #include "SpectralKSpaceRZ.H"
 
 #include <cmath>
@@ -23,7 +23,7 @@ SpectralKSpaceRZ::SpectralKSpaceRZ (const amrex::BoxArray& realspace_ba,
 {
     dx = realspace_dx;  // Store the cell size as member `dx`
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         realspace_ba.ixType() == amrex::IndexType::TheCellType(),
         "SpectralKSpaceRZ expects a cell-centered box.");
 

@@ -1,2 +1,2 @@
 CEXE_sources += Partition.cpp
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Particles/Sorting
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/Particles/Sorting

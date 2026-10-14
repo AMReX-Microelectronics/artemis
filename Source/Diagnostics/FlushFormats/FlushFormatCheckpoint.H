@@ -1,5 +1,5 @@
-#ifndef WARPX_FLUSHFORMATCHECKPOINT_H_
-#define WARPX_FLUSHFORMATCHECKPOINT_H_
+#ifndef ARTEMIS_FLUSHFORMATCHECKPOINT_H_
+#define ARTEMIS_FLUSHFORMATCHECKPOINT_H_
 
 #include "FlushFormatPlotfile.H"
 
@@ -37,4 +37,4 @@ class FlushFormatCheckpoint final : public FlushFormatPlotfile
     void WriteDMaps (const std::string& dir, int nlev) const;
 };
 
-#endif // WARPX_FLUSHFORMATCHECKPOINT_H_
+#endif // ARTEMIS_FLUSHFORMATCHECKPOINT_H_

@@ -1,14 +1,14 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_FINITE_DIFFERENCE_SOLVER_H_
-#define WARPX_FINITE_DIFFERENCE_SOLVER_H_
+#ifndef ARTEMIS_FINITE_DIFFERENCE_SOLVER_H_
+#define ARTEMIS_FINITE_DIFFERENCE_SOLVER_H_
 
-#include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
+#include "EmbeddedBoundary/ArtemisFaceInfoBox_fwd.H"
 #include "FiniteDifferenceSolver_fwd.H"
 
 #include "BoundaryConditions/PML_fwd.H"
@@ -37,7 +37,7 @@ class FiniteDifferenceSolver
          *
          * This function initializes the stencil coefficients for the chosen finite-difference algorithm
          *
-         * \param fdtd_algo Identifies the chosen algorithm, as defined in WarpXAlgorithmSelection.H
+         * \param fdtd_algo Identifies the chosen algorithm, as defined in ArtemisAlgorithmSelection.H
          * \param cell_size Cell size along each dimension, for the chosen refinement level
          * \param grid_type Whether the solver is applied to a collocated or staggered grid
          */
@@ -107,7 +107,7 @@ class FiniteDifferenceSolver
         /**
           * \brief Macroscopic E-update for non-vacuum medium using the user-selected
           * finite-difference algorithm and macroscopic sigma-method defined in
-          * WarpXAlgorithmSelection.H
+          * ArtemisAlgorithmSelection.H
           *
           * \param[out] Efield  vector of electric field MultiFabs updated at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
@@ -117,7 +117,7 @@ class FiniteDifferenceSolver
           * \param[in] macroscopic_properties contains user-defined properties of the medium.
           */
         void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
                             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
 #else
                             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Hfield,
@@ -126,8 +126,8 @@ class FiniteDifferenceSolver
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                             amrex::Real const dt,
                             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
-#ifndef WARPX_DIM_RZ
-#ifdef WARPX_MAG_LLG
+#ifndef ARTEMIS_DIM_RZ
+#ifdef ARTEMIS_MAG_LLG
         /**
           * \brief Macroscopic M-update, H-update and B=mu_o(H+M) computation for non-vacuum medium using finite-difference algorithm
           * solving Landau-Lifshitz-Gilbert (LLG) equation,
@@ -164,7 +164,7 @@ class FiniteDifferenceSolver
                        std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 
 #endif
-#endif // ifndef WARPX_DIM_RZ
+#endif // ifndef ARTEMIS_DIM_RZ
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
@@ -184,7 +184,7 @@ class FiniteDifferenceSolver
                      amrex::Real const dt );
 
        void MacroscopicEvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
                       std::array< amrex::MultiFab*, 3 > const Bfield,
 #else
                       std::array< amrex::MultiFab*, 3 > const Hfield,
@@ -198,21 +198,21 @@ class FiniteDifferenceSolver
                       amrex::MultiFab* const mu_mf,
                       amrex::MultiFab* const sigma_mf);
 
-#ifndef WARPX_DIM_RZ
-#ifdef WARPX_MAG_LLG
+#ifndef ARTEMIS_DIM_RZ
+#ifdef ARTEMIS_MAG_LLG
         void EvolveHPML ( std::array< amrex::MultiFab*, 3 > Hfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt,
                       const bool dive_cleaning);
 #endif
-#endif // ifndef WARPX_DIM_RZ
+#endif // ifndef ARTEMIS_DIM_RZ
 
     private:
 
         int m_fdtd_algo;
         short m_grid_type;
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         amrex::Real m_dr, m_rmin;
         int m_nmodes;
         // host-only
@@ -233,7 +233,7 @@ class FiniteDifferenceSolver
         // The member functions below contain extended __device__ lambda.
         // In order to compile with nvcc, they need to be public.
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         template< typename T_Algo >
         void EvolveBCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
@@ -325,7 +325,7 @@ class FiniteDifferenceSolver
         template< typename T_Algo, typename T_MacroAlgo >
         void MacroscopicEvolveECartesian (
             std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,
 #else
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Hfield,
@@ -335,7 +335,7 @@ class FiniteDifferenceSolver
             amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
         template< typename T_Algo >
         void MacroscopicEvolveHMCartesian(
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
@@ -383,7 +383,7 @@ class FiniteDifferenceSolver
         template< typename T_Algo, typename T_MacroAlgo >
         void MacroscopicEvolveEPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Efield,
-#ifndef WARPX_MAG_LLG
+#ifndef ARTEMIS_MAG_LLG
             std::array< amrex::MultiFab*, 3 > const Bfield,
 #else
             std::array< amrex::MultiFab*, 3 > const Hfield,
@@ -398,7 +398,7 @@ class FiniteDifferenceSolver
             amrex::MultiFab* const sigma_mf);
 
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
         template< typename T_Algo >
         void EvolveHPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Bfield,
@@ -411,4 +411,4 @@ class FiniteDifferenceSolver
 
 };
 
-#endif // WARPX_FINITE_DIFFERENCE_SOLVER_H_
+#endif // ARTEMIS_FINITE_DIFFERENCE_SOLVER_H_

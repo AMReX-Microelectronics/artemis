@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # Copyright 2017-2020 Luca Fedeli, Maxence Thevenet
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
@@ -38,7 +38,7 @@ resolution = (512, 512)
 camera_position = np.array([15., 20., -5.])*yt.units.micrometer
 file_list = glob.glob('./diags/plotfiles/plt?????')
 
-clight = 299792458.0 # must be the same value as in WarpX
+clight = 299792458.0 # must be the same value as in Artemis
 
 def plot_species(species, ad, radii, transparency, abs_xmax):
     # Color for each of these particles

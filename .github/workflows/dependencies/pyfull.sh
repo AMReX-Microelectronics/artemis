@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2021 The WarpX Community
+# Copyright 2021 The Artemis Community
 #
 # License: BSD-3-Clause-LBNL
 # Authors: Axel Huebl

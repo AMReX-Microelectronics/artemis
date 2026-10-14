@@ -1,4 +1,3 @@
-# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
 
 ################################
 ####### GENERAL PARAMETERS ######
@@ -23,9 +22,9 @@ boundary.field_hi = pml pml pml
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
+artemis.verbose = 1
 
-warpx.cfl = 0.8
+artemis.cfl = 0.8
 
 # vacuum or macroscopic
 algo.em_solver_medium = macroscopic
@@ -114,15 +113,15 @@ my_constants.tiny = 1.e-12
 # excitation
 ###############
 
-warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+artemis.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
-warpx.Ex_excitation_flag_function(x,y,z) = "0."
-warpx.Ey_excitation_flag_function(x,y,z) = "0."
-warpx.Ez_excitation_flag_function(x,y,z) = "(y > -w_port/2.) * (y < w_port/2.) * (z > 0.) * (z < h_port) * (x >= -dx/2.) * (x <= dx/2.)"
+artemis.Ex_excitation_flag_function(x,y,z) = "0."
+artemis.Ey_excitation_flag_function(x,y,z) = "0."
+artemis.Ez_excitation_flag_function(x,y,z) = "(y > -w_port/2.) * (y < w_port/2.) * (z > 0.) * (z < h_port) * (x >= -dx/2.) * (x <= dx/2.)"
 
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*y)/w_port) * sin(2*pi*c*t/wavelength) * exp(-(t-3*TP)**2/(2*TP**2))"
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ez_excitation_grid_function(x,y,z,t) = "cos((pi*y)/w_port) * sin(2*pi*c*t/wavelength) * exp(-(t-3*TP)**2/(2*TP**2))"
 
 ###############
 # diagnostics

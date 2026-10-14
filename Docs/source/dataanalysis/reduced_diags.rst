@@ -3,7 +3,7 @@
 Reduced diagnostics
 ===================
 
-WarpX has optional reduced diagnostics, that typically return one value (e.g., particle energy) per timestep.
+Artemis has optional reduced diagnostics, that typically return one value (e.g., particle energy) per timestep.
 
 A simple and quick way to read the data using python is
 
@@ -13,7 +13,7 @@ A simple and quick way to read the data using python is
 
 where ``data`` is a two dimensional array, ``data[i][j]`` gives the data in the ith row and the jth column.
 
-A Python function to read the data is available from module ``read_raw_data`` in ``WarpX/Tools/PostProcessing/``:
+A Python function to read the data is available from module ``read_raw_data`` in ``Artemis/Tools/PostProcessing/``:
 
 .. code-block:: python
 

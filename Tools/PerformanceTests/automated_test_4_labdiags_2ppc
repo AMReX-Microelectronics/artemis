@@ -18,21 +18,21 @@ boundary.particle_lo = absorbing absorbing absorbing
 boundary.particle_hi = absorbing absorbing absorbing
 
 # Verbosity
-warpx.verbose = 1
+artemis.verbose = 1
 
 # Numerics
 algo.particle_shape = 3
-warpx.use_filter = 1
-warpx.cfl = 1.0
+artemis.use_filter = 1
+artemis.cfl = 1.0
 
 # Moving window
-warpx.do_moving_window = 1
-warpx.moving_window_dir = z
-warpx.moving_window_v = 1.0 # in units of the speed of light
+artemis.do_moving_window = 1
+artemis.moving_window_dir = z
+artemis.moving_window_v = 1.0 # in units of the speed of light
 
 # Boosted frame
-warpx.gamma_boost = 15.
-warpx.boost_direction = z
+artemis.gamma_boost = 15.
+artemis.boost_direction = z
 
 # Species
 particles.species_names = electrons ions

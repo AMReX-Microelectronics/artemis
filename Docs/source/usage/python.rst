@@ -3,7 +3,7 @@
 Python (PICMI)
 ==============
 
-WarpX uses the `PICMI standard <https://github.com/picmi-standard/picmi>`__ for its Python input files.
+Artemis uses the `PICMI standard <https://github.com/picmi-standard/picmi>`__ for its Python input files.
 Python version 3.7 or newer is required.
 
 Example input files can be found in :ref:`the examples section <usage-examples>`.
@@ -21,7 +21,7 @@ Simulation and grid setup
 
 Simulation
 """"""""""
-.. autoclass:: pywarpx.picmi.Simulation
+.. autoclass:: pyartemis.picmi.Simulation
     :members: step, add_species, add_laser, write_input_file
 
 Constants
@@ -40,75 +40,75 @@ Field solvers define the updates of electric and magnetic fields.
 
 ElectromagneticSolver
 """""""""""""""""""""
-.. autoclass:: pywarpx.picmi.ElectromagneticSolver
+.. autoclass:: pyartemis.picmi.ElectromagneticSolver
 
 ElectrostaticSolver
 """""""""""""""""""
-.. autoclass:: pywarpx.picmi.ElectrostaticSolver
+.. autoclass:: pyartemis.picmi.ElectrostaticSolver
 
 Cartesian3DGrid
 """""""""""""""
-.. autoclass:: pywarpx.picmi.Cartesian3DGrid
+.. autoclass:: pyartemis.picmi.Cartesian3DGrid
 
 Cartesian2DGrid
 """""""""""""""
-.. autoclass:: pywarpx.picmi.Cartesian2DGrid
+.. autoclass:: pyartemis.picmi.Cartesian2DGrid
 
 Cartesian1DGrid
 """""""""""""""
-.. autoclass:: pywarpx.picmi.Cartesian1DGrid
+.. autoclass:: pyartemis.picmi.Cartesian1DGrid
 
 CylindricalGrid
 """""""""""""""
-.. autoclass:: pywarpx.picmi.CylindricalGrid
+.. autoclass:: pyartemis.picmi.CylindricalGrid
 
 EmbeddedBoundary
 """"""""""""""""
-.. autoclass:: pywarpx.picmi.EmbeddedBoundary
+.. autoclass:: pyartemis.picmi.EmbeddedBoundary
 
 Applied fields
 ^^^^^^^^^^^^^^
 
 ConstantAppliedField
 """"""""""""""""""""
-.. autoclass:: pywarpx.picmi.ConstantAppliedField
+.. autoclass:: pyartemis.picmi.ConstantAppliedField
 
 AnalyticAppliedField
 """"""""""""""""""""
-.. autoclass:: pywarpx.picmi.AnalyticAppliedField
+.. autoclass:: pyartemis.picmi.AnalyticAppliedField
 
 PlasmaLens
 """"""""""
-.. autoclass:: pywarpx.picmi.PlasmaLens
+.. autoclass:: pyartemis.picmi.PlasmaLens
 
 Mirror
 """"""
-.. autoclass:: pywarpx.picmi.Mirror
+.. autoclass:: pyartemis.picmi.Mirror
 
 Diagnostics
 ^^^^^^^^^^^
 
 ParticleDiagnostic
 """"""""""""""""""
-.. autoclass:: pywarpx.picmi.ParticleDiagnostic
+.. autoclass:: pyartemis.picmi.ParticleDiagnostic
 
 FieldDiagnostic
 """""""""""""""
-.. autoclass:: pywarpx.picmi.FieldDiagnostic
+.. autoclass:: pyartemis.picmi.FieldDiagnostic
 
 ElectrostaticFieldDiagnostic
 """"""""""""""""""""""""""""
-.. autoclass:: pywarpx.picmi.ElectrostaticFieldDiagnostic
+.. autoclass:: pyartemis.picmi.ElectrostaticFieldDiagnostic
 
 Lab-frame diagnostics diagnostics are used when running boosted-frame simulations.
 
 LabFrameFieldDiagnostic
 """""""""""""""""""""""
-.. autoclass:: pywarpx.picmi.LabFrameFieldDiagnostic
+.. autoclass:: pyartemis.picmi.LabFrameFieldDiagnostic
 
 Checkpoint
 """"""""""
-.. autoclass:: pywarpx.picmi.Checkpoint
+.. autoclass:: pyartemis.picmi.Checkpoint
 
 Particles
 ^^^^^^^^^
@@ -118,49 +118,49 @@ For instance, background plasma electrons, background plasma ions and an externa
 
 Species
 """""""
-.. autoclass:: pywarpx.picmi.Species
+.. autoclass:: pyartemis.picmi.Species
 
 MultiSpecies
 """"""""""""
-.. autoclass:: pywarpx.picmi.MultiSpecies
+.. autoclass:: pyartemis.picmi.MultiSpecies
 
 Particle distributions can be used for to initialize particles in a particle species.
 
 GaussianBunchDistribution
 """""""""""""""""""""""""
-.. autoclass:: pywarpx.picmi.GaussianBunchDistribution
+.. autoclass:: pyartemis.picmi.GaussianBunchDistribution
 
 UniformDistribution
 """""""""""""""""""
-.. autoclass:: pywarpx.picmi.UniformDistribution
+.. autoclass:: pyartemis.picmi.UniformDistribution
 
 AnalyticDistribution
 """"""""""""""""""""
-.. autoclass:: pywarpx.picmi.AnalyticDistribution
+.. autoclass:: pyartemis.picmi.AnalyticDistribution
 
 ParticleListDistribution
 """"""""""""""""""""""""
-.. autoclass:: pywarpx.picmi.ParticleListDistribution
+.. autoclass:: pyartemis.picmi.ParticleListDistribution
 
 Particle layouts determine how to microscopically place macro particles in a grid cell.
 
 GriddedLayout
 """""""""""""
-.. autoclass:: pywarpx.picmi.GriddedLayout
+.. autoclass:: pyartemis.picmi.GriddedLayout
 
 PseudoRandomLayout
 """"""""""""""""""
-.. autoclass:: pywarpx.picmi.PseudoRandomLayout
+.. autoclass:: pyartemis.picmi.PseudoRandomLayout
 
 Other operations related to particles
 
 CoulombCollisions
 """""""""""""""""
-.. autoclass:: pywarpx.picmi.CoulombCollisions
+.. autoclass:: pyartemis.picmi.CoulombCollisions
 
 MCCCollisions
 """""""""""""
-.. autoclass:: pywarpx.picmi.MCCCollisions
+.. autoclass:: pyartemis.picmi.MCCCollisions
 
 Lasers
 ^^^^^^
@@ -169,17 +169,17 @@ Laser profiles can be used to initialize laser pulses in the simulation.
 
 GaussianLaser
 """""""""""""
-.. autoclass:: pywarpx.picmi.GaussianLaser
+.. autoclass:: pyartemis.picmi.GaussianLaser
 
 AnalyticLaser
 """""""""""""
-.. autoclass:: pywarpx.picmi.AnalyticLaser
+.. autoclass:: pyartemis.picmi.AnalyticLaser
 
 Laser injectors control where to initialize laser pulses on the simulation grid.
 
 LaserAntenna
 """"""""""""
-.. autoclass:: pywarpx.picmi.LaserAntenna
+.. autoclass:: pyartemis.picmi.LaserAntenna
 
 
 .. _usage-picmi-run:
@@ -187,18 +187,18 @@ LaserAntenna
 Running
 -------
 
-WarpX can be run in one of two modes. It can run as a preprocessor, using the
+Artemis can be run in one of two modes. It can run as a preprocessor, using the
 Python input file to generate an input file to be used by the C++ version, or
 it can be run directly from Python.
 The examples support running in both modes by commenting and uncommenting the appropriate lines.
 
-In either mode, if using a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`__, be sure to activate it before compiling and running WarpX.
+In either mode, if using a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`__, be sure to activate it before compiling and running Artemis.
 
 
-Running WarpX directly from Python
+Running Artemis directly from Python
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For this, a full Python installation of WarpX is required, as described in :ref:`the install documentation <install-users>` (:ref:`developers <install-developers>`).
+For this, a full Python installation of Artemis is required, as described in :ref:`the install documentation <install-users>` (:ref:`developers <install-developers>`).
 
 In order to run a new simulation:
 
@@ -221,58 +221,58 @@ is the name of the script.
 Extending a Simulation from Python
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When running WarpX directly from Python it is possible to interact with the simulation
+When running Artemis directly from Python it is possible to interact with the simulation
 by installing ``CallbackFunctions``, which will execute a given Python function at a
-specific location in the WarpX simulation loop.
+specific location in the Artemis simulation loop.
 
-.. autoclass:: pywarpx.callbacks.CallbackFunctions
+.. autoclass:: pyartemis.callbacks.CallbackFunctions
 
-Places in the WarpX loop where callbacks are available include:
+Places in the Artemis loop where callbacks are available include:
 ``afterinit``, ``beforecollisions``, ``aftercollisions``, ``beforeEsolve``, ``afterEsolve``,
 ``beforeInitEsolve``, ``afterInitEsolve``, ``beforedeposition``, ``afterdeposition``,
 ``beforestep``, ``afterstep``, ``afterdiagnostics``,``afterrestart`` and ``oncheckpointsignal``.
 See the examples in *Examples/Tests/ParticleDataPython* for references on how to use
 ``callbacks``.
 
-There are several "hooks" available via the ``libwarpx`` shared library to access and manipulate
+There are several "hooks" available via the ``libartemis`` shared library to access and manipulate
 simulation objects (particles, fields and memory buffers) as well as general properties
 (such as processor number). These "hooks" are accessible through the `Simulation.extension` object.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getNProcs
+.. autofunction:: pyartemis.picmi.Simulation.extension.getNProcs
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getMyProc
+.. autofunction:: pyartemis.picmi.Simulation.extension.getMyProc
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_nattr
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_nattr
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_nattr_species
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_nattr_species
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getistep
+.. autofunction:: pyartemis.picmi.Simulation.extension.getistep
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.gett_new
+.. autofunction:: pyartemis.picmi.Simulation.extension.gett_new
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.evolve
+.. autofunction:: pyartemis.picmi.Simulation.extension.evolve
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.finalize
+.. autofunction:: pyartemis.picmi.Simulation.extension.finalize
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getProbLo
+.. autofunction:: pyartemis.picmi.Simulation.extension.getProbLo
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getProbHi
+.. autofunction:: pyartemis.picmi.Simulation.extension.getProbHi
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getCellSize
+.. autofunction:: pyartemis.picmi.Simulation.extension.getCellSize
 
 Particles can be added to the simulation at specific positions and with specific
 attribute values:
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.add_particles
+.. autofunction:: pyartemis.picmi.Simulation.extension.add_particles
 
 Properties of the particles already in the simulation can be obtained with various
 functions.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_count
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_particle_count
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_structs
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_particle_structs
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_arrays
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_particle_arrays
 
 The ``get_particle_structs()`` and ``get_particle_arrays()`` functions are called
 by several utility functions of the form ``get_particle_{comp_name}`` where
@@ -281,11 +281,11 @@ by several utility functions of the form ``get_particle_{comp_name}`` where
 
 The index of some specific component of the particle data can be obtained.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_comp_index
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_particle_comp_index
 
 New components can be added via Python.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.add_real_comp
+.. autofunction:: pyartemis.picmi.Simulation.extension.add_real_comp
 
 Various diagnostics are also accessible from Python.
 This includes getting the deposited or total charge density from a given species
@@ -293,21 +293,21 @@ as well as accessing the scraped particle buffer. See the example in
 *Examples/Tests/ParticleBoudaryScrape* for a reference on how to interact
 with scraped particle data.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_species_charge_sum
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_species_charge_sum
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.depositChargeDensity
+.. autofunction:: pyartemis.picmi.Simulation.extension.depositChargeDensity
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_size
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_particle_boundary_buffer_size
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_structs
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_particle_boundary_buffer_structs
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer
+.. autofunction:: pyartemis.picmi.Simulation.extension.get_particle_boundary_buffer
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.clearParticleBoundaryBuffer
+.. autofunction:: pyartemis.picmi.Simulation.extension.clearParticleBoundaryBuffer
 
 The embedded boundary conditions can be modified when using the electrostatic solver.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.set_potential_EB
+.. autofunction:: pyartemis.picmi.Simulation.extension.set_potential_EB
 
 Using Python input as a preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -330,4 +330,4 @@ which runs the preprocessor, generating the AMReX inputs file.
    python <python_script>
 
 where ``<python_script>`` is the name of the script.
-This creates the WarpX input file that you can run as normal with the WarpX executable.
+This creates the Artemis input file that you can run as normal with the Artemis executable.

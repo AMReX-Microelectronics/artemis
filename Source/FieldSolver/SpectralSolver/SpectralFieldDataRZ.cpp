@@ -1,13 +1,13 @@
 /* Copyright 2019-2020 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "SpectralFieldDataRZ.H"
 
-#include "Utils/WarpXUtil.H"
-#include "WarpX.H"
+#include "Utils/ArtemisUtil.H"
+#include "Artemis.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -182,7 +182,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
 #endif
 
         // Create the Hankel transformer for each box.
-        std::array<amrex::Real,3> xmax = WarpX::UpperCorner(mfi.tilebox(), lev, 0._rt);
+        std::array<amrex::Real,3> xmax = Artemis::UpperCorner(mfi.tilebox(), lev, 0._rt);
         multi_spectral_hankel_transformer[mfi] = SpectralHankelTransformer(grid_size[0], n_rz_azimuthal_modes, xmax[0]);
     }
 }
@@ -418,8 +418,8 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
                                        amrex::MultiFab const & field_mf, int const field_index,
                                        int const i_comp)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
+    bool do_costs = ArtemisUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
@@ -478,8 +478,8 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
                                        amrex::MultiFab const & field_mf_r, int const field_index_r,
                                        amrex::MultiFab const & field_mf_t, int const field_index_t)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf_r.boxArray(), field_mf_r.DistributionMap());
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
+    bool do_costs = ArtemisUtilLoadBalance::doCosts(cost, field_mf_r.boxArray(), field_mf_r.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
@@ -543,8 +543,8 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                                         amrex::MultiFab& field_mf, int const field_index,
                                         int const i_comp)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
+    bool do_costs = ArtemisUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     bool const is_nodal_z = field_mf.is_nodal(1);
@@ -627,8 +627,8 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                                         amrex::MultiFab& field_mf_r, int const field_index_r,
                                         amrex::MultiFab& field_mf_t, int const field_index_t)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf_r.boxArray(), field_mf_r.DistributionMap());
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
+    bool do_costs = ArtemisUtilLoadBalance::doCosts(cost, field_mf_r.boxArray(), field_mf_r.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     bool const is_nodal_z = field_mf_r.is_nodal(1);
@@ -738,8 +738,8 @@ SpectralFieldDataRZ::InitFilter (amrex::IntVect const & filter_npass_each_dir, b
 void
 SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, binomialfilter.boxArray(), binomialfilter.DistributionMap());
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
+    bool do_costs = ArtemisUtilLoadBalance::doCosts(cost, binomialfilter.boxArray(), binomialfilter.DistributionMap());
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
 
@@ -783,8 +783,8 @@ void
 SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index1,
                                   int const field_index2, int const field_index3)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, binomialfilter.boxArray(), binomialfilter.DistributionMap());
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
+    bool do_costs = ArtemisUtilLoadBalance::doCosts(cost, binomialfilter.boxArray(), binomialfilter.DistributionMap());
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
 

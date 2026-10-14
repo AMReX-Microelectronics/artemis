@@ -1,6 +1,6 @@
 /* Copyright 2019 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -32,7 +32,7 @@
 !                                          (www.jpmoreau.fr)
 ! ------------------------------------------------------------------------ */
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_REAL.H>
 

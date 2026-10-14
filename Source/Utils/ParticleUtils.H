@@ -1,14 +1,14 @@
 /* Copyright 2019-2020 Neil Zaim, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLE_UTILS_H_
-#define WARPX_PARTICLE_UTILS_H_
+#ifndef ARTEMIS_PARTICLE_UTILS_H_
+#define ARTEMIS_PARTICLE_UTILS_H_
 
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXConst.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_Particles.H>
@@ -28,9 +28,9 @@ namespace ParticleUtils {
      * @param[in] mfi the MultiFAB iterator.
      * @param[in] ptile the particle tile.
      */
-    amrex::DenseBins<WarpXParticleContainer::ParticleType>
+    amrex::DenseBins<ArtemisParticleContainer::ParticleType>
     findParticlesInEachCell( int const lev, amrex::MFIter const& mfi,
-                             WarpXParticleContainer::ParticleTileType const& ptile);
+                             ArtemisParticleContainer::ParticleTileType const& ptile);
 
     /**
      * \brief Return (relativistic) particle energy given velocity and mass.
@@ -188,4 +188,4 @@ namespace ParticleUtils {
 
 }
 
-#endif // WARPX_PARTICLE_UTILS_H_
+#endif // ARTEMIS_PARTICLE_UTILS_H_

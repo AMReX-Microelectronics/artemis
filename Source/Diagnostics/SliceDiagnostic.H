@@ -1,11 +1,11 @@
 /* Copyright 2019 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SliceDiagnostic_H_
-#define WARPX_SliceDiagnostic_H_
+#ifndef ARTEMIS_SliceDiagnostic_H_
+#define ARTEMIS_SliceDiagnostic_H_
 
 #include <AMReX_Vector.H>
 

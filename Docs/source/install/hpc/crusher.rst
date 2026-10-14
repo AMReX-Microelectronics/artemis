@@ -27,23 +27,23 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
-We use the following modules and environments on the system (``$HOME/crusher_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/crusher_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/crusher-olcf/crusher_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/crusher-olcf/crusher_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/crusher-olcf/crusher_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/crusher-olcf/crusher_artemis.profile.example``.
 
-We recommend to store the above lines in a file, such as ``$HOME/crusher_warpx.profile``, and load it into your shell after a login:
+We recommend to store the above lines in a file, such as ``$HOME/crusher_artemis.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   source $HOME/crusher_warpx.profile
+   source $HOME/crusher_artemis.profile
 
 And since Crusher does not yet provide a module for them, install BLAS++ and LAPACK++:
 
@@ -61,20 +61,20 @@ And since Crusher does not yet provide a module for them, install BLAS++ and LAP
    cmake -S src/lapackpp -B src/lapackpp-crusher-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/crusher/lapackpp-master
    cmake --build src/lapackpp-crusher-build --target install --parallel 10
 
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON
+   cmake -S . -B build -DArtemis_DIMS=3 -DArtemis_COMPUTE=HIP -DArtemis_PSATD=ON
    cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-crusher-MI100-GPUs>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-crusher-MI100-GPUs>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``$PROJWORK/$proj/``.
 
 
@@ -88,13 +88,13 @@ Running
 MI250X GPUs (2x64 GB)
 ^^^^^^^^^^^^^^^^^^^^^
 
-ECP WarpX project members, use the ``aph114`` project ID.
+ECP Artemis project members, use the ``aph114`` project ID.
 
 After requesting an interactive node with the ``getNode`` alias above, run a simulation like this, here using 8 MPI ranks and a single node:
 
 .. code-block:: bash
 
-   runNode ./warpx inputs
+   runNode ./artemis inputs
 
 Or in non-interactive runs:
 
@@ -120,7 +120,7 @@ Known System Issues
 .. warning::
 
    May 16th, 2022 (OLCFHELP-6888):
-   There is a caching bug in Libfrabric that causes WarpX simulations to occasionally hang on Crusher on more than 1 node.
+   There is a caching bug in Libfrabric that causes Artemis simulations to occasionally hang on Crusher on more than 1 node.
 
    As a work-around, please export the following environment variable in your job scripts until the issue is fixed:
 

@@ -1,11 +1,11 @@
 /* Copyright 2019-2020 Maxence Thevenet, Remi Lehe, Edoardo Zoni
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRAL_SOLVER_H_
-#define WARPX_SPECTRAL_SOLVER_H_
+#ifndef ARTEMIS_SPECTRAL_SOLVER_H_
+#define ARTEMIS_SPECTRAL_SOLVER_H_
 
 #include "SpectralSolver_fwd.H"
 
@@ -21,7 +21,7 @@
 #include <array>
 #include <memory>
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
 /**
  * \brief Top-level class for the electromagnetic spectral solver
  *
@@ -205,5 +205,5 @@ class SpectralSolver
         // to an instance of a sub-class defining a specific algorithm
         std::unique_ptr<SpectralBaseAlgorithm> algorithm;
 };
-#endif // WARPX_USE_PSATD
-#endif // WARPX_SPECTRAL_SOLVER_H_
+#endif // ARTEMIS_USE_PSATD
+#endif // ARTEMIS_SPECTRAL_SOLVER_H_

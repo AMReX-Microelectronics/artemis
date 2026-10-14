@@ -1,6 +1,6 @@
 /* Copyright 2019-2022 Andrew Myers
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -16,7 +16,7 @@
 #include <AMReX_Periodicity.H>
 #include <AMReX_TypeTraits.H>
 
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <optional>
 

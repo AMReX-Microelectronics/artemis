@@ -1,6 +1,6 @@
 /* Copyright 2019-2020 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -10,7 +10,7 @@
 #include "Utils/Algorithms/UpperBound.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -43,7 +43,7 @@
 using namespace amrex;
 
 void
-WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
+ArtemisLaserProfiles::FromTXYEFileLaserProfile::init (
     const amrex::ParmParse& ppl,
     CommonLaserParameters params)
 {
@@ -90,7 +90,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 }
 
 void
-WarpXLaserProfiles::FromTXYEFileLaserProfile::update (amrex::Real t)
+ArtemisLaserProfiles::FromTXYEFileLaserProfile::update (amrex::Real t)
 {
     t -= m_params.t_delay;
 
@@ -108,7 +108,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::update (amrex::Real t)
 }
 
 void
-WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
+ArtemisLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
@@ -141,7 +141,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
 }
 
 void
-WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_file_name)
+ArtemisLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_file_name)
 {
     if(ParallelDescriptor::IOProcessor()){
         std::ifstream inp(txye_file_name, std::ios::binary);
@@ -162,9 +162,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 
         if(m_params.nt <= 1) Abort("nt in txye file must be >=2");
         if(m_params.nx <= 1) Abort("nx in txye file must be >=2");
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
         if(m_params.ny <= 1) Abort("ny in txye file must be >=2 in 3D");
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
         if(m_params.ny != 1) Abort("ny in txye file must be 1 in 2D");
 #endif
 
@@ -173,9 +173,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         if(m_params.is_grid_uniform){
             dbuf_t.resize(2);
             dbuf_x.resize(2);
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
             dbuf_y.resize(2);
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
             dbuf_y.resize(1);
 #endif
         }
@@ -257,7 +257,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 }
 
 std::pair<int,int>
-WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex::Real t) const
+ArtemisLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex::Real t) const
 {
     int idx_t_right;
     if(m_params.is_grid_uniform){
@@ -276,7 +276,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex
 }
 
 void
-WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int t_end)
+ArtemisLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int t_end)
 {
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(t_begin) + ", " + std::to_string(t_end) +
@@ -326,7 +326,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
 }
 
 void
-WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
+ArtemisLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     const int idx_t_left,
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
@@ -337,12 +337,12 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     const auto tmp_e_max = m_common_params.e_max;
     const auto tmp_x_min = m_params.h_x_coords.front();
     const auto tmp_x_max = m_params.h_x_coords.back();
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
     const auto tmp_y_min = m_params.h_y_coords.front();
     const auto tmp_y_max = m_params.h_y_coords.back();
 #endif
     const auto tmp_nx = m_params.nx;
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
     const auto tmp_ny = m_params.ny;
 #endif
     const auto p_E_data = m_params.E_data.dataPtr();
@@ -355,8 +355,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         (m_params.t_coords.back()-m_params.t_coords.front())/(m_params.nt-1) +
         m_params.t_coords.front();
 
-#if (defined WARPX_DIM_1D_Z)
-    WARPX_ABORT_WITH_MESSAGE("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D");
+#if (defined ARTEMIS_DIM_1D_Z)
+    ARTEMIS_ABORT_WITH_MESSAGE("ArtemisLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D");
 #endif
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
@@ -367,7 +367,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             amplitude[i] = 0.0_rt;
             return;
         }
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
         if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
             amplitude[i] = 0.0_rt;
             return;
@@ -384,7 +384,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         const auto x_1 =
             idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
 
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
         //Find indices and coordinates along y
         const int temp_idx_y_right = static_cast<int>(
             std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
@@ -416,7 +416,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             p_E_data[idx(idx_t_right, idx_x_right, idx_y_right)],
             t, Xp[i], Yp[i])*tmp_e_max;
 
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
         //Interpolate amplitude
         const auto idx = [=](int i_interp, int j_interp){
             return (i_interp-tmp_idx_first_time) * tmp_nx + j_interp;
@@ -431,7 +431,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             t, Xp[i])*tmp_e_max;
         amrex::ignore_unused(Yp);
 #else
-        // TODO: implement WARPX_DIM_1D_Z
+        // TODO: implement ARTEMIS_DIM_1D_Z
         amrex::ignore_unused(x_0, x_1, tmp_e_max, p_E_data, tmp_idx_first_time,
                              t_left, t_right, Xp, Yp, t, idx_x_left);
 #endif
@@ -440,7 +440,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 }
 
 void
-WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform(
+ArtemisLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform(
     const int idx_t_left,
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
@@ -451,13 +451,13 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
     const auto tmp_e_max = m_common_params.e_max;
     const auto tmp_x_min = m_params.h_x_coords.front();
     const auto tmp_x_max = m_params.h_x_coords.back();
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
     const auto tmp_y_min = m_params.h_y_coords.front();
     const auto tmp_y_max = m_params.h_y_coords.back();
 #endif
     const auto p_x_coords = m_params.d_x_coords.dataPtr();
     const int tmp_x_coords_size = static_cast<int>(m_params.d_x_coords.size());
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
     const auto p_y_coords = m_params.d_y_coords.dataPtr();
     const int tmp_y_coords_size = static_cast<int>(m_params.d_y_coords.size());
 #endif
@@ -467,8 +467,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
     const auto t_left = m_params.t_coords[idx_t_left];
     const auto t_right = m_params.t_coords[idx_t_right];
 
-#if (defined WARPX_DIM_1D_Z)
-    WARPX_ABORT_WITH_MESSAGE("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D");
+#if (defined ARTEMIS_DIM_1D_Z)
+    ARTEMIS_ABORT_WITH_MESSAGE("ArtemisLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D");
 #endif
 
     // Loop through the macroparticle to calculate the proper amplitude
@@ -480,7 +480,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
             amplitude[ip] = 0.0_rt;
             return;
         }
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
         if (Yp[ip] <= tmp_y_min || Yp[ip] >= tmp_y_max){
             amplitude[ip] = 0.0_rt;
             return;
@@ -495,7 +495,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
         const int idx_x_right = p_x_right - p_x_coords;
         const int idx_x_left = idx_x_right - 1;
 
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
         //Find indices along y
         auto const p_y_right = utils::algorithms::upper_bound(
             p_y_coords, p_y_coords+tmp_y_coords_size, Yp[ip]);
@@ -522,7 +522,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
             p_E_data[idx(idx_t_right, idx_x_right, idx_y_right)],
             t, Xp[ip], Yp[ip])*tmp_e_max;
 
-#elif (defined WARPX_DIM_XZ)
+#elif (defined ARTEMIS_DIM_XZ)
         //Interpolate amplitude
         const auto idx = [=](int i, int j){
             return (i-tmp_idx_first_time) * tmp_x_coords_size + j;
@@ -536,7 +536,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
             p_E_data[idx(idx_t_right, idx_x_right)],
             t, Xp[ip])*tmp_e_max;
 #else
-        // TODO: implement WARPX_DIM_1D_Z
+        // TODO: implement ARTEMIS_DIM_1D_Z
         amrex::ignore_unused(idx_x_left, idx_t_left, idx_t_right, tmp_e_max,
                              p_E_data, tmp_idx_first_time, t_left, t_right, t);
 #endif

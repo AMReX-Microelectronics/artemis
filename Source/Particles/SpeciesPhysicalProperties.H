@@ -1,12 +1,12 @@
 /* Copyright 2020 Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_SPECIESPHYSICALPROPERTIES_H_
-#define WARPX_SPECIESPHYSICALPROPERTIES_H_
+#ifndef ARTEMIS_SPECIESPHYSICALPROPERTIES_H_
+#define ARTEMIS_SPECIESPHYSICALPROPERTIES_H_
 
 #include <AMReX_REAL.H>
 
@@ -54,4 +54,4 @@ namespace species
     std::string get_name (const PhysicalSpecies& ps);
 }
 
-#endif // WARPX_SPECIESPHYSICALPROPERTIES_H_
+#endif // ARTEMIS_SPECIESPHYSICALPROPERTIES_H_

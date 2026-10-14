@@ -1,15 +1,15 @@
 /* Copyright 2019-2020 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_LEVELING_THINNING_H_
-#define WARPX_LEVELING_THINNING_H_
+#ifndef ARTEMIS_LEVELING_THINNING_H_
+#define ARTEMIS_LEVELING_THINNING_H_
 
 #include "Resampling.H"
 
-#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Particles/ArtemisParticleContainer_fwd.H"
 
 #include <AMReX_REAL.H>
 
@@ -41,11 +41,11 @@ public:
     /**
      * \brief A method that performs leveling thinning for the considered species.
      *
-     * @param[in] pti WarpX particle iterator of the particles to resample.
+     * @param[in] pti Artemis particle iterator of the particles to resample.
      * @param[in] lev the index of the refinement level.
      * @param[in] pc a pointer to the particle container.
      */
-    void operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer * const pc) const override final;
+    void operator() (ArtemisParIter& pti, const int lev, ArtemisParticleContainer * const pc) const override final;
 
 private:
     amrex::Real m_target_ratio = amrex::Real(1.5);
@@ -53,4 +53,4 @@ private:
 };
 
 
-#endif //WARPX_LEVELING_THINNING_H_
+#endif //ARTEMIS_LEVELING_THINNING_H_

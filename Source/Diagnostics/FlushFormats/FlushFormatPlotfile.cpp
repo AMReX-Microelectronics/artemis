@@ -3,13 +3,13 @@
 #include "Particles/ParticleIO.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 #include "Utils/Interpolate.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 #include "Diagnostics/MultiDiagnostics.H"
 
 #include <AMReX.H>
@@ -67,8 +67,8 @@ FlushFormatPlotfile::WriteToFile (
     const amrex::Geometry& /*full_BTD_snapshot*/,
     bool isLastBTDFlush, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
-    WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
-    auto & warpx = WarpX::GetInstance();
+    ARTEMIS_PROFILE("FlushFormatPlotfile::WriteToFile()");
+    auto & artemis = Artemis::GetInstance();
     const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
     if (!isBTD)
     {
@@ -90,7 +90,7 @@ FlushFormatPlotfile::WriteToFile (
     amrex::WriteMultiLevelPlotfile(filename, nlev,
                                    amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
-                                   static_cast<Real>(time), iteration, warpx.refRatio(),
+                                   static_cast<Real>(time), iteration, artemis.refRatio(),
                                    "HyperCLaw-V1.1",
                                    "Level_",
                                    "Cell",
@@ -103,7 +103,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteJobInfo(filename);
 
-    WriteWarpXHeader(filename, geom);
+    WriteArtemisHeader(filename, geom);
 
     VisMF::SetHeaderVersion(current_version);
 }
@@ -112,7 +112,7 @@ void
 FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 {
 
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
 
     if (ParallelDescriptor::IOProcessor())
     {
@@ -124,12 +124,12 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 //        std::string OtherLine = std::string(78, '-') + "\n";
 //        std::string SkipSpace = std::string(8, ' ') + "\n";
 
-        FullPathJobInfoFile += "/warpx_job_info";
+        FullPathJobInfoFile += "/artemis_job_info";
         jobInfoFile.open(FullPathJobInfoFile.c_str(), std::ios::out);
 
         // job information
         jobInfoFile << PrettyLine;
-        jobInfoFile << " WarpX Job Information\n";
+        jobInfoFile << " Artemis Job Information\n";
         jobInfoFile << PrettyLine;
 
         jobInfoFile << "number of MPI processes: " << ParallelDescriptor::NProcs() << "\n";
@@ -175,7 +175,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         const char* githash2 = buildInfoGetGitHash(2);
         const char* githash3 = buildInfoGetGitHash(3);
         if (strlen(githash1) > 0) {
-            jobInfoFile << "WarpX  git describe: " << githash1 << "\n";
+            jobInfoFile << "Artemis  git describe: " << githash1 << "\n";
         }
         if (strlen(githash2) > 0) {
             jobInfoFile << "AMReX  git describe: " << githash2 << "\n";
@@ -191,14 +191,14 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         jobInfoFile << " Grid Information\n";
         jobInfoFile << PrettyLine;
 
-        for (int i = 0; i <= warpx.finestLevel(); i++)
+        for (int i = 0; i <= artemis.finestLevel(); i++)
         {
             jobInfoFile << " level: " << i << "\n";
-            jobInfoFile << "   number of boxes = " << warpx.boxArray(i).size() << "\n";
+            jobInfoFile << "   number of boxes = " << artemis.boxArray(i).size() << "\n";
             jobInfoFile << "   maximum zones   = ";
             for (int n = 0; n < AMREX_SPACEDIM; n++)
             {
-                jobInfoFile << warpx.Geom(i).Domain().length(n) << " ";
+                jobInfoFile << artemis.Geom(i).Domain().length(n) << " ";
             }
             jobInfoFile << "\n\n";
         }
@@ -211,7 +211,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
             jobInfoFile << "   -y: " << "interior" << "\n";
             jobInfoFile << "   +y: " << "interior" << "\n";
         }
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             jobInfoFile << "   -z: " << "interior" << "\n";
             jobInfoFile << "   +z: " << "interior" << "\n";
 #endif
@@ -231,17 +231,17 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 }
 
 void
-FlushFormatPlotfile::WriteWarpXHeader(
+FlushFormatPlotfile::WriteArtemisHeader(
     const std::string& name,
     amrex::Vector<amrex::Geometry>& geom) const
 {
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
     if (ParallelDescriptor::IOProcessor())
     {
         VisMF::IO_Buffer io_buffer(VisMF::IO_Buffer_Size);
         std::ofstream HeaderFile;
         HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
-        std::string HeaderFileName(name + "/WarpXHeader");
+        std::string HeaderFileName(name + "/ArtemisHeader");
         HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
                                                 std::ofstream::trunc |
                                                 std::ofstream::binary);
@@ -252,37 +252,37 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         HeaderFile << "Checkpoint version: 1\n";
 
-        const int nlevels = warpx.finestLevel()+1;
+        const int nlevels = artemis.finestLevel()+1;
         HeaderFile << nlevels << "\n";
 
-        for (int i = 0; i < warpx.getistep().size(); ++i) {
-            HeaderFile << warpx.getistep(i) << " ";
+        for (int i = 0; i < artemis.getistep().size(); ++i) {
+            HeaderFile << artemis.getistep(i) << " ";
         }
         HeaderFile << "\n";
 
-        for (int i = 0; i < warpx.getnsubsteps().size(); ++i) {
-            HeaderFile << warpx.getnsubsteps(i) << " ";
+        for (int i = 0; i < artemis.getnsubsteps().size(); ++i) {
+            HeaderFile << artemis.getnsubsteps(i) << " ";
         }
         HeaderFile << "\n";
 
-        for (int i = 0; i < warpx.gett_new().size(); ++i) {
-            HeaderFile << warpx.gett_new(i) << " ";
+        for (int i = 0; i < artemis.gett_new().size(); ++i) {
+            HeaderFile << artemis.gett_new(i) << " ";
         }
         HeaderFile << "\n";
 
-        for (int i = 0; i < warpx.gett_old().size(); ++i) {
-            HeaderFile << warpx.gett_old(i) << " ";
+        for (int i = 0; i < artemis.gett_old().size(); ++i) {
+            HeaderFile << artemis.gett_old(i) << " ";
         }
         HeaderFile << "\n";
 
-        for (int i = 0; i < warpx.getdt().size(); ++i) {
-            HeaderFile << warpx.getdt(i) << " ";
+        for (int i = 0; i < artemis.getdt().size(); ++i) {
+            HeaderFile << artemis.getdt(i) << " ";
         }
         HeaderFile << "\n";
 
-        HeaderFile << warpx.getmoving_window_x() << "\n";
+        HeaderFile << artemis.getmoving_window_x() << "\n";
 
-        HeaderFile << warpx.getis_synchronized() << "\n";
+        HeaderFile << artemis.getis_synchronized() << "\n";
 
         // Geometry
         for (int i = 0; i < AMREX_SPACEDIM; ++i) {
@@ -296,23 +296,23 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         // BoxArray
         for (int lev = 0; lev < nlevels; ++lev) {
-            warpx.boxArray(lev).writeOn(HeaderFile);
+            artemis.boxArray(lev).writeOn(HeaderFile);
             HeaderFile << '\n';
         }
 
-        warpx.GetPartContainer().WriteHeader(HeaderFile);
+        artemis.GetPartContainer().WriteHeader(HeaderFile);
 
-        HeaderFile << warpx.getcurrent_injection_position() << "\n";
+        HeaderFile << artemis.getcurrent_injection_position() << "\n";
 
-        HeaderFile << warpx.getdo_moving_window() << "\n";
+        HeaderFile << artemis.getdo_moving_window() << "\n";
 
-        HeaderFile << warpx.time_of_last_gal_shift << "\n";
+        HeaderFile << artemis.time_of_last_gal_shift << "\n";
 
-        for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
+        for (int idiag = 0; idiag < artemis.GetMultiDiags().GetTotalDiags(); ++idiag)
         {
-            if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
+            if( artemis.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
             {
-                auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
+                auto& diag = artemis.GetMultiDiags().GetDiag(idiag);
                 for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
                     HeaderFile << diag.gettlab(i_buffer) << "\n";
                     HeaderFile << diag.get_buffer_k_index_hi(i_buffer) << "\n";
@@ -338,7 +338,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 {
 
     for (auto& part_diag : particle_diags) {
-        WarpXParticleContainer* pc = part_diag.getParticleContainer();
+        ArtemisParticleContainer* pc = part_diag.getParticleContainer();
         auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
         if (isBTD) {
             PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
@@ -356,7 +356,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");
 
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         real_names.push_back("theta");
 #endif
 
@@ -391,8 +391,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                              part_diag.m_diag_domain);
 
         if (!isBTD) {
-            particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
-            using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+            particlesConvertUnits(ConvertDirection::Artemis_to_SI, pc, mass);
+            using SrcData = ArtemisParticleContainer::ParticleTileType::ConstParticleTileDataType;
             tmp.copyParticles(*pc,
                               [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
             {
@@ -400,11 +400,11 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                 return random_filter(p, engine) * uniform_filter(p, engine)
                     * parser_filter(p, engine) * geometry_filter(p, engine);
             }, true);
-            particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
+            particlesConvertUnits(ConvertDirection::SI_to_Artemis, pc, mass);
         } else {
             PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
             tmp.copyParticles(*pinned_pc, true);
-            particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
+            particlesConvertUnits(ConvertDirection::Artemis_to_SI, &tmp, mass);
         }
         // real_names contains a list of all particle attributes.
         // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.
@@ -442,7 +442,7 @@ WriteRawMF ( const MultiFab& F, const DistributionMapping& dm,
 /** \brief Write a multifab of the same shape as `F` but filled with 0.
  *  (The shape includes guard cells if `plot_guards` is True.)
  *  This is mainly needed because the yt reader requires all levels of the
- *  coarse/fine patch to be written, but WarpX does not have data for
+ *  coarse/fine patch to be written, but Artemis does not have data for
  *  the coarse patch of level 0 (meaningless).
  */
 void
@@ -489,8 +489,8 @@ WriteCoarseVector( const std::string field_name,
         WriteZeroRawMF( *Fz_fp, dm, filename, level_prefix, field_name+"z_cp", lev, ng );
     } else {
         // Interpolate coarse data onto fine grid
-        amrex::IntVect r_ratio = WarpX::GetInstance().refRatio(lev-1);
-        const Real* dx = WarpX::GetInstance().Geom(lev-1).CellSize();
+        amrex::IntVect r_ratio = Artemis::GetInstance().refRatio(lev-1);
+        const Real* dx = Artemis::GetInstance().Geom(lev-1).CellSize();
         auto F = Interpolate::getInterpolatedVector( Fx_cp, Fy_cp, Fz_cp, Fx_fp, Fy_fp, Fz_fp,
                                     dm, r_ratio, dx, ng );
         // Write interpolated raw data
@@ -526,8 +526,8 @@ WriteCoarseScalar( const std::string field_name,
         // Create an alias to the component `icomp` of F_cp
         MultiFab F_comp(*F_cp, amrex::make_alias, icomp, 1);
         // Interpolate coarse data onto fine grid
-        const amrex::IntVect r_ratio = WarpX::GetInstance().refRatio(lev-1);
-        const Real* dx = WarpX::GetInstance().Geom(lev-1).CellSize();
+        const amrex::IntVect r_ratio = Artemis::GetInstance().refRatio(lev-1);
+        const Real* dx = Artemis::GetInstance().Geom(lev-1).CellSize();
         auto F = Interpolate::getInterpolatedScalar( F_comp, *F_fp, dm, r_ratio, dx, ng );
         // Write interpolated raw data
         WriteRawMF( *F, dm, filename, level_prefix, field_name+"_cp", lev, plot_guards );
@@ -540,100 +540,100 @@ FlushFormatPlotfile::WriteAllRawFields(
     const bool plot_raw_fields_guards) const
 {
     if (!plot_raw_fields) return;
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
     for (int lev = 0; lev < nlevels; ++lev)
     {
         const std::unique_ptr<MultiFab> empty_ptr;
         const std::string raw_pltname = plotfilename + "/raw_fields";
-        const DistributionMapping& dm = warpx.DistributionMap(lev);
+        const DistributionMapping& dm = artemis.DistributionMap(lev);
 
         // Auxiliary patch
 
-        WriteRawMF( warpx.getEfield(lev, 0), dm, raw_pltname, default_level_prefix, "Ex_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getEfield(lev, 1), dm, raw_pltname, default_level_prefix, "Ey_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getEfield(lev, 2), dm, raw_pltname, default_level_prefix, "Ez_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield(lev, 0), dm, raw_pltname, default_level_prefix, "Bx_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield(lev, 1), dm, raw_pltname, default_level_prefix, "By_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getEfield(lev, 0), dm, raw_pltname, default_level_prefix, "Ex_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getEfield(lev, 1), dm, raw_pltname, default_level_prefix, "Ey_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getEfield(lev, 2), dm, raw_pltname, default_level_prefix, "Ez_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getBfield(lev, 0), dm, raw_pltname, default_level_prefix, "Bx_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getBfield(lev, 1), dm, raw_pltname, default_level_prefix, "By_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getBfield(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_aux", lev, plot_raw_fields_guards);
 
         // fine patch
-        WriteRawMF( warpx.getEfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Ex_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getEfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "Ey_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getEfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Ez_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getcurrent_fp(lev, 0), dm, raw_pltname, default_level_prefix, "jx_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getcurrent_fp(lev, 1), dm, raw_pltname, default_level_prefix, "jy_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getcurrent_fp(lev, 2), dm, raw_pltname, default_level_prefix, "jz_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "By_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
-#ifdef WARPX_MAG_LLG
-        WriteRawMF( warpx.getHfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Hx_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getHfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "Hy_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getHfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Hz_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getMfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "M_xface_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getMfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "M_yface_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getMfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "M_zface_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getEfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Ex_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getEfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "Ey_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getEfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Ez_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getcurrent_fp(lev, 0), dm, raw_pltname, default_level_prefix, "jx_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getcurrent_fp(lev, 1), dm, raw_pltname, default_level_prefix, "jy_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getcurrent_fp(lev, 2), dm, raw_pltname, default_level_prefix, "jz_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getBfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getBfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "By_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getBfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
+#ifdef ARTEMIS_MAG_LLG
+        WriteRawMF( artemis.getHfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Hx_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getHfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "Hy_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getHfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Hz_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getMfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "M_xface_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getMfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "M_yface_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( artemis.getMfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "M_zface_fp", lev, plot_raw_fields_guards);
 #endif
-        if (warpx.get_pointer_F_fp(lev))
+        if (artemis.get_pointer_F_fp(lev))
         {
-            WriteRawMF(warpx.getF_fp(lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
+            WriteRawMF(artemis.getF_fp(lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
         }
-        if (warpx.get_pointer_rho_fp(lev))
+        if (artemis.get_pointer_rho_fp(lev))
         {
             // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
             // If nComp > 1, this is the upper half of the list of components.
-            MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
+            MultiFab rho_new(artemis.getrho_fp(lev), amrex::make_alias, artemis.getrho_fp(lev).nComp()/2, artemis.getrho_fp(lev).nComp()/2);
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
-        if (warpx.get_pointer_phi_fp(lev) != nullptr) {
-            WriteRawMF(warpx.getphi_fp(lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
+        if (artemis.get_pointer_phi_fp(lev) != nullptr) {
+            WriteRawMF(artemis.getphi_fp(lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
         }
 
         // Averaged fields on fine patch
-        if (warpx.fft_do_time_averaging)
+        if (artemis.fft_do_time_averaging)
         {
-            WriteRawMF(warpx.getEfield_avg_fp(lev, 0) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(artemis.getEfield_avg_fp(lev, 0) , dm, raw_pltname, default_level_prefix,
                        "Ex_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getEfield_avg_fp(lev, 1) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(artemis.getEfield_avg_fp(lev, 1) , dm, raw_pltname, default_level_prefix,
                        "Ey_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getEfield_avg_fp(lev, 2) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(artemis.getEfield_avg_fp(lev, 2) , dm, raw_pltname, default_level_prefix,
                        "Ez_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getBfield_avg_fp(lev, 0) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(artemis.getBfield_avg_fp(lev, 0) , dm, raw_pltname, default_level_prefix,
                        "Bx_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getBfield_avg_fp(lev, 1) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(artemis.getBfield_avg_fp(lev, 1) , dm, raw_pltname, default_level_prefix,
                        "By_avg_fp", lev, plot_raw_fields_guards);
 
-            WriteRawMF(warpx.getBfield_avg_fp(lev, 2) , dm, raw_pltname, default_level_prefix,
+            WriteRawMF(artemis.getBfield_avg_fp(lev, 2) , dm, raw_pltname, default_level_prefix,
                        "Bz_avg_fp", lev, plot_raw_fields_guards);
         }
 
         // Coarse path
         if (lev > 0) {
             WriteCoarseVector( "E",
-                               warpx.get_pointer_Efield_cp(lev, 0), warpx.get_pointer_Efield_cp(lev, 1), warpx.get_pointer_Efield_cp(lev, 2),
-                               warpx.get_pointer_Efield_fp(lev, 0), warpx.get_pointer_Efield_fp(lev, 1), warpx.get_pointer_Efield_fp(lev, 2),
+                               artemis.get_pointer_Efield_cp(lev, 0), artemis.get_pointer_Efield_cp(lev, 1), artemis.get_pointer_Efield_cp(lev, 2),
+                               artemis.get_pointer_Efield_fp(lev, 0), artemis.get_pointer_Efield_fp(lev, 1), artemis.get_pointer_Efield_fp(lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "B",
-                               warpx.get_pointer_Bfield_cp(lev, 0), warpx.get_pointer_Bfield_cp(lev, 1), warpx.get_pointer_Bfield_cp(lev, 2),
-                               warpx.get_pointer_Bfield_fp(lev, 0), warpx.get_pointer_Bfield_fp(lev, 1), warpx.get_pointer_Bfield_fp(lev, 2),
+                               artemis.get_pointer_Bfield_cp(lev, 0), artemis.get_pointer_Bfield_cp(lev, 1), artemis.get_pointer_Bfield_cp(lev, 2),
+                               artemis.get_pointer_Bfield_fp(lev, 0), artemis.get_pointer_Bfield_fp(lev, 1), artemis.get_pointer_Bfield_fp(lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "j",
-                               warpx.get_pointer_current_cp(lev, 0), warpx.get_pointer_current_cp(lev, 1), warpx.get_pointer_current_cp(lev, 2),
-                               warpx.get_pointer_current_fp(lev, 0), warpx.get_pointer_current_fp(lev, 1), warpx.get_pointer_current_fp(lev, 2),
+                               artemis.get_pointer_current_cp(lev, 0), artemis.get_pointer_current_cp(lev, 1), artemis.get_pointer_current_cp(lev, 2),
+                               artemis.get_pointer_current_fp(lev, 0), artemis.get_pointer_current_fp(lev, 1), artemis.get_pointer_current_fp(lev, 2),
                                dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
-            if (warpx.get_pointer_F_fp(lev) && warpx.get_pointer_F_cp(lev))
+            if (artemis.get_pointer_F_fp(lev) && artemis.get_pointer_F_cp(lev))
             {
-                WriteCoarseScalar("F", warpx.get_pointer_F_cp(lev), warpx.get_pointer_F_fp(lev),
+                WriteCoarseScalar("F", artemis.get_pointer_F_cp(lev), artemis.get_pointer_F_fp(lev),
                     dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 0);
             }
-            if (warpx.get_pointer_rho_fp(lev) && warpx.get_pointer_rho_cp(lev))
+            if (artemis.get_pointer_rho_fp(lev) && artemis.get_pointer_rho_cp(lev))
             {
                 // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
-                WriteCoarseScalar("rho", warpx.get_pointer_rho_cp(lev), warpx.get_pointer_rho_fp(lev),
+                WriteCoarseScalar("rho", artemis.get_pointer_rho_cp(lev), artemis.get_pointer_rho_fp(lev),
                     dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 1);
             }
         }

@@ -3,13 +3,13 @@
 yt-project
 ==========
 
-`yt <http://yt-project.org/>`__ is a Python package that can help in analyzing and visualizing WarpX data (among other data formats).
+`yt <http://yt-project.org/>`__ is a Python package that can help in analyzing and visualizing Artemis data (among other data formats).
 It is convenient to use yt within a `Jupyter notebook <http://jupyter.org/>`__.
 
 Data Support
 ------------
 
-yt primarily supports WarpX through plotfiles.
+yt primarily supports Artemis through plotfiles.
 There is also support for openPMD HDF5 files in yt (w/o mesh refinement).
 
 Installation

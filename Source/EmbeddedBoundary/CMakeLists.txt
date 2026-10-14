@@ -1,6 +1,6 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
-    WarpXInitEB.cpp
-    WarpXFaceExtensions.cpp
-    WarpXFaceInfoBox.H
+    ArtemisInitEB.cpp
+    ArtemisFaceExtensions.cpp
+    ArtemisFaceInfoBox.H
 )

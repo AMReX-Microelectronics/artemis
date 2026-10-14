@@ -1,6 +1,6 @@
 /* Copyright 2021 Lorenzo Giacomel, Elisa Rheaume, Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -13,8 +13,8 @@
 
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -48,12 +48,12 @@ using namespace amrex;
 // constructor
 
 FieldProbe::FieldProbe (std::string rd_name)
-: ReducedDiags{rd_name}, m_probe(&WarpX::GetInstance())
+: ReducedDiags{rd_name}, m_probe(&Artemis::GetInstance())
 {
 
     // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+#if (defined ARTEMIS_DIM_RZ)
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldProbe reduced diagnostics does not work for RZ coordinate.");
 #endif
 
@@ -86,11 +86,11 @@ FieldProbe::FieldProbe (std::string rd_name)
     if (m_probe_geometry_str == "Point")
     {
         m_probe_geometry = DetectorGeometry::Point;
-#if !defined(WARPX_DIM_1D_Z)
+#if !defined(ARTEMIS_DIM_1D_Z)
         utils::parser::getWithParser(
             pp_rd_name, "x_probe", x_probe);
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         utils::parser::getWithParser(
             pp_rd_name, "y_probe", y_probe);
 #endif
@@ -100,11 +100,11 @@ FieldProbe::FieldProbe (std::string rd_name)
     else if (m_probe_geometry_str == "Line")
     {
         m_probe_geometry = DetectorGeometry::Line;
-#if !defined(WARPX_DIM_1D_Z)
+#if !defined(ARTEMIS_DIM_1D_Z)
         utils::parser::queryWithParser(pp_rd_name, "x_probe", x_probe);
         utils::parser::queryWithParser(pp_rd_name, "x1_probe", x1_probe);
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         utils::parser::queryWithParser(pp_rd_name, "y_probe", y_probe);
         utils::parser::queryWithParser(pp_rd_name, "y1_probe", y1_probe);
 #endif
@@ -114,12 +114,12 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     else if (m_probe_geometry_str == "Plane")
     {
-#if defined(WARPX_DIM_1D_Z)
-        WARPX_ABORT_WITH_MESSAGE(
+#if defined(ARTEMIS_DIM_1D_Z)
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "Plane probe should be used in a 2D or 3D simulation only");
 #endif
         m_probe_geometry = DetectorGeometry::Plane;
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         utils::parser::queryWithParser(pp_rd_name, "y_probe", y_probe);
         utils::parser::queryWithParser(pp_rd_name, "target_normal_x", target_normal_x);
         utils::parser::queryWithParser(pp_rd_name, "target_normal_y", target_normal_y);
@@ -135,7 +135,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     else
     {
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "Invalid probe geometry '" + m_probe_geometry_str
             + "'. Valid geometries are Point, Line or Plane."
         );
@@ -145,7 +145,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     utils::parser::queryWithParser(pp_rd_name, "interp_order", interp_order);
     pp_rd_name.query("do_moving_window_FP", do_moving_window_FP);
 
-    if (WarpX::gamma_boost > 1.0_rt)
+    if (Artemis::gamma_boost > 1.0_rt)
     {
         ablastr::warn_manager::WMRecordWarning(
             "Boosted Frame Invalid",
@@ -153,7 +153,7 @@ FieldProbe::FieldProbe (std::string rd_name)
             ablastr::warn_manager::WarnPriority::low);
     }
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= Artemis::nox ,
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
     if (ParallelDescriptor::IOProcessor())
     {
@@ -337,10 +337,10 @@ void FieldProbe::LoadBalance ()
 
 bool FieldProbe::ProbeInDomain () const
 {
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
     int const lev = 0;
-    const amrex::Geometry& gm = warpx.Geom(lev);
+    const amrex::Geometry& gm = artemis.Geom(lev);
     const auto prob_lo = gm.ProbLo();
     const auto prob_hi = gm.ProbHi();
 
@@ -348,11 +348,11 @@ bool FieldProbe::ProbeInDomain () const
      * Determine if probe exists within simulation boundaries. During 2D simulations,
      * y values will be set to 0 making it unnecessary to check. Generally, the second
      * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
-     * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
+     * and prob_hi[1] refer to z. This is a result of artemis.Geom(lev).
      */
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     return z_probe >= prob_lo[0] && z_probe < prob_hi[0];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
            z_probe >= prob_lo[1] && z_probe < prob_hi[1];
 #else
@@ -369,37 +369,37 @@ void FieldProbe::ComputeDiags (int step)
     {
         if (!m_intervals.contains(step+1)) { return; }
     }
-    // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // get number of mesh-refinement levels
-    const auto nLevel = warpx.finestLevel() + 1;
+    const auto nLevel = artemis.finestLevel() + 1;
 
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
-        const amrex::Geometry& gm = warpx.Geom(lev);
+        const amrex::Geometry& gm = artemis.Geom(lev);
         const auto prob_lo = gm.ProbLo();
-        amrex::Real const dt = WarpX::GetInstance().getdt(lev);
+        amrex::Real const dt = Artemis::GetInstance().getdt(lev);
         // Calculates particle movement in moving window sims
         amrex::Real move_dist = 0.0;
         bool const update_particles_moving_window =
             do_moving_window_FP &&
-            step > warpx.start_moving_window_step &&
-            step <= warpx.end_moving_window_step;
+            step > artemis.start_moving_window_step &&
+            step <= artemis.end_moving_window_step;
         if (update_particles_moving_window)
         {
             int step_diff = step - m_last_compute_step;
-            move_dist = dt*warpx.moving_window_v*step_diff;
+            move_dist = dt*artemis.moving_window_v*step_diff;
         }
 
         // get MultiFab data at lev
-        const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
-        const amrex::MultiFab &Ey = warpx.getEfield(lev, 1);
-        const amrex::MultiFab &Ez = warpx.getEfield(lev, 2);
-        const amrex::MultiFab &Bx = warpx.getBfield(lev, 0);
-        const amrex::MultiFab &By = warpx.getBfield(lev, 1);
-        const amrex::MultiFab &Bz = warpx.getBfield(lev, 2);
+        const amrex::MultiFab &Ex = artemis.getEfield(lev, 0);
+        const amrex::MultiFab &Ey = artemis.getEfield(lev, 1);
+        const amrex::MultiFab &Ez = artemis.getEfield(lev, 2);
+        const amrex::MultiFab &Bx = artemis.getBfield(lev, 0);
+        const amrex::MultiFab &By = artemis.getBfield(lev, 1);
+        const amrex::MultiFab &Bz = artemis.getBfield(lev, 2);
 
         /*
          * Prepare interpolation of field components to probe_position
@@ -438,20 +438,20 @@ void FieldProbe::ComputeDiags (int step)
             auto const np = pti.numParticles();
             if (update_particles_moving_window)
             {
-                const auto temp_warpx_moving_window = warpx.moving_window_dir;
+                const auto temp_artemis_moving_window = artemis.moving_window_dir;
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
                     getPosition(ip, xp, yp, zp);
-                    if (temp_warpx_moving_window == 0)
+                    if (temp_artemis_moving_window == 0)
                     {
                         setPosition(ip, xp+move_dist, yp, zp);
                     }
-                    if (temp_warpx_moving_window == 1)
+                    if (temp_artemis_moving_window == 1)
                     {
                         setPosition(ip, xp, yp+move_dist, zp);
                     }
-                    if (temp_warpx_moving_window == WARPX_ZINDEX)
+                    if (temp_artemis_moving_window == ARTEMIS_ZINDEX)
                     {
                         setPosition(ip, xp, yp, zp+move_dist);
                     }
@@ -461,13 +461,13 @@ void FieldProbe::ComputeDiags (int step)
             {
                 const auto cell_size = gm.CellSizeArray();
                 const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
                 const int j_probe = 0;
                 const int k_probe = 0;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
                 const int k_probe = 0;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
                 const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
                 const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
 #endif
@@ -497,15 +497,15 @@ void FieldProbe::ComputeDiags (int step)
 
                 auto * const AMREX_RESTRICT idcpu = pti.GetStructOfArrays().GetIdCPUData().data();
 
-                const auto &xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
-                const std::array<Real, 3> &dx = WarpX::CellSize(lev);
+                const auto &xyzmin = Artemis::LowerCorner(box, lev, 0._rt);
+                const std::array<Real, 3> &dx = Artemis::CellSize(lev);
 
                 const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
                 const Dim3 lo = lbound(box);
 
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
-                const int temp_modes = WarpX::n_rz_azimuthal_modes;
+                const int temp_modes = Artemis::n_rz_azimuthal_modes;
                 const int temp_interp_order = interp_order;
                 const bool temp_raw_fields = raw_fields;
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
@@ -693,7 +693,7 @@ void FieldProbe::WriteToFile (int step) const
         ofs << m_sep;
         ofs << std::fixed << std::setprecision(14) << std::scientific;
         // write time
-        ofs << WarpX::GetInstance().gett_new(0);
+        ofs << Artemis::GetInstance().gett_new(0);
 
         // start at k = 1 since the particle id is not written to file
         for (int k = 1; k < noutputs; k++)

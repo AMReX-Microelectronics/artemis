@@ -6,8 +6,8 @@ amr.max_level = 0
 #################################
 ######### BOX PARAMETERS ########
 #################################
-# warpx.zmax_plasma_to_compute_max_step = 0.33
-warpx.zmax_plasma_to_compute_max_step = -1.
+# artemis.zmax_plasma_to_compute_max_step = 0.33
+artemis.zmax_plasma_to_compute_max_step = -1.
 # max_step = 3150
 
 amr.n_cell = 32 2048 # 64 3072
@@ -24,7 +24,7 @@ geometry.prob_hi =  0.00024190484157981564  0.0
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
+artemis.verbose = 1
 algo.current_deposition = esirkepov
 algo.charge_deposition = standard
 #algo.field_gathering = standard
@@ -33,21 +33,21 @@ algo.particle_pusher = vay
 algo.maxwell_solver = ckc
 algo.load_balance_intervals = -1
 algo.particle_shape = 3
-warpx.use_filter = 1
-warpx.filter_npass_each_dir = 1 4
-warpx.cfl = .9999
-warpx.do_pml = 0
-warpx.do_dynamic_scheduling = 1
+artemis.use_filter = 1
+artemis.filter_npass_each_dir = 1 4
+artemis.cfl = .9999
+artemis.do_pml = 0
+artemis.do_dynamic_scheduling = 1
 # Moving window
-warpx.do_moving_window = 1
-warpx.moving_window_dir = z
-warpx.moving_window_v = 1.0 # in units of the speed of light
+artemis.do_moving_window = 1
+artemis.moving_window_dir = z
+artemis.moving_window_v = 1.0 # in units of the speed of light
 
 #################################
 ####### BOOST PARAMETERS ########
 #################################
-warpx.gamma_boost = 30.0
-warpx.boost_direction = z
+artemis.gamma_boost = 30.0
+artemis.boost_direction = z
 
 #################################
 ############ PLASMA #############
@@ -172,10 +172,10 @@ particles.Bx_external_particle_function(x,y,z,t) = "0."
 particles.By_external_particle_function(x,y,z,t) = "( - adjust_factor * vb * gab * 2 * mcce * ga * x / (wlen * dlen * clight * clight) ) * ((gab*(z+vb*t))>=zlen) * ((gab*(z+vb*t))<=(zlen+wlen))"
 particles.Bz_external_particle_function(x,y,z,t) = "0."
 
-warpx.num_mirrors=2
-warpx.mirror_z = 0.321 0.6695
-warpx.mirror_z_width = 8.0e-6  8.0e-6
-warpx.mirror_z_npoints = 4 4
+artemis.num_mirrors=2
+artemis.mirror_z = 0.321 0.6695
+artemis.mirror_z_width = 8.0e-6  8.0e-6
+artemis.mirror_z_npoints = 4 4
 
 #################################
 ############# LASER #############

@@ -6,16 +6,16 @@ Particles
 Particle containers
 -------------------
 
-Particle structures and functions are defined in ``Source/Particles/``. WarpX uses the ``Particle`` class from AMReX for single particles. An ensemble of particles (e.g., a plasma species, or laser particles) is stored as a ``WarpXParticleContainer`` (see description below) in a per-box (and even per-tile on CPU) basis.
+Particle structures and functions are defined in ``Source/Particles/``. Artemis uses the ``Particle`` class from AMReX for single particles. An ensemble of particles (e.g., a plasma species, or laser particles) is stored as a ``ArtemisParticleContainer`` (see description below) in a per-box (and even per-tile on CPU) basis.
 
-.. doxygenclass:: WarpXParticleContainer
+.. doxygenclass:: ArtemisParticleContainer
 
-Physical species are stored in ``PhysicalParticleContainer``, that derives from ``WarpXParticleContainer``. In particular, the main function to advance all particles in a physical species is ``PhysicalParticleContainer::Evolve`` (see below).
+Physical species are stored in ``PhysicalParticleContainer``, that derives from ``ArtemisParticleContainer``. In particular, the main function to advance all particles in a physical species is ``PhysicalParticleContainer::Evolve`` (see below).
 
 .. doxygenfunction:: PhysicalParticleContainer::Evolve
    :outline:
 
-Finally, all particle species (physical plasma species ``PhysicalParticleContainer``, photon species ``PhotonParticleContainer`` or non-physical species ``LaserParticleContainer``) are stored in ``MultiParticleContainer``. The class ``WarpX`` holds one instance of ``MultiParticleContainer`` as a member variable, called ``WarpX::mypc`` (where `mypc` stands for "my particle containers"):
+Finally, all particle species (physical plasma species ``PhysicalParticleContainer``, photon species ``PhotonParticleContainer`` or non-physical species ``LaserParticleContainer``) are stored in ``MultiParticleContainer``. The class ``Artemis`` holds one instance of ``MultiParticleContainer`` as a member variable, called ``Artemis::mypc`` (where `mypc` stands for "my particle containers"):
 
 .. doxygenclass:: MultiParticleContainer
 
@@ -26,11 +26,11 @@ A typical loop over particles reads:
 
 .. code-block:: cpp
 
-  // pc is a std::unique_ptr<WarpXParticleContainer>
+  // pc is a std::unique_ptr<ArtemisParticleContainer>
   // Loop over MR levels
   for (int lev = 0; lev <= finest_level; ++lev) {
       // Loop over particles, box by box
-      for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti) {
+      for (ArtemisParIter pti(*this, lev); pti.isValid(); ++pti) {
           // Do something on particles
           // [MY INNER LOOP]
       }
@@ -54,7 +54,7 @@ The innermost step ``[MY INNER LOOP]`` typically calls ``amrex::ParallelFor`` to
 Link fields and particles?
 --------------------------
 
-In WarpX, the loop over boxes through a ``MultiFab`` iterator ``MFIter`` and the loop over boxes through a ``ParticleContainer`` iterator ``WarpXParIter`` are consistent.
+In Artemis, the loop over boxes through a ``MultiFab`` iterator ``MFIter`` and the loop over boxes through a ``ParticleContainer`` iterator ``ArtemisParIter`` are consistent.
 
 On a loop over boxes in a ``MultiFab`` (``MFIter``), it can be useful to access particle data on a GPU-friendly way. This can be done by:
 
@@ -76,7 +76,7 @@ On a loop over particles it can be useful to access the fields on the box we are
 
 .. code-block:: cpp
 
-  // E is a reference to, say, WarpX::Efield_aux
+  // E is a reference to, say, Artemis::Efield_aux
   // Get the Ex field on the grid
   const FArrayBox& exfab = (*E[lev][0])[pti];
   // Let's be generous and also get the underlying box (i.e., index info)
@@ -87,17 +87,17 @@ Main functions
 
 .. doxygenfunction:: PhysicalParticleContainer::PushPX
 
-.. doxygenfunction:: WarpXParticleContainer::DepositCurrent(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &J, const amrex::Real dt, const amrex::Real relative_time)
+.. doxygenfunction:: ArtemisParticleContainer::DepositCurrent(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &J, const amrex::Real dt, const amrex::Real relative_time)
 
 .. note::
-   The current deposition is used both by ``PhysicalParticleContainer`` and ``LaserParticleContainer``, so it is in the parent class ``WarpXParticleContainer``.
+   The current deposition is used both by ``PhysicalParticleContainer`` and ``LaserParticleContainer``, so it is in the parent class ``ArtemisParticleContainer``.
 
 Buffers
 -------
 
-To reduce numerical artifacts at the boundary of a mesh-refinement patch, WarpX has an option to use buffers: When particles evolve on the fine level, they gather from the coarse level (e.g., ``Efield_cax``, a copy of the ``aux`` data from the level below) if they are located on the fine level but fewer than ``WarpX::n_field_gather_buffer`` cells away from the coarse-patch boundary. Similarly, when particles evolve on the fine level, they deposit on the coarse level (e.g., ``Efield_cp``) if they are located on the fine level but fewer than ``WarpX::n_current_deposition_buffer`` cells away from the coarse-patch boundary.
+To reduce numerical artifacts at the boundary of a mesh-refinement patch, Artemis has an option to use buffers: When particles evolve on the fine level, they gather from the coarse level (e.g., ``Efield_cax``, a copy of the ``aux`` data from the level below) if they are located on the fine level but fewer than ``Artemis::n_field_gather_buffer`` cells away from the coarse-patch boundary. Similarly, when particles evolve on the fine level, they deposit on the coarse level (e.g., ``Efield_cp``) if they are located on the fine level but fewer than ``Artemis::n_current_deposition_buffer`` cells away from the coarse-patch boundary.
 
-``WarpX::gather_buffer_masks`` and ``WarpX::current_buffer_masks`` contain masks indicating if a cell is in the interior of the fine-resolution patch or in the buffers. Then, particles depending on this mask in
+``Artemis::gather_buffer_masks`` and ``Artemis::current_buffer_masks`` contain masks indicating if a cell is in the interior of the fine-resolution patch or in the buffers. Then, particles depending on this mask in
 
 .. doxygenfunction:: PhysicalParticleContainer::PartitionParticlesInBuffers
 
@@ -108,7 +108,7 @@ To reduce numerical artifacts at the boundary of a mesh-refinement patch, WarpX 
 Particle attributes
 -------------------
 
-WarpX adds the following particle attributes by default to WarpX particles.
+Artemis adds the following particle attributes by default to Artemis particles.
 These attributes are either stored in an Array-of-Struct (AoS) or Struct-of-Array (SoA) location of the AMReX particle containers.
 The data structures for those are either pre-described at compile-time (CT) or runtime (RT).
 
@@ -128,7 +128,7 @@ Attribute name        ``int``/``real``  Description                         Wher
                                         Wheeler process                                physics is used.
 ====================  ================  ==================================  ===== ==== =====================
 
-WarpX allows extra runtime attributes to be added to particle containers (through ``AddRealComp("attrname")`` or ``AddIntComp("attrname")``).
+Artemis allows extra runtime attributes to be added to particle containers (through ``AddRealComp("attrname")`` or ``AddIntComp("attrname")``).
 The attribute name can then be used to access the values of that attribute.
 For example, using a particle iterator, ``pti``, to loop over the particles the command ``pti.GetAttribs(particle_comps["attrname"]).dataPtr();`` will return the values of the ``"attrname"`` attribute.
 

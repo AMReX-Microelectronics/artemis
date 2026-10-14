@@ -1,15 +1,15 @@
 /* Copyright 2019-2020 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmRZ.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <cmath>
 
@@ -58,20 +58,20 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
 
     if (time_averaging && J_in_time != JInTime::Linear)
     {
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "RZ PSATD: psatd.do_time_averaging=1 implemented only with psatd.J_in_time=linear");
     }
 
     if (dive_cleaning && J_in_time != JInTime::Linear)
     {
-        WARPX_ABORT_WITH_MESSAGE(
-            "RZ PSATD: warpx.do_dive_cleaning=1 implemented only with psatd.J_in_time=linear");
+        ARTEMIS_ABORT_WITH_MESSAGE(
+            "RZ PSATD: artemis.do_dive_cleaning=1 implemented only with psatd.J_in_time=linear");
     }
 
     if (divb_cleaning && J_in_time != JInTime::Linear)
     {
-        WARPX_ABORT_WITH_MESSAGE(
-            "RZ PSATD: warpx.do_divb_cleaning=1 implemented only with psatd.J_in_time=linear");
+        ARTEMIS_ABORT_WITH_MESSAGE(
+            "RZ PSATD: artemis.do_divb_cleaning=1 implemented only with psatd.J_in_time=linear");
     }
 }
 
@@ -204,7 +204,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                 rho_diff = (X2 - X3)*PhysConst::ep0*divE - X2*dt*divJ;
             }
 
-            // Update E (see WarpX online documentation: theory section)
+            // Update E (see Artemis online documentation: theory section)
             fields(i,j,k,Ep_m) = C*Ep_old
                         + S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old - inv_ep0*Jp)
                         + 0.5_rt*kr*rho_diff;
@@ -214,7 +214,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             fields(i,j,k,Ez_m) = C*Ez_old
                         + S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old - inv_ep0*Jz)
                         - I*kz*rho_diff;
-            // Update B (see WarpX online documentation: theory section)
+            // Update B (see Artemis online documentation: theory section)
             fields(i,j,k,Bp_m) = C*Bp_old
                         - S_ck*(-I*kr/2._rt*Ez_old + kz*Ep_old)
                         + X1*(-I*kr/2._rt*Jz + kz*Jp);
@@ -426,7 +426,7 @@ void
 PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 {
     // Profiling
-    WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" );
+    ARTEMIS_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" );
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 
@@ -491,6 +491,6 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 void
 PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    WARPX_ABORT_WITH_MESSAGE(
+    ARTEMIS_ABORT_WITH_MESSAGE(
         "Vay deposition not implemented in RZ geometry");
 }

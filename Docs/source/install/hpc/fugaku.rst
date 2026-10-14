@@ -17,14 +17,14 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
 
-Compiling WarpX on Fugaku is more pratical on a compute node. Use the following commands to acquire a compute node for one hour:
+Compiling Artemis on Fugaku is more pratical on a compute node. Use the following commands to acquire a compute node for one hour:
 
 .. code-block:: bash
 
@@ -68,11 +68,11 @@ At this point we need to download and compile the libraries required for OpenPMD
    cmake -S src/adios2 -B src/adios2-fg-build -DBUILD_SHARED_LIBS=OFF -DADIOS2_USE_Blosc=ON -DBUILD_TESTING=OFF -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/a64fx-fj490/adios2-2.8.3-install
    cmake --build src/adios2-fg-build --target install -j 24
 
-Finally, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Finally, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
    rm -rf build
 
    export CC=$(which mpifcc)
@@ -80,18 +80,18 @@ Finally, ``cd`` into the directory ``$HOME/src/warpx`` and use the following com
    export CFLAGS="-Nclang"
    export CXXFLAGS="-Nclang"
 
-   cmake -S . -B build -DWarpX_COMPUTE=OMP \
+   cmake -S . -B build -DArtemis_COMPUTE=OMP \
    -DCMAKE_BUILD_TYPE=Release \
    -DCMAKE_CXX_FLAGS_RELEASE="-Ofast -mllvm -polly -mllvm -polly-parallel" \
    -DAMReX_DIFFERENT_COMPILER=ON \
-   -DWarpX_MPI_THREAD_MULTIPLE=OFF
+   -DArtemis_MPI_THREAD_MULTIPLE=OFF
 
    cmake --build build -j 48
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-fugaku>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-fugaku>` with a :ref:`3D example inputs file <usage-examples>`.
 
 .. _running-cpp-fugaku:
 
@@ -111,5 +111,5 @@ In non-interactive runs, you can use `pjsub submit.sh` where `submit.sh` can be 
 
 Note: the ``Boost Eco Mode`` mode that is set in this example increases the default frequency of the A64FX
 from 2 GHz to 2.2 GHz, while at the same time switching off one of the two floating-point arithmetic
-pipelines. Some preliminary tests with WarpX show that this mode achieves performances similar to those of
+pipelines. Some preliminary tests with Artemis show that this mode achieves performances similar to those of
 the normal mode but with a reduction of the energy consumption of approximately 20%.

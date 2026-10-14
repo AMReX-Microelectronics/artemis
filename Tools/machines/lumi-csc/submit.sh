@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -A <project id>
-#SBATCH -J warpx
+#SBATCH -J artemis
 #SBATCH -o %x-%j.out
 #SBATCH -t 00:10:00
 # Early access to the GPU partition
@@ -27,4 +27,4 @@ export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
 export ROCFFT_RTC_CACHE_PATH=/dev/null
 
 export OMP_NUM_THREADS=1
-srun ../warpx inputs > outputs
+srun ../artemis inputs > outputs

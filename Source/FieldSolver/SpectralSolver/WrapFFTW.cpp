@@ -1,6 +1,6 @@
 /* Copyright 2019-2021
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -34,7 +34,7 @@ namespace AnyFFT
     {
         FFTplan fft_plan;
 
-#if defined(AMREX_USE_OMP) && defined(WarpX_FFTW_OMP)
+#if defined(AMREX_USE_OMP) && defined(Artemis_FFTW_OMP)
 #   ifdef AMREX_USE_FLOAT
         fftwf_init_threads();
         fftwf_plan_with_nthreads(omp_get_max_threads());
@@ -54,7 +54,7 @@ namespace AnyFFT
                 fft_plan.m_plan = VendorCreatePlanR2C2D(
                     real_size[1], real_size[0], real_array, complex_array, FFTW_ESTIMATE);
             } else {
-                WARPX_ABORT_WITH_MESSAGE(
+                ARTEMIS_ABORT_WITH_MESSAGE(
                     "only dim=2 and dim=3 have been implemented");
             }
         } else if (dir == direction::C2R){
@@ -65,7 +65,7 @@ namespace AnyFFT
                 fft_plan.m_plan = VendorCreatePlanC2R2D(
                     real_size[1], real_size[0], complex_array, real_array, FFTW_ESTIMATE);
             } else {
-                WARPX_ABORT_WITH_MESSAGE(
+                ARTEMIS_ABORT_WITH_MESSAGE(
                     "only dim=2 and dim=3 have been implemented. Should be easy to add dim=1.");
             }
         }

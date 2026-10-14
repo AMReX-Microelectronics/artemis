@@ -1,12 +1,12 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "FiniteDifferenceSolver.H"
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -14,10 +14,10 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#ifdef WARPX_DIM_RZ
-#   include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#ifdef ARTEMIS_DIM_RZ
+#   include "Artemis.H"
 #endif
 
 #include <AMReX.H>
@@ -52,7 +52,7 @@ void FiniteDifferenceSolver::EvolveF (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
 
         EvolveFCylindrical <CylindricalYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
@@ -72,13 +72,13 @@ void FiniteDifferenceSolver::EvolveF (
 
 #endif
     } else {
-        WARPX_ABORT_WITH_MESSAGE("EvolveF: Unknown algorithm");
+        ARTEMIS_ABORT_WITH_MESSAGE("EvolveF: Unknown algorithm");
     }
 
 }
 
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveFCartesian (
@@ -131,7 +131,7 @@ void FiniteDifferenceSolver::EvolveFCartesian (
 
 }
 
-#else // corresponds to ifndef WARPX_DIM_RZ
+#else // corresponds to ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveFCylindrical (
@@ -171,11 +171,11 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
         Real constexpr inv_epsilon0 = 1./PhysConst::ep0;
 
         // Use the right shift in components:
-        // - the first WarpX::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho old (i.e. rhocomp=0)
-        // - the next WarpX::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho new (i.e. rhocomp=1)
+        // - the first Artemis::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho old (i.e. rhocomp=0)
+        // - the next Artemis::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho new (i.e. rhocomp=1)
         int rho_shift = 0;
         if (rhocomp == 1) {
-            rho_shift = WarpX::ncomps;
+            rho_shift = Artemis::ncomps;
         }
 
         // Loop over the cells and update the fields
@@ -221,4 +221,4 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
 
 }
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to ifndef ARTEMIS_DIM_RZ

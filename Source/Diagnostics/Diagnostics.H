@@ -1,12 +1,12 @@
-#ifndef WARPX_DIAGNOSTICS_H_
-#define WARPX_DIAGNOSTICS_H_
+#ifndef ARTEMIS_DIAGNOSTICS_H_
+#define ARTEMIS_DIAGNOSTICS_H_
 
 #include "ParticleDiag/ParticleDiag.H"
 
 #include "ComputeDiagFunctors/ComputeDiagFunctor_fwd.H"
 #include "ComputeDiagFunctors/ComputeParticleDiagFunctor.H"
 #include "FlushFormats/FlushFormat_fwd.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <AMReX_IntVect.H>
@@ -53,7 +53,7 @@ public:
      * of which are members of Diagnostics. Yet, the implementation is left to derived classes
      * for now because:
      * - The functions underlying FlushFormat::WriteToFile expect a geometry object, which is
-     *   WarpX::geom for FullDiagnostics but should be constructed for BTDiagnostics;
+     *   Artemis::geom for FullDiagnostics but should be constructed for BTDiagnostics;
      * - The functions underlying FlushFormat::WriteToFile do not support writing a buffer to file
      *   multiple times yet.
      *  When these are fixed, the implementation of Flush should be in Diagnostics.cpp
@@ -318,4 +318,4 @@ protected:
 
 };
 
-#endif // WARPX_DIAGNOSTICS_H_
+#endif // ARTEMIS_DIAGNOSTICS_H_

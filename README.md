@@ -1,5 +1,5 @@
 # ARTEMIS
-ARTEMIS (Adaptive mesh Refinement Time-domain ElectrodynaMIcs Solver) is a high-performance coupled electrodynamics–micromagnetics solver for full physical modeling of signals in microelectronic circuitry. The overall strategy couples a finite-difference time-domain (FDTD) approach for Maxwell’s equations to a magnetization model described by the Landau–Lifshitz–Gilbert (LLG) equation. The algorithm is implemented in the Exascale Computing Project (ECP) software framework, AMReX, which provides effective scalability on manycore and GPU-based supercomputing architectures. Furthermore, the code leverages ongoing developments of the Exascale Application Code, WarpX, which is primarily being developed for plasma wakefield accelerator modeling. Our temporal coupling scheme provides second-order accuracy in space and time by combining the integration steps for the magnetic field and magnetization into an iterative sub-step that includes a trapezoidal temporal discretization for the magnetization. The performance of the algorithm is demonstrated by the excellent scaling results on NERSC multicore and GPU systems, with a significant (59×) speedup on the GPU using a node-by-node comparison. The utility of our code is validated by performing simulations of transmission lines, rectangle electromagnetic waveguides, magnetically tunable filters, on-chip coplanar waveguides and resonators, magnon-photon coupling circuits, and so on.
+ARTEMIS (Adaptive mesh Refinement Time-domain ElectrodynaMIcs Solver) is a high-performance coupled electrodynamics–micromagnetics solver for full physical modeling of signals in microelectronic circuitry. The overall strategy couples a finite-difference time-domain (FDTD) approach for Maxwell’s equations to a magnetization model described by the Landau–Lifshitz–Gilbert (LLG) equation. The algorithm is implemented in the Exascale Computing Project (ECP) software framework, AMReX, which provides effective scalability on manycore and GPU-based supercomputing architectures. Furthermore, the code leverages ongoing developments of the Exascale Application Code, __UPSTREAM_ARTEMIS__, which is primarily being developed for plasma wakefield accelerator modeling. Our temporal coupling scheme provides second-order accuracy in space and time by combining the integration steps for the magnetic field and magnetization into an iterative sub-step that includes a trapezoidal temporal discretization for the magnetization. The performance of the algorithm is demonstrated by the excellent scaling results on NERSC multicore and GPU systems, with a significant (59×) speedup on the GPU using a node-by-node comparison. The utility of our code is validated by performing simulations of transmission lines, rectangle electromagnetic waveguides, magnetically tunable filters, on-chip coplanar waveguides and resonators, magnon-photon coupling circuits, and so on.
 
 For questions, please reach out to Zhi (Jackie) Yao (jackie_zhiyao@lbl.gov) and Andy Nonaka (ajnonaka@lbl.gov).
 
@@ -71,9 +71,9 @@ cmake --build . -j 4
 ```bash
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
-  -DWarpX_MPI=ON \
-  -DWarpX_COMPUTE=OMP \
-  -DWarpX_MAG_LLG=ON
+  -DArtemis_MPI=ON \
+  -DArtemis_COMPUTE=OMP \
+  -DArtemis_MAG_LLG=ON
 cmake --build build -j 4
 ```
 
@@ -81,9 +81,9 @@ cmake --build build -j 4
 ```bash
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
-  -DWarpX_COMPUTE=CUDA \
-  -DWarpX_MPI=ON \
-  -DWarpX_MAG_LLG=ON \
+  -DArtemis_COMPUTE=CUDA \
+  -DArtemis_MPI=ON \
+  -DArtemis_MAG_LLG=ON \
   -DAMReX_CUDA_ARCH=8.0  # Adjust for your GPU architecture
 cmake --build build -j 4
 ```
@@ -92,17 +92,17 @@ cmake --build build -j 4
 ```bash
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
-  -DWarpX_MAG_LLG=OFF
+  -DArtemis_MAG_LLG=OFF
 cmake --build build -j 4
 ```
 
 ### Common CMake Options
-- `-DWarpX_MAG_LLG=ON/OFF` - Enable/disable LLG equation (default: ON)
-- `-DWarpX_MPI=ON/OFF` - Enable/disable MPI (default: ON)
-- `-DWarpX_COMPUTE=NOACC/OMP/CUDA/SYCL` - Set compute backend
-- `-DWarpX_PRECISION=SINGLE/DOUBLE` - Set floating point precision
-- `-DWarpX_EB=ON/OFF` - Enable/disable embedded boundaries
-- `-DWarpX_OPENPMD=ON/OFF` - Enable/disable openPMD I/O
+- `-DArtemis_MAG_LLG=ON/OFF` - Enable/disable LLG equation (default: ON)
+- `-DArtemis_MPI=ON/OFF` - Enable/disable MPI (default: ON)
+- `-DArtemis_COMPUTE=NOACC/OMP/CUDA/SYCL` - Set compute backend
+- `-DArtemis_PRECISION=SINGLE/DOUBLE` - Set floating point precision
+- `-DArtemis_EB=ON/OFF` - Enable/disable embedded boundaries
+- `-DArtemis_OPENPMD=ON/OFF` - Enable/disable openPMD I/O
 - `-DCMAKE_BUILD_TYPE=Debug/Release` - Set build type
 
 ### AMReX Configuration Options
@@ -111,16 +111,16 @@ cmake --build build -j 4
 ```bash
 # Use external AMReX installation
 cmake -S . -B build \
-  -DWarpX_amrex_internal=OFF \
+  -DArtemis_amrex_internal=OFF \
   -DAMReX_DIR=/path/to/amrex/lib/cmake/AMReX
 
 # Use local AMReX source directory
-cmake -S . -B build -DWarpX_amrex_src=/path/to/amrex/source
+cmake -S . -B build -DArtemis_amrex_src=/path/to/amrex/source
 
 # Use custom AMReX repository/branch
 cmake -S . -B build \
-  -DWarpX_amrex_repo=https://github.com/user/amrex.git \
-  -DWarpX_amrex_branch=my_branch
+  -DArtemis_amrex_repo=https://github.com/user/amrex.git \
+  -DArtemis_amrex_branch=my_branch
 ```
 
 # Running Artemis
@@ -165,17 +165,17 @@ The CMake build produces executables in the build directory. The exact name depe
 
 ### Basic execution
 ```bash
-./build/bin/warpx Examples/Waveguide/inputs_3d_empty_X_band
+./build/bin/artemis Examples/Waveguide/inputs_3d_empty_X_band
 ```
 
 ### With MPI
 ```bash
-mpirun -n 4 ./build/bin/warpx Examples/Waveguide/inputs_3d_LLG_filter
+mpirun -n 4 ./build/bin/artemis Examples/Waveguide/inputs_3d_LLG_filter
 ```
 
 ### With GPU
 ```bash
-mpirun -n 4 ./build/bin/warpx Examples/Waveguide/inputs_3d_LLG_filter
+mpirun -n 4 ./build/bin/artemis Examples/Waveguide/inputs_3d_LLG_filter
 ```
 
 [Visualization](https://amrex-codes.github.io/amrex/docs_html/Visualization_Chapter.html)

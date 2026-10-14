@@ -1,12 +1,12 @@
 /* Copyright 2020 Luca Fedeli, Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_schwinger_process_wrapper_h_
-#define WARPX_schwinger_process_wrapper_h_
+#ifndef ARTEMIS_schwinger_process_wrapper_h_
+#define ARTEMIS_schwinger_process_wrapper_h_
 
 #include "QedWrapperCommons.H"
 
@@ -61,4 +61,4 @@ getSchwingerProductionNumber (const amrex::Real dV, const amrex::Real dt,
     }
 }
 
-#endif // WARPX_schwinger_process_wrapper_h_
+#endif // ARTEMIS_schwinger_process_wrapper_h_

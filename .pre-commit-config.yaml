@@ -52,7 +52,7 @@ repos:
   rev: v1.5.1
   hooks:
   - id: remove-tabs
-    exclude: 'Make.WarpX|Make.package|Makefile|GNUmake'
+    exclude: 'Make.Artemis|Make.package|Makefile|GNUmake'
 
 # CMake formatting
 #- repo: https://github.com/cheshirekow/cmake-format-precommit

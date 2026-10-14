@@ -1,4 +1,4 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     PsatdAlgorithmFirstOrder.cpp
     PsatdAlgorithmJConstantInTime.cpp
@@ -8,8 +8,8 @@ target_sources(WarpX
     PsatdAlgorithmComoving.cpp
 )
 
-if(WarpX_DIMS STREQUAL RZ)
-    target_sources(WarpX
+if(Artemis_DIMS STREQUAL RZ)
+    target_sources(Artemis
       PRIVATE
         SpectralBaseAlgorithmRZ.cpp
         PsatdAlgorithmRZ.cpp

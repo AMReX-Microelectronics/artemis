@@ -1,16 +1,16 @@
 /* Copyright 2022 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_ACCELERATORLATTICE_LATTICEELEMENTS_LATTICEELEMENTFINDER_H_
-#define WARPX_ACCELERATORLATTICE_LATTICEELEMENTS_LATTICEELEMENTFINDER_H_
+#ifndef ARTEMIS_ACCELERATORLATTICE_LATTICEELEMENTS_LATTICEELEMENTFINDER_H_
+#define ARTEMIS_ACCELERATORLATTICE_LATTICEELEMENTS_LATTICEELEMENTFINDER_H_
 
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_GpuContainers.H>
@@ -72,7 +72,7 @@ struct LatticeElementFinder
      * @param[in] a_offset particle index offset needed to access particle info
      * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
      */
-    LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset,
+    LatticeElementFinderDevice GetFinderDeviceInstance (ArtemisParIter const& a_pti, int const a_offset,
                                                         AcceleratorLattice const& accelerator_lattice);
 
     /* The index lookup tables for each lattice element type */
@@ -161,7 +161,7 @@ struct LatticeElementFinderDevice
      * @param[in] h_finder The host level instance of the element finder that this is associated with
      */
     void
-    InitLatticeElementFinderDevice (WarpXParIter const& a_pti, int const a_offset,
+    InitLatticeElementFinderDevice (ArtemisParIter const& a_pti, int const a_offset,
                                     AcceleratorLattice const& accelerator_lattice,
                                     LatticeElementFinder const & h_finder);
 
@@ -280,4 +280,4 @@ struct LatticeElementFinderDevice
 
 };
 
-#endif // WARPX_ACCELERATORLATTICE_LATTICEELEMENTS_LATTICEELEMENTFINDER_H_
+#endif // ARTEMIS_ACCELERATORLATTICE_LATTICEELEMENTS_LATTICEELEMENTFINDER_H_

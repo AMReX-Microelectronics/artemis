@@ -1,6 +1,6 @@
 /* Copyright 2019-2020 Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,7 +8,7 @@
 #include "ParticleExtrema.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
-#if (defined WARPX_QED)
+#if (defined ARTEMIS_QED)
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 #endif
 #include "Particles/Gather/FieldGather.H"
@@ -16,9 +16,9 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX_Algorithm.H>
 #include <AMReX_Array.H>
@@ -60,11 +60,11 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
     ParmParse pp_rd_name(rd_name);
     pp_rd_name.get("species",m_species_name);
 
-    // get WarpX class object
-    auto & warpx = WarpX::GetInstance();
+    // get Artemis class object
+    auto & artemis = Artemis::GetInstance();
 
     // get MultiParticleContainer class object
-    auto & mypc = warpx.GetPartContainer();
+    auto & mypc = artemis.GetPartContainer();
 
     // get number of species (int)
     const auto nSpecies = mypc.nSpecies();
@@ -78,7 +78,7 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
         // only chosen species does
         if (species_names[i_s] != m_species_name) { continue; }
 
-        // get WarpXParticleContainer class object
+        // get ArtemisParticleContainer class object
         auto & myspc = mypc.GetParticleContainer(i_s);
 
         auto all_diag_names = std::vector<std::string> {};
@@ -103,10 +103,10 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
         add_diag("gmin", "gmin()");
         add_diag("gmax", "gmax()");
 
-#if (defined WARPX_DIM_3D)
+#if (defined ARTEMIS_DIM_3D)
         add_diag("wmin", "wmin()");
         add_diag("wmax", "wmax()");
-#elif (defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ))
+#elif (defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ))
         add_diag("wmin", "wmin(1/m)");
         add_diag("wmax", "wmax(1/m)");
 #else
@@ -154,7 +154,7 @@ void ParticleExtrema::ComputeDiags (int step)
     if (!m_intervals.contains(step+1)) { return; }
 
     // get MultiParticleContainer class object
-    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    auto & mypc = Artemis::GetInstance().GetPartContainer();
 
     // get number of species (int)
     const auto nSpecies = mypc.nSpecies();
@@ -166,11 +166,11 @@ void ParticleExtrema::ComputeDiags (int step)
     Real constexpr inv_c2 = 1.0_rt / (PhysConst::c * PhysConst::c);
 
     // If 2D-XZ, p.pos(1) is z, rather than p.pos(2).
-#if (defined WARPX_DIM_3D)
+#if (defined ARTEMIS_DIM_3D)
     int const index_z = 2;
-#elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
+#elif (defined ARTEMIS_DIM_XZ || defined ARTEMIS_DIM_RZ)
     int const index_z = 1;
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
     int const index_z = 0;
 #endif
 
@@ -180,7 +180,7 @@ void ParticleExtrema::ComputeDiags (int step)
         // only chosen species does
         if (species_names[i_s] != m_species_name) { continue; }
 
-        // get WarpXParticleContainer class object
+        // get ArtemisParticleContainer class object
         auto & myspc = mypc.GetParticleContainer(i_s);
 
         // get mass (Real)
@@ -190,15 +190,15 @@ void ParticleExtrema::ComputeDiags (int step)
             m = PhysConst::m_e;
         }
 
-        using PType = typename WarpXParticleContainer::SuperParticleType;
+        using PType = typename ArtemisParticleContainer::SuperParticleType;
 
         // xmin
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
         Real xmin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::cos(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMin(xmin);
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
         Real xmin = 0.0_rt;
 #else
         Real xmin = ReduceMin( myspc,
@@ -208,12 +208,12 @@ void ParticleExtrema::ComputeDiags (int step)
 #endif
 
         // xmax
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
         Real xmax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::cos(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMax(xmax);
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
         Real xmax = 0.0_rt;
 #else
         Real xmax = ReduceMax( myspc,
@@ -223,12 +223,12 @@ void ParticleExtrema::ComputeDiags (int step)
 #endif
 
         // ymin
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
         Real ymin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::sin(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMin(ymin);
-#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_XZ || ARTEMIS_DIM_1D_Z)
         Real ymin = 0.0_rt;
 #else
         Real ymin = ReduceMin( myspc,
@@ -238,12 +238,12 @@ void ParticleExtrema::ComputeDiags (int step)
 #endif
 
         // ymax
-#if (defined WARPX_DIM_RZ)
+#if (defined ARTEMIS_DIM_RZ)
         Real ymax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::sin(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMax(ymax);
-#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_XZ || ARTEMIS_DIM_1D_Z)
         Real ymax = 0.0_rt;
 #else
         Real ymax = ReduceMax( myspc,
@@ -362,9 +362,9 @@ void ParticleExtrema::ComputeDiags (int step)
         { return p.rdata(PIdx::w); });
         ParallelDescriptor::ReduceRealMax(wmax);
 
-#if (defined WARPX_QED)
+#if (defined ARTEMIS_QED)
         // get number of level (int)
-        const auto level_number = WarpX::GetInstance().finestLevel();
+        const auto level_number = Artemis::GetInstance().finestLevel();
 
         // compute chimin and chimax
         Real chimin_f = 0.0_rt;
@@ -378,27 +378,27 @@ void ParticleExtrema::ComputeDiags (int step)
             chimax.resize(level_number+1,0.0_rt);
 
             // define variables in preparation for field gathering
-            auto & warpx = WarpX::GetInstance();
-            const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
-            const int nox = WarpX::nox;
-            const bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            const amrex::IntVect ngEB = warpx.getngEB();
+            auto & artemis = Artemis::GetInstance();
+            const int n_rz_azimuthal_modes = Artemis::n_rz_azimuthal_modes;
+            const int nox = Artemis::nox;
+            const bool galerkin_interpolation = Artemis::galerkin_interpolation;
+            const amrex::IntVect ngEB = artemis.getngEB();
 
             // loop over refinement levels
             for (int lev = 0; lev <= level_number; ++lev)
             {
                 // define variables in preparation for field gathering
-                const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
+                const std::array<amrex::Real,3>& dx = Artemis::CellSize(std::max(lev, 0));
                 const GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-                const MultiFab & Ex = warpx.getEfield(lev,0);
-                const MultiFab & Ey = warpx.getEfield(lev,1);
-                const MultiFab & Ez = warpx.getEfield(lev,2);
-                const MultiFab & Bx = warpx.getBfield(lev,0);
-                const MultiFab & By = warpx.getBfield(lev,1);
-                const MultiFab & Bz = warpx.getBfield(lev,2);
+                const MultiFab & Ex = artemis.getEfield(lev,0);
+                const MultiFab & Ey = artemis.getEfield(lev,1);
+                const MultiFab & Ez = artemis.getEfield(lev,2);
+                const MultiFab & Bx = artemis.getBfield(lev,0);
+                const MultiFab & By = artemis.getBfield(lev,1);
+                const MultiFab & Bz = artemis.getBfield(lev,2);
 
                 // Loop over boxes
-                for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
+                for (ArtemisParIter pti(myspc, lev); pti.isValid(); ++pti)
                 {
                     const auto GetPosition = GetParticlePosition(pti);
                     // get particle arrays
@@ -412,7 +412,7 @@ void ParticleExtrema::ComputeDiags (int step)
                     amrex::Box box = pti.tilebox();
                     box.grow(ngEB);
                     const Dim3 lo = amrex::lbound(box);
-                    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
+                    const std::array<amrex::Real, 3>& xyzmin = Artemis::LowerCorner(box, lev, 0._rt);
                     const GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
                     const auto& ex_arr = Ex[pti].array();
                     const auto& ey_arr = Ey[pti].array();
@@ -491,7 +491,7 @@ void ParticleExtrema::ComputeDiags (int step)
         m_data[get_idx("gmax")] = gmax;
         m_data[get_idx("wmin")] = wmin;
         m_data[get_idx("wmax")] = wmax;
-#if (defined WARPX_QED)
+#if (defined ARTEMIS_QED)
         if (myspc.DoQED())
         {
             m_data[get_idx("chimin")] = chimin_f;

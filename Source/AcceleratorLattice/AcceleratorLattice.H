@@ -1,11 +1,11 @@
 /* Copyright 2022 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_ACCELERATORLATTICE_ACCELERATORLATTICE_H_
-#define WARPX_ACCELERATORLATTICE_ACCELERATORLATTICE_H_
+#ifndef ARTEMIS_ACCELERATORLATTICE_ACCELERATORLATTICE_H_
+#define ARTEMIS_ACCELERATORLATTICE_ACCELERATORLATTICE_H_
 
 #include "LatticeElementFinder.H"
 #include "LatticeElements/Drift.H"
@@ -66,7 +66,7 @@ public:
      * @param[in] a_pti the grid where the finder is needed
      * @param[in] a_offset the particle offset since the finded needs information about the particles as well
      */
-    LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset) const;
+    LatticeElementFinderDevice GetFinderDeviceInstance (ArtemisParIter const& a_pti, int const a_offset) const;
 
     /* All of the available lattice element types */
     Drift h_drift;
@@ -75,4 +75,4 @@ public:
 
 };
 
-#endif // WARPX_ACCELERATORLATTICE_ACCELERATORLATTICE_H_
+#endif // ARTEMIS_ACCELERATORLATTICE_ACCELERATORLATTICE_H_

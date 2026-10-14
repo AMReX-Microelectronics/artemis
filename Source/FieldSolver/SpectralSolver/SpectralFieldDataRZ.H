@@ -1,11 +1,11 @@
 /* Copyright 2019-2020 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRAL_FIELD_DATA_RZ_H_
-#define WARPX_SPECTRAL_FIELD_DATA_RZ_H_
+#ifndef ARTEMIS_SPECTRAL_FIELD_DATA_RZ_H_
+#define ARTEMIS_SPECTRAL_FIELD_DATA_RZ_H_
 
 #include "SpectralBinomialFilter.H"
 #include "SpectralFieldData.H"
@@ -140,9 +140,9 @@ class SpectralFieldDataRZ
         //! `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
 
-        //! Number of modes for the RZ multi-mode version, see WarpX::n_rz_azimuthal_modes
+        //! Number of modes for the RZ multi-mode version, see Artemis::n_rz_azimuthal_modes
         int n_rz_azimuthal_modes;
-        //! Number of MultiFab components, see WarpX::ncomps
+        //! Number of MultiFab components, see Artemis::ncomps
         int m_ncomps;
 
     private:
@@ -163,4 +163,4 @@ class SpectralFieldDataRZ
 
 };
 
-#endif // WARPX_SPECTRAL_FIELD_DATA_RZ_H_
+#endif // ARTEMIS_SPECTRAL_FIELD_DATA_RZ_H_

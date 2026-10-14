@@ -1,15 +1,15 @@
 /* Copyright 2021 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
-#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
+#ifndef ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
+#define ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 
 #include "ReducedDiags.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <ablastr/coarsen/sample.H>
 
@@ -83,22 +83,22 @@ public:
     {
         using namespace amrex::literals;
 
-        // get a reference to WarpX instance
-        auto & warpx = WarpX::GetInstance();
+        // get a reference to Artemis instance
+        auto & artemis = Artemis::GetInstance();
 
         constexpr int lev = 0; // This reduced diag currently does not work with mesh refinement
 
-        amrex::Geometry const & geom = warpx.Geom(lev);
+        amrex::Geometry const & geom = artemis.Geom(lev);
         const amrex::RealBox& real_box = geom.ProbDomain();
         const auto dx = geom.CellSizeArray();
 
         // get MultiFab data
-        const amrex::MultiFab & Ex = warpx.getEfield(lev,0);
-        const amrex::MultiFab & Ey = warpx.getEfield(lev,1);
-        const amrex::MultiFab & Ez = warpx.getEfield(lev,2);
-        const amrex::MultiFab & Bx = warpx.getBfield(lev,0);
-        const amrex::MultiFab & By = warpx.getBfield(lev,1);
-        const amrex::MultiFab & Bz = warpx.getBfield(lev,2);
+        const amrex::MultiFab & Ex = artemis.getEfield(lev,0);
+        const amrex::MultiFab & Ey = artemis.getEfield(lev,1);
+        const amrex::MultiFab & Ez = artemis.getEfield(lev,2);
+        const amrex::MultiFab & Bx = artemis.getBfield(lev,0);
+        const amrex::MultiFab & By = artemis.getBfield(lev,1);
+        const amrex::MultiFab & Bz = artemis.getBfield(lev,2);
 
         // General preparation of interpolation and reduction operations
         const amrex::GpuArray<int,3> cellCenteredtype{0,0,0};
@@ -151,11 +151,11 @@ public:
             {
                  // 0.5 is here because position are computed on the cell centers
 
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
                 const amrex::Real y = 0._rt;
                 const amrex::Real z = (k + 0.5_rt)*dx[0] + real_box.lo(0);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
                 const amrex::Real x = (i + 0.5_rt)*dx[0] + real_box.lo(0);
                 const amrex::Real y = 0._rt;
                 const amrex::Real z = (j + 0.5_rt)*dx[1] + real_box.lo(1);
@@ -197,9 +197,9 @@ public:
             amrex::ParallelDescriptor::ReduceRealSum(reduce_value);
         // If reduction operation is a sum, multiply the value by the cell volume so that the
         // result is the integral of the function over the simulation domain.
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
             reduce_value *= dx[0];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             reduce_value *= dx[0]*dx[1];
 #else
             reduce_value *= dx[0]*dx[1]*dx[2];
@@ -214,4 +214,4 @@ public:
 
 };
 
-#endif // WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
+#endif // ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_

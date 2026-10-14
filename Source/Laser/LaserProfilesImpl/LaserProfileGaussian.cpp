@@ -1,7 +1,7 @@
 /* Copyright 2019 Axel Huebl, Luca Fedeli, Maxence Thevenet
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,8 +9,8 @@
 
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -30,7 +30,7 @@
 using namespace amrex;
 
 void
-WarpXLaserProfiles::GaussianLaserProfile::init (
+ArtemisLaserProfiles::GaussianLaserProfile::init (
     const amrex::ParmParse& ppl,
     CommonLaserParameters params)
 {
@@ -63,12 +63,12 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
             m_common_params.nvec.end(),
             m_params.stc_direction.begin(), 0.0);
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < 1.0e-14,
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < 1.0e-14,
         "stc_direction is not perpendicular to the laser plane vector");
 
     // Get angle between p_X and stc_direction
     // in 2d, stcs are in the simulation plane
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     auto arg = m_params.stc_direction[0]*m_common_params.p_X[0] +
         m_params.stc_direction[1]*m_common_params.p_X[1] +
         m_params.stc_direction[2]*m_common_params.p_X[2];
@@ -96,7 +96,7 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
  * \param amplitude: pointer to array of field amplitude.
  */
 void
-WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
+ArtemisLaserProfiles::GaussianLaserProfile::fill_amplitude (
     const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
@@ -127,9 +127,9 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // Because diffract_factor is a complex, the code below takes into
     // account the impact of the dimensionality on both the Gouy phase
     // and the amplitude of the laser
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if (defined(ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
     prefactor = prefactor / diffract_factor;
-#elif defined(WARPX_DIM_XZ)
+#elif defined(ARTEMIS_DIM_XZ)
     prefactor = prefactor / amrex::sqrt(diffract_factor);
 #endif
 

@@ -1,7 +1,7 @@
 # Copyright 2019 Axel Huebl, Luca Fedeli, Maxence Thevenet
 #
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 

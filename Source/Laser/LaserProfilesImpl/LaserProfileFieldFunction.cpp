@@ -1,6 +1,6 @@
 /* Copyright 2019 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,7 +8,7 @@
 
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpX_Complex.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX.H>
 #include <AMReX_Extension.H>
@@ -25,7 +25,7 @@
 using namespace amrex;
 
 void
-WarpXLaserProfiles::FieldFunctionLaserProfile::init (
+ArtemisLaserProfiles::FieldFunctionLaserProfile::init (
     const amrex::ParmParse& ppl,
     CommonLaserParameters /*params*/)
 {
@@ -36,7 +36,7 @@ WarpXLaserProfiles::FieldFunctionLaserProfile::init (
 }
 
 void
-WarpXLaserProfiles::FieldFunctionLaserProfile::fill_amplitude (
+ArtemisLaserProfiles::FieldFunctionLaserProfile::fill_amplitude (
     const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {

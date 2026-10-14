@@ -1,11 +1,11 @@
 /* Copyright 2019 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRAL_BASE_ALGORITHM_RZ_H_
-#define WARPX_SPECTRAL_BASE_ALGORITHM_RZ_H_
+#ifndef ARTEMIS_SPECTRAL_BASE_ALGORITHM_RZ_H_
+#define ARTEMIS_SPECTRAL_BASE_ALGORITHM_RZ_H_
 
 #include "FieldSolver/SpectralSolver/SpectralKSpaceRZ.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldDataRZ.H"
@@ -75,4 +75,4 @@ class SpectralBaseAlgorithmRZ
         KVectorComponent modified_kz_vec;
 };
 
-#endif // WARPX_SPECTRAL_BASE_ALGORITHM_RZ_H_
+#endif // ARTEMIS_SPECTRAL_BASE_ALGORITHM_RZ_H_

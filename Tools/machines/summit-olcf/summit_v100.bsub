@@ -2,7 +2,7 @@
 
 # Copyright 2019-2020 Maxence Thevenet, Axel Huebl
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 #
@@ -14,9 +14,9 @@
 #BSUB -W 00:10
 #BSUB -nnodes 2
 #BSUB -alloc_flags smt4
-#BSUB -J WarpX
-#BSUB -o WarpXo.%J
-#BSUB -e WarpXe.%J
+#BSUB -J Artemis
+#BSUB -o Artemiso.%J
+#BSUB -e Artemise.%J
 
 # make output group-readable by default
 umask 0027
@@ -49,5 +49,5 @@ EOL
 # OpenMP: 1 thread per MPI rank
 export OMP_NUM_THREADS=1
 
-# run WarpX
+# run Artemis
 jsrun -r 6 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs --smpiargs="-gpu" <path/to/executable> <input file> > output.txt

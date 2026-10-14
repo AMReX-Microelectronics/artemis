@@ -1,6 +1,6 @@
 /* Copyright 2021 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -12,7 +12,7 @@
 #include "ProtonBoronFusionCrossSection.H"
 
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Algorithm.H>
 #include <AMReX_Math.H>

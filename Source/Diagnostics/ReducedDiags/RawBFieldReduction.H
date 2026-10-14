@@ -1,15 +1,15 @@
 /* Copyright 2021 Revathi Jambunathan, Saurabh Sawant, Andrew Nonaka
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_RAWBFIELDREDUCTION_H_
-#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_RAWBFIELDREDUCTION_H_
+#ifndef ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_RAWBFIELDREDUCTION_H_
+#define ARTEMIS_DIAGNOSTICS_REDUCEDDIAGS_RAWBFIELDREDUCTION_H_
 
 #include "ReducedDiags.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Box.H>
@@ -92,16 +92,16 @@ public:
     {
         using namespace amrex::literals;
 
-        auto & warpx = WarpX::GetInstance();
+        auto & artemis = Artemis::GetInstance();
         const auto nLevel = 1;
         auto reduction_function_parser = m_parser->compile<m_nvars>();
         int integral_type = m_integral_type;
         int* surface_normal = &m_surface_normal[0];
 
         for (int lev = 0; lev < nLevel; ++lev) {
-            const amrex::MultiFab &Bx = warpx.getBfield(lev,0);
-            const amrex::MultiFab &By = warpx.getBfield(lev,1);
-            const amrex::MultiFab &Bz = warpx.getBfield(lev,2);
+            const amrex::MultiFab &Bx = artemis.getBfield(lev,0);
+            const amrex::MultiFab &By = artemis.getBfield(lev,1);
+            const amrex::MultiFab &Bz = artemis.getBfield(lev,2);
 
             constexpr int index_Bx = 0;
             constexpr int index_By = 1;
@@ -119,7 +119,7 @@ public:
 
             using ReduceTuple = typename decltype(reduceBx_data)::Type;
 
-            amrex::Geometry const & geom = warpx.Geom(lev);
+            amrex::Geometry const & geom = artemis.Geom(lev);
             const amrex::RealBox& real_box = geom.ProbDomain();
             const auto dx = geom.CellSizeArray();
 

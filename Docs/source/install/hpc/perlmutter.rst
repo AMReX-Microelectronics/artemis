@@ -24,11 +24,11 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
 On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended) or CPU nodes.
 
@@ -36,17 +36,17 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
 
    .. tab-item:: A100 GPUs
 
-      We use the following modules and environments on the system (``$HOME/perlmutter_gpu_warpx.profile``).
+      We use the following modules and environments on the system (``$HOME/perlmutter_gpu_artemis.profile``).
 
-      .. literalinclude:: ../../../../Tools/machines/perlmutter-nersc/perlmutter_gpu_warpx.profile.example
+      .. literalinclude:: ../../../../Tools/machines/perlmutter-nersc/perlmutter_gpu_artemis.profile.example
          :language: bash
-         :caption: You can copy this file from ``Tools/machines/perlmutter-nersc/perlmutter_gpu_warpx.profile.example``.
+         :caption: You can copy this file from ``Tools/machines/perlmutter-nersc/perlmutter_gpu_artemis.profile.example``.
 
-      We recommend to store the above lines in a file, such as ``$HOME/perlmutter_gpu_warpx.profile``, and load it into your shell after a login:
+      We recommend to store the above lines in a file, such as ``$HOME/perlmutter_gpu_artemis.profile``, and load it into your shell after a login:
 
       .. code-block:: bash
 
-         source $HOME/perlmutter_gpu_warpx.profile
+         source $HOME/perlmutter_gpu_artemis.profile
 
       And since Perlmutter does not yet provide a module for them, install ADIOS2, BLAS++ and LAPACK++:
 
@@ -83,9 +83,9 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
         python3 -m pip install --user --upgrade pip
         python3 -m pip install --user virtualenv
         python3 -m pip cache purge
-        rm -rf ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx
-        python3 -m venv ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx
-        source ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx/bin/activate
+        rm -rf ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/artemis
+        python3 -m venv ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/artemis
+        source ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/artemis/bin/activate
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade wheel
         python3 -m pip install --upgrade cython
@@ -97,35 +97,35 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
         python3 -m pip install --upgrade matplotlib
         python3 -m pip install --upgrade yt
         # optional: for libEnsemble
-        python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+        python3 -m pip install -r $HOME/src/artemis/Tools/LibEnsemble/requirements.txt
         # optional: for optimas (based on libEnsemble & ax->botorch->gpytorch->pytorch)
         python3 -m pip install --upgrade torch  # CUDA 11.7 compatible wheel
-        python3 -m pip install -r $HOME/src/warpx/Tools/optimas/requirements.txt
+        python3 -m pip install -r $HOME/src/artemis/Tools/optimas/requirements.txt
 
-     Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+     Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
 
      .. code-block:: bash
 
-        cd $HOME/src/warpx
+        cd $HOME/src/artemis
         rm -rf build
 
-        cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON
+        cmake -S . -B build -DArtemis_DIMS=3 -DArtemis_COMPUTE=CUDA -DArtemis_PSATD=ON
         cmake --build build -j 16
 
 
    .. tab-item:: CPU Nodes
 
-      We use the following modules and environments on the system (``$HOME/perlmutter_cpu_warpx.profile``).
+      We use the following modules and environments on the system (``$HOME/perlmutter_cpu_artemis.profile``).
 
-      .. literalinclude:: ../../../../Tools/machines/perlmutter-nersc/perlmutter_cpu_warpx.profile.example
+      .. literalinclude:: ../../../../Tools/machines/perlmutter-nersc/perlmutter_cpu_artemis.profile.example
          :language: bash
-         :caption: You can copy this file from ``Tools/machines/perlmutter-nersc/perlmutter_cpu_warpx.profile.example``.
+         :caption: You can copy this file from ``Tools/machines/perlmutter-nersc/perlmutter_cpu_artemis.profile.example``.
 
-      We recommend to store the above lines in a file, such as ``$HOME/perlmutter_cpu_warpx.profile``, and load it into your shell after a login:
+      We recommend to store the above lines in a file, such as ``$HOME/perlmutter_cpu_artemis.profile``, and load it into your shell after a login:
 
       .. code-block:: bash
 
-         source $HOME/perlmutter_cpu_warpx.profile
+         source $HOME/perlmutter_cpu_artemis.profile
 
       And since Perlmutter does not yet provide a module for them, install ADIOS2, BLAS++ and LAPACK++:
 
@@ -162,9 +162,9 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
         python3 -m pip install --user --upgrade pip
         python3 -m pip install --user virtualenv
         python3 -m pip cache purge
-        rm -rf ${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/venvs/warpx
-        python3 -m venv ${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/venvs/warpx
-        source ${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/venvs/warpx/bin/activate
+        rm -rf ${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/venvs/artemis
+        python3 -m venv ${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/venvs/artemis
+        source ${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/venvs/artemis/bin/activate
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade wheel
         python3 -m pip install --upgrade cython
@@ -176,22 +176,22 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
         python3 -m pip install --upgrade matplotlib
         python3 -m pip install --upgrade yt
         # optional: for libEnsemble
-        python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+        python3 -m pip install -r $HOME/src/artemis/Tools/LibEnsemble/requirements.txt
 
-     Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+     Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
 
      .. code-block:: bash
 
-        cd $HOME/src/warpx
+        cd $HOME/src/artemis
         rm -rf build
 
-        cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=OMP -DWarpX_PSATD=ON
+        cmake -S . -B build -DArtemis_DIMS=3 -DArtemis_COMPUTE=OMP -DArtemis_PSATD=ON
         cmake --build build -j 16
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-perlmutter>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-perlmutter>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``$PSCRATCH``.
 
 For a *full PICMI install*, follow the :ref:`instructions for Python (PICMI) bindings <building-cmake-python>`:
@@ -202,31 +202,31 @@ For a *full PICMI install*, follow the :ref:`instructions for Python (PICMI) bin
 
       .. code-block:: bash
 
-         export WARPX_COMPUTE=CUDA
+         export ARTEMIS_COMPUTE=CUDA
 
    .. tab-item:: CPU Nodes
 
       .. code-block:: bash
 
-         export WARPX_COMPUTE=OMP
+         export ARTEMIS_COMPUTE=OMP
 
 .. code-block:: bash
 
    # PICMI build
-   cd $HOME/src/warpx
+   cd $HOME/src/artemis
 
    # install or update dependencies
    python3 -m pip install -r requirements.txt
 
    # compile parallel PICMI interfaces in 3D, 2D, 1D and RZ
-   WARPX_MPI=ON WARPX_PSATD=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall --no-deps -v .
+   ARTEMIS_MPI=ON ARTEMIS_PSATD=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall --no-deps -v .
 
-Or, if you are *developing*, do a quick PICMI install of a *single geometry* (see: :ref:`WarpX_DIMS <building-cmake-options>`) using:
+Or, if you are *developing*, do a quick PICMI install of a *single geometry* (see: :ref:`Artemis_DIMS <building-cmake-options>`) using:
 
 .. code-block:: bash
 
    # find dependencies & configure
-   cmake -S . -B build -DWarpX_COMPUTE=${WARPX_COMPUTE} -DWarpX_PSATD=ON -DWarpX_LIB=ON -DWarpX_DIMS=RZ
+   cmake -S . -B build -DArtemis_COMPUTE=${ARTEMIS_COMPUTE} -DArtemis_PSATD=ON -DArtemis_LIB=ON -DArtemis_DIMS=RZ
 
    # build and then call "python3 -m pip install ..."
    cmake --build build --target pip_install -j 16
@@ -242,7 +242,7 @@ Running
 A100 GPUs (40 GB)
 ^^^^^^^^^^^^^^^^^
 
-The batch script below can be used to run a WarpX simulation on multiple nodes (change ``-N`` accordingly) on the supercomputer Perlmutter at NERSC.
+The batch script below can be used to run a Artemis simulation on multiple nodes (change ``-N`` accordingly) on the supercomputer Perlmutter at NERSC.
 This partition as up to `1536 nodes <https://docs.nersc.gov/systems/perlmutter/architecture/>`__.
 
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.

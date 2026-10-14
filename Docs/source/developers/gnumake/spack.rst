@@ -1,9 +1,9 @@
 .. _developers-gnumake-spack:
 
-Building WarpX with Spack
+Building Artemis with Spack
 =========================
 
-As mentioned in the :ref:`install section <install-users>`, WarpX can be installed using Spack.
+As mentioned in the :ref:`install section <install-users>`, Artemis can be installed using Spack.
 From the `Spack web page <https://spack.io>`__: "Spack is a package management tool designed to support multiple versions and configurations of software on a wide variety of platforms and environments."
 
 .. note::
@@ -28,22 +28,22 @@ Do not miss out on `the official Spack tutorial <https://spack-tutorial.readthed
 
 The spack command, ``spack/bin/spack``, can be used directly or ``spack/bin`` can be added to your ``PATH`` environment variable.
 
-WarpX is built with the single command
+Artemis is built with the single command
 
 .. code-block:: bash
 
-   spack install warpx
+   spack install artemis
 
-This will build the 3-D version of WarpX using the ``development`` branch.
-At the very end of the output from build sequence, Spack tells you where the WarpX executable has been placed.
-Alternatively, ``spack load warpx`` can be called, which will put the executable in your ``PATH`` environment variable.
+This will build the 3-D version of Artemis using the ``development`` branch.
+At the very end of the output from build sequence, Spack tells you where the Artemis executable has been placed.
+Alternatively, ``spack load artemis`` can be called, which will put the executable in your ``PATH`` environment variable.
 
-WarpX can be built in several variants, see
+Artemis can be built in several variants, see
 
 .. code-block:: bash
 
-   spack info warpx
-   spack info py-warpx
+   spack info artemis
+   spack info py-artemis
 
 for all available options.
 
@@ -51,11 +51,11 @@ For example
 
 .. code-block:: bash
 
-   spack install warpx dims=2 build_type=Debug
+   spack install artemis dims=2 build_type=Debug
 
 will build the 2-D version and also turns debugging on.
 
 See ``spack help --spec`` for all syntax details.
 Also, please consult the `basic usage section <https://spack.readthedocs.io/en/latest/basic_usage.html>`_ of the Spack package manager for an extended introduction to Spack.
 
-The Python version of WarpX is available through the ``py-warpx`` package.
+The Python version of Artemis is available through the ``py-artemis`` package.

@@ -29,7 +29,7 @@ Choose **one** of the installation methods below to get started:
 HPC Systems
 -----------
 
-If want to use WarpX on a specific high-performance computing (HPC) systems, jump directly to our :ref:`HPC system-specific documentation <install-hpc>`.
+If want to use Artemis on a specific high-performance computing (HPC) systems, jump directly to our :ref:`HPC system-specific documentation <install-hpc>`.
 
 
 .. _install-conda:
@@ -41,7 +41,7 @@ If want to use WarpX on a specific high-performance computing (HPC) systems, jum
 Using the Conda Package
 -----------------------
 
-A package for WarpX is available via the `Conda <https://conda.io>`_ package manager.
+A package for Artemis is available via the `Conda <https://conda.io>`_ package manager.
 
 .. tip::
 
@@ -55,12 +55,12 @@ A package for WarpX is available via the `Conda <https://conda.io>`_ package man
 
 .. code-block:: bash
 
-   conda create -n warpx -c conda-forge warpx
-   conda activate warpx
+   conda create -n artemis -c conda-forge artemis
+   conda activate artemis
 
 .. note::
 
-   The ``warpx`` `conda package <https://anaconda.org/conda-forge/warpx>`__ does not yet provide GPU support.
+   The ``artemis`` `conda package <https://anaconda.org/conda-forge/warpx>`__ does not yet provide GPU support.
 
 .. tip::
 
@@ -81,8 +81,8 @@ A package for WarpX is available via the `Conda <https://conda.io>`_ package man
 Using the Spack Package
 -----------------------
 
-Packages for WarpX are available via the `Spack <https://spack.readthedocs.io>`__ package manager.
-The package ``warpx`` installs executables and the package ``py-warpx`` includes Python bindings, i.e. `PICMI <https://github.com/picmi-standard/picmi>`_.
+Packages for Artemis are available via the `Spack <https://spack.readthedocs.io>`__ package manager.
+The package ``artemis`` installs executables and the package ``py-artemis`` includes Python bindings, i.e. `PICMI <https://github.com/picmi-standard/picmi>`_.
 
 .. code-block:: bash
 
@@ -90,12 +90,12 @@ The package ``warpx`` installs executables and the package ``py-warpx`` includes
    spack mirror add rolling https://binaries.spack.io/develop
    spack buildcache keys --install --trust
 
-   # see `spack info py-warpx` for build options.
-   # optional arguments:  -mpi ^warpx dims=2 compute=cuda
-   spack install py-warpx
-   spack load py-warpx
+   # see `spack info py-artemis` for build options.
+   # optional arguments:  -mpi ^artemis dims=2 compute=cuda
+   spack install py-artemis
+   spack load py-artemis
 
-See ``spack info warpx`` or ``spack info py-warpx`` and `the official Spack tutorial <https://spack-tutorial.readthedocs.io>`__ for more information.
+See ``spack info artemis`` or ``spack info py-artemis`` and `the official Spack tutorial <https://spack-tutorial.readthedocs.io>`__ for more information.
 
 
 .. _install-pypi:
@@ -107,7 +107,7 @@ See ``spack info warpx`` or ``spack info py-warpx`` and `the official Spack tuto
 Using the PyPI Package
 ----------------------
 
-Given that you have the :ref:`WarpX dependencies <install-dependencies>` installed, you can use ``pip`` to install WarpX with `PICMI <https://github.com/picmi-standard/picmi>`_ :ref:`from source <install-developers>`:
+Given that you have the :ref:`Artemis dependencies <install-dependencies>` installed, you can use ``pip`` to install Artemis with `PICMI <https://github.com/picmi-standard/picmi>`_ :ref:`from source <install-developers>`:
 
 .. code-block:: bash
 
@@ -146,13 +146,13 @@ Using the Brew Package
 From Source with CMake
 ----------------------
 
-After installing the :ref:`WarpX dependencies <install-dependencies>`, you can also install WarpX from source with `CMake <https://cmake.org/>`_:
+After installing the :ref:`Artemis dependencies <install-dependencies>`, you can also install Artemis from source with `CMake <https://cmake.org/>`_:
 
 .. code-block:: bash
 
    # get the source code
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
-   cd $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
+   cd $HOME/src/artemis
 
    # configure
    cmake -S . -B build
@@ -164,7 +164,7 @@ After installing the :ref:`WarpX dependencies <install-dependencies>`, you can a
    #   on Windows:          --config RelWithDebInfo
    cmake --build build -j 4
 
-   # executables for WarpX are now in build/bin/
+   # executables for Artemis are now in build/bin/
 
 We document the details in the :ref:`developer installation <install-developers>`.
 

@@ -25,36 +25,36 @@ Installation
 ------------
 Only very little software is pre-installed on LXPLUS so we show how to install from scratch all the dependencies using `Spack <https://spack.io>`__.
 
-For size reasons it is not advisable to install WarpX in the ``$HOME`` directory, while it should be installed in the "work directory". For this purpose we set an environment variable with the path to the "work directory"
+For size reasons it is not advisable to install Artemis in the ``$HOME`` directory, while it should be installed in the "work directory". For this purpose we set an environment variable with the path to the "work directory"
 
 .. code-block:: bash
 
     export WORK=/afs/cern.ch/work/${USER:0:1}/$USER/
 
-We clone WarpX in ``$WORK``:
+We clone Artemis in ``$WORK``:
 
 .. code-block:: bash
 
     cd $WORK
-    git clone https://github.com/ECP-WarpX/WarpX.git warpx
+    git clone https://github.com/ECP-WarpX/WarpX.git artemis
 
 Installation profile file
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-The easiest way to install the dependencies is to use the pre-prepared ``warpx.profile`` as follows:
+The easiest way to install the dependencies is to use the pre-prepared ``artemis.profile`` as follows:
 
 .. code-block:: bash
 
-    cp $WORK/warpx/WarpX/Tools/machines/lxplus-cern/lxplus_warpx.profile.example $WORK/lxplus_warpx.profile
-    source $WORK/lxplus_warpx.profile
+    cp $WORK/artemis/Artemis/Tools/machines/lxplus-cern/lxplus_artemis.profile.example $WORK/lxplus_artemis.profile
+    source $WORK/lxplus_artemis.profile
 
-When doing this one can directly skip to the :ref:`Building WarpX <building-lxplus-warpx>` section.
+When doing this one can directly skip to the :ref:`Building Artemis <building-lxplus-artemis>` section.
 
 To have the environment activated at every login it is then possible to add the following lines to the ``.bashrc``
 
 .. code-block:: bash
 
     export WORK=/afs/cern.ch/work/${USER:0:1}/$USER/
-    source $WORK/lxplus_warpx.profile
+    source $WORK/lxplus_artemis.profile
 
 GCC
 ^^^
@@ -87,12 +87,12 @@ Now we add our gcc 11.2.0 compiler to spack:
 Installing the Dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To install the dependencies we create a virtual environment, which we call ``warpx-lxplus``:
+To install the dependencies we create a virtual environment, which we call ``artemis-lxplus``:
 
 .. code-block:: bash
 
-    spack env create warpx-lxplus $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
-    spack env activate warpx-lxplus
+    spack env create artemis-lxplus $WORK/Artemis/Tools/machines/lxplus-cern/spack.yaml
+    spack env activate artemis-lxplus
     spack install
 
 If the GPU support or the Python bindings are not needed, it's possible to skip the installation by respectively setting
@@ -103,24 +103,24 @@ After the installation is done once, all we need to do in future sessions is jus
 
 .. code-block:: bash
 
-    spack env activate warpx-lxplus
+    spack env activate artemis-lxplus
 
-The environment ``warpx-lxplus`` (or ``-cuda`` or ``-cuda-py``) must be reactivated everytime that we log in so it could
+The environment ``artemis-lxplus`` (or ``-cuda`` or ``-cuda-py``) must be reactivated everytime that we log in so it could
 be a good idea to add the following lines to the ``.bashrc``:
 
 .. code-block:: bash
 
     source $WORK/spack/share/spack/setup-env.sh
-    spack env activate -d warpx-lxplus
+    spack env activate -d artemis-lxplus
     cd $HOME
 
-.. _building-lxplus-warpx:
+.. _building-lxplus-artemis:
 
-Building WarpX
+Building Artemis
 ^^^^^^^^^^^^^^
 
 We prepare and load the Spack software environment as above.
-Then we build WarpX:
+Then we build Artemis:
 
 .. code-block:: bash
 
@@ -131,11 +131,11 @@ Or if we need to compile with CUDA:
 
 .. code-block:: bash
 
-    cmake -S . -B build -DWarpX_COMPUTE=CUDA
+    cmake -S . -B build -DArtemis_COMPUTE=CUDA
     cmake --build build -j 6
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and can be run with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and can be run with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``$WORK``.
 
 Python Bindings
@@ -150,18 +150,18 @@ Now, ensure Python tooling is up-to-date:
    python3 -m pip install -U pip setuptools wheel
    python3 -m pip install -U cmake
 
-Then we compile WarpX as in the previous section (with or without CUDA) adding ``-DWarpX_LIB=ON`` and then we install it into our Python:
+Then we compile Artemis as in the previous section (with or without CUDA) adding ``-DArtemis_LIB=ON`` and then we install it into our Python:
 
 .. code-block:: bash
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_LIB=ON
+   cmake -S . -B build -DArtemis_COMPUTE=CUDA -DArtemis_LIB=ON
    cmake --build build --target pip_install -j 6
 
-This builds WarpX for 3D geometry.
+This builds Artemis for 3D geometry.
 
-Alternatively, if you like to build WarpX for all geometries at once, use:
+Alternatively, if you like to build Artemis for all geometries at once, use:
 
 .. code-block:: bash
 
    BUILD_PARALLEL=6 python3 -m pip wheel .
-   python3 -m pip install pywarpx-*whl
+   python3 -m pip install pyartemis-*whl

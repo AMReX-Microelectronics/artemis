@@ -1,6 +1,6 @@
 /* Copyright 2019-2020 Maxence Thevenet, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -25,7 +25,7 @@
 #include "RawBFieldReduction.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/ArtemisProfilerWrapper.H"
 
 #include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -43,8 +43,8 @@ using namespace amrex;
 MultiReducedDiags::MultiReducedDiags ()
 {
     // read reduced diags names
-    ParmParse pp_warpx("warpx");
-    m_plot_rd = pp_warpx.queryarr("reduced_diags_names", m_rd_names);
+    ParmParse pp_artemis("artemis");
+    m_plot_rd = pp_artemis.queryarr("reduced_diags_names", m_rd_names);
 
     // if names are not given, reduced diags will not be done
     if ( m_plot_rd == 0 ) { return; }
@@ -79,7 +79,7 @@ MultiReducedDiags::MultiReducedDiags ()
             std::string rd_type;
             pp_rd_name.get("type", rd_type);
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 reduced_diags_dictionary.count(rd_type) != 0,
                 rd_type + " is not a valid type for reduced diagnostic " + rd_name
             );
@@ -110,7 +110,7 @@ void MultiReducedDiags::LoadBalance () {
 // call functions to compute diags
 void MultiReducedDiags::ComputeDiags (int step)
 {
-    WARPX_PROFILE("MultiReducedDiags::ComputeDiags()");
+    ARTEMIS_PROFILE("MultiReducedDiags::ComputeDiags()");
 
     // loop over all reduced diags
     for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)

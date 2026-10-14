@@ -1,12 +1,12 @@
 /* Copyright 2021 Luca Fedeli Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "SpeciesPhysicalProperties.H"
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_AmrCore.H>
 

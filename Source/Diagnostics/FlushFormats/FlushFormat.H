@@ -1,11 +1,11 @@
-#ifndef WARPX_FLUSHFORMAT_H_
-#define WARPX_FLUSHFORMAT_H_
+#ifndef ARTEMIS_FLUSHFORMAT_H_
+#define ARTEMIS_FLUSHFORMAT_H_
 
 #include "FlushFormat_fwd.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/MultiParticleContainer.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 class FlushFormat
 {
@@ -30,4 +30,4 @@ public:
      virtual ~FlushFormat() {}
 };
 
-#endif // WARPX_FLUSHFORMAT_H_
+#endif // ARTEMIS_FLUSHFORMAT_H_

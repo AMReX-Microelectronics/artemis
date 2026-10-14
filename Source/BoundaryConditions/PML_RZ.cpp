@@ -1,18 +1,18 @@
 /* Copyright 2021 David Grote
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "PML_RZ.H"
 
 #include "BoundaryConditions/PML_RZ.H"
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldDataRZ.H"
 #endif
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <ablastr/utils/Communication.H>
 
@@ -41,19 +41,19 @@ PML_RZ::PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::Dist
       m_geom(geom)
 {
 
-    const amrex::MultiFab & Er_fp = WarpX::GetInstance().getEfield_fp(lev,0);
-    const amrex::MultiFab & Et_fp = WarpX::GetInstance().getEfield_fp(lev,1);
+    const amrex::MultiFab & Er_fp = Artemis::GetInstance().getEfield_fp(lev,0);
+    const amrex::MultiFab & Et_fp = Artemis::GetInstance().getEfield_fp(lev,1);
     const amrex::BoxArray ba_Er = amrex::convert(grid_ba, Er_fp.ixType().toIntVect());
     const amrex::BoxArray ba_Et = amrex::convert(grid_ba, Et_fp.ixType().toIntVect());
-    WarpX::AllocInitMultiFab(pml_E_fp[0], ba_Er, grid_dm, Er_fp.nComp(), Er_fp.nGrowVect(), "pml_E_fp[0]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_E_fp[1], ba_Et, grid_dm, Et_fp.nComp(), Et_fp.nGrowVect(), "pml_E_fp[1]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_E_fp[0], ba_Er, grid_dm, Er_fp.nComp(), Er_fp.nGrowVect(), "pml_E_fp[0]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_E_fp[1], ba_Et, grid_dm, Et_fp.nComp(), Et_fp.nGrowVect(), "pml_E_fp[1]", 0.0_rt);
 
-    const amrex::MultiFab & Br_fp = WarpX::GetInstance().getBfield_fp(lev,0);
-    const amrex::MultiFab & Bt_fp = WarpX::GetInstance().getBfield_fp(lev,1);
+    const amrex::MultiFab & Br_fp = Artemis::GetInstance().getBfield_fp(lev,0);
+    const amrex::MultiFab & Bt_fp = Artemis::GetInstance().getBfield_fp(lev,1);
     const amrex::BoxArray ba_Br = amrex::convert(grid_ba, Br_fp.ixType().toIntVect());
     const amrex::BoxArray ba_Bt = amrex::convert(grid_ba, Bt_fp.ixType().toIntVect());
-    WarpX::AllocInitMultiFab(pml_B_fp[0], ba_Br, grid_dm, Br_fp.nComp(), Br_fp.nGrowVect(), "pml_B_fp[0]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_B_fp[1], ba_Bt, grid_dm, Bt_fp.nComp(), Bt_fp.nGrowVect(), "pml_B_fp[1]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_B_fp[0], ba_Br, grid_dm, Br_fp.nComp(), Br_fp.nGrowVect(), "pml_B_fp[0]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_B_fp[1], ba_Bt, grid_dm, Bt_fp.nComp(), Bt_fp.nGrowVect(), "pml_B_fp[1]", 0.0_rt);
 
 }
 
@@ -145,7 +145,7 @@ PML_RZ::FillBoundaryE (PatchType patch_type)
     {
         const amrex::Periodicity& period = m_geom->periodicity();
         Vector<amrex::MultiFab*> mf{pml_E_fp[0].get(),pml_E_fp[1].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, Artemis::do_single_precision_comms, period);
     }
 }
 
@@ -162,7 +162,7 @@ PML_RZ::FillBoundaryB (PatchType patch_type)
     {
         const amrex::Periodicity& period = m_geom->periodicity();
         Vector<amrex::MultiFab*> mf{pml_B_fp[0].get(),pml_B_fp[1].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, Artemis::do_single_precision_comms, period);
     }
 }
 
@@ -190,13 +190,13 @@ PML_RZ::Restart (const std::string& dir)
     }
 }
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
 void
 PML_RZ::PushPSATD (const int lev)
 {
     // Update the fields on the fine and coarse patch
-    WarpX& warpx = WarpX::GetInstance();
-    SpectralSolverRZ& solver = warpx.get_spectral_solver_fp(lev);
+    Artemis& artemis = Artemis::GetInstance();
+    SpectralSolverRZ& solver = artemis.get_spectral_solver_fp(lev);
     PushPMLPSATDSinglePatchRZ(lev, solver, pml_E_fp, pml_B_fp);
 }
 

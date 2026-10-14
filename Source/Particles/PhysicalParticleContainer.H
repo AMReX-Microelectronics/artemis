@@ -3,17 +3,17 @@
  * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
  * Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PhysicalParticleContainer_H_
-#define WARPX_PhysicalParticleContainer_H_
+#ifndef ARTEMIS_PhysicalParticleContainer_H_
+#define ARTEMIS_PhysicalParticleContainer_H_
 
-#include "Evolve/WarpXDtType.H"
+#include "Evolve/ArtemisDtType.H"
 #include "Initialization/PlasmaInjector.H"
 #include "Particles/ElementaryProcess/Ionization.H"
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
 #    include "Particles/ElementaryProcess/QEDPairGeneration.H"
 #    include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 #    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
@@ -21,7 +21,7 @@
 #endif
 #include "Particles/Gather/ScaleFields.H"
 #include "Particles/Resampling/Resampling.H"
-#include "WarpXParticleContainer.H"
+#include "ArtemisParticleContainer.H"
 
 #include <AMReX_GpuContainers.H>
 #include <AMReX_Particles.H>
@@ -39,10 +39,10 @@
  * particles (if a simulation has 2 plasma species, say "electrons" and
  * "ions"), they will be two instances of PhysicalParticleContainer.
  *
- * PhysicalParticleContainer inherits from WarpXParticleContainer.
+ * PhysicalParticleContainer inherits from ArtemisParticleContainer.
  */
 class PhysicalParticleContainer
-    : public WarpXParticleContainer
+    : public ArtemisParticleContainer
 {
 public:
 
@@ -126,7 +126,7 @@ public:
                          DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false ) override;
 
-    virtual void PushPX (WarpXParIter& pti,
+    virtual void PushPX (ArtemisParIter& pti,
                          amrex::FArrayBox const * exfab,
                          amrex::FArrayBox const * eyfab,
                          amrex::FArrayBox const * ezfab,
@@ -152,7 +152,7 @@ public:
                         long& nfine_current,
                         long& nfine_gather,
                         long const np,
-                        WarpXParIter& pti,
+                        ArtemisParIter& pti,
                         int const lev,
                         amrex::iMultiFab const* current_masks,
                         amrex::iMultiFab const* gather_masks );
@@ -161,7 +161,7 @@ public:
 
     void SplitParticles (int lev);
 
-    IonizationFilterFunc getIonizationFunc (const WarpXParIter& pti,
+    IonizationFilterFunc getIonizationFunc (const ArtemisParIter& pti,
                                             int lev,
                                             amrex::IntVect ngEB,
                                             const amrex::FArrayBox& Ex,
@@ -302,8 +302,8 @@ public:
     */
     void resample (const int timestep) override final;
 
-#ifdef WARPX_QED
-    //Functions decleared in WarpXParticleContainer.H
+#ifdef ARTEMIS_QED
+    //Functions decleared in ArtemisParticleContainer.H
     //containers for which QED processes could be relevant
     //are expected to override these functions
 
@@ -370,7 +370,7 @@ protected:
     // A flag to enable saving of the previous timestep positions
     bool m_save_previous_position = false;
 
-#ifdef WARPX_QED
+#ifdef ARTEMIS_QED
     // A flag to enable quantum_synchrotron process for leptons
     bool m_do_qed_quantum_sync = false;
 

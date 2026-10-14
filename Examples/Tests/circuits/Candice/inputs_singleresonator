@@ -1,4 +1,3 @@
-# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
 
 ################################
 ####### GENERAL PARAMETERS ######
@@ -27,9 +26,9 @@ my_constants.offset_y = -1100.e-6
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
+artemis.verbose = 1
 
-warpx.cfl = 0.8
+artemis.cfl = 0.8
 
 # vacuum or macroscopic
 algo.em_solver_medium = macroscopic
@@ -182,9 +181,9 @@ my_constants.flag_ss = 2
 # excitation
 ###############
 
-warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+artemis.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
+artemis.Ex_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
                                             (1
                                             -(x > -50.0e-6 - ddx) * (x < -40.e-6 + ddx) * (y > -10.e-6 - ddy) * (y < 10.e-6 + ddy)
                                             -(x > -85.0e-6 - ddx) * (x < 635.e-6 + ddx) * (y > -20.e-6 + ddy) * (y < -10.e-6 - ddy)
@@ -306,7 +305,7 @@ warpx.Ex_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_
 # This is a source on the signal line
 #+ flag_ss * ( (x > 1237.5e-6 + ddx) * (x < 1255.e-6 - ddx) + (x > 1285.e-6 + ddx) * (x < 1302.5e-6 - ddx)) * (y > -2565.e-6 - ddy) * (y < -2565.e-6 + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
 
-warpx.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
+artemis.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
                                             (1
                                             -(x > -50.0e-6 + ddx) * (x < -40.e-6 + ddx) * (y > -10.e-6 - ddy) * (y < 10.e-6 + ddy)
                                             -(x > -85.0e-6 - ddx) * (x < 635.e-6 + ddx) * (y > -20.e-6 + ddy) * (y < -10.e-6 - ddy)
@@ -426,20 +425,20 @@ warpx.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_
                                             )
                                             + flag_ss * ( (y >= -20.e-6 + ddy) * (y <= -10.e-6 - ddy) + (y >= 10.0e-6 + ddy) * (y <= 20.0e-6 - ddy)) * (z > h_si - ddz) * (z < h_si + ddz) * (x > -85.e-6 - ddx) * (x < -85.e-6 + ddx)"
 
-warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ez_excitation_flag_function(x,y,z) = "flag_none"
 
 
 # This is a source on a qubit control line
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
                                               ( -(y >= -20.e-6 + ddy) * (y <= -10.e-6 - ddy) + (y >= 10.0e-6 + ddy) * (y <= 20.0e-6 - ddy)) * (z > h_si - ddz) * (z < h_si + ddz) * (x > -85.e-6 - ddx) * (x < -85.e-6 + ddx)"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 # This is a source on the signal line
-#warpx.Ex_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
+#artemis.Ex_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
 #                                              ( (x > 1237.5e-6 + ddx) * (x < 1255.e-6 - ddx) - (x > 1285.e-6 + ddx) * (x < 1302.5e-6 - ddx)) * (y > -2565.e-6 - ddy) * (y < -2565.e-6 + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
-#warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-#warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+#artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+#artemis.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 ###############
 # diagnostics

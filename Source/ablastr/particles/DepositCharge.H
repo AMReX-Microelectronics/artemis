@@ -1,6 +1,6 @@
 /* Copyright 2019-2021 Axel Huebl, Andrew Myers
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -108,15 +108,15 @@ deposit_charge (typename T_PC::ParIterType& pti,
     // are not trivial, this check might be too strict and we might need to relax it, as currently
     // done for the current deposition.
 
-#if   defined(WARPX_DIM_1D_Z)
+#if   defined(ARTEMIS_DIM_1D_Z)
     amrex::ignore_unused(nox);
     amrex::ignore_unused(noy);
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(noz/2+1));
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif   defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     amrex::ignore_unused(noy);
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(nox/2+1),
                                                        static_cast<int>(noz/2+1));
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
     const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(nox/2+1),
                                                        static_cast<int>(noy/2+1),
                                                        static_cast<int>(noz/2+1));

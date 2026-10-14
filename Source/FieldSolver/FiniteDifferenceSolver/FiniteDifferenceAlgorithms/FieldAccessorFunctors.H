@@ -1,14 +1,14 @@
 /* Copyright 2020 Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_FIELD_ACCESSOR_FUNCTORS_H
-#define WARPX_FIELD_ACCESSOR_FUNCTORS_H
+#ifndef ARTEMIS_FIELD_ACCESSOR_FUNCTORS_H
+#define ARTEMIS_FIELD_ACCESSOR_FUNCTORS_H
 
-#include "WarpX.H"
+#include "Artemis.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include <AMReX_Array.H>

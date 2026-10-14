@@ -2,13 +2,13 @@
 
 # Copyright 2021-2023 Axel Huebl, Kevin Gott
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
 #SBATCH -t 00:10:00
 #SBATCH -N 2
-#SBATCH -J WarpX
+#SBATCH -J Artemis
 #    note: <proj> must end on _g
 #SBATCH -A <proj>
 #SBATCH -q regular
@@ -19,11 +19,11 @@
 #SBATCH --exclusive
 #SBATCH --gpu-bind=none
 #SBATCH --gpus-per-node=4
-#SBATCH -o WarpX.o%j
-#SBATCH -e WarpX.e%j
+#SBATCH -o Artemis.o%j
+#SBATCH -e Artemis.e%j
 
 # executable & inputs file or python interpreter & PICMI script here
-EXE=./warpx
+EXE=./artemis
 INPUTS=inputs_small
 
 # pin to closest NIC to GPU

@@ -1,6 +1,6 @@
 /* Copyright 2019-2020
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -18,7 +18,7 @@ namespace AnyFFT
         void assert_rocfft_status (std::string const& name, rocfft_status status)
         {
             if (status != rocfft_status_success) {
-                WARPX_ABORT_WITH_MESSAGE(
+                ARTEMIS_ABORT_WITH_MESSAGE(
                     name + " failed! Error: " + rocfftErrorToString(status));
             }
         }
@@ -91,7 +91,7 @@ namespace AnyFFT
                                     (void**)&(fft_plan.m_real_array), // out
                                     execinfo);
         } else {
-            WARPX_ABORT_WITH_MESSAGE(
+            ARTEMIS_ABORT_WITH_MESSAGE(
                 "direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R");
         }
 

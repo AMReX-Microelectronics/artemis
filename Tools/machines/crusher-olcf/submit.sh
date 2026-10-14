@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 #SBATCH -A <project id>
-#    note: WarpX ECP members use aph114
-#SBATCH -J warpx
+#    note: Artemis ECP members use aph114
+#SBATCH -J artemis
 #SBATCH -o %x-%j.out
 #SBATCH -t 00:10:00
 #SBATCH -p batch
@@ -34,4 +34,4 @@ export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
 export ROCFFT_RTC_CACHE_PATH=/dev/null
 
 export OMP_NUM_THREADS=8
-srun ./warpx inputs > output.txt
+srun ./artemis inputs > output.txt

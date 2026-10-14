@@ -1,15 +1,15 @@
 /* Copyright 2019-2020 Andrew Myers, Maxence Thevenet, Remi Lehe
  * Revathi Jambunathan
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "SpectralKSpace.H"
 
-#include "WarpX.H"
+#include "Artemis.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
@@ -40,7 +40,7 @@ SpectralKSpace::SpectralKSpace( const BoxArray& realspace_ba,
                                 const RealVect realspace_dx )
     : dx(realspace_dx)  // Store the cell size as member `dx`
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
         realspace_ba.ixType()==IndexType::TheCellType(),
         "SpectralKSpace expects a cell-centered box.");
 
@@ -106,9 +106,9 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
         // Fill the k vector
         IntVect fft_size = realspace_ba[mfi].length();
         const Real dk = 2*MathConst::pi/(fft_size[i_dim]*dx[i_dim]);
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( bx.smallEnd(i_dim) == 0,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( bx.smallEnd(i_dim) == 0,
             "Expected box to start at 0, in spectral space.");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( bx.bigEnd(i_dim) == N-1,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE( bx.bigEnd(i_dim) == N-1,
             "Expected different box end index in spectral space.");
         if (only_positive_k){
             // Fill the full axis with positive k values
@@ -216,7 +216,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
     } else {
 
         // Compute real-space stencil coefficients
-        Vector<Real> h_stencil_coef = WarpX::getFornbergStencilCoefficients(n_order, grid_type);
+        Vector<Real> h_stencil_coef = Artemis::getFornbergStencilCoefficients(n_order, grid_type);
         Gpu::DeviceVector<Real> d_stencil_coef(h_stencil_coef.size());
         Gpu::copyAsync(Gpu::hostToDevice, h_stencil_coef.begin(), h_stencil_coef.end(),
                        d_stencil_coef.begin());

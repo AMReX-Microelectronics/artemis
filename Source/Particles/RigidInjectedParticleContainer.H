@@ -1,18 +1,18 @@
 /* Copyright 2019 Andrew Myers, David Grote, Maxence Thevenet
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_RigidInjectedParticleContainer_H_
-#define WARPX_RigidInjectedParticleContainer_H_
+#ifndef ARTEMIS_RigidInjectedParticleContainer_H_
+#define ARTEMIS_RigidInjectedParticleContainer_H_
 
-#include "Evolve/WarpXDtType.H"
+#include "Evolve/ArtemisDtType.H"
 #include "Particles/Gather/ScaleFields.H"
 #include "PhysicalParticleContainer.H"
 
-#include "WarpXParticleContainer_fwd.H"
+#include "ArtemisParticleContainer_fwd.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
@@ -80,7 +80,7 @@ public:
                          DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false ) override;
 
-    virtual void PushPX (WarpXParIter& pti,
+    virtual void PushPX (ArtemisParIter& pti,
                          amrex::FArrayBox const * exfab,
                          amrex::FArrayBox const * eyfab,
                          amrex::FArrayBox const * ezfab,

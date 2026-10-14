@@ -1,12 +1,12 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "FiniteDifferenceSolver.H"
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -14,9 +14,9 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#ifdef WARPX_DIM_RZ
-#   include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#ifdef ARTEMIS_DIM_RZ
+#   include "Artemis.H"
 #endif
 
 #include <AMReX.H>
@@ -41,10 +41,10 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
         return;
 
     // Calculate coefficients of finite-difference stencil
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     m_dr = cell_size[0];
-    m_nmodes = WarpX::GetInstance().n_rz_azimuthal_modes;
-    m_rmin = WarpX::GetInstance().Geom(0).ProbLo(0);
+    m_nmodes = Artemis::GetInstance().n_rz_azimuthal_modes;
+    m_rmin = Artemis::GetInstance().Geom(0).ProbLo(0);
     if (fdtd_algo == ElectromagneticSolverAlgo::Yee) {
         CylindricalYeeAlgorithm::InitializeStencilCoefficients( cell_size,
             m_h_stencil_coefs_r, m_h_stencil_coefs_z );
@@ -58,7 +58,7 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
                               m_stencil_coefs_z.begin());
         amrex::Gpu::synchronize();
     } else {
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "FiniteDifferenceSolver: Unknown algorithm");
     }
 #else
@@ -78,7 +78,7 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
             m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );
 
     } else {
-        WARPX_ABORT_WITH_MESSAGE(
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "FiniteDifferenceSolver: Unknown algorithm");
     }
 

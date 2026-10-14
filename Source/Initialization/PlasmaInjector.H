@@ -2,7 +2,7 @@
  * Maxence Thevenet, Remi Lehe, Weiqun Zhang
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -23,7 +23,7 @@
 
 #include <AMReX_BaseFwd.H>
 
-#ifdef WARPX_USE_OPENPMD
+#ifdef ARTEMIS_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif
 
@@ -101,7 +101,7 @@ public:
 
     bool external_file = false; //! initialize from an openPMD file
     amrex::Real z_shift = 0.0; //! additional z offset for particle positions
-#ifdef WARPX_USE_OPENPMD
+#ifdef ARTEMIS_USE_OPENPMD
     //! openPMD::Series to load from in external_file injection
     std::unique_ptr<openPMD::Series> m_openpmd_input_series;
 #endif

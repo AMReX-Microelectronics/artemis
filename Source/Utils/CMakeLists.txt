@@ -1,15 +1,15 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     Interpolate.cpp
     MPIInitHelpers.cpp
     ParticleUtils.cpp
     RelativeCellPosition.cpp
-    WarpXAlgorithmSelection.cpp
-    WarpXMovingWindow.cpp
-    WarpXTagging.cpp
-    WarpXUtil.cpp
-    WarpXrocfftUtil.cpp
-    WarpXVersion.cpp
+    ArtemisAlgorithmSelection.cpp
+    ArtemisMovingWindow.cpp
+    ArtemisTagging.cpp
+    ArtemisUtil.cpp
+    ArtemisrocfftUtil.cpp
+    ArtemisVersion.cpp
     cnpy.cpp
 )
 

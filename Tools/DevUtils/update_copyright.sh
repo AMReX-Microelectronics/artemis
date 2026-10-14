@@ -2,15 +2,15 @@
 
 # Copyright 2020 Maxence Thevenet
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
-# This file loops over all WarpX source files, uses git to get the list of
+# This file loops over all Artemis source files, uses git to get the list of
 # contributors, and writes a copyright header at the beginning of each file
 # with the list of contributors.
 #
-# To use it, execute from the WarpX directory.
+# To use it, execute from the Artemis directory.
 # Warning: it'll delete and create file tmp.txt
 # It uses the gnu-sed (sed on Linux, gsed on MacOS)
 
@@ -104,7 +104,7 @@ do
     # Write copyright
     echo "$pattern1 Copyright $year_string $authors_list
 $pattern2
-$pattern2 This file is part of WarpX.
+$pattern2 This file is part of Artemis.
 $pattern2
 $pattern2 License: BSD-3-Clause-LBNL$pattern3" >> tmp.txt
     # If no shebang, put first line after Copyright

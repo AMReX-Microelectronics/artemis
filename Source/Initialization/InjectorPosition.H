@@ -1,7 +1,7 @@
 /* Copyright 2019 Axel Huebl, David Grote, Maxence Thevenet
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -39,17 +39,17 @@ struct InjectorPositionRandomPlane
                         amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex::literals;
-#if ((defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+#if ((defined ARTEMIS_DIM_3D) || (defined ARTEMIS_DIM_RZ))
         // In RZ, the 3 components of the `XDim3` vector below correspond to r, theta, z respectively
         if (dir == 0) return amrex::XDim3{0._rt, amrex::Random(engine), amrex::Random(engine)};
         if (dir == 1) return amrex::XDim3{amrex::Random(engine), 0._rt, amrex::Random(engine)};
         else          return amrex::XDim3{amrex::Random(engine), amrex::Random(engine), 0._rt};
-#elif (defined(WARPX_DIM_XZ))
+#elif (defined(ARTEMIS_DIM_XZ))
         // In 2D, the 2 first components of the `XDim3` vector below correspond to x and z
         if (dir == 0) return amrex::XDim3{0._rt, amrex::Random(engine), 0._rt};
         if (dir == 1) return amrex::XDim3{amrex::Random(engine), amrex::Random(engine), 0._rt};
         else          return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt};
-#elif (defined(WARPX_DIM_1D_Z))
+#elif (defined(ARTEMIS_DIM_1D_Z))
         // In 2D, the first components of the `XDim3` vector below correspond to z
         if (dir == 0) return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt};
         if (dir == 1) return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt};
@@ -77,19 +77,19 @@ struct InjectorPositionRegular
     {
         using namespace amrex;
 
-#if (defined WARPX_DIM_3D)
+#if (defined ARTEMIS_DIM_3D)
         int const nx = ref_fac[0]*ppc.x;
         int const ny = ref_fac[1]*ppc.y;
         int const nz = ref_fac[2]*ppc.z;
-#elif (defined WARPX_DIM_RZ)
+#elif (defined ARTEMIS_DIM_RZ)
         int const nx = ref_fac[0]*ppc.x;
         int const ny = ref_fac[1]*ppc.y;
         int const nz = ppc.z; // Number of particles in theta ; no refinement
-#elif (defined WARPX_DIM_XZ)
+#elif (defined ARTEMIS_DIM_XZ)
         int const nx = ref_fac[0]*ppc.x;
         int const ny = ref_fac[1]*ppc.y;
         int const nz = 1;
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
         int const nx = ref_fac[0]*ppc.x;
         int const ny = 1;
         int const nz = 1;

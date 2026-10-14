@@ -1,4 +1,4 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     ComputeDivE.cpp
     EvolveB.cpp
@@ -16,8 +16,8 @@ target_sources(WarpX
     EvolveBLondon.cpp
 )
 
-if(WarpX_MAG_LLG)
-    target_sources(WarpX
+if(Artemis_MAG_LLG)
+    target_sources(Artemis
       PRIVATE
         MacroscopicEvolveHM_2nd.cpp
         MacroscopicEvolveHM.cpp

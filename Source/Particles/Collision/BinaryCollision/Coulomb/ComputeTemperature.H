@@ -1,13 +1,13 @@
 /* Copyright 2019-2020 Andrew Myers, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_COMPUTE_TEMPERATURE_H_
-#define WARPX_PARTICLES_COLLISION_COMPUTE_TEMPERATURE_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_COMPUTE_TEMPERATURE_H_
+#define ARTEMIS_PARTICLES_COLLISION_COMPUTE_TEMPERATURE_H_
 
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 
 template <typename T_index, typename T_R>
@@ -45,4 +45,4 @@ T_R ComputeTemperature (
     return m/T_R(3.0)*(vs-(vx*vx+vy*vy+vz*vz));
 }
 
-#endif // WARPX_PARTICLES_COLLISION_COMPUTE_TEMPERATURE_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_COMPUTE_TEMPERATURE_H_

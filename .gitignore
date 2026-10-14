@@ -1,6 +1,6 @@
 Bin/
 main?d.*.ex
-Python/pywarpx/libwarpx*.so
+Python/pyartemis/libartemis*.so
 d/
 f/
 o/
@@ -26,15 +26,15 @@ chk*
 __pycache__
 Python/build/
 Python/dist/
-Python/pywarpx.egg-info/
+Python/pyartemis.egg-info/
 _tmppythonbuild/
-pywarpx.egg-info/
+pyartemis.egg-info/
 
 ##########
 # Sphinx #
 ##########
 Docs/amrex-doxygen-web.tag.xml
-Docs/warpx-doxygen-web.tag.xml
+Docs/artemis-doxygen-web.tag.xml
 Docs/openpmd-api-doxygen-web.tag.xml
 Docs/doxyhtml/
 Docs/doxyxml/

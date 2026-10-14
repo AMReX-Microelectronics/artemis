@@ -1,6 +1,6 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     GuardCellManager.cpp
-    WarpXComm.cpp
-    WarpXRegrid.cpp
+    ArtemisComm.cpp
+    ArtemisRegrid.cpp
 )

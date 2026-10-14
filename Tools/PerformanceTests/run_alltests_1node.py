@@ -1,6 +1,6 @@
 # Copyright 2018-2020 Luca Fedeli, Maxence Thevenet
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
@@ -13,9 +13,9 @@ import time
 
 from functions_perftest import *
 
-# This script runs automated performance tests for WarpX.
+# This script runs automated performance tests for Artemis.
 # It runs tests in list test_list defined below, and write
-# results in file performance_log.txt in warpx/Tools/PerformanceTests/
+# results in file performance_log.txt in artemis/Tools/PerformanceTests/
 
 # ---- User's manual ----
 # Before running performance tests, make sure you have the latest version
@@ -34,12 +34,12 @@ from functions_perftest import *
 
 # To add a new test item, extent the test_list with a line like
 # test_list.extend([['my_input_file', n_node, n_mpi, n_omp]]*n_repeat)
-# - my_input_file must be in warpx/Tools/PerformanceTests
+# - my_input_file must be in artemis/Tools/PerformanceTests
 
 # ---- Developer's manual ----
 # This script can run in two modes:
 # - 'run' mode: for each test item, a batch job is executed.
-#     create folder '$SCRATCH/performance_warpx/'
+#     create folder '$SCRATCH/performance_artemis/'
 #     recompile the code if option --recompile is used
 #     loop over test_list and submit one batch script per item
 #     Submit a batch job that executes the script in read mode
@@ -109,15 +109,15 @@ if do_commit == True:
     log_file = 'performance_log.txt'
 
 # Dictionaries
-# compiler names. Used for WarpX executable name
+# compiler names. Used for Artemis executable name
 compiler_name = {'intel': 'intel', 'gnu': 'gcc'}
-# architecture. Used for WarpX executable name
+# architecture. Used for Artemis executable name
 module_name = {'cpu': 'haswell', 'knl': 'mic-knl'}
 # architecture. Used in batch scripts
 module_Cname = {'cpu': 'haswell', 'knl': 'knl,quad,cache'}
 # Define environment variables
 cwd = os.getcwd() + '/'
-res_dir_base = os.environ['SCRATCH'] + '/performance_warpx/'
+res_dir_base = os.environ['SCRATCH'] + '/performance_artemis/'
 bin_dir = cwd + 'Bin/'
 bin_name = 'perf_tests3d.' + args.compiler + '.' + module_name[args.architecture] + '.TPROF.MTMPI.OMP.QED.ex'
 log_dir  = cwd
@@ -127,7 +127,7 @@ month = time.strftime('%m')
 year = time.strftime('%Y')
 n_node   = int(args.n_node)
 
-perf_database_file = cwd + 'perf_database_warpx.h5'
+perf_database_file = cwd + 'perf_database_artemis.h5'
 
 # Initialize tests
 # ----------------
@@ -177,7 +177,7 @@ def process_analysis():
     dependencies += line.split()[3] + ':'
     batch_string = ''
     batch_string += '#!/bin/bash\n'
-    batch_string += '#SBATCH --job-name=warpx_1node_read\n'
+    batch_string += '#SBATCH --job-name=artemis_1node_read\n'
     batch_string += '#SBATCH --time=00:05:00\n'
     batch_string += '#SBATCH -C haswell\n'
     batch_string += '#SBATCH -N 1\n'
@@ -279,7 +279,7 @@ if args.mode == 'read':
         updated_df.to_hdf(perf_database_file, key='all_data', mode='w')
 
     # Store test parameters fot record
-    dir_record_base = './perf_warpx_record/'
+    dir_record_base = './perf_artemis_record/'
     if not os.path.exists(dir_record_base):
         os.mkdir(dir_record_base)
     count = 0
@@ -345,7 +345,7 @@ if args.mode == 'read':
         selector = [idx for idx in range(len(namelist)) if selector_string in namelist[idx]]
         plt.figure(num=0, figsize=(8,4))
         plt.clf()
-        plt.title('warpx ' + selector_string)
+        plt.title('artemis ' + selector_string)
         for i in np.arange(data.shape[1]):
             icolors = i-3
             if i>3 and (data[selector,i] > 5./100*data[selector,4]).any():

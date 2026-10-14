@@ -2,11 +2,11 @@
 #
 # Copyright 2021 Axel Huebl
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 
 # This file is a maintainer tool to bump the AMReX version that we pull in
-# when building WarpX.
+# when building Artemis.
 #
 import datetime
 from pathlib import Path
@@ -26,8 +26,8 @@ except ImportError:
 
 # Maintainer Inputs ###########################################################
 
-print("""Hi there, this is a WarpX maintainer tool to update the source
-code of WarpX to a new commit/release of AMReX.
+print("""Hi there, this is a Artemis maintainer tool to update the source
+code of Artemis to a new commit/release of AMReX.
 For it to work, you need write access on the source directory and
 you should be working in a clean git branch without ongoing
 rebase/merge/conflict resolves and without unstaged changes.""")
@@ -49,13 +49,13 @@ if not REPLY in ["Y", "y"]:
 amrex_gh = requests.get('https://api.github.com/repos/AMReX-Codes/amrex/commits/development')
 amrex_HEAD = amrex_gh.json()["sha"]
 
-# WarpX references to AMReX: cmake/dependencies/AMReX.cmake
+# Artemis references to AMReX: cmake/dependencies/AMReX.cmake
 amrex_cmake_path = str(REPO_DIR.joinpath("cmake/dependencies/AMReX.cmake"))
 #   branch/commit/tag (git fetcher) version
-#     set(WarpX_amrex_branch "development" ...
+#     set(Artemis_amrex_branch "development" ...
 amrex_branch = f"unknown (format issue in {amrex_cmake_path})"
 with open(amrex_cmake_path, encoding='utf-8') as f:
-    r_minimal = re.findall(r'.*set\(WarpX_amrex_branch\s+"(.+)"\s+.*',
+    r_minimal = re.findall(r'.*set\(Artemis_amrex_branch\s+"(.+)"\s+.*',
                            f.read(), re.MULTILINE)
     if len(r_minimal) >= 1:
         amrex_branch = r_minimal[0]
@@ -76,7 +76,7 @@ print("""We will now run a few sed commands on your source directory.
 Please answer the following questions about the version number
 you want to require from AMReX:\n""")
 
-print(f"Currently, WarpX builds against this AMReX commit/branch/sha: {amrex_branch}")
+print(f"Currently, Artemis builds against this AMReX commit/branch/sha: {amrex_branch}")
 print(f"AMReX HEAD commit (development branch): {amrex_HEAD}")
 amrex_new_branch = input(f"Update AMReX commit/branch/sha: ").strip()
 if not amrex_new_branch:
@@ -133,30 +133,30 @@ with open(ci_gnumake_path, "w", encoding='utf-8') as f:
     f.write(ci_gnumake_content)
 
 if ConfigUpdater is not None:
-    # WarpX-tests.ini
-    tests_ini_path = str(REPO_DIR.joinpath("Regression/WarpX-tests.ini"))
+    # Artemis-tests.ini
+    tests_ini_path = str(REPO_DIR.joinpath("Regression/Artemis-tests.ini"))
     cp = ConfigUpdater()
     cp.optionxform = str
     cp.read(tests_ini_path)
     cp['AMReX']['branch'].value = amrex_new_branch
     cp.update_file()
 
-    # WarpX-GPU-tests.ini
-    tests_gpu_ini_path = str(REPO_DIR.joinpath("Regression/WarpX-GPU-tests.ini"))
+    # Artemis-GPU-tests.ini
+    tests_gpu_ini_path = str(REPO_DIR.joinpath("Regression/Artemis-GPU-tests.ini"))
     cp = ConfigUpdater()
     cp.optionxform = str
     cp.read(tests_gpu_ini_path)
     cp['AMReX']['branch'].value = amrex_new_branch
     cp.update_file()
 
-# WarpX references to AMReX: cmake/dependencies/AMReX.cmake
+# Artemis references to AMReX: cmake/dependencies/AMReX.cmake
 with open(amrex_cmake_path, encoding='utf-8') as f:
     amrex_cmake_content = f.read()
 
     #   branch/commit/tag (git fetcher) version
-    #     set(WarpX_amrex_branch "development" ...
+    #     set(Artemis_amrex_branch "development" ...
     amrex_cmake_content = re.sub(
-        r'(.*set\(WarpX_amrex_branch\s+")(.+)("\s+.*)',
+        r'(.*set\(Artemis_amrex_branch\s+")(.+)("\s+.*)',
         r'\g<1>{}\g<3>'.format(amrex_new_branch),
         amrex_cmake_content, flags = re.MULTILINE)
 

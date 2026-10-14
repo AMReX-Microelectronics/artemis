@@ -23,9 +23,9 @@ boundary.field_hi = pml pml pml
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
+artemis.verbose = 1
 
-warpx.cfl = 0.6
+artemis.cfl = 0.6
 
 # vacuum or macroscopic
 algo.em_solver_medium = macroscopic
@@ -123,27 +123,27 @@ my_constants.flag_ss = 2
 # excitation
 ###############
 
-warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+artemis.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ex_excitation_flag_function(x,y,z) = "flag_none"
 # thin excitation
-warpx.Ey_excitation_flag_function(x,y,z) = "flag_ss * ( (y >= 702.5e-6 + ddy) * (y <= 712.5e-6 - ddy) + (y >= 717.5e-6 + ddy) * (y <= 727.5e-6 - ddy)) * (z > h_top - ddz) * (z < h_top + ddz) * (x > 162.5e-6 - ddx) * (x < 162.5e-6 + ddx)"
-warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ey_excitation_flag_function(x,y,z) = "flag_ss * ( (y >= 702.5e-6 + ddy) * (y <= 712.5e-6 - ddy) + (y >= 717.5e-6 + ddy) * (y <= 727.5e-6 - ddy)) * (z > h_top - ddz) * (z < h_top + ddz) * (x > 162.5e-6 - ddx) * (x < 162.5e-6 + ddx)"
+artemis.Ez_excitation_flag_function(x,y,z) = "flag_none"
 
 
 # This is a source on a qubit control line
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
 # thin excitation
-warpx.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
+artemis.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
                                                       ( (y >= 702.5e-6 + ddy) * (y <= 712.5e-6 - ddy) - (y >= 717.5e-6 + ddy) * (y <= 727.5e-6 - ddy)) * (z > h_top - ddz) * (z < h_top + ddz) * (x > 162.5e-6 - ddx) * (x < 162.5e-6 + ddx)"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0."
 
 ###############
 # diagnostics
 ###############
 
-warpx.field_io_nfiles=64
-warpx.particle_io_nfiles=64
+artemis.field_io_nfiles=64
+artemis.particle_io_nfiles=64
 
 diagnostics.diags_names = plt full chk
 

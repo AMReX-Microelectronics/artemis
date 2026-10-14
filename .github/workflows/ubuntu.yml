@@ -30,21 +30,21 @@ jobs:
         restore-keys: |
           ccache-openmp-cxxminimal-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
           ccache-openmp-cxxminimal-
-    - name: build WarpX
+    - name: build Artemis
       run: |
         cmake -S . -B build_3D         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_EB=OFF               \
-          -DWarpX_MPI=OFF              \
-          -DWarpX_QED=OFF
+          -DArtemis_EB=OFF               \
+          -DArtemis_MPI=OFF              \
+          -DArtemis_QED=OFF
         cmake --build build_3D -j 2
 
         cmake -S . -B build_3D_EM      \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_EB=OFF               \
-          -DWarpX_MPI=OFF              \
-          -DWarpX_QED=OFF              \
-          -DWarpX_MAG_LLG=OFF
+          -DArtemis_EB=OFF               \
+          -DArtemis_MPI=OFF              \
+          -DArtemis_QED=OFF              \
+          -DArtemis_MAG_LLG=OFF
         cmake --build build_3D_EM -j 2
 
   build_1D_2D:
@@ -72,26 +72,26 @@ jobs:
         restore-keys: |
           ccache-openmp-1D-2D-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
           ccache-openmp-1D-2D-
-    - name: build WarpX
+    - name: build Artemis
       run: |
         # cmake -S . -B build_1D         \
         #  -GNinja                      \
         #  -DCMAKE_VERBOSE_MAKEFILE=ON  \
-        #  -DWarpX_DIMS=1               \
-        #  -DWarpX_EB=OFF               \
-        #  -DWarpX_MAG_LLG=OFF          \
-        #  -DWarpX_PSATD=ON             \
-        #  -DWarpX_QED_TABLE_GEN=ON
+        #  -DArtemis_DIMS=1               \
+        #  -DArtemis_EB=OFF               \
+        #  -DArtemis_MAG_LLG=OFF          \
+        #  -DArtemis_PSATD=ON             \
+        #  -DArtemis_QED_TABLE_GEN=ON
         # cmake --build build_1D -j 2
 
         cmake -S . -B build_2D         \
           -GNinja                      \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS=2               \
-          -DWarpX_EB=OFF               \
-          -DWarpX_MAG_LLG=OFF          \
-          -DWarpX_PSATD=ON             \
-          -DWarpX_QED_TABLE_GEN=ON
+          -DArtemis_DIMS=2               \
+          -DArtemis_EB=OFF               \
+          -DArtemis_MAG_LLG=OFF          \
+          -DArtemis_PSATD=ON             \
+          -DArtemis_QED_TABLE_GEN=ON
         cmake --build build_2D -j 2
 
   build_gcc_ablastr:
@@ -119,16 +119,16 @@ jobs:
         restore-keys: |
           ccache-openmp-gccablastr-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
           ccache-openmp-gccablastr-
-    - name: build WarpX
+    - name: build Artemis
       run: |
         cmake -S . -B build            \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_APP=OFF              \
-          -DWarpX_LIB=OFF
+          -DArtemis_APP=OFF              \
+          -DArtemis_LIB=OFF
         cmake --build build -j 2
 
   build_pyfull:
-    name: Clang pywarpx
+    name: Clang pyartemis
     runs-on: ubuntu-24.04
     if: github.event.pull_request.draft == false && false  # Second condition prevents running
     env:
@@ -155,13 +155,13 @@ jobs:
         restore-keys: |
           ccache-openmp-pyfull-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
           ccache-openmp-pyfull-
-    - name: build WarpX
+    - name: build Artemis
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
-        export WARPX_MPI=ON
-        export WARPX_OPENPMD=ON
-        export WARPX_PSATD=ON
-        export WARPX_QED_TABLE_GEN=ON
+        export ARTEMIS_MPI=ON
+        export ARTEMIS_OPENPMD=ON
+        export ARTEMIS_PSATD=ON
+        export ARTEMIS_QED_TABLE_GEN=ON
         export CC=$(which clang)
         export CXX=$(which clang++)
         export CXXFLAGS="-Werror -Wno-error=pass-failed"

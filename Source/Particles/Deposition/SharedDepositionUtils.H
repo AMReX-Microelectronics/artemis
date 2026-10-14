@@ -1,6 +1,6 @@
 /* Copyright 2022 Noah Kaplan, Andrew Myers, Phil Miller
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -9,11 +9,11 @@
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXConst.H"
-#ifdef WARPX_DIM_RZ
-#   include "Utils/WarpX_Complex.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Utils/ArtemisConst.H"
+#ifdef ARTEMIS_DIM_RZ
+#   include "Utils/Artemis_Complex.H"
 #endif
 
 #include <AMReX.H>
@@ -81,7 +81,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
                        const unsigned int ip,
                        const int zdir, const int NODE, const int CELL, const int dir)
 {
-#if !defined(WARPX_DIM_RZ)
+#if !defined(ARTEMIS_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
@@ -89,13 +89,13 @@ void depositComponent (const GetParticlePosition& GetPosition,
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
     const amrex::Real dzi = 1.0_rt/dx[2];
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     const amrex::Real invvol = dzi;
 #endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real invvol = dxi*dzi;
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
     const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dyi = 1.0_rt/dx[1];
     const amrex::Real invvol = dxi*dyi*dzi;
@@ -104,7 +104,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
 #if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
     const amrex::Real zmin = xyzmin[2];
@@ -127,7 +127,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
     const amrex::Real vy = uyp[ip]*gaminv;
     const amrex::Real vz = uzp[ip]*gaminv;
     // pcurrent is the particle current in the deposited direction
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
     // In RZ, wqx is actually wqr, and wqy is wqtheta
     // Convert to cylinderical at the mid point
     const amrex::Real xpmid = xp + relative_time*vx;
@@ -162,11 +162,11 @@ void depositComponent (const GetParticlePosition& GetPosition,
 
     // --- Compute shape factors
     Compute_shape_factor< depos_order > const compute_shape_factor;
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ) || defined(ARTEMIS_DIM_3D)
 
     // x direction
     // Get particle position after 1/2 push back in position
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
     // Keep these double to avoid bug in single precision
     const double xmid = (rpmid - xmin)*dxi;
 #else
@@ -197,7 +197,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
     int const j_j = ((j_type[0] == NODE) ? j_node : j_cell);
 #endif //AMREX_SPACEDIM >= 2
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
     // y direction
     // Keep these double to avoid bug in single precision
     const double ymid = ((yp - ymin) + relative_time*vy)*dyi;
@@ -240,20 +240,20 @@ void depositComponent (const GetParticlePosition& GetPosition,
     int const l_j = ((j_type[zdir] == NODE) ? l_node : l_cell);
 
     // Deposit current into j_buff
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
     for (int iz=0; iz<=depos_order; iz++){
         amrex::Gpu::Atomic::AddNoRet(
                                      &j_buff(lo.x+l_j+iz, 0, 0, 0),
                                      sz_j[iz]*pcurrent);
     }
 #endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order; ix++){
             amrex::Gpu::Atomic::AddNoRet(
                                          &j_buff(lo.x+j_j+ix, lo.y+l_j+iz, 0, 0),
                                          sx_j[ix]*sz_j[iz]*pcurrent);
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
             Complex xy = xy0; // Note that xy is equal to e^{i m theta}
             for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                 // The factor 2 on the weighting comes from the normalization of the modes
@@ -264,7 +264,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
 #endif
         }
     }
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<=depos_order; ix++){

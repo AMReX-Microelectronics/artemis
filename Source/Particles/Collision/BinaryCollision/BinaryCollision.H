@@ -1,11 +1,11 @@
 /* Copyright 2020-2021 Yinjian Zhao, David Grote, Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
-#define WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_BINARYCOLLISION_H_
+#define ARTEMIS_PARTICLES_COLLISION_BINARYCOLLISION_H_
 
 #include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
@@ -16,13 +16,13 @@
 #include "Particles/ParticleCreation/SmartUtils.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/ParticleUtils.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Artemis.H"
 
 #include "Particles/MultiParticleContainer_fwd.H"
-#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Particles/ArtemisParticleContainer_fwd.H"
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -69,10 +69,10 @@ class BinaryCollision final
     : public CollisionBase
 {
     // Define shortcuts for frequently-used type names
-    using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
+    using ParticleType = ArtemisParticleContainer::ParticleType;
+    using ParticleTileType = ArtemisParticleContainer::ParticleTileType;
     using ParticleBins = amrex::DenseBins<ParticleType>;
-    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+    using SoaData_type = ArtemisParticleContainer::ParticleTileType::ParticleTileDataType;
     using index_type = ParticleBins::index_type;
 
 public:
@@ -120,7 +120,7 @@ public:
 
         // In case of particle creation, create the necessary vectors
         const int n_product_species = m_product_species.size();
-        amrex::Vector<WarpXParticleContainer*> product_species_vector;
+        amrex::Vector<ArtemisParticleContainer*> product_species_vector;
         amrex::Vector<SmartCopyFactory> copy_factory_species1;
         amrex::Vector<SmartCopyFactory> copy_factory_species2;
         amrex::Vector<SmartCopy> copy_species1;
@@ -164,7 +164,7 @@ public:
         // Loop over refinement levels
         for (int lev = 0; lev <= species1.finestLevel(); ++lev){
 
-        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+        amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
 
             // Loop over all grids/tiles at this level
 #ifdef AMREX_USE_OMP
@@ -172,7 +172,7 @@ public:
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
             for (amrex::MFIter mfi = species1.MakeMFIter(lev, info); mfi.isValid(); ++mfi){
-                if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+                if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
                     amrex::Gpu::synchronize();
                 }
@@ -181,7 +181,7 @@ public:
                 doCollisionsWithinTile( dt, lev, mfi, species1, species2, product_species_vector,
                                          copy_species1_data, copy_species2_data);
 
-                if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+                if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
                     amrex::Gpu::synchronize();
                     wt = amrex::second() - wt;
@@ -205,9 +205,9 @@ public:
      */
     void doCollisionsWithinTile (
         amrex::Real dt, int const lev, amrex::MFIter const& mfi,
-        WarpXParticleContainer& species_1,
-        WarpXParticleContainer& species_2,
-        amrex::Vector<WarpXParticleContainer*> product_species_vector,
+        ArtemisParticleContainer& species_1,
+        ArtemisParticleContainer& species_2,
+        amrex::Vector<ArtemisParticleContainer*> product_species_vector,
         SmartCopy* copy_species1, SmartCopy* copy_species2)
     {
         using namespace ParticleUtils;
@@ -257,19 +257,19 @@ public:
             ParticleType * AMREX_RESTRICT
                                  particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
 
-            amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if defined WARPX_DIM_1D_Z
+            amrex::Geometry const& geom = Artemis::GetInstance().Geom(lev);
+#if defined ARTEMIS_DIM_1D_Z
             auto dV = geom.CellSize(0);
-#elif defined WARPX_DIM_XZ
+#elif defined ARTEMIS_DIM_XZ
             auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined WARPX_DIM_RZ
+#elif defined ARTEMIS_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
             const auto lo = lbound(cbx);
             const auto hi = ubound(cbx);
             int const nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
@@ -339,7 +339,7 @@ public:
                     // shuffle
                     ShuffleFisherYates(
                         indices_1, cell_start_1, cell_half_1, engine );
-#if defined WARPX_DIM_RZ
+#if defined ARTEMIS_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
@@ -407,19 +407,19 @@ public:
             ParticleType * AMREX_RESTRICT
                                  particle_ptr_2 = ptile_2.GetArrayOfStructs()().data();
 
-            amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if defined WARPX_DIM_1D_Z
+            amrex::Geometry const& geom = Artemis::GetInstance().Geom(lev);
+#if defined ARTEMIS_DIM_1D_Z
             auto dV = geom.CellSize(0);
-#elif defined WARPX_DIM_XZ
+#elif defined ARTEMIS_DIM_XZ
             auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined WARPX_DIM_RZ
+#elif defined ARTEMIS_DIM_RZ
             amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
             const auto lo = lbound(cbx);
             const auto hi = ubound(cbx);
             int nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
@@ -500,7 +500,7 @@ public:
                     // shuffle
                     ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
                     ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
-#if defined WARPX_DIM_RZ
+#if defined ARTEMIS_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
@@ -549,4 +549,4 @@ private:
 
 };
 
-#endif // WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_BINARYCOLLISION_H_

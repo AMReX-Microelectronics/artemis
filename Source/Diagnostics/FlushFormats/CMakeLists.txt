@@ -1,4 +1,4 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     FlushFormatAscent.cpp
     FlushFormatCheckpoint.cpp
@@ -6,8 +6,8 @@ target_sources(WarpX
     FlushFormatSensei.cpp
 )
 
-if(WarpX_HAVE_OPENPMD)
-    target_sources(WarpX
+if(Artemis_HAVE_OPENPMD)
+    target_sources(Artemis
       PRIVATE
         FlushFormatOpenPMD.cpp
     )

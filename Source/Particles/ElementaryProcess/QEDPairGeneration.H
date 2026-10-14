@@ -1,6 +1,6 @@
 /* Copyright 2019 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -11,7 +11,7 @@
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "QEDInternals/BreitWheelerEngineWrapper.H"
 
 #include <AMReX_Array.H>
@@ -97,7 +97,7 @@ public:
     * @param[in] a_offset offset to apply to the particle indices
     */
     PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
-                                const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
+                                const ArtemisParIter& a_pti, int lev, amrex::IntVect ngEB,
                                 amrex::FArrayBox const& exfab,
                                 amrex::FArrayBox const& eyfab,
                                 amrex::FArrayBox const& ezfab,

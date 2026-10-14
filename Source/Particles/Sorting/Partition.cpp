@@ -1,14 +1,14 @@
 /* Copyright 2019 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "Particles/PhysicalParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "SortingUtils.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <AMReX_ArrayOfStructs.H>
 #include <AMReX_GpuContainers.H>
@@ -52,11 +52,11 @@ using namespace amrex;
 void
 PhysicalParticleContainer::PartitionParticlesInBuffers(
     long& nfine_current, long& nfine_gather, long const np,
-    WarpXParIter& pti, int const lev,
+    ArtemisParIter& pti, int const lev,
     iMultiFab const* current_masks,
     iMultiFab const* gather_masks )
 {
-    WARPX_PROFILE("PhysicalParticleContainer::PartitionParticlesInBuffers");
+    ARTEMIS_PROFILE("PhysicalParticleContainer::PartitionParticlesInBuffers");
 
     // Initialize temporary arrays
     Gpu::DeviceVector<int> inexflag;
@@ -68,7 +68,7 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
 
     // - Select the larger buffer
     iMultiFab const* bmasks =
-        (WarpX::n_field_gather_buffer >= WarpX::n_current_deposition_buffer) ?
+        (Artemis::n_field_gather_buffer >= Artemis::n_current_deposition_buffer) ?
         gather_masks : current_masks;
     // - For each particle, find whether it is in the larger buffer,
     //   by looking up the mask. Store the answer in `inexflag`.
@@ -87,7 +87,7 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
     // Second, among particles that are in the larger buffer, partition
     // particles into the smaller buffer
 
-    if (WarpX::n_current_deposition_buffer == WarpX::n_field_gather_buffer) {
+    if (Artemis::n_current_deposition_buffer == Artemis::n_field_gather_buffer) {
         // No need to do anything if the buffers have the same size
         nfine_current = nfine_gather = iteratorDistance(pid.begin(), sep);
     } else if (sep == pid.end()) {
@@ -98,11 +98,11 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
         if (bmasks == gather_masks) {
             nfine_gather = n_fine;
             bmasks = current_masks;
-            n_buf = WarpX::n_current_deposition_buffer;
+            n_buf = Artemis::n_current_deposition_buffer;
         } else {
             nfine_current = n_fine;
             bmasks = gather_masks;
-            n_buf = WarpX::n_field_gather_buffer;
+            n_buf = Artemis::n_field_gather_buffer;
         }
         if (n_buf > 0)
         {

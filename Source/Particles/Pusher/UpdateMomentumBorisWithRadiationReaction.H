@@ -1,11 +1,11 @@
 /* Copyright 2019 Luca Fedeli
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_WITHRR_H_
-#define WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_WITHRR_H_
+#ifndef ARTEMIS_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_WITHRR_H_
+#define ARTEMIS_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_WITHRR_H_
 
 #include "UpdateMomentumBoris.H"
 
@@ -88,4 +88,4 @@ void UpdateMomentumBorisWithRadiationReaction(
     uz += frz*dt;
 }
 
-#endif // WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_WITHRR_H_
+#endif // ARTEMIS_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_WITHRR_H_

@@ -1,5 +1,5 @@
-#ifndef WARPX_PSATD_ALGORITHM_COMOVING_H_
-#define WARPX_PSATD_ALGORITHM_COMOVING_H_
+#ifndef ARTEMIS_PSATD_ALGORITHM_COMOVING_H_
+#define ARTEMIS_PSATD_ALGORITHM_COMOVING_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -14,7 +14,7 @@
 #include <array>
 #include <memory>
 
-#if WARPX_USE_PSATD
+#if ARTEMIS_USE_PSATD
 
 /* \brief Class that updates the field in spectral space and stores the coefficients
  * of the corresponding update equation, according to the comoving spectral scheme.
@@ -78,7 +78,7 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
 
         // k vectors
         KVectorComponent kx_vec;
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         KVectorComponent ky_vec;
 #endif
         KVectorComponent kz_vec;
@@ -88,5 +88,5 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
         amrex::Real m_dt;
 };
 
-#endif // WARPX_USE_PSATD
-#endif // WARPX_PSATD_ALGORITHM_COMOVING_H_
+#endif // ARTEMIS_USE_PSATD
+#endif // ARTEMIS_PSATD_ALGORITHM_COMOVING_H_

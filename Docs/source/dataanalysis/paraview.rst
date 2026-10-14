@@ -3,7 +3,7 @@
 3D Visualization: ParaView
 ==========================
 
-WarpX results can be visualized by ParaView, an open source visualization and analysis software.
+Artemis results can be visualized by ParaView, an open source visualization and analysis software.
 ParaView can be downloaded and installed from httpshttps://www.paraview.org.
 Use the latest version for best results.
 
@@ -21,10 +21,10 @@ If this is your first time using ParaView, consider starting with a tutorial.
 openPMD
 -------
 
-WarpX' openPMD files can be visualized with ParaView 5.9+.
-ParaView supports ADIOS1, ADIOS2 and HDF5 files, as it implements (like WarpX) against `openPMD-api <https://github.com/openPMD/openPMD-api>`__.
+Artemis' openPMD files can be visualized with ParaView 5.9+.
+ParaView supports ADIOS1, ADIOS2 and HDF5 files, as it implements (like Artemis) against `openPMD-api <https://github.com/openPMD/openPMD-api>`__.
 
-For openPMD output, WarpX automatically creates an ``.pmd`` file per diagnostics, which can be opened with ParaView.
+For openPMD output, Artemis automatically creates an ``.pmd`` file per diagnostics, which can be opened with ParaView.
 
 .. tip::
 
@@ -36,8 +36,8 @@ For openPMD output, WarpX automatically creates an ``.pmd`` file per diagnostics
 
 .. warning::
 
-   `WarpX issue 21162 <https://github.com/ECP-WarpX/WarpX/issues/1803>`__:
-   We currently load WarpX field data with a rotation.
+   `Artemis issue 21162 <https://github.com/ECP-WarpX/WarpX/issues/1803>`__:
+   We currently load Artemis field data with a rotation.
    Please apply rotation of ``0 -90 0`` to mesh data.
 
 .. warning::

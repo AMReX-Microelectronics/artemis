@@ -27,43 +27,43 @@ The cluster also provides a few extra nodes, e.g. two ``Thunder X2`` (ARM) nodes
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
-We use the following modules and environments on the system (``$HOME/warpx_gcc10.profile``).
+We use the following modules and environments on the system (``$HOME/artemis_gcc10.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/ookami-sbu/ookami_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/ookami-sbu/ookami_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/ookami-sbu/ookami_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/ookami-sbu/ookami_artemis.profile.example``.
 
-We recommend to store the above lines in a file, such as ``$HOME/warpx_gcc10.profile``, and load it into your shell after a login:
-
-.. code-block:: bash
-
-   source $HOME/warpx_gcc10.profile
-
-
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+We recommend to store the above lines in a file, such as ``$HOME/artemis_gcc10.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   source $HOME/artemis_gcc10.profile
+
+
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
+
+.. code-block:: bash
+
+   cd $HOME/src/artemis
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=OMP
+   cmake -S . -B build -DArtemis_COMPUTE=OMP
    cmake --build build -j 10
 
    # or (currently better performance)
-   cmake -S . -B build -DWarpX_COMPUTE=NOACC
+   cmake -S . -B build -DArtemis_COMPUTE=NOACC
    cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-ookami>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-ookami>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``/lustre/scratch/<netid>``.
 
 
@@ -77,10 +77,10 @@ For running on 48 cores of a single node:
 .. code-block:: bash
 
    srun -p short -N 1 -n 48 --pty bash
-   OMP_NUM_THREADS=1 mpiexec -n 48 --map-by ppr:12:numa:pe=1 --report-bindings ./warpx inputs
+   OMP_NUM_THREADS=1 mpiexec -n 48 --map-by ppr:12:numa:pe=1 --report-bindings ./artemis inputs
 
    # alternatively, using 4 MPI ranks with each 12 threads on a single node:
-   OMP_NUM_THREADS=12 mpiexec -n 4 --map-by ppr:4:numa:pe=12 --report-bindings ./warpx inputs
+   OMP_NUM_THREADS=12 mpiexec -n 4 --map-by ppr:4:numa:pe=12 --report-bindings ./artemis inputs
 
 The Ookami HPE Apollo 80 system has 174 A64FX compute nodes each with 32GB of high-bandwidth memory.
 
@@ -105,7 +105,7 @@ We compiled with the Fujitsu Compiler (Clang) with the following build string:
       -DCMAKE_CXX_FLAGS="-Nclang"                   \
       -DAMReX_DIFFERENT_COMPILER=ON                 \
       -DAMReX_MPI_THREAD_MULTIPLE=FALSE             \
-      -DWarpX_COMPUTE=OMP
+      -DArtemis_COMPUTE=OMP
    cmake --build build -j 10
 
 Note that the best performance for A64FX is currently achieved with the GCC or ARM compilers.

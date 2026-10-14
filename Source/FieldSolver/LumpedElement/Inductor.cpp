@@ -1,7 +1,7 @@
 #include "Inductor.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
-#include "Utils/WarpXUtil.H"
-#include "WarpX.H"
+#include "Utils/ArtemisUtil.H"
+#include "Artemis.H"
 #include <ablastr/coarsen/sample.H>
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/Parser/ParserUtils.H"
@@ -47,18 +47,18 @@ Inductor::ReadParameters ()
 void
 Inductor::InitData()
 {
-    auto& warpx = WarpX::GetInstance();
+    auto& artemis = Artemis::GetInstance();
 
     const int lev = 0;
-    amrex::BoxArray ba = warpx.boxArray(lev);
-    amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
+    amrex::BoxArray ba = artemis.boxArray(lev);
+    amrex::DistributionMapping dmap = artemis.DistributionMap(lev);
     // number of guard cells used in EB solver
-    const amrex::IntVect ng_EB_alloc = warpx.getngEB();
+    const amrex::IntVect ng_EB_alloc = artemis.getngEB();
     // Define a nodal multifab to store if region is on super conductor (1) or not (0)
 
-    amrex::IntVect jx_stag = warpx.get_pointer_current_fp(lev,0)->ixType().toIntVect();
-    amrex::IntVect jy_stag = warpx.get_pointer_current_fp(lev,1)->ixType().toIntVect();
-    amrex::IntVect jz_stag = warpx.get_pointer_current_fp(lev,2)->ixType().toIntVect();
+    amrex::IntVect jx_stag = artemis.get_pointer_current_fp(lev,0)->ixType().toIntVect();
+    amrex::IntVect jy_stag = artemis.get_pointer_current_fp(lev,1)->ixType().toIntVect();
+    amrex::IntVect jz_stag = artemis.get_pointer_current_fp(lev,2)->ixType().toIntVect();
 
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         jx_IndexType[idim] = jx_stag[idim];
@@ -80,18 +80,18 @@ void
 Inductor::EvolveInductorJ (amrex::Real dt)
 {
     amrex::Print() << " evolve inductor J using E\n";
-    auto & warpx = WarpX::GetInstance();
+    auto & artemis = Artemis::GetInstance();
     const int lev = 0;
 
-    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx = warpx.Geom(lev).CellSizeArray();
+    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx = artemis.Geom(lev).CellSizeArray();
 
-    amrex::MultiFab * jx = warpx.get_pointer_current_fp(lev, 0);
-    amrex::MultiFab * jy = warpx.get_pointer_current_fp(lev, 1);
-    amrex::MultiFab * jz = warpx.get_pointer_current_fp(lev, 2);
+    amrex::MultiFab * jx = artemis.get_pointer_current_fp(lev, 0);
+    amrex::MultiFab * jy = artemis.get_pointer_current_fp(lev, 1);
+    amrex::MultiFab * jz = artemis.get_pointer_current_fp(lev, 2);
 
-    amrex::MultiFab * Ex = warpx.get_pointer_Efield_fp(lev, 0);
-    amrex::MultiFab * Ey = warpx.get_pointer_Efield_fp(lev, 1);
-    amrex::MultiFab * Ez = warpx.get_pointer_Efield_fp(lev, 2);
+    amrex::MultiFab * Ex = artemis.get_pointer_Efield_fp(lev, 0);
+    amrex::MultiFab * Ey = artemis.get_pointer_Efield_fp(lev, 1);
+    amrex::MultiFab * Ez = artemis.get_pointer_Efield_fp(lev, 2);
 
     for (amrex::MFIter mfi(*jx, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
@@ -136,9 +136,9 @@ Inductor::InitializeInductorMultiFabUsingParser (amrex::MultiFab *inductor_mf,
 {
     using namespace amrex::literals;
 
-    WarpX& warpx = WarpX::GetInstance();
-    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx = warpx.Geom(lev).CellSizeArray();
-    const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    Artemis& artemis = Artemis::GetInstance();
+    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx = artemis.Geom(lev).CellSizeArray();
+    const amrex::RealBox& real_box = artemis.Geom(lev).ProbDomain();
     amrex::IntVect iv = inductor_mf->ixType().toIntVect();
     for ( amrex::MFIter mfi(*inductor_mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells

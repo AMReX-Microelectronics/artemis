@@ -1,4 +1,4 @@
-target_sources(WarpX
+target_sources(Artemis
   PRIVATE
     Diagnostics.cpp
     FieldIO.cpp
@@ -6,8 +6,8 @@ target_sources(WarpX
     MultiDiagnostics.cpp
     ParticleIO.cpp
     SliceDiagnostic.cpp
-    WarpXIO.cpp
-    WarpXOpenPMD.cpp
+    ArtemisIO.cpp
+    ArtemisOpenPMD.cpp
     BTDiagnostics.cpp
     BoundaryScrapingDiagnostics.cpp
     BTD_Plotfile_Header_Impl.cpp

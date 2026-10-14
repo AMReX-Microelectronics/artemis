@@ -1,6 +1,6 @@
 /* Copyright 2019-2020
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -33,7 +33,7 @@
  * Wrapper around FFT libraries. The header file defines the API and the base types
  * (Complex and VendorFFTPlan), and the implementation for different FFT libraries is
  * done in different cpp files. This wrapper only depends on the underlying FFT library
- * AND on AMReX (There is no dependence on WarpX).
+ * AND on AMReX (There is no dependence on Artemis).
  */
 namespace AnyFFT
 {

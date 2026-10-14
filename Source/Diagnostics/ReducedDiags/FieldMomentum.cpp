@@ -1,6 +1,6 @@
 /* Copyright 2019-2020
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -8,8 +8,8 @@
 #include "FieldMomentum.H"
 
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <ablastr/coarsen/sample.H>
 
@@ -42,8 +42,8 @@ FieldMomentum::FieldMomentum (std::string rd_name)
     : ReducedDiags{rd_name}
 {
     // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
-        WARPX_ABORT_WITH_MESSAGE(
+#if (defined ARTEMIS_DIM_RZ)
+        ARTEMIS_ABORT_WITH_MESSAGE(
             "FieldMomentum reduced diagnostics not implemented in RZ geometry");
 #endif
 
@@ -99,22 +99,22 @@ void FieldMomentum::ComputeDiags (int step)
         return;
     }
 
-    // Get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    // Get a reference to Artemis instance
+    auto & artemis = Artemis::GetInstance();
 
     // Get number of refinement levels
-    const auto nLevel = warpx.finestLevel() + 1;
+    const auto nLevel = artemis.finestLevel() + 1;
 
     // Loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // Get MultiFab data at given refinement level
-        const amrex::MultiFab & Ex = warpx.getEfield(lev, 0);
-        const amrex::MultiFab & Ey = warpx.getEfield(lev, 1);
-        const amrex::MultiFab & Ez = warpx.getEfield(lev, 2);
-        const amrex::MultiFab & Bx = warpx.getBfield(lev, 0);
-        const amrex::MultiFab & By = warpx.getBfield(lev, 1);
-        const amrex::MultiFab & Bz = warpx.getBfield(lev, 2);
+        const amrex::MultiFab & Ex = artemis.getEfield(lev, 0);
+        const amrex::MultiFab & Ey = artemis.getEfield(lev, 1);
+        const amrex::MultiFab & Ez = artemis.getEfield(lev, 2);
+        const amrex::MultiFab & Bx = artemis.getBfield(lev, 0);
+        const amrex::MultiFab & By = artemis.getBfield(lev, 1);
+        const amrex::MultiFab & Bz = artemis.getBfield(lev, 2);
 
         // Cell-centered index type
         const amrex::GpuArray<int,3> cc{0,0,0};
@@ -187,12 +187,12 @@ void FieldMomentum::ComputeDiags (int step)
         amrex::ParallelDescriptor::ReduceRealSum(ExB_z);
 
         // Get cell size
-        amrex::Geometry const & geom = warpx.Geom(lev);
-#if   defined(WARPX_DIM_1D_Z)
+        amrex::Geometry const & geom = artemis.Geom(lev);
+#if   defined(ARTEMIS_DIM_1D_Z)
         auto dV = geom.CellSize(0);
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif   defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
+#elif defined(ARTEMIS_DIM_3D)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 

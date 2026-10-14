@@ -23,29 +23,29 @@ If you are new to this system, **please see the following resources**:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the Artemis source code and switch to the correct branch:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/artemis
 
-We use the following modules and environments on the system (``$HOME/quartz_warpx.profile``).
+We use the following modules and environments on the system (``$HOME/quartz_artemis.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/quartz-llnl/quartz_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/quartz-llnl/quartz_artemis.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/quartz-llnl/quartz_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/quartz-llnl/quartz_artemis.profile.example``.
 
-We recommend to store the above lines in a file, such as ``$HOME/quartz_warpx.profile``, and load it into your shell after a login:
-
-.. code-block:: bash
-
-   source $HOME/quartz_warpx.profile
-
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+We recommend to store the above lines in a file, such as ``$HOME/quartz_artemis.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   source $HOME/quartz_artemis.profile
+
+Then, ``cd`` into the directory ``$HOME/src/artemis`` and use the following commands to compile:
+
+.. code-block:: bash
+
+   cd $HOME/src/artemis
    rm -rf build
 
    cmake -S . -B build
@@ -54,7 +54,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 The other :ref:`general compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-quartz-CPUs>` with a :ref:`3D example inputs file <usage-examples>`.
+A 3D Artemis executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-quartz-CPUs>` with a :ref:`3D example inputs file <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``/p/lustre1/$(whoami)``.
 
 
@@ -66,7 +66,7 @@ Running
 Intel Xeon E5-2695 v4 CPUs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The batch script below can be used to run a WarpX simulation on 2 nodes on the supercomputer Quartz at LLNL.
+The batch script below can be used to run a Artemis simulation on 2 nodes on the supercomputer Quartz at LLNL.
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
 
 .. literalinclude:: ../../../../Tools/machines/quartz-llnl/quartz.sbatch

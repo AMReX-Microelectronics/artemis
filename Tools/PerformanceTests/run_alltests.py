@@ -1,7 +1,7 @@
 # Copyright 2017-2020 Luca Fedeli, Maxence Thevenet, Remi Lehe
 #
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
@@ -14,9 +14,9 @@ import time
 
 from functions_perftest import *
 
-# This script runs automated performance tests for WarpX.
+# This script runs automated performance tests for Artemis.
 # It runs tests in list test_list defined below, and write
-# results in file performance_log.txt in warpx/Tools/PerformanceTests/
+# results in file performance_log.txt in artemis/Tools/PerformanceTests/
 
 # ---- User's manual ----
 # Before running performance tests, make sure you have the latest version
@@ -27,14 +27,14 @@ from functions_perftest import *
 # > python run_alltests.py
 # To add a new test item, extent the test_list with a line like
 # test_list.extend([['my_input_file', n_node, n_mpi, n_omp]]*3)
-# - my_input_file must be in warpx/Tools/PerformanceTests
+# - my_input_file must be in artemis/Tools/PerformanceTests
 # - the test will run 3 times, to have some statistics
 # - the test must take <1h or it will timeout
 
 # ---- Developer's manual ----
 # This script can run in two modes:
 # - 'run' mode: for each test item, a batch job is executed.
-#     create folder '$SCRATCH/performance_warpx/'
+#     create folder '$SCRATCH/performance_artemis/'
 #     recompile the code if option --recompile is used
 #     loop over test_list and submit one batch script per item
 #     Submit a batch job that executes the script in read mode
@@ -131,20 +131,20 @@ if args.commit == True:
     log_file = 'performance_log.txt'
 
 # Dictionaries
-# compiler names. Used for WarpX executable name
+# compiler names. Used for Artemis executable name
 compiler_name = {'intel': 'intel', 'gnu': 'gcc'}
-# architecture. Used for WarpX executable name
+# architecture. Used for Artemis executable name
 module_name = {'cpu': 'haswell', 'knl': 'mic-knl'}
 # architecture. Used in batch scripts
 module_Cname = {'cpu': 'haswell', 'knl': 'knl,quad,cache'}
 # Define environment variables
 cwd = os.getcwd() + '/'
-res_dir_base = os.environ['SCRATCH'] + '/performance_warpx/'
+res_dir_base = os.environ['SCRATCH'] + '/performance_artemis/'
 bin_dir = cwd + 'Bin/'
 bin_name = 'perf_tests3d.' + args.compiler + '.' + module_name[args.architecture] + '.TPROF.MTMPI.OMP.QED.ex'
 log_dir  = cwd
 
-perf_database_file = cwd + 'perf_database_warpx.h5'
+perf_database_file = cwd + 'perf_database_artemis.h5'
 do_rename = False
 store_test = False
 
@@ -201,7 +201,7 @@ def process_analysis():
         dependencies += line.split()[3] + ':'
     batch_string = ''
     batch_string += '#!/bin/bash\n'
-    batch_string += '#SBATCH --job-name=warpx_read\n'
+    batch_string += '#SBATCH --job-name=artemis_read\n'
     batch_string += '#SBATCH --time=00:05:00\n'
     batch_string += '#SBATCH -C ' + module_Cname[args.architecture] + '\n'
     batch_string += '#SBATCH -N 1\n'
@@ -316,7 +316,7 @@ if args.mode == 'read':
 
     # Store test parameters for record if requested
     if store_test == True:
-        dir_record_base = './perf_warpx_record/'
+        dir_record_base = './perf_artemis_record/'
         if not os.path.exists(dir_record_base):
             os.mkdir(dir_record_base)
         count = 0

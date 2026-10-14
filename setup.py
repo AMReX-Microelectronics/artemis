@@ -24,7 +24,7 @@ class CopyPreBuild(build):
     def run(self):
         # remove existing build directory
         #   by default, this stays around. we want to make sure generated
-        #   files like libwarpx.(2d|3d|rz).(so|pyd) are always only the
+        #   files like libartemis.(2d|3d|rz).(so|pyd) are always only the
         #   ones we want to package and not ones from an earlier wheel's stage
         c = clean(self.distribution)
         c.all = True
@@ -34,19 +34,19 @@ class CopyPreBuild(build):
         # call superclass
         build.run(self)
 
-        # matches: libwarpx.(2d|3d|rz).(so|pyd)
-        re_libprefix = re.compile(r"libwarpx\...\.(?:so|dll)")
+        # matches: libartemis.(2d|3d|rz).(so|pyd)
+        re_libprefix = re.compile(r"libartemis\...\.(?:so|dll)")
         libs_found = []
-        for lib_name in os.listdir(PYWARPX_LIB_DIR):
+        for lib_name in os.listdir(PYARTEMIS_LIB_DIR):
             if re_libprefix.match(lib_name):
-                lib_path = os.path.join(PYWARPX_LIB_DIR, lib_name)
+                lib_path = os.path.join(PYARTEMIS_LIB_DIR, lib_name)
                 libs_found.append(lib_path)
         if len(libs_found) == 0:
-            raise RuntimeError("Error: no pre-build WarpX libraries found in "
-                               "PYWARPX_LIB_DIR='{}'".format(PYWARPX_LIB_DIR))
+            raise RuntimeError("Error: no pre-build Artemis libraries found in "
+                               "PYARTEMIS_LIB_DIR='{}'".format(PYARTEMIS_LIB_DIR))
 
         # copy external libs into collection of files in a temporary build dir
-        dst_path = os.path.join(self.build_lib, "pywarpx")
+        dst_path = os.path.join(self.build_lib, "pyartemis")
         for lib_path in libs_found:
             shutil.copy(lib_path, dst_path)
 
@@ -85,28 +85,28 @@ class CMakeBuild(build_ext):
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
 
-        r_dim = re.search(r'warpx_(1|2|3|rz)(?:d*)', ext.name)
+        r_dim = re.search(r'artemis_(1|2|3|rz)(?:d*)', ext.name)
         dims = r_dim.group(1).upper()
 
         cmake_args = [
             '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' +
-            os.path.join(extdir, "pywarpx"),
+            os.path.join(extdir, "pyartemis"),
             '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=' + extdir,
-            '-DWarpX_DIMS=' + dims,
-            '-DWarpX_APP:BOOL=OFF',
-            '-DWarpX_LIB:BOOL=ON',
+            '-DArtemis_DIMS=' + dims,
+            '-DArtemis_APP:BOOL=OFF',
+            '-DArtemis_LIB:BOOL=ON',
             ## variants
-            '-DWarpX_COMPUTE=' + WARPX_COMPUTE,
-            '-DWarpX_MPI:BOOL=' + WARPX_MPI,
-            '-DWarpX_EB:BOOL=' + WARPX_EB,
-            '-DWarpX_OPENPMD:BOOL=' + WARPX_OPENPMD,
-            '-DWarpX_PRECISION=' + WARPX_PRECISION,
-            '-DWarpX_PARTICLE_PRECISION=' + WARPX_PARTICLE_PRECISION,
-            '-DWarpX_PSATD:BOOL=' + WARPX_PSATD,
-            '-DWarpX_QED:BOOL=' + WARPX_QED,
-            '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
+            '-DArtemis_COMPUTE=' + ARTEMIS_COMPUTE,
+            '-DArtemis_MPI:BOOL=' + ARTEMIS_MPI,
+            '-DArtemis_EB:BOOL=' + ARTEMIS_EB,
+            '-DArtemis_OPENPMD:BOOL=' + ARTEMIS_OPENPMD,
+            '-DArtemis_PRECISION=' + ARTEMIS_PRECISION,
+            '-DArtemis_PARTICLE_PRECISION=' + ARTEMIS_PARTICLE_PRECISION,
+            '-DArtemis_PSATD:BOOL=' + ARTEMIS_PSATD,
+            '-DArtemis_QED:BOOL=' + ARTEMIS_QED,
+            '-DArtemis_QED_TABLE_GEN:BOOL=' + ARTEMIS_QED_TABLE_GEN,
             ## dependency control (developers & package managers)
-            '-DWarpX_amrex_internal=' + WARPX_AMREX_INTERNAL,
+            '-DArtemis_amrex_internal=' + ARTEMIS_AMREX_INTERNAL,
             #        see PICSAR and openPMD below
             ## static/shared libs
             '-DBUILD_SHARED_LIBS:BOOL=' + BUILD_SHARED_LIBS,
@@ -118,27 +118,27 @@ class CMakeBuild(build_ext):
             # Windows: has no RPath concept, all `.dll`s must be in %PATH%
             #          or same dir as calling executable
         ]
-        if WARPX_QED.upper() in ['1', 'ON', 'TRUE', 'YES']:
-            cmake_args.append('-DWarpX_picsar_internal=' + WARPX_PICSAR_INTERNAL)
-        if WARPX_OPENPMD.upper() in ['1', 'ON', 'TRUE', 'YES']:
+        if ARTEMIS_QED.upper() in ['1', 'ON', 'TRUE', 'YES']:
+            cmake_args.append('-DArtemis_picsar_internal=' + ARTEMIS_PICSAR_INTERNAL)
+        if ARTEMIS_OPENPMD.upper() in ['1', 'ON', 'TRUE', 'YES']:
             cmake_args += [
                 '-DHDF5_USE_STATIC_LIBRARIES:BOOL=' + HDF5_USE_STATIC_LIBRARIES,
                 '-DADIOS_USE_STATIC_LIBS:BOOL=' + ADIOS_USE_STATIC_LIBS,
-                '-DWarpX_openpmd_internal=' + WARPX_OPENPMD_INTERNAL,
+                '-DArtemis_openpmd_internal=' + ARTEMIS_OPENPMD_INTERNAL,
             ]
         # further dependency control (developers & package managers)
-        if WARPX_AMREX_SRC:
-            cmake_args.append('-DWarpX_amrex_src=' + WARPX_AMREX_SRC)
-        if WARPX_AMREX_REPO:
-            cmake_args.append('-DWarpX_amrex_repo=' + WARPX_AMREX_REPO)
-        if WARPX_AMREX_BRANCH:
-            cmake_args.append('-DWarpX_amrex_branch=' + WARPX_AMREX_BRANCH)
-        if WARPX_OPENPMD_SRC:
-            cmake_args.append('-DWarpX_openpmd_src=' + WARPX_OPENPMD_SRC)
-        if WARPX_PICSAR_SRC:
-            cmake_args.append('-DWarpX_picsar_src=' + WARPX_PICSAR_SRC)
-        if WARPX_CCACHE_PROGRAM is not None:
-            cmake_args.append('-DCCACHE_PROGRAM=' + WARPX_CCACHE_PROGRAM)
+        if ARTEMIS_AMREX_SRC:
+            cmake_args.append('-DArtemis_amrex_src=' + ARTEMIS_AMREX_SRC)
+        if ARTEMIS_AMREX_REPO:
+            cmake_args.append('-DArtemis_amrex_repo=' + ARTEMIS_AMREX_REPO)
+        if ARTEMIS_AMREX_BRANCH:
+            cmake_args.append('-DArtemis_amrex_branch=' + ARTEMIS_AMREX_BRANCH)
+        if ARTEMIS_OPENPMD_SRC:
+            cmake_args.append('-DArtemis_openpmd_src=' + ARTEMIS_OPENPMD_SRC)
+        if ARTEMIS_PICSAR_SRC:
+            cmake_args.append('-DArtemis_picsar_src=' + ARTEMIS_PICSAR_SRC)
+        if ARTEMIS_CCACHE_PROGRAM is not None:
+            cmake_args.append('-DCCACHE_PROGRAM=' + ARTEMIS_CCACHE_PROGRAM)
 
         if sys.platform == "darwin":
             cmake_args.append('-DCMAKE_INSTALL_RPATH=@loader_path')
@@ -154,7 +154,7 @@ class CMakeBuild(build_ext):
             cmake_args += [
                 '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(
                     cfg.upper(),
-                    os.path.join(extdir, "pywarpx")
+                    os.path.join(extdir, "pyartemis")
                 )
             ]
             if sys.maxsize > 2**32:
@@ -189,100 +189,100 @@ with open('./README.md', encoding='utf-8') as f:
 
 # Allow to control options via environment vars.
 #   Work-around for https://github.com/pypa/setuptools/issues/1712
-# Pick up existing WarpX libraries or...
-PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
+# Pick up existing Artemis libraries or...
+PYARTEMIS_LIB_DIR = os.environ.get('PYARTEMIS_LIB_DIR')
 
 env = os.environ.copy()
-# ... build WarpX libraries with CMake
+# ... build Artemis libraries with CMake
 #   note: changed default for SHARED, MPI, TESTING and EXAMPLES
 #   note: we use all-uppercase variable names for environment control to be
 #         consistent across platforms (especially Windows)
-WARPX_COMPUTE = env.pop('WARPX_COMPUTE', 'OMP')
-WARPX_MPI = env.pop('WARPX_MPI', 'OFF')
-WARPX_EB = env.pop('WARPX_EB', 'OFF')
-WARPX_OPENPMD = env.pop('WARPX_OPENPMD', 'ON')
-WARPX_PRECISION = env.pop('WARPX_PRECISION', 'DOUBLE')
-WARPX_PARTICLE_PRECISION = env.pop('WARPX_PARTICLE_PRECISION', WARPX_PRECISION)
-WARPX_PSATD = env.pop('WARPX_PSATD', 'OFF')
-WARPX_QED = env.pop('WARPX_QED', 'ON')
-WARPX_QED_TABLE_GEN = env.pop('WARPX_QED_TABLE_GEN', 'OFF')
-WARPX_DIMS = env.pop('WARPX_DIMS', '1;2;3;RZ')
+ARTEMIS_COMPUTE = env.pop('ARTEMIS_COMPUTE', 'OMP')
+ARTEMIS_MPI = env.pop('ARTEMIS_MPI', 'OFF')
+ARTEMIS_EB = env.pop('ARTEMIS_EB', 'OFF')
+ARTEMIS_OPENPMD = env.pop('ARTEMIS_OPENPMD', 'ON')
+ARTEMIS_PRECISION = env.pop('ARTEMIS_PRECISION', 'DOUBLE')
+ARTEMIS_PARTICLE_PRECISION = env.pop('ARTEMIS_PARTICLE_PRECISION', ARTEMIS_PRECISION)
+ARTEMIS_PSATD = env.pop('ARTEMIS_PSATD', 'OFF')
+ARTEMIS_QED = env.pop('ARTEMIS_QED', 'ON')
+ARTEMIS_QED_TABLE_GEN = env.pop('ARTEMIS_QED_TABLE_GEN', 'OFF')
+ARTEMIS_DIMS = env.pop('ARTEMIS_DIMS', '1;2;3;RZ')
 BUILD_PARALLEL = env.pop('BUILD_PARALLEL', '2')
-BUILD_SHARED_LIBS = env.pop('WARPX_BUILD_SHARED_LIBS',
+BUILD_SHARED_LIBS = env.pop('ARTEMIS_BUILD_SHARED_LIBS',
                                    'OFF')
-#BUILD_TESTING = env.pop('WARPX_BUILD_TESTING',
+#BUILD_TESTING = env.pop('ARTEMIS_BUILD_TESTING',
 #                               'OFF')
-#BUILD_EXAMPLES = env.pop('WARPX_BUILD_EXAMPLES',
+#BUILD_EXAMPLES = env.pop('ARTEMIS_BUILD_EXAMPLES',
 #                                'OFF')
 # openPMD-api sub-control
 HDF5_USE_STATIC_LIBRARIES = env.pop('HDF5_USE_STATIC_LIBRARIES', 'OFF')
 ADIOS_USE_STATIC_LIBS = env.pop('ADIOS_USE_STATIC_LIBS', 'OFF')
 # CMake dependency control (developers & package managers)
-WARPX_AMREX_SRC = env.pop('WARPX_AMREX_SRC', '')
-WARPX_AMREX_REPO = env.pop('WARPX_AMREX_REPO', '')
-WARPX_AMREX_BRANCH = env.pop('WARPX_AMREX_BRANCH', '')
-WARPX_AMREX_INTERNAL = env.pop('WARPX_AMREX_INTERNAL', 'ON')
-WARPX_OPENPMD_SRC = env.pop('WARPX_OPENPMD_SRC', '')
-WARPX_OPENPMD_INTERNAL = env.pop('WARPX_OPENPMD_INTERNAL', 'ON')
-WARPX_PICSAR_SRC = env.pop('WARPX_PICSAR_SRC', '')
-WARPX_PICSAR_INTERNAL = env.pop('WARPX_PICSAR_INTERNAL', 'ON')
-WARPX_CCACHE_PROGRAM = env.pop('WARPX_CCACHE_PROGRAM', None)
+ARTEMIS_AMREX_SRC = env.pop('ARTEMIS_AMREX_SRC', '')
+ARTEMIS_AMREX_REPO = env.pop('ARTEMIS_AMREX_REPO', '')
+ARTEMIS_AMREX_BRANCH = env.pop('ARTEMIS_AMREX_BRANCH', '')
+ARTEMIS_AMREX_INTERNAL = env.pop('ARTEMIS_AMREX_INTERNAL', 'ON')
+ARTEMIS_OPENPMD_SRC = env.pop('ARTEMIS_OPENPMD_SRC', '')
+ARTEMIS_OPENPMD_INTERNAL = env.pop('ARTEMIS_OPENPMD_INTERNAL', 'ON')
+ARTEMIS_PICSAR_SRC = env.pop('ARTEMIS_PICSAR_SRC', '')
+ARTEMIS_PICSAR_INTERNAL = env.pop('ARTEMIS_PICSAR_INTERNAL', 'ON')
+ARTEMIS_CCACHE_PROGRAM = env.pop('ARTEMIS_CCACHE_PROGRAM', None)
 
 for key in env.keys():
-    if key.lower().startswith('warpx'):
-        print(f"\nWARNING: Found environment variable '{key}', which is not a recognized WarpX option\n")
+    if key.lower().startswith('artemis'):
+        print(f"\nWARNING: Found environment variable '{key}', which is not a recognized Artemis option\n")
 
 
 # https://cmake.org/cmake/help/v3.0/command/if.html
-if WARPX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
-    WARPX_MPI = "ON"
+if ARTEMIS_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
+    ARTEMIS_MPI = "ON"
 else:
-    WARPX_MPI = "OFF"
+    ARTEMIS_MPI = "OFF"
 
 # Include embedded boundary functionality
-if WARPX_EB.upper() in ['1', 'ON', 'TRUE', 'YES']:
-    WARPX_EB = "ON"
+if ARTEMIS_EB.upper() in ['1', 'ON', 'TRUE', 'YES']:
+    ARTEMIS_EB = "ON"
 else:
-    WARPX_EB = "OFF"
+    ARTEMIS_EB = "OFF"
 
 
 # for CMake
-cxx_modules = []     # values: warpx_1d, warpx_2d, warpx_3d, warpx_rz
+cxx_modules = []     # values: artemis_1d, artemis_2d, artemis_3d, artemis_rz
 cmdclass = {}        # build extensions
 
-# externally pre-built: pick up pre-built WarpX libraries
-if PYWARPX_LIB_DIR:
+# externally pre-built: pick up pre-built Artemis libraries
+if PYARTEMIS_LIB_DIR:
     cmdclass=dict(build=CopyPreBuild)
-# CMake: build WarpX libraries ourselves
+# CMake: build Artemis libraries ourselves
 else:
     cmdclass = dict(build_ext=CMakeBuild)
-    for dim in [x.lower() for x in WARPX_DIMS.split(';')]:
+    for dim in [x.lower() for x in ARTEMIS_DIMS.split(';')]:
         name = dim if dim == "rz" else dim + "d"
-        cxx_modules.append(CMakeExtension("warpx_" + name))
+        cxx_modules.append(CMakeExtension("artemis_" + name))
 
 # Get the package requirements from the requirements.txt file
 install_requires = []
 with open('./requirements.txt') as f:
     install_requires = [line.strip('\n') for line in f.readlines()]
-    if WARPX_MPI == "ON":
+    if ARTEMIS_MPI == "ON":
         install_requires.append('mpi4py>=2.1.0')
 
 # keyword reference:
 #   https://packaging.python.org/guides/distributing-packages-using-setuptools
 setup(
-    name='pywarpx',
+    name='pyartemis',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
     version = '23.04',
-    packages = ['pywarpx'],
-    package_dir = {'pywarpx': 'Python/pywarpx'},
+    packages = ['pyartemis'],
+    package_dir = {'pyartemis': 'Python/pyartemis'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',
     author_email='jlvay@lbl.gov, grote1@llnl.gov, maxence.thevenet@desy.de, rlehe@lbl.gov, atmyers@lbl.gov, WeiqunZhang@lbl.gov, axelhuebl@lbl.gov',
     maintainer='Axel Huebl, David P. Grote, Rémi Lehe', # wheel/pypi packages
     maintainer_email='axelhuebl@lbl.gov, grote1@llnl.gov, rlehe@lbl.gov',
-    description='WarpX is an advanced electromagnetic Particle-In-Cell code.',
+    description='Artemis is an advanced electromagnetic Particle-In-Cell code.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    keywords=('WarpX openscience mpi hpc research pic particle-in-cell '
+    keywords=('Artemis openscience mpi hpc research pic particle-in-cell '
               'plasma laser-plasma accelerator modeling simulation'),
     url='https://ecp-warpx.github.io',
     project_urls={
@@ -295,7 +295,7 @@ setup(
     # CMake: self-built as extension module
     ext_modules=cxx_modules,
     cmdclass=cmdclass,
-    # scripts=['warpx_1d', 'warpx_2d', 'warpx_3d', 'warpx_rz'],
+    # scripts=['artemis_1d', 'artemis_2d', 'artemis_3d', 'artemis_rz'],
     zip_safe=False,
     python_requires='>=3.7',
     # tests_require=['pytest'],
@@ -303,7 +303,7 @@ setup(
     # see: src/bindings/python/cli
     #entry_points={
     #    'console_scripts': [
-    #        'warpx_3d = warpx.3d.__main__:main'
+    #        'artemis_3d = artemis.3d.__main__:main'
     #    ]
     #},
     extras_require={

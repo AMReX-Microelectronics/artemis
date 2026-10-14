@@ -1,7 +1,7 @@
 /* Copyright 2019-2022 Andrew Myers, Luca Fedeli, Maxence Thevenet,
  *                     Weiqun Zhang, Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -32,7 +32,7 @@ namespace ablastr::constant
      * https://physics.nist.gov/cuu/Constants/index.html
      *
      * New additions here should also be considered for addition to
-     * `warpx_constants` in WarpXUtil.cpp's `makeParser`, so that they're
+     * `artemis_constants` in ArtemisUtil.cpp's `makeParser`, so that they're
      * available in parsing and evaluation of PICMI expressions, as well
      * as the corresponding Python definitions
      */

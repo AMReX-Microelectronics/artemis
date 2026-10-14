@@ -24,9 +24,9 @@ boundary.field_hi = pml pml pml
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
+artemis.verbose = 1
 
-warpx.cfl = 0.9
+artemis.cfl = 0.9
 
 # vacuum or macroscopic
 algo.em_solver_medium = macroscopic
@@ -143,25 +143,25 @@ my_constants.tiny = 1.e-12
 # excitation
 ###############
 
-warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+artemis.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
-warpx.Ex_excitation_flag_function(x,y,z) = "0."
-warpx.Ey_excitation_flag_function(x,y,z) = "0."
-warpx.Ez_excitation_flag_function(x,y,z) = "2* (x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= -dy/2.) * (y <= dy/2.)"
+artemis.Ex_excitation_flag_function(x,y,z) = "0."
+artemis.Ey_excitation_flag_function(x,y,z) = "0."
+artemis.Ez_excitation_flag_function(x,y,z) = "2* (x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= -dy/2.) * (y <= dy/2.)"
 
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
-warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*freq*t) * (t < (1./freq))"
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ey_excitation_grid_function(x,y,z,t) = "0."
+artemis.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*freq*t) * (t < (1./freq))"
 
-warpx.B_excitation_on_grid_style = parse_B_excitation_grid_function
+artemis.B_excitation_on_grid_style = parse_B_excitation_grid_function
 
-warpx.Bx_excitation_flag_function(x,y,z) = "2* (x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= 0.) * (y <= dy)"
-warpx.By_excitation_flag_function(x,y,z) = "0."
-warpx.Bz_excitation_flag_function(x,y,z) = "0."
+artemis.Bx_excitation_flag_function(x,y,z) = "2* (x > -w_port/2.) * (x < w_port/2.) * (z > 0.) * (z < h_port) * (y >= 0.) * (y <= dy)"
+artemis.By_excitation_flag_function(x,y,z) = "0."
+artemis.Bz_excitation_flag_function(x,y,z) = "0."
 
-warpx.Bx_excitation_grid_function(x,y,z,t) = "(mu_0*mu_r_SiO2/50.)*(sin(2*pi*freq*t)) * (t < (1./freq))"
-warpx.By_excitation_grid_function(x,y,z,t) = "0."
-warpx.Bz_excitation_grid_function(x,y,z,t) = "0."
+artemis.Bx_excitation_grid_function(x,y,z,t) = "(mu_0*mu_r_SiO2/50.)*(sin(2*pi*freq*t)) * (t < (1./freq))"
+artemis.By_excitation_grid_function(x,y,z,t) = "0."
+artemis.Bz_excitation_grid_function(x,y,z,t) = "0."
 
 ###############
 # diagnostics
@@ -181,7 +181,7 @@ plt.diag_type = Full
 ########################## Surface Integral on the Y-Plane #############################
 my_constants.eps=1.e-9
 
-warpx.reduced_diags_names = Int_yInputPlane Int_yIntermPlane Int_yOutputPlane
+artemis.reduced_diags_names = Int_yInputPlane Int_yIntermPlane Int_yOutputPlane
 Int_yInputPlane.type = RawEFieldReduction
 Int_yInputPlane.reduction_type = integral
 Int_yInputPlane.integration_type = surface

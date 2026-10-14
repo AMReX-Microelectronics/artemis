@@ -33,9 +33,9 @@ my_constants.flag_ss = 2
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
-warpx.use_filter = 0
-warpx.cfl = 0.9
+artemis.verbose = 1
+artemis.use_filter = 0
+artemis.cfl = 0.9
 
 algo.em_solver_medium = macroscopic # vacuum/macroscopic
 algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
@@ -47,23 +47,23 @@ macroscopic.mu_function(x,y,z) = "1.1310e-05" # mu_r = 9
 #################################
 ############ FIELDS #############
 #################################
-warpx.E_ext_grid_init_style = parse_E_ext_grid_function
-warpx.Ex_external_grid_function(x,y,z) = 0.
-warpx.Ey_external_grid_function(x,y,z) = 0.
-warpx.Ez_external_grid_function(x,y,z) = 0.
+artemis.E_ext_grid_init_style = parse_E_ext_grid_function
+artemis.Ex_external_grid_function(x,y,z) = 0.
+artemis.Ey_external_grid_function(x,y,z) = 0.
+artemis.Ez_external_grid_function(x,y,z) = 0.
 
-warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
-warpx.Ex_excitation_grid_function(x,y,z,t) = "0.0"
-warpx.Ey_excitation_grid_function(x,y,z,t) = "1000*(exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (z>=h) * (z<h+6.0e-4)"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "0.0"
-warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
-warpx.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z>=h) * (z<h+6.0e-4) + flag_none * (z<h) + flag_none * (z>=h+6.0e-4)"
-warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+artemis.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+artemis.Ex_excitation_grid_function(x,y,z,t) = "0.0"
+artemis.Ey_excitation_grid_function(x,y,z,t) = "1000*(exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t)) * (z>=h) * (z<h+6.0e-4)"
+artemis.Ez_excitation_grid_function(x,y,z,t) = "0.0"
+artemis.Ex_excitation_flag_function(x,y,z) = "flag_none"
+artemis.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z>=h) * (z<h+6.0e-4) + flag_none * (z<h) + flag_none * (z>=h+6.0e-4)"
+artemis.Ez_excitation_flag_function(x,y,z) = "flag_none"
 
-warpx.B_ext_grid_init_style = parse_B_ext_grid_function
-warpx.Bx_external_grid_function(x,y,z)= "0.0"
-warpx.By_external_grid_function(x,y,z)= 0.
-warpx.Bz_external_grid_function(x,y,z) = 0.
+artemis.B_ext_grid_init_style = parse_B_ext_grid_function
+artemis.Bx_external_grid_function(x,y,z)= "0.0"
+artemis.By_external_grid_function(x,y,z)= 0.
+artemis.Bz_external_grid_function(x,y,z) = 0.
 
 #Diagnostics
 diagnostics.diags_names = plt

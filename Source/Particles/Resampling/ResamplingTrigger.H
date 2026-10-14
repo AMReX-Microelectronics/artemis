@@ -1,11 +1,11 @@
 /* Copyright 2019-2020 Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_RESAMPLING_TRIGGER_H_
-#define WARPX_RESAMPLING_TRIGGER_H_
+#ifndef ARTEMIS_RESAMPLING_TRIGGER_H_
+#define ARTEMIS_RESAMPLING_TRIGGER_H_
 
 #include "Utils/Parser/IntervalsParser.H"
 
@@ -46,7 +46,7 @@ public:
 
     /**
      * \brief A method that initializes the member m_global_numcells. It is only called once (the
-     * first time triggered() is called) and is needed because warpx.boxArray(lev) is not yet
+     * first time triggered() is called) and is needed because artemis.boxArray(lev) is not yet
      * initialized when the constructor of this class is called.
      */
     void initialize_global_numcells () const;
@@ -65,4 +65,4 @@ private:
     mutable bool m_initialized = false;
 };
 
-#endif //WARPX_RESAMPLING_TRIGGER_H_
+#endif //ARTEMIS_RESAMPLING_TRIGGER_H_

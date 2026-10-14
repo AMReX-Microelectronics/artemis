@@ -1,14 +1,14 @@
 /* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_PUSHER_GETANDSETPOSITION_H_
-#define WARPX_PARTICLES_PUSHER_GETANDSETPOSITION_H_
+#ifndef ARTEMIS_PARTICLES_PUSHER_GETANDSETPOSITION_H_
+#define ARTEMIS_PARTICLES_PUSHER_GETANDSETPOSITION_H_
 
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 
 #include <AMReX.H>
 #include <AMReX_REAL.H>
@@ -20,22 +20,22 @@
  *         p and store them in the variables `x`, `y`, `z`
  *         This version operates on a SuperParticle */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
+void get_particle_position (const ArtemisParticleContainer::SuperParticleType& p,
                             amrex::ParticleReal& x,
                             amrex::ParticleReal& y,
                             amrex::ParticleReal& z) noexcept
 {
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     amrex::ParticleReal theta = p.rdata(PIdx::theta);
     amrex::ParticleReal r = p.pos(0);
     x = r*std::cos(theta);
     y = r*std::sin(theta);
     z = p.pos(1);
-#elif WARPX_DIM_3D
+#elif ARTEMIS_DIM_3D
     x = p.pos(0);
     y = p.pos(1);
     z = p.pos(2);
-#elif WARPX_DIM_XZ
+#elif ARTEMIS_DIM_XZ
     x = p.pos(0);
     y = amrex::ParticleReal(0.0);
     z = p.pos(1);
@@ -51,15 +51,15 @@ void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
 */
 struct GetParticlePosition
 {
-    using PType = WarpXParticleContainer::ParticleType;
+    using PType = ArtemisParticleContainer::ParticleType;
     using RType = amrex::ParticleReal;
 
     const PType* AMREX_RESTRICT m_structs = nullptr;
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
     const RType* m_theta = nullptr;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
     static constexpr RType m_y_default = RType(0.0);
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
     static constexpr RType m_x_default = RType(0.0);
     static constexpr RType m_y_default = RType(0.0);
 #endif
@@ -78,7 +78,7 @@ struct GetParticlePosition
     {
         const auto& aos = a_pti.GetArrayOfStructs();
         m_structs = aos().dataPtr() + a_offset;
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
         const auto& soa = a_pti.GetStructOfArrays();
         m_theta = soa.GetRealData(PIdx::theta).dataPtr() + a_offset;
 #endif
@@ -91,16 +91,16 @@ struct GetParticlePosition
     void operator() (const int i, RType& x, RType& y, RType& z) const noexcept
     {
         const PType& p = m_structs[i];
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         RType r = p.pos(0);
         x = r*std::cos(m_theta[i]);
         y = r*std::sin(m_theta[i]);
         z = p.pos(1);
-#elif WARPX_DIM_3D
+#elif ARTEMIS_DIM_3D
         x = p.pos(0);
         y = p.pos(1);
         z = p.pos(2);
-#elif WARPX_DIM_XZ
+#elif ARTEMIS_DIM_XZ
         x = p.pos(0);
         y = m_y_default;
         z = p.pos(1);
@@ -120,15 +120,15 @@ struct GetParticlePosition
     void AsStored (const int i, RType& x, RType& y, RType& z) const noexcept
     {
         const PType& p = m_structs[i];
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         x = p.pos(0);
         y = m_theta[i];
         z = p.pos(1);
-#elif WARPX_DIM_3D
+#elif ARTEMIS_DIM_3D
         x = p.pos(0);
         y = p.pos(1);
         z = p.pos(2);
-#elif WARPX_DIM_XZ
+#elif ARTEMIS_DIM_XZ
         x = p.pos(0);
         y = m_y_default;
         z = p.pos(1);
@@ -148,11 +148,11 @@ struct GetParticlePosition
 */
 struct SetParticlePosition
 {
-    using PType = WarpXParticleContainer::ParticleType;
+    using PType = ArtemisParticleContainer::ParticleType;
     using RType = amrex::ParticleReal;
 
     PType* AMREX_RESTRICT m_structs;
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
     RType* AMREX_RESTRICT m_theta;
 #endif
 
@@ -161,7 +161,7 @@ struct SetParticlePosition
     {
         auto& aos = a_pti.GetArrayOfStructs();
         m_structs = aos().dataPtr() + a_offset;
-#if defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_RZ)
         auto& soa = a_pti.GetStructOfArrays();
         m_theta = soa.GetRealData(PIdx::theta).dataPtr() + a_offset;
 #endif
@@ -172,21 +172,21 @@ struct SetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const int i, RType x, RType y, RType z) const noexcept
     {
-#if defined(WARPX_DIM_XZ)
+#if defined(ARTEMIS_DIM_XZ)
         amrex::ignore_unused(y);
 #endif
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(x,y);
 #endif
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         m_theta[i] = std::atan2(y, x);
         m_structs[i].pos(0) = std::sqrt(x*x + y*y);
         m_structs[i].pos(1) = z;
-#elif WARPX_DIM_3D
+#elif ARTEMIS_DIM_3D
         m_structs[i].pos(0) = x;
         m_structs[i].pos(1) = y;
         m_structs[i].pos(2) = z;
-#elif WARPX_DIM_XZ
+#elif ARTEMIS_DIM_XZ
         m_structs[i].pos(0) = x;
         m_structs[i].pos(1) = z;
 #else
@@ -201,21 +201,21 @@ struct SetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void AsStored (const int i, RType x, RType y, RType z) const noexcept
     {
-#if defined(WARPX_DIM_XZ)
+#if defined(ARTEMIS_DIM_XZ)
         amrex::ignore_unused(y);
 #endif
-#if defined(WARPX_DIM_1D_Z)
+#if defined(ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(x,y);
 #endif
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
         m_structs[i].pos(0) = x;
         m_theta[i] = y;
         m_structs[i].pos(1) = z;
-#elif WARPX_DIM_3D
+#elif ARTEMIS_DIM_3D
         m_structs[i].pos(0) = x;
         m_structs[i].pos(1) = y;
         m_structs[i].pos(2) = z;
-#elif WARPX_DIM_XZ
+#elif ARTEMIS_DIM_XZ
         m_structs[i].pos(0) = x;
         m_structs[i].pos(1) = z;
 #else
@@ -224,4 +224,4 @@ struct SetParticlePosition
     }
 };
 
-#endif // WARPX_PARTICLES_PUSHER_GETANDSETPOSITION_H_
+#endif // ARTEMIS_PARTICLES_PUSHER_GETANDSETPOSITION_H_

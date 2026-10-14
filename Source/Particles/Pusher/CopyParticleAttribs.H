@@ -1,13 +1,13 @@
 /* Copyright 2020 Andrew Myers
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_PUSHER_COPYPARTICLEATTRIBS_H_
-#define WARPX_PARTICLES_PUSHER_COPYPARTICLEATTRIBS_H_
+#ifndef ARTEMIS_PARTICLES_PUSHER_COPYPARTICLEATTRIBS_H_
+#define ARTEMIS_PARTICLES_PUSHER_COPYPARTICLEATTRIBS_H_
 
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 
 #include <AMReX_REAL.H>
 
@@ -20,7 +20,7 @@
 */
 struct CopyParticleAttribs
 {
-    using TmpParticles = WarpXParticleContainer::TmpParticles;
+    using TmpParticles = ArtemisParticleContainer::TmpParticles;
 
     GetParticlePosition m_get_position;
 
@@ -46,7 +46,7 @@ struct CopyParticleAttribs
      *        This is needed because when we use field gather buffers we don't
      *        always start at the particle with index 0.
      */
-    CopyParticleAttribs (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
+    CopyParticleAttribs (const ArtemisParIter& a_pti, TmpParticles& tmp_particle_data,
                          int a_offset = 0) noexcept
     {
         if (tmp_particle_data.size() == 0) return;
@@ -100,4 +100,4 @@ struct CopyParticleAttribs
     }
 };
 
-#endif // WARPX_PARTICLES_PUSHER_COPYPARTICLEATTRIBS_H_
+#endif // ARTEMIS_PARTICLES_PUSHER_COPYPARTICLEATTRIBS_H_

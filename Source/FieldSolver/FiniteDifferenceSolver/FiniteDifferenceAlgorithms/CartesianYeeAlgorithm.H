@@ -1,22 +1,22 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_
-#define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_
+#ifndef ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_
+#define ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_
 
 #include "FieldAccessorFunctors.H"
-#include "Utils/WarpXConst.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
-#include "Utils/WarpXUtil.H"
-#include "WarpX.H"
+#include "Utils/ArtemisUtil.H"
+#include "Artemis.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include <array>
@@ -75,7 +75,7 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if (defined WARPX_DIM_1D_Z)
+#if (defined ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_x, i, j, k, ncomp);
         return 0._rt; // 1D Cartesian: derivative along x is 0
 #else
@@ -94,7 +94,7 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if (defined WARPX_DIM_1D_Z)
+#if (defined ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_x, i, j, k, ncomp);
         return 0._rt; // 1D Cartesian: derivative along x is 0
 #else
@@ -112,11 +112,11 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         Real const inv_dy = coefs_y[0];
         amrex::ignore_unused(n_coefs_y);
         return inv_dy*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
-#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_XZ || ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
         return 0._rt; // 1D and 2D Cartesian: derivative along y is 0
@@ -137,11 +137,11 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         Real const inv_dy = coefs_y[0];
         amrex::ignore_unused(n_coefs_y);
         return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
-#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_XZ || ARTEMIS_DIM_1D_Z)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
         return 0._rt; // 1D and 2D Cartesian: derivative along y is 0
@@ -162,11 +162,11 @@ struct CartesianYeeAlgorithm {
 
         using namespace amrex;
         Real const inv_dz = coefs_z[0];
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         return inv_dz*( F(i,j,k+1,ncomp) - F(i,j,k,ncomp) );
-#elif (defined WARPX_DIM_XZ)
+#elif (defined ARTEMIS_DIM_XZ)
         return inv_dz*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
         return inv_dz*( F(i+1,j,k,ncomp) - F(i,j,k,ncomp) );
 #endif
     }
@@ -182,16 +182,16 @@ struct CartesianYeeAlgorithm {
 
         using namespace amrex;
         Real const inv_dz = coefs_z[0];
-#if defined WARPX_DIM_3D
+#if defined ARTEMIS_DIM_3D
         return inv_dz*( F(i,j,k,ncomp) - F(i,j,k-1,ncomp) );
-#elif (defined WARPX_DIM_XZ)
+#elif (defined ARTEMIS_DIM_XZ)
         return inv_dz*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
-#elif (defined WARPX_DIM_1D_Z)
+#elif (defined ARTEMIS_DIM_1D_Z)
         return inv_dz*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
 #endif
     }
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 
     /**
      * Perform derivative along x on a nodal field, from a nodal field `F`*/
@@ -242,7 +242,7 @@ struct CartesianYeeAlgorithm {
 
 #endif
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 
     /**
      * Perform divergence of gradient along x on M field when exchange coupling is on */
@@ -347,4 +347,4 @@ struct CartesianYeeAlgorithm {
 
 };
 
-#endif // WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_
+#endif // ARTEMIS_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_

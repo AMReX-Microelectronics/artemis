@@ -1,7 +1,7 @@
 /* Copyright 2021 Hannah Klion
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -26,17 +26,17 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     pp.query("theta_distribution_type", temp_dist_s);
     pp.query("momentum_distribution_type", mom_dist_s);
     if (temp_dist_s == "constant") {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             utils::parser::queryWithParser(pp, "theta", theta),
             "Temperature parameter theta not specified");
 
         // Do validation on theta value
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(theta >= 0,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(theta >= 0,
             "Temperature parameter theta = " + std::to_string(theta) +
             " is less than zero, which is not allowed");
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             mom_dist_s != "maxwell_juttner" ||
             theta >= 0.1,
             "Temperature parameter theta = " +
@@ -69,6 +69,6 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
         std::string string;
         stringstream << "Temperature distribution type '" << temp_dist_s << "' not recognized.";
         string = stringstream.str();
-        WARPX_ABORT_WITH_MESSAGE(string.c_str());
+        ARTEMIS_ABORT_WITH_MESSAGE(string.c_str());
     }
 }

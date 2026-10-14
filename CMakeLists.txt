@@ -1,9 +1,9 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 23.04)
+project(Artemis VERSION 23.04)
 
-include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
+include(${Artemis_SOURCE_DIR}/cmake/ArtemisFunctions.cmake)
 
 # In-source tree builds are messy and can screw up the build system.
 # Avoid building at least in the same dir as the root dir:
@@ -58,66 +58,66 @@ set_default_install_dirs()
 # Options and Variants ########################################################
 #
 include(CMakeDependentOption)
-option(WarpX_APP           "Build the WarpX executable application"     ON)
-option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
-option(WarpX_EB            "Embedded boundary support"                  OFF)
-cmake_dependent_option(WarpX_GPUCLOCK
+option(Artemis_APP           "Build the Artemis executable application"     ON)
+option(Artemis_ASCENT        "Ascent in situ diagnostics"                 OFF)
+option(Artemis_EB            "Embedded boundary support"                  OFF)
+cmake_dependent_option(Artemis_GPUCLOCK
                            "Add GPU kernel timers (cost function)"      ON
-                           "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP" OFF)
-option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
-option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
-option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
-option(WarpX_PSATD         "spectral solver support"                    OFF)
-option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
-option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
-option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
-option(WarpX_MAG_LLG       "LLG for magnetization modeling"             ON)
+                           "Artemis_COMPUTE STREQUAL CUDA OR Artemis_COMPUTE STREQUAL HIP" OFF)
+option(Artemis_LIB           "Build Artemis as a shared library"            OFF)
+option(Artemis_MPI           "Multi-node support (message-passing)"       ON)
+option(Artemis_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
+option(Artemis_PSATD         "spectral solver support"                    OFF)
+option(Artemis_SENSEI        "SENSEI in situ diagnostics"                 OFF)
+option(Artemis_QED           "QED support (requires PICSAR)"                    ON)
+option(Artemis_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
+option(Artemis_MAG_LLG       "LLG for magnetization modeling"             ON)
 
-set(WarpX_DIMS_VALUES 1 2 3 RZ)
-set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality (1/2/3/RZ)")
-set_property(CACHE WarpX_DIMS PROPERTY STRINGS ${WarpX_DIMS_VALUES})
-if(NOT WarpX_DIMS IN_LIST WarpX_DIMS_VALUES)
-    message(FATAL_ERROR "WarpX_DIMS (${WarpX_DIMS}) must be one of ${WarpX_DIMS_VALUES}")
+set(Artemis_DIMS_VALUES 1 2 3 RZ)
+set(Artemis_DIMS 3 CACHE STRING "Simulation dimensionality (1/2/3/RZ)")
+set_property(CACHE Artemis_DIMS PROPERTY STRINGS ${Artemis_DIMS_VALUES})
+if(NOT Artemis_DIMS IN_LIST Artemis_DIMS_VALUES)
+    message(FATAL_ERROR "Artemis_DIMS (${Artemis_DIMS}) must be one of ${Artemis_DIMS_VALUES}")
 endif()
 
-set(WarpX_PRECISION_VALUES SINGLE DOUBLE)
-set(WarpX_PRECISION DOUBLE CACHE STRING "Floating point precision (SINGLE/DOUBLE)")
-set_property(CACHE WarpX_PRECISION PROPERTY STRINGS ${WarpX_PRECISION_VALUES})
-if(NOT WarpX_PRECISION IN_LIST WarpX_PRECISION_VALUES)
-    message(FATAL_ERROR "WarpX_PRECISION (${WarpX_PRECISION}) must be one of ${WarpX_PRECISION_VALUES}")
+set(Artemis_PRECISION_VALUES SINGLE DOUBLE)
+set(Artemis_PRECISION DOUBLE CACHE STRING "Floating point precision (SINGLE/DOUBLE)")
+set_property(CACHE Artemis_PRECISION PROPERTY STRINGS ${Artemis_PRECISION_VALUES})
+if(NOT Artemis_PRECISION IN_LIST Artemis_PRECISION_VALUES)
+    message(FATAL_ERROR "Artemis_PRECISION (${Artemis_PRECISION}) must be one of ${Artemis_PRECISION_VALUES}")
 endif()
 
-set(WarpX_PARTICLE_PRECISION_VALUES SINGLE DOUBLE)
-set(WarpX_PARTICLE_PRECISION ${WarpX_PRECISION} CACHE STRING "Particle floating point precision (SINGLE/DOUBLE)")
-set_property(CACHE WarpX_PARTICLE_PRECISION PROPERTY STRINGS ${WarpX_PARTICLE_PRECISION_VALUES})
-if(NOT WarpX_PARTICLE_PRECISION IN_LIST WarpX_PARTICLE_PRECISION_VALUES)
-    message(FATAL_ERROR "WarpX_PARTICLE_PRECISION (${WarpX_PARTICLE_PRECISION}) must be one of ${WarpX_PARTICLE_PRECISION_VALUES}")
+set(Artemis_PARTICLE_PRECISION_VALUES SINGLE DOUBLE)
+set(Artemis_PARTICLE_PRECISION ${Artemis_PRECISION} CACHE STRING "Particle floating point precision (SINGLE/DOUBLE)")
+set_property(CACHE Artemis_PARTICLE_PRECISION PROPERTY STRINGS ${Artemis_PARTICLE_PRECISION_VALUES})
+if(NOT Artemis_PARTICLE_PRECISION IN_LIST Artemis_PARTICLE_PRECISION_VALUES)
+    message(FATAL_ERROR "Artemis_PARTICLE_PRECISION (${Artemis_PARTICLE_PRECISION}) must be one of ${Artemis_PARTICLE_PRECISION_VALUES}")
 endif()
 
-set(WarpX_COMPUTE_VALUES NOACC OMP CUDA SYCL HIP)
-set(WarpX_COMPUTE OMP CACHE STRING "On-node, accelerated computing backend (NOACC/OMP/CUDA/SYCL/HIP)")
-set_property(CACHE WarpX_COMPUTE PROPERTY STRINGS ${WarpX_COMPUTE_VALUES})
-if(NOT WarpX_COMPUTE IN_LIST WarpX_COMPUTE_VALUES)
-    message(FATAL_ERROR "WarpX_COMPUTE (${WarpX_COMPUTE}) must be one of ${WarpX_COMPUTE_VALUES}")
+set(Artemis_COMPUTE_VALUES NOACC OMP CUDA SYCL HIP)
+set(Artemis_COMPUTE OMP CACHE STRING "On-node, accelerated computing backend (NOACC/OMP/CUDA/SYCL/HIP)")
+set_property(CACHE Artemis_COMPUTE PROPERTY STRINGS ${Artemis_COMPUTE_VALUES})
+if(NOT Artemis_COMPUTE IN_LIST Artemis_COMPUTE_VALUES)
+    message(FATAL_ERROR "Artemis_COMPUTE (${Artemis_COMPUTE}) must be one of ${Artemis_COMPUTE_VALUES}")
 endif()
 
-option(WarpX_MPI_THREAD_MULTIPLE "MPI thread-multiple support, i.e. for async_io" ON)
-mark_as_advanced(WarpX_MPI_THREAD_MULTIPLE)
+option(Artemis_MPI_THREAD_MULTIPLE "MPI thread-multiple support, i.e. for async_io" ON)
+mark_as_advanced(Artemis_MPI_THREAD_MULTIPLE)
 
-option(WarpX_amrex_internal                    "Download & build AMReX" ON)
+option(Artemis_amrex_internal                    "Download & build AMReX" ON)
 
 # change the default build type to Release (or RelWithDebInfo) instead of Debug
 set_default_build_type("Release")
 
 # Option to enable interprocedural optimization
 # (also know as "link-time optimization" or "whole program optimization")
-option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
+option(Artemis_IPO                                "Compile Artemis with interprocedural optimization (will take more time)" OFF)
 
-# note: we could skip this if we solely build WarpX_APP, but if we build a
-# shared WarpX library or a third party, like ImpactX, uses ablastr in a
+# note: we could skip this if we solely build Artemis_APP, but if we build a
+# shared Artemis library or a third party, like ImpactX, uses ablastr in a
 # shared library (e.g., for Python bindings), then we need relocatable code.
 option(ABLASTR_POSITION_INDEPENDENT_CODE
-    "Build ABLASTR with position independent code" ${WarpX_LIB})
+    "Build ABLASTR with position independent code" ${Artemis_LIB})
 mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 
 # this defined the variable BUILD_TESTING which is ON by default
@@ -129,23 +129,23 @@ mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 
 # AMReX
 #   builds AMReX from source (default) or finds an existing install
-include(${WarpX_SOURCE_DIR}/cmake/dependencies/AMReX.cmake)
+include(${Artemis_SOURCE_DIR}/cmake/dependencies/AMReX.cmake)
 #   suppress warnings in AMReX headers (use -isystem instead of -I)
-warpx_make_third_party_includes_system(AMReX::amrex AMReX)
+artemis_make_third_party_includes_system(AMReX::amrex AMReX)
 
 # PICSAR
 #   builds PICSAR from source
-include(${WarpX_SOURCE_DIR}/cmake/dependencies/PICSAR.cmake)
+include(${Artemis_SOURCE_DIR}/cmake/dependencies/PICSAR.cmake)
 
 # openPMD
 #   builds openPMD-api from source (default) or finds an existing install
-include(${WarpX_SOURCE_DIR}/cmake/dependencies/openPMD.cmake)
+include(${Artemis_SOURCE_DIR}/cmake/dependencies/openPMD.cmake)
 
 # PSATD
-include(${WarpX_SOURCE_DIR}/cmake/dependencies/FFT.cmake)
-if(WarpX_PSATD)
+include(${Artemis_SOURCE_DIR}/cmake/dependencies/FFT.cmake)
+if(Artemis_PSATD)
     # BLASPP and LAPACKPP
-    if(WarpX_DIMS STREQUAL RZ)
+    if(Artemis_DIMS STREQUAL RZ)
         find_package(blaspp CONFIG REQUIRED)
         find_package(lapackpp CONFIG REQUIRED)
         find_package(OpenMP REQUIRED)  # pulled by the two above
@@ -159,34 +159,34 @@ find_package(ZLIB REQUIRED)
 # Targets #####################################################################
 #
 # collect all objects for compilation
-add_library(WarpX OBJECT)
+add_library(Artemis OBJECT)
 add_library(ablastr)
 
 # ABLASTR library
 set(_BUILDINFO_SRC ablastr)
-set(_ALL_TARGETS WarpX ablastr)
-add_library(WarpX::ablastr ALIAS ablastr)
+set(_ALL_TARGETS Artemis ablastr)
+add_library(Artemis::ablastr ALIAS ablastr)
 
 # executable application
 #   note: we currently avoid a dependency on a core library
 #         for simpler usage, but could make this an option
-if(WarpX_APP)
+if(Artemis_APP)
     add_executable(app)
-    add_executable(WarpX::app ALIAS app)
-    target_link_libraries(app PRIVATE WarpX ablastr)
+    add_executable(Artemis::app ALIAS app)
+    target_link_libraries(app PRIVATE Artemis ablastr)
     set(_BUILDINFO_SRC app)
     list(APPEND _ALL_TARGETS app)
 endif()
 
 # link into a shared library
-if(WarpX_LIB)
+if(Artemis_LIB)
     add_library(shared MODULE)
-    add_library(WarpX::shared ALIAS shared)
-    target_link_libraries(shared PUBLIC WarpX ablastr)
+    add_library(Artemis::shared ALIAS shared)
+    target_link_libraries(shared PUBLIC Artemis ablastr)
     set(_BUILDINFO_SRC shared)
     list(APPEND _ALL_TARGETS shared)
 
-    set_target_properties(WarpX shared PROPERTIES
+    set_target_properties(Artemis shared PROPERTIES
         POSITION_INDEPENDENT_CODE ON
         WINDOWS_EXPORT_ALL_SYMBOLS ON
     )
@@ -205,24 +205,24 @@ if(ABLASTR_POSITION_INDEPENDENT_CODE)
 endif()
 
 # own headers
-target_include_directories(WarpX PUBLIC
-    $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
-    $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
+target_include_directories(Artemis PUBLIC
+    $<BUILD_INTERFACE:${Artemis_SOURCE_DIR}/Source>
+    $<BUILD_INTERFACE:${Artemis_BINARY_DIR}/Source>
 )
 target_include_directories(ablastr PUBLIC
     # future: own directory root
-    $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
+    $<BUILD_INTERFACE:${Artemis_SOURCE_DIR}/Source>
 )
 
 # if we include <AMReX_buildInfo.H> we will need to call:
 include(AMReXBuildInfo)
-generate_buildinfo(${_BUILDINFO_SRC} "${WarpX_SOURCE_DIR}")
-target_link_libraries(WarpX PRIVATE buildInfo::${_BUILDINFO_SRC})
+generate_buildinfo(${_BUILDINFO_SRC} "${Artemis_SOURCE_DIR}")
+target_link_libraries(Artemis PRIVATE buildInfo::${_BUILDINFO_SRC})
 unset(_BUILDINFO_SRC)
 
 # add sources
-target_sources(WarpX PRIVATE Source/WarpX.cpp)
-if(WarpX_APP)
+target_sources(Artemis PRIVATE Source/Artemis.cpp)
+if(Artemis_APP)
     target_sources(app PRIVATE Source/main.cpp)
 endif()
 
@@ -242,8 +242,8 @@ add_subdirectory(Source/Python)
 add_subdirectory(Source/Utils)
 
 # C++ properties: at least a C++17 capable compiler is needed
-foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-    target_compile_features(${warpx_tgt} PUBLIC cxx_std_17)
+foreach(artemis_tgt IN LISTS _ALL_TARGETS)
+    target_compile_features(${artemis_tgt} PUBLIC cxx_std_17)
 endforeach()
 set_target_properties(${_ALL_TARGETS} PROPERTIES
     CXX_EXTENSIONS OFF
@@ -251,40 +251,40 @@ set_target_properties(${_ALL_TARGETS} PROPERTIES
 )
 
 # Interprocedural optimization
-if(WarpX_IPO)
+if(Artemis_IPO)
     enable_IPO("${_ALL_TARGETS}")
 endif()
 
 # link dependencies
-target_link_libraries(ablastr PUBLIC WarpX::thirdparty::AMReX)
-target_link_libraries(WarpX PUBLIC ablastr)
+target_link_libraries(ablastr PUBLIC Artemis::thirdparty::AMReX)
+target_link_libraries(Artemis PUBLIC ablastr)
 
-if(WarpX_PSATD)
-    target_link_libraries(ablastr PUBLIC WarpX::thirdparty::FFT)
-    if(WarpX_DIMS STREQUAL RZ)
+if(Artemis_PSATD)
+    target_link_libraries(ablastr PUBLIC Artemis::thirdparty::FFT)
+    if(Artemis_DIMS STREQUAL RZ)
         target_link_libraries(ablastr PUBLIC blaspp)
         target_link_libraries(ablastr PUBLIC lapackpp)
 
         # BLAS++ forgets to declare cuBLAS and cudaRT dependencies
-        if(WarpX_COMPUTE STREQUAL CUDA)
+        if(Artemis_COMPUTE STREQUAL CUDA)
             find_package(CUDAToolkit REQUIRED)
             target_link_libraries(ablastr PUBLIC CUDA::cudart CUDA::cublas)
         endif()
     endif()
 endif()
 
-if(WarpX_OPENPMD)
+if(Artemis_OPENPMD)
     target_link_libraries(ablastr PUBLIC openPMD::openPMD)
 endif()
 
-if(WarpX_MAG_LLG)
-    target_compile_definitions(WarpX PUBLIC WARPX_MAG_LLG)
+if(Artemis_MAG_LLG)
+    target_compile_definitions(Artemis PUBLIC ARTEMIS_MAG_LLG)
 endif()
 
-if(WarpX_QED)
-    target_compile_definitions(ablastr PUBLIC WARPX_QED)
-    if(WarpX_QED_TABLE_GEN)
-        target_compile_definitions(ablastr PUBLIC WARPX_QED_TABLE_GEN)
+if(Artemis_QED)
+    target_compile_definitions(ablastr PUBLIC ARTEMIS_QED)
+    if(Artemis_QED_TABLE_GEN)
+        target_compile_definitions(ablastr PUBLIC ARTEMIS_QED_TABLE_GEN)
     endif()
     target_link_libraries(ablastr PUBLIC PXRMP_QED::PXRMP_QED)
 endif()
@@ -293,12 +293,12 @@ endif()
 target_link_libraries(ablastr PUBLIC ZLIB::ZLIB)
 
 # AMReX helper function: propagate CUDA specific target & source properties
-if(WarpX_COMPUTE STREQUAL CUDA)
-    foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-        setup_target_for_cuda_compilation(${warpx_tgt})
+if(Artemis_COMPUTE STREQUAL CUDA)
+    foreach(artemis_tgt IN LISTS _ALL_TARGETS)
+        setup_target_for_cuda_compilation(${artemis_tgt})
     endforeach()
-    foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-        target_compile_features(${warpx_tgt} PUBLIC cuda_std_17)
+    foreach(artemis_tgt IN LISTS _ALL_TARGETS)
+        target_compile_features(${artemis_tgt} PUBLIC cuda_std_17)
     endforeach()
     set_target_properties(${_ALL_TARGETS} PROPERTIES
         CUDA_EXTENSIONS OFF
@@ -306,58 +306,58 @@ if(WarpX_COMPUTE STREQUAL CUDA)
     )
 endif()
 
-if(WarpX_COMPUTE STREQUAL "HIP")
+if(Artemis_COMPUTE STREQUAL "HIP")
     # Disable libstdc++ assertions in device code
-    foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-        target_compile_definitions(${warpx_tgt} PRIVATE _GLIBCXX_ASSERTIONS=0)
+    foreach(artemis_tgt IN LISTS _ALL_TARGETS)
+        target_compile_definitions(${artemis_tgt} PRIVATE _GLIBCXX_ASSERTIONS=0)
     endforeach()
 endif()
 
 # avoid building all object files if we are only used as ABLASTR library
-if(NOT WarpX_APP AND NOT WarpX_LIB)
-    set_target_properties(WarpX PROPERTIES
+if(NOT Artemis_APP AND NOT Artemis_LIB)
+    set_target_properties(Artemis PROPERTIES
         EXCLUDE_FROM_ALL 1
         EXCLUDE_FROM_DEFAULT_BUILD 1
     )
 endif()
 
 # fancy binary name for build variants
-set_warpx_binary_name()
+set_artemis_binary_name()
 
 
 # Defines #####################################################################
 #
-if(WarpX_DIMS STREQUAL 3)
-    target_compile_definitions(ablastr PUBLIC WARPX_DIM_3D WARPX_ZINDEX=2)
-elseif(WarpX_DIMS STREQUAL 2)
-    target_compile_definitions(ablastr PUBLIC WARPX_DIM_XZ WARPX_ZINDEX=1)
-elseif(WarpX_DIMS STREQUAL 1)
-    target_compile_definitions(ablastr PUBLIC WARPX_DIM_1D_Z WARPX_ZINDEX=0)
-elseif(WarpX_DIMS STREQUAL RZ)
-    target_compile_definitions(ablastr PUBLIC WARPX_DIM_RZ WARPX_ZINDEX=1)
+if(Artemis_DIMS STREQUAL 3)
+    target_compile_definitions(ablastr PUBLIC ARTEMIS_DIM_3D ARTEMIS_ZINDEX=2)
+elseif(Artemis_DIMS STREQUAL 2)
+    target_compile_definitions(ablastr PUBLIC ARTEMIS_DIM_XZ ARTEMIS_ZINDEX=1)
+elseif(Artemis_DIMS STREQUAL 1)
+    target_compile_definitions(ablastr PUBLIC ARTEMIS_DIM_1D_Z ARTEMIS_ZINDEX=0)
+elseif(Artemis_DIMS STREQUAL RZ)
+    target_compile_definitions(ablastr PUBLIC ARTEMIS_DIM_RZ ARTEMIS_ZINDEX=1)
 endif()
 
-if(WarpX_GPUCLOCK)
-    target_compile_definitions(ablastr PUBLIC WARPX_USE_GPUCLOCK)
+if(Artemis_GPUCLOCK)
+    target_compile_definitions(ablastr PUBLIC ARTEMIS_USE_GPUCLOCK)
 endif()
 
-if(WarpX_OPENPMD)
-    target_compile_definitions(ablastr PUBLIC WARPX_USE_OPENPMD)
+if(Artemis_OPENPMD)
+    target_compile_definitions(ablastr PUBLIC ARTEMIS_USE_OPENPMD)
 endif()
 
-if(WarpX_QED)
-    target_compile_definitions(ablastr PUBLIC WARPX_QED)
-    if(WarpX_QED_TABLE_GEN)
-        target_compile_definitions(ablastr PUBLIC WarpX_QED_TABLE_GEN)
+if(Artemis_QED)
+    target_compile_definitions(ablastr PUBLIC ARTEMIS_QED)
+    if(Artemis_QED_TABLE_GEN)
+        target_compile_definitions(ablastr PUBLIC Artemis_QED_TABLE_GEN)
     endif()
 endif()
 
-if(WarpX_PSATD)
-    target_compile_definitions(ablastr PUBLIC WARPX_USE_PSATD)
+if(Artemis_PSATD)
+    target_compile_definitions(ablastr PUBLIC ARTEMIS_USE_PSATD)
 endif()
 
-if(WarpX_MAG_LLG)
-    target_compile_definitions(WarpX PUBLIC WARPX_MAG_LLG)
+if(Artemis_MAG_LLG)
+    target_compile_definitions(Artemis PUBLIC ARTEMIS_MAG_LLG)
 endif()
 
 # <cmath>: M_PI
@@ -373,19 +373,19 @@ set_cxx_warnings()
 
 # Generate Configuration and .pc Files ########################################
 #
-get_source_version(WarpX ${WarpX_SOURCE_DIR})
+get_source_version(Artemis ${Artemis_SOURCE_DIR})
 configure_file(
-    ${WarpX_SOURCE_DIR}/Source/Utils/WarpXVersion.H.in
-    ${WarpX_BINARY_DIR}/Source/Utils/WarpXVersion.H
+    ${Artemis_SOURCE_DIR}/Source/Utils/ArtemisVersion.H.in
+    ${Artemis_BINARY_DIR}/Source/Utils/ArtemisVersion.H
     @ONLY
 )
 
-# these files are used if WarpX is installed and picked up by a downstream
+# these files are used if Artemis is installed and picked up by a downstream
 # project (not needed yet)
 
 #include(CMakePackageConfigHelpers)
-#write_basic_package_version_file("WarpXConfigVersion.cmake"
-#    VERSION ${WarpX_VERSION}
+#write_basic_package_version_file("ArtemisConfigVersion.cmake"
+#    VERSION ${Artemis_VERSION}
 #    COMPATIBILITY SameMajorVersion
 #)
 
@@ -393,16 +393,16 @@ configure_file(
 # Installs ####################################################################
 #
 # headers, libraries and executables
-set(WarpX_INSTALL_TARGET_NAMES ablastr)
-if(WarpX_APP)
-    list(APPEND WarpX_INSTALL_TARGET_NAMES app)
+set(Artemis_INSTALL_TARGET_NAMES ablastr)
+if(Artemis_APP)
+    list(APPEND Artemis_INSTALL_TARGET_NAMES app)
 endif()
-if(WarpX_LIB)
-    list(APPEND WarpX_INSTALL_TARGET_NAMES shared)
+if(Artemis_LIB)
+    list(APPEND Artemis_INSTALL_TARGET_NAMES shared)
 endif()
 
-install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
-    EXPORT WarpXTargets
+install(TARGETS ${Artemis_INSTALL_TARGET_NAMES}
+    EXPORT ArtemisTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -411,11 +411,11 @@ install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
 
 # simplified library alias
 # this is currently expected by Python bindings
-if(WarpX_LIB)
-    if(WarpX_DIMS STREQUAL RZ)
+if(Artemis_LIB)
+    if(Artemis_DIMS STREQUAL RZ)
         set(lib_dim "rz")
     else()
-        set(lib_dim "${WarpX_DIMS}d")
+        set(lib_dim "${Artemis_DIMS}d")
     endif()
     if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
         set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
@@ -427,73 +427,73 @@ if(WarpX_LIB)
 
     install(CODE "file(CREATE_LINK
         $<TARGET_FILE_NAME:shared>
-        \"${ABS_INSTALL_LIB_DIR}/libwarpx.${lib_dim}$<TARGET_FILE_SUFFIX:shared>\"
+        \"${ABS_INSTALL_LIB_DIR}/libartemis.${lib_dim}$<TARGET_FILE_SUFFIX:shared>\"
         COPY_ON_ERROR SYMBOLIC)")
 endif()
 
-# CMake package file for find_package(WarpX::WarpX) in depending projects
-#install(EXPORT WarpXTargets
-#    FILE WarpXTargets.cmake
-#    NAMESPACE WarpX::
-#    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
+# CMake package file for find_package(Artemis::Artemis) in depending projects
+#install(EXPORT ArtemisTargets
+#    FILE ArtemisTargets.cmake
+#    NAMESPACE Artemis::
+#    DESTINATION ${Artemis_INSTALL_CMAKEDIR}
 #)
 #install(
 #    FILES
-#        ${WarpX_BINARY_DIR}/WarpXConfig.cmake
-#        ${WarpX_BINARY_DIR}/WarpXConfigVersion.cmake
-#    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
+#        ${Artemis_BINARY_DIR}/ArtemisConfig.cmake
+#        ${Artemis_BINARY_DIR}/ArtemisConfigVersion.cmake
+#    DESTINATION ${Artemis_INSTALL_CMAKEDIR}
 #)
 
 
-# pip helpers for the pywarpx package #########################################
+# pip helpers for the pyartemis package #########################################
 #
-if(WarpX_LIB)
+if(Artemis_LIB)
     set(PYINSTALLOPTIONS "" CACHE STRING
         "Additional parameters to pass to `pip install`")
 
     # add a prefix to custom targets so we do not collide if used as a subproject
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-        set(_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT "")
+        set(_Artemis_CUSTOM_TARGET_PREFIX_DEFAULT "")
     else()
-        set(_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT "warpx_")
+        set(_Artemis_CUSTOM_TARGET_PREFIX_DEFAULT "artemis_")
     endif()
-    set(WarpX_CUSTOM_TARGET_PREFIX "${_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT}"
+    set(Artemis_CUSTOM_TARGET_PREFIX "${_Artemis_CUSTOM_TARGET_PREFIX_DEFAULT}"
             CACHE STRING "Prefix for custom targets")
 
     # build the wheel by re-using the shared library we build
-    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel
-        ${CMAKE_COMMAND} -E rm -f -r warpx-whl
+    add_custom_target(${Artemis_CUSTOM_TARGET_PREFIX}pip_wheel
+        ${CMAKE_COMMAND} -E rm -f -r artemis-whl
         COMMAND
-            ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=$<TARGET_FILE_DIR:shared>
-                python3 -m pip wheel -v --no-build-isolation --no-deps --wheel-dir=warpx-whl ${WarpX_SOURCE_DIR}
+            ${CMAKE_COMMAND} -E env PYARTEMIS_LIB_DIR=$<TARGET_FILE_DIR:shared>
+                python3 -m pip wheel -v --no-build-isolation --no-deps --wheel-dir=artemis-whl ${Artemis_SOURCE_DIR}
         WORKING_DIRECTORY
-            ${WarpX_BINARY_DIR}
+            ${Artemis_BINARY_DIR}
         DEPENDS
             shared
     )
 
     # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
-    if(WarpX_MPI)
-        set(pyWarpX_REQUIREMENT_FILE "requirements_mpi.txt")
+    if(Artemis_MPI)
+        set(pyArtemis_REQUIREMENT_FILE "requirements_mpi.txt")
     else()
-        set(pyWarpX_REQUIREMENT_FILE "requirements.txt")
+        set(pyArtemis_REQUIREMENT_FILE "requirements.txt")
     endif()
-    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
-        python3 -m pip install ${PYINSTALLOPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
+    add_custom_target(${Artemis_CUSTOM_TARGET_PREFIX}pip_install_requirements
+        python3 -m pip install ${PYINSTALLOPTIONS} -r "${Artemis_SOURCE_DIR}/${pyArtemis_REQUIREMENT_FILE}"
         WORKING_DIRECTORY
-            ${WarpX_BINARY_DIR}
+            ${Artemis_BINARY_DIR}
     )
 
     # We force-install because in development, it is likely that the version of
     # the package does not change, but the code did change. We need --no-deps,
     # because otherwise pip would also force reinstall all dependencies.
-    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install
-        ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
-            python3 -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
+    add_custom_target(${Artemis_CUSTOM_TARGET_PREFIX}pip_install
+        ${CMAKE_COMMAND} -E env ARTEMIS_MPI=${Artemis_MPI}
+            python3 -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=artemis-whl pyartemis
         WORKING_DIRECTORY
-            ${WarpX_BINARY_DIR}
+            ${Artemis_BINARY_DIR}
         DEPENDS
-            shared ${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel ${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
+            shared ${Artemis_CUSTOM_TARGET_PREFIX}pip_wheel ${Artemis_CUSTOM_TARGET_PREFIX}pip_install_requirements
     )
 endif()
 
@@ -510,4 +510,4 @@ endif()
 
 # Status Summary for Build Options ############################################
 #
-warpx_print_summary()
+artemis_print_summary()

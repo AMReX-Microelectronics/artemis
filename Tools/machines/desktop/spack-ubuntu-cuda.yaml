@@ -8,8 +8,8 @@
 #   https://spack.readthedocs.io/en/latest/environments.html
 #
 # Inside the directory of this file
-#   spack env create warpx-cuda-dev spack-ubuntu-cuda.yaml
-#   spack env activate warpx-cuda-dev
+#   spack env create artemis-cuda-dev spack-ubuntu-cuda.yaml
+#   spack env activate artemis-cuda-dev
 #   spack install  # only needed the first time
 #
 spack:

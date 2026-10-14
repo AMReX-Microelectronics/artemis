@@ -1,1 +1,1 @@
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/ablastr/parallelization
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source/ablastr/parallelization

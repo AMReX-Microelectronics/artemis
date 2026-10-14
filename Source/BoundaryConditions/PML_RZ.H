@@ -1,16 +1,16 @@
 /* Copyright 2021 David Grote
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PML_RZ_H_
-#define WARPX_PML_RZ_H_
+#ifndef ARTEMIS_PML_RZ_H_
+#define ARTEMIS_PML_RZ_H_
 
 #include "PML_RZ_fwd.H"
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #endif
 
@@ -39,7 +39,7 @@ public:
     std::array<amrex::MultiFab*,2> GetE_fp ();
     std::array<amrex::MultiFab*,2> GetB_fp ();
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
     void PushPSATD (const int lev);
 #endif
 
@@ -63,7 +63,7 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,2> pml_E_fp;
     std::array<std::unique_ptr<amrex::MultiFab>,2> pml_B_fp;
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
     void PushPMLPSATDSinglePatchRZ ( const int lev,
                 SpectralSolverRZ& solver,
                 std::array<std::unique_ptr<amrex::MultiFab>,2>& pml_E,

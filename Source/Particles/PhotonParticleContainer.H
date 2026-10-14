@@ -1,18 +1,18 @@
 /* Copyright 2019 Andrew Myers, David Grote, Luca Fedeli
  * Maxence Thevenet, Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PhotonParticleContainer_H_
-#define WARPX_PhotonParticleContainer_H_
+#ifndef ARTEMIS_PhotonParticleContainer_H_
+#define ARTEMIS_PhotonParticleContainer_H_
 
-#include "Evolve/WarpXDtType.H"
+#include "Evolve/ArtemisDtType.H"
 #include "Particles/Gather/ScaleFields.H"
 #include "PhysicalParticleContainer.H"
 
-#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Particles/ArtemisParticleContainer_fwd.H"
 
 #include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
@@ -66,7 +66,7 @@ public:
                          DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false) override;
 
-    virtual void PushPX(WarpXParIter& pti,
+    virtual void PushPX(ArtemisParIter& pti,
                         amrex::FArrayBox const * exfab,
                         amrex::FArrayBox const * eyfab,
                         amrex::FArrayBox const * ezfab,
@@ -92,7 +92,7 @@ public:
 
 
     // DepositCharge should do nothing for photons
-    virtual void DepositCharge (WarpXParIter& /*pti*/,
+    virtual void DepositCharge (ArtemisParIter& /*pti*/,
                                 RealVector const & /*wp*/,
                                 const int * const /*ion_lev*/,
                                 amrex::MultiFab* /*rho*/,
@@ -104,7 +104,7 @@ public:
                                 int /*depos_lev*/) override {}
 
     // DepositCurrent should do nothing for photons
-    virtual void DepositCurrent (WarpXParIter& /*pti*/,
+    virtual void DepositCurrent (ArtemisParIter& /*pti*/,
                                  RealVector const & /*wp*/,
                                  RealVector const & /*uxp*/,
                                  RealVector const & /*uyp*/,
@@ -122,4 +122,4 @@ public:
                                  amrex::Real const /*relative_time*/) override {}
 };
 
-#endif // #ifndef WARPX_PhotonParticleContainer_H_
+#endif // #ifndef ARTEMIS_PhotonParticleContainer_H_

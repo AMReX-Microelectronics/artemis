@@ -2,7 +2,7 @@
  * Luca Fedeli, Maxence Thevenet, Remi Lehe, Weiqun Zhang
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -10,16 +10,16 @@
 
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "WarpX.H"
+#include "Artemis.H"
 
 #include <ablastr/utils/Communication.H>
 
@@ -247,7 +247,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
 #if (AMREX_SPACEDIM >= 2)
         int jdim = (idim+1) % AMREX_SPACEDIM;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         int kdim = (idim+2) % AMREX_SPACEDIM;
 #endif
 
@@ -265,7 +265,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
             {
                 side_faces.push_back(kv.first);
             }
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             else if (amrex::grow(grid_box, kdim, ncell[kdim]).intersects(box))
             {
                 side_faces.push_back(kv.first);
@@ -300,7 +300,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
 
             Box lobox = amrex::adjCellLo(grid_box, idim, ncell[idim]);
             lobox.grow(jdim,ncell[jdim]);
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             lobox.grow(kdim,ncell[kdim]);
 #endif
             Box looverlap = lobox & box;
@@ -314,7 +314,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
 
             Box hibox = amrex::adjCellHi(grid_box, idim, ncell[idim]);
             hibox.grow(jdim,ncell[jdim]);
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
             hibox.grow(kdim,ncell[kdim]);
 #endif
             Box hioverlap = hibox & box;
@@ -325,20 +325,20 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                        grid_box.bigEnd(idim), fac[idim], v_sigma_sb);
             }
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 looverlap.ok() || hioverlap.ok(),
                 "SigmaBox::SigmaBox(): corners, how did this happen?"
             );
         }
 #endif
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         for (auto gid : side_side_edges)
         {
             const Box& grid_box = grids[gid];
             const Box& overlap = amrex::grow(amrex::grow(grid_box,jdim,ncell[jdim]),kdim,ncell[kdim]) & box;
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 overlap.ok(),
                 "SigmaBox::SigmaBox(): side_side_edges, how did this happen?"
             );
@@ -370,7 +370,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                        grid_box.bigEnd(idim), fac[idim], v_sigma_sb);
             }
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 looverlap.ok() || hioverlap.ok(),
                 "SigmaBox::SigmaBox(): direct_side_edges, how did this happen?"
             );
@@ -381,13 +381,13 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
         for (auto gid : side_faces)
         {
             const Box& grid_box = grids[gid];
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
             const Box& overlap = amrex::grow(grid_box,jdim,ncell[jdim]) & box;
 #else
             const Box& overlap = amrex::grow(amrex::grow(grid_box,jdim,ncell[jdim]),kdim,ncell[kdim]) & box;
 #endif
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 overlap.ok(),
                 "SigmaBox::SigmaBox(): side_faces, how did this happen?"
             );
@@ -420,14 +420,14 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                        grid_box.bigEnd(idim), fac[idim], v_sigma_sb);
             }
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 looverlap.ok() || hioverlap.ok(),
                 "SigmaBox::SigmaBox(): direct faces, how did this happen?"
             );
 
         }
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
             direct_faces.size() <= 1,
             "SigmaBox::SigmaBox(): direct_faces.size() > 1, Box gaps not wide enough?"
         );
@@ -600,19 +600,19 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     IntVect nge = IntVect(AMREX_D_DECL(2, 2, 2));
     IntVect ngb = IntVect(AMREX_D_DECL(2, 2, 2));
     int ngf_int = 0;
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) ngf_int = std::max( ngf_int, 1 );
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) ngf_int = std::max( ngf_int, 1 );
     IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
 
     if (do_moving_window) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev <= 1,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(lev <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
-        int rr = ref_ratio[WarpX::moving_window_dir];
-        nge[WarpX::moving_window_dir] = std::max(nge[WarpX::moving_window_dir], rr);
-        ngb[WarpX::moving_window_dir] = std::max(ngb[WarpX::moving_window_dir], rr);
-        ngf[WarpX::moving_window_dir] = std::max(ngf[WarpX::moving_window_dir], rr);
+        int rr = ref_ratio[Artemis::moving_window_dir];
+        nge[Artemis::moving_window_dir] = std::max(nge[Artemis::moving_window_dir], rr);
+        ngb[Artemis::moving_window_dir] = std::max(ngb[Artemis::moving_window_dir], rr);
+        ngf[Artemis::moving_window_dir] = std::max(ngf[Artemis::moving_window_dir], rr);
     }
 
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Increase the number of guard cells, in order to fit the extent
         // of the stencil for the spectral solver
         int ngFFt_x = (grid_type == GridType::Collocated) ? nox_fft : nox_fft/2;
@@ -624,11 +624,11 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
         utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
-#elif defined(WARPX_DIM_1D_Z)
+#elif defined(ARTEMIS_DIM_1D_Z)
         IntVect ngFFT = IntVect(ngFFt_z);
 #endif
 
@@ -643,7 +643,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     }
 
     DistributionMapping dm;
-    if (WarpX::do_similar_dm_pml) {
+    if (Artemis::do_similar_dm_pml) {
         auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
         dm = amrex::MakeSimilarDM(ba, grid_ba, grid_dm, ng_sim);
     } else {
@@ -663,48 +663,48 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     const int ncompe = (m_dive_cleaning) ? 3 : 2;
     const int ncompb = (m_divb_cleaning) ? 3 : 2;
 
-    const amrex::BoxArray ba_Ex = amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect());
-    const amrex::BoxArray ba_Ey = amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect());
-    const amrex::BoxArray ba_Ez = amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect());
-    WarpX::AllocInitMultiFab(pml_E_fp[0], ba_Ex, dm, ncompe, nge, "pml_E_fp[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_E_fp[1], ba_Ey, dm, ncompe, nge, "pml_E_fp[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_E_fp[2], ba_Ez, dm, ncompe, nge, "pml_E_fp[z]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_PEC_fp[0], ba_Ex, dm, ncompe, nge, "pml_PEC_fp[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_PEC_fp[1], ba_Ey, dm, ncompe, nge, "pml_PEC_fp[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_PEC_fp[2], ba_Ez, dm, ncompe, nge, "pml_PEC_fp[z]", 0.0_rt);
+    const amrex::BoxArray ba_Ex = amrex::convert(ba, Artemis::GetInstance().getEfield_fp(0,0).ixType().toIntVect());
+    const amrex::BoxArray ba_Ey = amrex::convert(ba, Artemis::GetInstance().getEfield_fp(0,1).ixType().toIntVect());
+    const amrex::BoxArray ba_Ez = amrex::convert(ba, Artemis::GetInstance().getEfield_fp(0,2).ixType().toIntVect());
+    Artemis::AllocInitMultiFab(pml_E_fp[0], ba_Ex, dm, ncompe, nge, "pml_E_fp[x]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_E_fp[1], ba_Ey, dm, ncompe, nge, "pml_E_fp[y]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_E_fp[2], ba_Ez, dm, ncompe, nge, "pml_E_fp[z]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_PEC_fp[0], ba_Ex, dm, ncompe, nge, "pml_PEC_fp[x]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_PEC_fp[1], ba_Ey, dm, ncompe, nge, "pml_PEC_fp[y]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_PEC_fp[2], ba_Ez, dm, ncompe, nge, "pml_PEC_fp[z]", 0.0_rt);
 
-    const amrex::BoxArray ba_Bx = amrex::convert(ba, WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect());
-    const amrex::BoxArray ba_By = amrex::convert(ba, WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect());
-    const amrex::BoxArray ba_Bz = amrex::convert(ba, WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect());
-    WarpX::AllocInitMultiFab(pml_B_fp[0], ba_Bx, dm, ncompb, ngb, "pml_B_fp[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_B_fp[1], ba_By, dm, ncompb, ngb, "pml_B_fp[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_B_fp[2], ba_Bz, dm, ncompb, ngb, "pml_B_fp[z]", 0.0_rt);
+    const amrex::BoxArray ba_Bx = amrex::convert(ba, Artemis::GetInstance().getBfield_fp(0,0).ixType().toIntVect());
+    const amrex::BoxArray ba_By = amrex::convert(ba, Artemis::GetInstance().getBfield_fp(0,1).ixType().toIntVect());
+    const amrex::BoxArray ba_Bz = amrex::convert(ba, Artemis::GetInstance().getBfield_fp(0,2).ixType().toIntVect());
+    Artemis::AllocInitMultiFab(pml_B_fp[0], ba_Bx, dm, ncompb, ngb, "pml_B_fp[x]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_B_fp[1], ba_By, dm, ncompb, ngb, "pml_B_fp[y]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_B_fp[2], ba_Bz, dm, ncompb, ngb, "pml_B_fp[z]", 0.0_rt);
 
-    const amrex::BoxArray ba_jx = amrex::convert(ba, WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect());
-    const amrex::BoxArray ba_jy = amrex::convert(ba, WarpX::GetInstance().getcurrent_fp(0,1).ixType().toIntVect());
-    const amrex::BoxArray ba_jz = amrex::convert(ba, WarpX::GetInstance().getcurrent_fp(0,2).ixType().toIntVect());
-    WarpX::AllocInitMultiFab(pml_j_fp[0], ba_jx, dm, 1, ngb, "pml_j_fp[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_j_fp[1], ba_jy, dm, 1, ngb, "pml_j_fp[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_j_fp[2], ba_jz, dm, 1, ngb, "pml_j_fp[z]", 0.0_rt);
+    const amrex::BoxArray ba_jx = amrex::convert(ba, Artemis::GetInstance().getcurrent_fp(0,0).ixType().toIntVect());
+    const amrex::BoxArray ba_jy = amrex::convert(ba, Artemis::GetInstance().getcurrent_fp(0,1).ixType().toIntVect());
+    const amrex::BoxArray ba_jz = amrex::convert(ba, Artemis::GetInstance().getcurrent_fp(0,2).ixType().toIntVect());
+    Artemis::AllocInitMultiFab(pml_j_fp[0], ba_jx, dm, 1, ngb, "pml_j_fp[x]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_j_fp[1], ba_jy, dm, 1, ngb, "pml_j_fp[y]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_j_fp[2], ba_jz, dm, 1, ngb, "pml_j_fp[z]", 0.0_rt);
 
-#ifdef WARPX_MAG_LLG
-    const amrex::BoxArray ba_Hx = amrex::convert( ba, WarpX::GetInstance().getHfield_fp(0,0).ixType().toIntVect() );
-    const amrex::BoxArray ba_Hy = amrex::convert( ba, WarpX::GetInstance().getHfield_fp(0,1).ixType().toIntVect() );
-    const amrex::BoxArray ba_Hz = amrex::convert( ba, WarpX::GetInstance().getHfield_fp(0,2).ixType().toIntVect() );
-    WarpX::AllocInitMultiFab(pml_H_fp[0], ba_Hx, dm, 2, ngb, "pml_H_fp[x]");
-    WarpX::AllocInitMultiFab(pml_H_fp[1], ba_Hy, dm, 2, ngb, "pml_H_fp[y]");
-    WarpX::AllocInitMultiFab(pml_H_fp[2], ba_Hz, dm, 2, ngb, "pml_H_fp[z]");
+#ifdef ARTEMIS_MAG_LLG
+    const amrex::BoxArray ba_Hx = amrex::convert( ba, Artemis::GetInstance().getHfield_fp(0,0).ixType().toIntVect() );
+    const amrex::BoxArray ba_Hy = amrex::convert( ba, Artemis::GetInstance().getHfield_fp(0,1).ixType().toIntVect() );
+    const amrex::BoxArray ba_Hz = amrex::convert( ba, Artemis::GetInstance().getHfield_fp(0,2).ixType().toIntVect() );
+    Artemis::AllocInitMultiFab(pml_H_fp[0], ba_Hx, dm, 2, ngb, "pml_H_fp[x]");
+    Artemis::AllocInitMultiFab(pml_H_fp[1], ba_Hy, dm, 2, ngb, "pml_H_fp[y]");
+    Artemis::AllocInitMultiFab(pml_H_fp[2], ba_Hz, dm, 2, ngb, "pml_H_fp[z]");
 #endif
 
-    if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+    if (Artemis::em_solver_medium == MediumForEM::Macroscopic) {
         // Allocating macroproperties in pml at cell-centers
         pml_eps_fp = std::make_unique<MultiFab>(ba, dm, 1, nge);
         pml_mu_fp = std::make_unique<MultiFab>(ba, dm, 1, nge);
         pml_sigma_fp = std::make_unique<MultiFab>(ba, dm, 1, nge);
 
         // Initializing macroparameter multifab //
-        auto& warpx = WarpX::GetInstance();
-        auto& macroscopic_properties = warpx.m_macroscopic_properties;
+        auto& artemis = Artemis::GetInstance();
+        auto& macroscopic_properties = artemis.m_macroscopic_properties;
 
         // Initialize sigma, conductivity
         if (macroscopic_properties->m_sigma_s == "constant") {
@@ -732,7 +732,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             }
         }
 
-        if (warpx.use_PEC_mask) {
+        if (artemis.use_PEC_mask) {
             pml_PEC_fp[0]->setVal(1.);
             pml_PEC_fp[1]->setVal(1.);
             pml_PEC_fp[2]->setVal(1.);
@@ -806,18 +806,18 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
 #ifdef AMREX_USE_EB
     const amrex::IntVect max_guard_EB_vect = amrex::IntVect(max_guard_EB);
-    WarpX::AllocInitMultiFab(pml_edge_lengths[0], ba_Ex, dm, WarpX::ncomps, max_guard_EB_vect, "pml_edge_lengths[x]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_edge_lengths[1], ba_Ey, dm, WarpX::ncomps, max_guard_EB_vect, "pml_edge_lengths[y]", 0.0_rt);
-    WarpX::AllocInitMultiFab(pml_edge_lengths[2], ba_Ez, dm, WarpX::ncomps, max_guard_EB_vect, "pml_edge_lengths[z]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_edge_lengths[0], ba_Ex, dm, Artemis::ncomps, max_guard_EB_vect, "pml_edge_lengths[x]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_edge_lengths[1], ba_Ey, dm, Artemis::ncomps, max_guard_EB_vect, "pml_edge_lengths[y]", 0.0_rt);
+    Artemis::AllocInitMultiFab(pml_edge_lengths[2], ba_Ez, dm, Artemis::ncomps, max_guard_EB_vect, "pml_edge_lengths[z]", 0.0_rt);
 
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
-        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+        Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
+        Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
 
         auto const eb_fact = fieldEBFactory();
 
-        WarpX::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
-        WarpX::ScaleEdges(pml_edge_lengths, WarpX::CellSize(lev));
+        Artemis::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
+        Artemis::ScaleEdges(pml_edge_lengths, Artemis::CellSize(lev));
 
     }
 #endif
@@ -826,7 +826,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     if (m_dive_cleaning)
     {
         const amrex::BoxArray ba_F_nodal = amrex::convert(ba, amrex::IntVect::TheNodeVector());
-        WarpX::AllocInitMultiFab(pml_F_fp, ba_F_nodal, dm, 3, ngf, "pml_F_fp", 0.0_rt);
+        Artemis::AllocInitMultiFab(pml_F_fp, ba_F_nodal, dm, 3, ngf, "pml_F_fp", 0.0_rt);
     }
 
     if (m_divb_cleaning)
@@ -836,7 +836,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             (grid_type == GridType::Collocated) ? amrex::IntVect::TheNodeVector()
                                                 : amrex::IntVect::TheCellVector();
         const amrex::BoxArray ba_G_nodal = amrex::convert(ba, G_nodal_flag);
-        WarpX::AllocInitMultiFab(pml_G_fp, ba_G_nodal, dm, 3, ngf, "pml_G_fp", 0.0_rt);
+        Artemis::AllocInitMultiFab(pml_G_fp, ba_G_nodal, dm, 3, ngf, "pml_G_fp", 0.0_rt);
     }
 
     Box single_domain_box = is_single_box_domain ? domain0 : Box();
@@ -844,13 +844,13 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba_reduced, geom->CellSize(),
                                                IntVect(ncell), IntVect(delta), single_domain_box, v_sigma_sb);
 
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
-#ifndef WARPX_USE_PSATD
+    if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+#ifndef ARTEMIS_USE_PSATD
         amrex::ignore_unused(lev, dt, psatd_solution_type, J_in_time, rho_in_time);
 #   if(AMREX_SPACEDIM!=3)
         amrex::ignore_unused(noy_fft);
 #   endif
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+        ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
             "PML: PSATD solver selected but not built.");
 #else
         // Flags passed to the spectral solver constructor
@@ -873,7 +873,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     if (cgeom)
     {
-        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
+        if (Artemis::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
             nge = IntVect(AMREX_D_DECL(1, 1, 1));
             ngb = IntVect(AMREX_D_DECL(1, 1, 1));
         }
@@ -907,45 +907,45 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         const BoxArray& cba = MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
                                            cncells, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
         DistributionMapping cdm;
-        if (WarpX::do_similar_dm_pml) {
+        if (Artemis::do_similar_dm_pml) {
             auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
             cdm = amrex::MakeSimilarDM(cba, grid_cba_reduced, grid_dm, ng_sim);
         } else {
             cdm.define(cba);
         }
 
-        const amrex::BoxArray cba_Ex = amrex::convert(cba, WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect());
-        const amrex::BoxArray cba_Ey = amrex::convert(cba, WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect());
-        const amrex::BoxArray cba_Ez = amrex::convert(cba, WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect());
-        WarpX::AllocInitMultiFab(pml_E_cp[0], cba_Ex, cdm, ncompe, nge, "pml_E_cp[x]", 0.0_rt);
-        WarpX::AllocInitMultiFab(pml_E_cp[1], cba_Ey, cdm, ncompe, nge, "pml_E_cp[y]", 0.0_rt);
-        WarpX::AllocInitMultiFab(pml_E_cp[2], cba_Ez, cdm, ncompe, nge, "pml_E_cp[z]", 0.0_rt);
+        const amrex::BoxArray cba_Ex = amrex::convert(cba, Artemis::GetInstance().getEfield_cp(1,0).ixType().toIntVect());
+        const amrex::BoxArray cba_Ey = amrex::convert(cba, Artemis::GetInstance().getEfield_cp(1,1).ixType().toIntVect());
+        const amrex::BoxArray cba_Ez = amrex::convert(cba, Artemis::GetInstance().getEfield_cp(1,2).ixType().toIntVect());
+        Artemis::AllocInitMultiFab(pml_E_cp[0], cba_Ex, cdm, ncompe, nge, "pml_E_cp[x]", 0.0_rt);
+        Artemis::AllocInitMultiFab(pml_E_cp[1], cba_Ey, cdm, ncompe, nge, "pml_E_cp[y]", 0.0_rt);
+        Artemis::AllocInitMultiFab(pml_E_cp[2], cba_Ez, cdm, ncompe, nge, "pml_E_cp[z]", 0.0_rt);
 
-        const amrex::BoxArray cba_Bx = amrex::convert(cba, WarpX::GetInstance().getBfield_cp(1,0).ixType().toIntVect());
-        const amrex::BoxArray cba_By = amrex::convert(cba, WarpX::GetInstance().getBfield_cp(1,1).ixType().toIntVect());
-        const amrex::BoxArray cba_Bz = amrex::convert(cba, WarpX::GetInstance().getBfield_cp(1,2).ixType().toIntVect());
-        WarpX::AllocInitMultiFab(pml_B_cp[0], cba_Bx, cdm, ncompb, ngb, "pml_B_cp[x]", 0.0_rt);
-        WarpX::AllocInitMultiFab(pml_B_cp[1], cba_By, cdm, ncompb, ngb, "pml_B_cp[y]", 0.0_rt);
-        WarpX::AllocInitMultiFab(pml_B_cp[2], cba_Bz, cdm, ncompb, ngb, "pml_B_cp[z]", 0.0_rt);
+        const amrex::BoxArray cba_Bx = amrex::convert(cba, Artemis::GetInstance().getBfield_cp(1,0).ixType().toIntVect());
+        const amrex::BoxArray cba_By = amrex::convert(cba, Artemis::GetInstance().getBfield_cp(1,1).ixType().toIntVect());
+        const amrex::BoxArray cba_Bz = amrex::convert(cba, Artemis::GetInstance().getBfield_cp(1,2).ixType().toIntVect());
+        Artemis::AllocInitMultiFab(pml_B_cp[0], cba_Bx, cdm, ncompb, ngb, "pml_B_cp[x]", 0.0_rt);
+        Artemis::AllocInitMultiFab(pml_B_cp[1], cba_By, cdm, ncompb, ngb, "pml_B_cp[y]", 0.0_rt);
+        Artemis::AllocInitMultiFab(pml_B_cp[2], cba_Bz, cdm, ncompb, ngb, "pml_B_cp[z]", 0.0_rt);
 
-#ifdef WARPX_MAG_LLG
-        const amrex::BoxArray cba_Hx = amrex::convert(cba, WarpX::GetInstance().getHfield_cp(1,0).ixType().toIntVect());
-        const amrex::BoxArray cba_Hy = amrex::convert(cba, WarpX::GetInstance().getHfield_cp(1,1).ixType().toIntVect());
-        const amrex::BoxArray cba_Hz = amrex::convert(cba, WarpX::GetInstance().getHfield_cp(1,2).ixType().toIntVect());
-        WarpX::AllocInitMultiFab(pml_H_cp[0], cba_Hx, cdm, 2, ngb, "pml_H_cp[x]");
-        WarpX::AllocInitMultiFab(pml_H_cp[1], cba_Hy, cdm, 2, ngb, "pml_H_cp[y]");
-        WarpX::AllocInitMultiFab(pml_H_cp[2], cba_Hz, cdm, 2, ngb, "pml_H_cp[z]");
+#ifdef ARTEMIS_MAG_LLG
+        const amrex::BoxArray cba_Hx = amrex::convert(cba, Artemis::GetInstance().getHfield_cp(1,0).ixType().toIntVect());
+        const amrex::BoxArray cba_Hy = amrex::convert(cba, Artemis::GetInstance().getHfield_cp(1,1).ixType().toIntVect());
+        const amrex::BoxArray cba_Hz = amrex::convert(cba, Artemis::GetInstance().getHfield_cp(1,2).ixType().toIntVect());
+        Artemis::AllocInitMultiFab(pml_H_cp[0], cba_Hx, cdm, 2, ngb, "pml_H_cp[x]");
+        Artemis::AllocInitMultiFab(pml_H_cp[1], cba_Hy, cdm, 2, ngb, "pml_H_cp[y]");
+        Artemis::AllocInitMultiFab(pml_H_cp[2], cba_Hz, cdm, 2, ngb, "pml_H_cp[z]");
 #endif
 
         // Allocating macroproperties in pml at cell-centers
-        if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+        if (Artemis::em_solver_medium == MediumForEM::Macroscopic) {
             pml_eps_cp = std::make_unique<MultiFab>(cba, dm, 1, nge);
             pml_mu_cp = std::make_unique<MultiFab>(cba, dm, 1, nge);
             pml_sigma_cp = std::make_unique<MultiFab>(cba, dm, 1, nge);
 
             // Initializing macroparameter multifab //
-            auto& warpx = WarpX::GetInstance();
-            auto& macroscopic_properties = warpx.m_macroscopic_properties;
+            auto& artemis = Artemis::GetInstance();
+            auto& macroscopic_properties = artemis.m_macroscopic_properties;
 
             // Initialize sigma, conductivity
             if (macroscopic_properties->m_sigma_s == "constant") {
@@ -978,7 +978,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         if (m_dive_cleaning)
         {
             const amrex::BoxArray cba_F_nodal = amrex::convert(cba, amrex::IntVect::TheNodeVector());
-            WarpX::AllocInitMultiFab(pml_F_cp, cba_F_nodal, cdm, 3, ngf, "pml_F_cp", 0.0_rt);
+            Artemis::AllocInitMultiFab(pml_F_cp, cba_F_nodal, cdm, 3, ngf, "pml_F_cp", 0.0_rt);
         }
 
         if (m_divb_cleaning)
@@ -988,24 +988,24 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                 (grid_type == GridType::Collocated) ? amrex::IntVect::TheNodeVector()
                                                     : amrex::IntVect::TheCellVector();
             const amrex::BoxArray cba_G_nodal = amrex::convert(cba, G_nodal_flag);
-            WarpX::AllocInitMultiFab( pml_G_cp, cba_G_nodal, cdm, 3, ngf, "pml_G_cp", 0.0_rt);
+            Artemis::AllocInitMultiFab( pml_G_cp, cba_G_nodal, cdm, 3, ngf, "pml_G_cp", 0.0_rt);
         }
 
-        const amrex::BoxArray cba_jx = amrex::convert(cba, WarpX::GetInstance().getcurrent_cp(1,0).ixType().toIntVect());
-        const amrex::BoxArray cba_jy = amrex::convert(cba, WarpX::GetInstance().getcurrent_cp(1,1).ixType().toIntVect());
-        const amrex::BoxArray cba_jz = amrex::convert(cba, WarpX::GetInstance().getcurrent_cp(1,2).ixType().toIntVect());
-        WarpX::AllocInitMultiFab(pml_j_cp[0], cba_jx, cdm, 1, ngb, "pml_j_cp[x]", 0.0_rt);
-        WarpX::AllocInitMultiFab(pml_j_cp[1], cba_jy, cdm, 1, ngb, "pml_j_cp[y]", 0.0_rt);
-        WarpX::AllocInitMultiFab(pml_j_cp[2], cba_jz, cdm, 1, ngb, "pml_j_cp[z]", 0.0_rt);
+        const amrex::BoxArray cba_jx = amrex::convert(cba, Artemis::GetInstance().getcurrent_cp(1,0).ixType().toIntVect());
+        const amrex::BoxArray cba_jy = amrex::convert(cba, Artemis::GetInstance().getcurrent_cp(1,1).ixType().toIntVect());
+        const amrex::BoxArray cba_jz = amrex::convert(cba, Artemis::GetInstance().getcurrent_cp(1,2).ixType().toIntVect());
+        Artemis::AllocInitMultiFab(pml_j_cp[0], cba_jx, cdm, 1, ngb, "pml_j_cp[x]", 0.0_rt);
+        Artemis::AllocInitMultiFab(pml_j_cp[1], cba_jy, cdm, 1, ngb, "pml_j_cp[y]", 0.0_rt);
+        Artemis::AllocInitMultiFab(pml_j_cp[2], cba_jz, cdm, 1, ngb, "pml_j_cp[z]", 0.0_rt);
 
         single_domain_box = is_single_box_domain ? cdomain : Box();
         sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(),
                                                    cncells, cdelta, single_domain_box, v_sigma_sb);
 
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
-#ifndef WARPX_USE_PSATD
+        if (Artemis::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+#ifndef ARTEMIS_USE_PSATD
             amrex::ignore_unused(dt);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(false,
                 "PML: PSATD solver selected but not built.");
 #else
             // Flags passed to the spectral solver constructor
@@ -1107,7 +1107,7 @@ PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& 
             // The check is only needed along the axis where PMLs are being used.
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 if (do_pml_Lo[idim] || do_pml_Hi[idim]) {
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                         grid_bx.length(idim) > ncell[idim],
                         "Consider using larger amr.blocking_factor with PMLs");
                 }
@@ -1119,7 +1119,7 @@ PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& 
         bx &= domain;
 
         Vector<Box> bndryboxes;
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         int kbegin = -1, kend = 1;
 #else
         int kbegin =  0, kend = 0;
@@ -1199,7 +1199,7 @@ PML::GetB_fp ()
     return {pml_B_fp[0].get(), pml_B_fp[1].get(), pml_B_fp[2].get()};
 }
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 std::array<MultiFab*,3>
 PML::GetH_fp ()
 {
@@ -1225,7 +1225,7 @@ PML::GetB_cp ()
     return {pml_B_cp[0].get(), pml_B_cp[1].get(), pml_B_cp[2].get()};
 }
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 std::array<MultiFab*,3>
 PML::GetH_cp ()
 {
@@ -1318,7 +1318,7 @@ void PML::Exchange (const std::array<amrex::MultiFab*,3>& mf_pml,
     if (mf_pml[2] && mf[2]) Exchange(*mf_pml[2], *mf[2], geom, do_pml_in_domain);
 }
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 void
 PML::ExchangeH (const std::array<amrex::MultiFab*,3>& H_fp,
                 const std::array<amrex::MultiFab*,3>& H_cp,
@@ -1414,7 +1414,7 @@ void
 PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
                 int do_pml_in_domain)
 {
-    WARPX_PROFILE("PML::Exchange");
+    ARTEMIS_PROFILE("PML::Exchange");
 
     const IntVect& ngr = reg.nGrowVect();
     const IntVect& ngp = pml.nGrowVect();
@@ -1441,7 +1441,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         // Valid cells of the PML and of the regular grid overlap
         // Copy from valid cells of the PML to valid cells of the regular grid
         ablastr::utils::communication::ParallelCopy(reg, totpmlmf, 0, 0, 1, IntVect(0), IntVect(0),
-                                                    WarpX::do_single_precision_comms,
+                                                    Artemis::do_single_precision_comms,
                                                     period);
     } else {
         // Valid cells of the PML only overlap with guard cells of regular grid
@@ -1451,7 +1451,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         if (ngr.max() > 0) {
             MultiFab::Copy(tmpregmf, reg, 0, 0, 1, ngr);
             ablastr::utils::communication::ParallelCopy(tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr,
-                                   WarpX::do_single_precision_comms,
+                                   Artemis::do_single_precision_comms,
                                                         period);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -1486,11 +1486,11 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         // copy the PML (this is order to avoid overwriting PML valid cells,
         // in the next `ParallelCopy`)
         ablastr::utils::communication::ParallelCopy(tmpregmf, pml, 0, 0, ncp, IntVect(0), IntVect(0),
-                                                    WarpX::do_single_precision_comms,
+                                                    Artemis::do_single_precision_comms,
                                                     period);
     }
     ablastr::utils::communication::ParallelCopy(pml, tmpregmf, 0, 0, ncp, IntVect(0), ngp,
-                                                WarpX::do_single_precision_comms, period);
+                                                Artemis::do_single_precision_comms, period);
 }
 
 
@@ -1501,7 +1501,7 @@ PML::CopyToPML (MultiFab& pml, MultiFab& reg, const Geometry& geom)
   const auto& period = geom.periodicity();
 
     ablastr::utils::communication::ParallelCopy(pml, reg, 0, 0, 1, IntVect(0), ngp,
-                                                WarpX::do_single_precision_comms, period);
+                                                Artemis::do_single_precision_comms, period);
 }
 
 void
@@ -1527,13 +1527,13 @@ PML::FillBoundaryE (PatchType patch_type)
     {
         const auto& period = m_geom->periodicity();
         Vector<MultiFab*> mf{pml_E_fp[0].get(),pml_E_fp[1].get(),pml_E_fp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, Artemis::do_single_precision_comms, period);
     }
     else if (patch_type == PatchType::coarse && pml_E_cp[0] && pml_E_cp[0]->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
         Vector<MultiFab*> mf{pml_E_cp[0].get(),pml_E_cp[1].get(),pml_E_cp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, Artemis::do_single_precision_comms, period);
     }
 }
 
@@ -1551,17 +1551,17 @@ PML::FillBoundaryB (PatchType patch_type)
     {
         const auto& period = m_geom->periodicity();
         Vector<MultiFab*> mf{pml_B_fp[0].get(),pml_B_fp[1].get(),pml_B_fp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, Artemis::do_single_precision_comms, period);
     }
     else if (patch_type == PatchType::coarse && pml_B_cp[0])
     {
         const auto& period = m_cgeom->periodicity();
         Vector<MultiFab*> mf{pml_B_cp[0].get(),pml_B_cp[1].get(),pml_B_cp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, Artemis::do_single_precision_comms, period);
     }
 }
 
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
 void
 PML::FillBoundaryH ()
 {
@@ -1600,12 +1600,12 @@ PML::FillBoundaryF (PatchType patch_type)
     if (patch_type == PatchType::fine && pml_F_fp && pml_F_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_F_fp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_F_fp, Artemis::do_single_precision_comms, period);
     }
     else if (patch_type == PatchType::coarse && pml_F_cp && pml_F_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_F_cp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_F_cp, Artemis::do_single_precision_comms, period);
     }
 }
 
@@ -1622,12 +1622,12 @@ PML::FillBoundaryG (PatchType patch_type)
     if (patch_type == PatchType::fine && pml_G_fp && pml_G_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_G_fp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_G_fp, Artemis::do_single_precision_comms, period);
     }
     else if (patch_type == PatchType::coarse && pml_G_cp && pml_G_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_G_cp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_G_cp, Artemis::do_single_precision_comms, period);
     }
 }
 
@@ -1642,7 +1642,7 @@ PML::CheckPoint (const std::string& dir) const
         VisMF::AsyncWrite(*pml_B_fp[0], dir+"_Bx_fp");
         VisMF::AsyncWrite(*pml_B_fp[1], dir+"_By_fp");
         VisMF::AsyncWrite(*pml_B_fp[2], dir+"_Bz_fp");
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
         VisMF::AsyncWrite(*pml_H_fp[0], dir+"_Hx_fp");
         VisMF::AsyncWrite(*pml_H_fp[1], dir+"_Hy_fp");
         VisMF::AsyncWrite(*pml_H_fp[2], dir+"_Hz_fp");
@@ -1657,7 +1657,7 @@ PML::CheckPoint (const std::string& dir) const
         VisMF::AsyncWrite(*pml_B_cp[0], dir+"_Bx_cp");
         VisMF::AsyncWrite(*pml_B_cp[1], dir+"_By_cp");
         VisMF::AsyncWrite(*pml_B_cp[2], dir+"_Bz_cp");
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
         VisMF::AsyncWrite(*pml_H_cp[0], dir+"_Hx_cp");
         VisMF::AsyncWrite(*pml_H_cp[1], dir+"_Hy_cp");
         VisMF::AsyncWrite(*pml_H_cp[2], dir+"_Hz_cp");
@@ -1676,7 +1676,7 @@ PML::Restart (const std::string& dir)
         VisMF::Read(*pml_B_fp[0], dir+"_Bx_fp");
         VisMF::Read(*pml_B_fp[1], dir+"_By_fp");
         VisMF::Read(*pml_B_fp[2], dir+"_Bz_fp");
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
         VisMF::Read(*pml_H_fp[0], dir+"_Hx_fp");
         VisMF::Read(*pml_H_fp[1], dir+"_Hy_fp");
         VisMF::Read(*pml_H_fp[2], dir+"_Hz_fp");
@@ -1691,7 +1691,7 @@ PML::Restart (const std::string& dir)
         VisMF::Read(*pml_B_cp[0], dir+"_Bx_cp");
         VisMF::Read(*pml_B_cp[1], dir+"_By_cp");
         VisMF::Read(*pml_B_cp[2], dir+"_Bz_cp");
-#ifdef WARPX_MAG_LLG
+#ifdef ARTEMIS_MAG_LLG
         VisMF::Read(*pml_H_cp[0], dir+"_Hx_cp");
         VisMF::Read(*pml_H_cp[1], dir+"_Hy_cp");
         VisMF::Read(*pml_H_cp[2], dir+"_Hz_cp");
@@ -1699,7 +1699,7 @@ PML::Restart (const std::string& dir)
     }
 }
 
-#ifdef WARPX_USE_PSATD
+#ifdef ARTEMIS_USE_PSATD
 void
 PML::PushPSATD (const int lev) {
 
@@ -1736,7 +1736,7 @@ PushPMLPSATDSinglePatch (
     solver.ForwardTransform(lev, *pml_B[2], Idx.Bzx, PMLComp::zx);
     solver.ForwardTransform(lev, *pml_B[2], Idx.Bzy, PMLComp::zy);
 
-    // WarpX::do_pml_dive_cleaning = true
+    // Artemis::do_pml_dive_cleaning = true
     if (pml_F)
     {
         solver.ForwardTransform(lev, *pml_E[0], Idx.Exx, PMLComp::xx);
@@ -1747,7 +1747,7 @@ PushPMLPSATDSinglePatch (
         solver.ForwardTransform(lev, *pml_F, Idx.Fz, PMLComp::z);
     }
 
-    // WarpX::do_pml_divb_cleaning = true
+    // Artemis::do_pml_divb_cleaning = true
     if (pml_G)
     {
         solver.ForwardTransform(lev, *pml_B[0], Idx.Bxx, PMLComp::xx);
@@ -1775,7 +1775,7 @@ PushPMLPSATDSinglePatch (
     solver.BackwardTransform(lev, *pml_B[2], Idx.Bzx, fill_guards, PMLComp::zx);
     solver.BackwardTransform(lev, *pml_B[2], Idx.Bzy, fill_guards, PMLComp::zy);
 
-    // WarpX::do_pml_dive_cleaning = true
+    // Artemis::do_pml_dive_cleaning = true
     if (pml_F)
     {
         solver.BackwardTransform(lev, *pml_E[0], Idx.Exx, fill_guards, PMLComp::xx);
@@ -1786,7 +1786,7 @@ PushPMLPSATDSinglePatch (
         solver.BackwardTransform(lev, *pml_F, Idx.Fz, fill_guards, PMLComp::z);
     }
 
-    // WarpX::do_pml_divb_cleaning = true
+    // Artemis::do_pml_divb_cleaning = true
     if (pml_G)
     {
         solver.BackwardTransform(lev, *pml_B[0], Idx.Bxx, fill_guards, PMLComp::xx);

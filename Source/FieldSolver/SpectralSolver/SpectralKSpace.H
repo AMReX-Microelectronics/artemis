@@ -1,16 +1,16 @@
 /* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
  *
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRAL_K_SPACE_H_
-#define WARPX_SPECTRAL_K_SPACE_H_
+#ifndef ARTEMIS_SPECTRAL_K_SPACE_H_
+#define ARTEMIS_SPECTRAL_K_SPACE_H_
 
 #include "SpectralKSpace_fwd.H"
 
-#include "Utils/WarpX_Complex.H"
+#include "Utils/Artemis_Complex.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_BoxArray.H>

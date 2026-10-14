@@ -2,7 +2,7 @@
  * Luca Fedeli, Maxence Thevenet, Revathi Jambunathan
  * Weiqun Zhang, levinem, Yinjian Zhao
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -13,11 +13,11 @@
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/RigidInjectedParticleContainer.H"
 #include "Particles/SpeciesPhysicalProperties.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ArtemisParticleContainer.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+#include "Utils/ArtemisConst.H"
+#include "Utils/ArtemisProfilerWrapper.H"
+#include "Artemis.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -48,7 +48,7 @@ LaserParticleContainer::ReadHeader (std::istream& is)
         m_updated_position.resize(3);
         for (int i = 0; i < 3; ++i) {
             is >> m_updated_position[i];
-            WarpX::GotoNextLine(is);
+            Artemis::GotoNextLine(is);
         }
     }
 }
@@ -72,7 +72,7 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
     // Read quantities that are specific to rigid-injected species
     int nlevs;
     is >> nlevs;
-    WarpX::GotoNextLine(is);
+    Artemis::GotoNextLine(is);
 
     AMREX_ASSERT(zinject_plane_levels.size() == 0);
 
@@ -81,10 +81,10 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
         amrex::Real zinject_plane_tmp;
         is >> zinject_plane_tmp;
         zinject_plane_levels.push_back(zinject_plane_tmp);
-        WarpX::GotoNextLine(is);
+        Artemis::GotoNextLine(is);
     }
     is >> vzbeam_ave_boosted;
-    WarpX::GotoNextLine(is);
+    Artemis::GotoNextLine(is);
 }
 
 void
@@ -107,7 +107,7 @@ void
 PhysicalParticleContainer::ReadHeader (std::istream& is)
 {
     is >> charge >> mass;
-    WarpX::GotoNextLine(is);
+    Artemis::GotoNextLine(is);
 }
 
 void
@@ -125,7 +125,7 @@ MultiParticleContainer::Restart (const std::string& dir)
     // - lasers_names
     // we don't need to read back the laser particle charge/mass
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
-        WarpXParticleContainer* pc = allcontainers.at(i).get();
+        ArtemisParticleContainer* pc = allcontainers.at(i).get();
         std::string header_fn = dir + "/" + species_names[i] + "/Header";
 
         Vector<char> fileCharPtr;
@@ -151,7 +151,7 @@ MultiParticleContainer::Restart (const std::string& dir)
 
         for (auto const& comp : pc->getParticleRuntimeComps()) {
             auto search = std::find(real_comp_names.begin(), real_comp_names.end(), comp.first);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 search != real_comp_names.end(),
                 "Species " + species_names[i]
                 + "needs runtime real component " +  comp.first
@@ -185,7 +185,7 @@ MultiParticleContainer::Restart (const std::string& dir)
 
         for (auto const& comp : pc->getParticleRuntimeiComps()) {
             auto search = std::find(int_comp_names.begin(), int_comp_names.end(), comp.first);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            ARTEMIS_ALWAYS_ASSERT_WITH_MESSAGE(
                 search != int_comp_names.end(),
                 "Species " + species_names[i] + "needs runtime int component " + comp.first
                 + ", but it was not found in the checkpoint file."

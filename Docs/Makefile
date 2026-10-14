@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = WarpX
+SPHINXPROJ    = Artemis
 SOURCEDIR     = source
 BUILDDIR      = build
 
@@ -14,7 +14,7 @@ help:
 
 clean:
 	rm -rf
-	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" amrex-doxygen-web.tag.xml warpx-doxygen-web.tag.xml
+	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" amrex-doxygen-web.tag.xml artemis-doxygen-web.tag.xml
 
 .PHONY: help Makefile
 

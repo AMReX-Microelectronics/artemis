@@ -1,11 +1,11 @@
-.. _debugging_warpx:
+.. _debugging_artemis:
 
 Debugging the code
 ==================
 
 Sometimes, the code does not give you the result that you are expecting.
 This can be due to a variety of reasons, from misunderstandings or changes in the :ref:`input parameters <running-cpp-parameters>`, system specific quirks, or bugs.
-You might also want to debug your code as you implement new features in WarpX during development.
+You might also want to debug your code as you implement new features in Artemis during development.
 
 This section gives a step-by-step guidance on how to systematically check what might be going wrong.
 
@@ -16,7 +16,7 @@ Debugging Workflow
 Try the following steps to debug a simulation:
 
 #. Check the output text file, usually called ``output.txt``: are there warnings or errors present?
-#. On an HPC system, look for the job output and error files, usually called ``WarpX.e...`` and ``WarpX.o...``.
+#. On an HPC system, look for the job output and error files, usually called ``Artemis.e...`` and ``Artemis.o...``.
    Read long messages from the top and follow potential guidance.
 #. If your simulation already created output data files:
    Check if they look reasonable before the problem occurred; are the initial conditions of the simulation as you expected?
@@ -38,10 +38,10 @@ Try the following steps to debug a simulation:
 
 Fore more information, see also the `AMReX Debugging Manual <https://amrex-codes.github.io/amrex/docs_html/Basics.html#debugging>`__.
 
-Last but not least: the community of WarpX developers and users can help if you get stuck.
+Last but not least: the community of Artemis developers and users can help if you get stuck.
 Collect your above findings, describe where and what you are running and how you installed the code, describe the issue you are seeing with details and input files used and what you already tried.
 Can you reproduce the problem with a smaller setup (less parallelism and/or less resolution)?
-Report these details in a :ref:`WarpX GitHub issue <contact>`.
+Report these details in a :ref:`Artemis GitHub issue <contact>`.
 
 
 Debuggers

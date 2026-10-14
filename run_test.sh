@@ -4,11 +4,11 @@
 # Luca Fedeli, Maxence Thevenet, Remi Lehe
 #
 #
-# This file is part of WarpX.
+# This file is part of Artemis.
 #
 # License: BSD-3-Clause-LBNL
 
-# This script runs some of WarpX's standard regression tests, but
+# This script runs some of Artemis's standard regression tests, but
 # without comparing the output to previously run simulations.
 # This checks that:
 # - The code compiles and runs without error
@@ -16,9 +16,9 @@
 # physically correct.
 
 # The tests can be influenced by environment variables:
-# Use `export WARPX_CI_DIM=3` or `export WARPX_CI_DIM=2` in order to
+# Use `export ARTEMIS_CI_DIM=3` or `export ARTEMIS_CI_DIM=2` in order to
 # select only the tests that correspond to this dimension
-# Use `export WARPX_TEST_ARCH=CPU` or `export WARPX_TEST_ARCH=GPU` in order
+# Use `export ARTEMIS_TEST_ARCH=CPU` or `export ARTEMIS_TEST_ARCH=GPU` in order
 # to run the tests on CPU or GPU respectively.
 
 set -eu -o pipefail
@@ -30,25 +30,25 @@ tests_arg=$*
 tests_run=${tests_arg:+--tests=${tests_arg}}
 
 # environment options
-WARPX_CI_TMP=${WARPX_CI_TMP:-""}
+ARTEMIS_CI_TMP=${ARTEMIS_CI_TMP:-""}
 
 # Remove contents and link to a previous test directory (intentionally two arguments)
 rm -rf test_dir/* test_dir
 # Create a temporary test directory
-if [ -z "${WARPX_CI_TMP}" ]; then
+if [ -z "${ARTEMIS_CI_TMP}" ]; then
     tmp_dir=$(mktemp --help >/dev/null 2>&1 && mktemp -d -t ci-XXXXXXXXXX || mktemp -d "${TMPDIR:-/tmp}"/ci-XXXXXXXXXX)
     if [ $? -ne 0 ]; then
         echo "Cannot create temporary directory"
         exit 1
     fi
 else
-    tmp_dir=${WARPX_CI_TMP}
+    tmp_dir=${ARTEMIS_CI_TMP}
 fi
 
-# Copy WarpX into current test directory
-rm -rf ${tmp_dir}/warpx
-mkdir -p ${tmp_dir}/warpx
-cp -r ./* ${tmp_dir}/warpx
+# Copy Artemis into current test directory
+rm -rf ${tmp_dir}/artemis
+mkdir -p ${tmp_dir}/artemis
+cp -r ./* ${tmp_dir}/artemis
 
 # Link the test directory
 ln -s ${tmp_dir} test_dir
@@ -67,12 +67,12 @@ python3 -m pip install --upgrade cmake
 #   https://github.com/mpi4py/mpi4py/pull/159
 #   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
 export SETUPTOOLS_USE_DISTUTILS="stdlib"
-python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
+python3 -m pip install --upgrade -r artemis/Regression/requirements.txt
 
-# Clone AMReX and warpx-data
+# Clone AMReX and artemis-data
 git clone https://github.com/AMReX-Codes/amrex.git
 cd amrex && git checkout --detach 9d2f762f4897b5f585544baf87a19edd0f0c9560 && cd -
-# warpx-data contains various required data sets
+# artemis-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 # openPMD-example-datasets contains various required data sets
 mkdir -p openPMD-example-datasets
@@ -85,11 +85,11 @@ cd -
 git clone https://github.com/AMReX-Codes/regression_testing.git
 
 # Prepare regression tests
-mkdir -p rt-WarpX/WarpX-benchmarks
-cd warpx/Regression
+mkdir -p rt-Artemis/Artemis-benchmarks
+cd artemis/Regression
 echo "cd $PWD"
 python3 prepare_file_ci.py
-cp ci-tests.ini ../../rt-WarpX
+cp ci-tests.ini ../../rt-Artemis
 cp -r Checksum ../../regression_testing/
 
 # Run tests
@@ -97,10 +97,10 @@ cd ../../regression_testing/
 echo "cd $PWD"
 # run only tests specified in variable tests_arg (single test or multiple tests)
 if [[ ! -z "${tests_arg}" ]]; then
-  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all "${tests_run}"
+  python3 regtest.py ../rt-Artemis/ci-tests.ini --no_update all "${tests_run}"
 # run all tests (variables tests_arg and tests_run are empty)
 else
-  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all
+  python3 regtest.py ../rt-Artemis/ci-tests.ini --no_update all
 fi
 
 # clean up python virtual environment

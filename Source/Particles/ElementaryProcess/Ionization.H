@@ -1,7 +1,7 @@
 /* Copyright 2019-2020 Andrew Myers, Axel Huebl,
  * Maxence Thevenet
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -11,8 +11,8 @@
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXConst.H"
+#include "Particles/ArtemisParticleContainer.H"
+#include "Utils/ArtemisConst.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -63,7 +63,7 @@ struct IonizationFilterFunc
 
     amrex::Dim3 m_lo;
 
-    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
+    IonizationFilterFunc (const ArtemisParIter& a_pti, int lev, amrex::IntVect ngEB,
                           amrex::FArrayBox const& exfab,
                           amrex::FArrayBox const& eyfab,
                           amrex::FArrayBox const& ezfab,

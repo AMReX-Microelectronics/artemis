@@ -1,11 +1,11 @@
 /* Copyright 2022 David Grote
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_COLLISION_BACKGROUNSTOPPING_H_
-#define WARPX_PARTICLES_COLLISION_BACKGROUNSTOPPING_H_
+#ifndef ARTEMIS_PARTICLES_COLLISION_BACKGROUNSTOPPING_H_
+#define ARTEMIS_PARTICLES_COLLISION_BACKGROUNSTOPPING_H_
 
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Collision/CollisionBase.H"
@@ -46,7 +46,7 @@ public:
      * @param species_charge charge of the active species
      *
      */
-    void doBackgroundStoppingOnElectronsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
+    void doBackgroundStoppingOnElectronsWithinTile (ArtemisParIter& pti, amrex::Real dt, amrex::Real t,
                                                     amrex::ParticleReal species_mass, amrex::ParticleReal species_charge);
 
     /** Perform the stopping calculation within a tile for stopping on ions
@@ -58,7 +58,7 @@ public:
      * @param species_charge charge of the active species
      *
      */
-    void doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
+    void doBackgroundStoppingOnIonsWithinTile (ArtemisParIter& pti, amrex::Real dt, amrex::Real t,
                                                amrex::ParticleReal species_mass, amrex::ParticleReal species_charge);
 
 private:
@@ -75,4 +75,4 @@ private:
 
 };
 
-#endif // WARPX_PARTICLES_COLLISION_BACKGROUNSTOPPING_H_
+#endif // ARTEMIS_PARTICLES_COLLISION_BACKGROUNSTOPPING_H_

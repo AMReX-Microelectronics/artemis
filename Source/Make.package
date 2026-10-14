@@ -2,7 +2,7 @@ ifneq ($(USE_PYTHON_MAIN),TRUE)
   CEXE_sources += main.cpp
 endif
 
-CEXE_sources += WarpX.cpp
+CEXE_sources += Artemis.cpp
 
-INCLUDE_LOCATIONS += $(WARPX_HOME)/Source
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source
+INCLUDE_LOCATIONS += $(ARTEMIS_HOME)/Source
+VPATH_LOCATIONS   += $(ARTEMIS_HOME)/Source

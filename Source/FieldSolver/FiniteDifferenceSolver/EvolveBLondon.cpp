@@ -1,21 +1,21 @@
 /* Copyright 2020 Remi Lehe
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
 #include "FiniteDifferenceSolver.H"
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #else
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
-#include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
+#include "Utils/ArtemisAlgorithmSelection.H"
+#include "Utils/ArtemisConst.H"
+#include "Artemis.H"
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -59,7 +59,7 @@ void FiniteDifferenceSolver::EvolveBLondon (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-#ifdef WARPX_DIM_RZ
+#ifdef ARTEMIS_DIM_RZ
     amrex::ignore_unused(Bfield, current, Gfield, face_areas,
                          lev, dt, penetration_depth);
     amrex::Abort("EvolveBLondon: RZ not implemented");
@@ -86,7 +86,7 @@ void FiniteDifferenceSolver::EvolveBLondon (
 }
 
 
-#ifndef WARPX_DIM_RZ
+#ifndef ARTEMIS_DIM_RZ
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBLondonCartesian (
@@ -95,14 +95,14 @@ void FiniteDifferenceSolver::EvolveBLondonCartesian (
     std::unique_ptr<amrex::MultiFab> const& /* Gfield */,
     int lev, amrex::Real const /* dt */, amrex::Real const penetration_depth ) {
 
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = Artemis::getCosts(lev);
     amrex::Real const lambdasq_mu0_fac = penetration_depth * penetration_depth * PhysConst::mu0;
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
         }
@@ -157,7 +157,7 @@ void FiniteDifferenceSolver::EvolveBLondonCartesian (
             }
         );
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && Artemis::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -167,6 +167,6 @@ void FiniteDifferenceSolver::EvolveBLondonCartesian (
 }
 
 
-#else // corresponds to ifndef WARPX_DIM_RZ
+#else // corresponds to ifndef ARTEMIS_DIM_RZ
 
-#endif // corresponds to ifndef WARPX_DIM_RZ
+#endif // corresponds to ifndef ARTEMIS_DIM_RZ

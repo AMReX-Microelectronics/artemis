@@ -8,8 +8,8 @@
 #   https://spack.readthedocs.io/en/latest/environments.html
 #
 # Inside the directory of this file
-#   spack env create warpx-openmp-dev spack-ubuntu-openmp.yaml
-#   spack env activate warpx-openmp-dev
+#   spack env create artemis-openmp-dev spack-ubuntu-openmp.yaml
+#   spack env activate artemis-openmp-dev
 #   spack install  # only needed the first time
 #
 spack:

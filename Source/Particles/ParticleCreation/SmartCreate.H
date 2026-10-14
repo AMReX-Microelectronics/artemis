@@ -1,6 +1,6 @@
 /* Copyright 2019-2020 Luca Fedeli, Neil Zaim
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -46,11 +46,11 @@ struct SmartCreate
         const int cpu = 0,
         const int id = 0) const noexcept
     {
-#if defined(WARPX_DIM_3D)
+#if defined(ARTEMIS_DIM_3D)
         prt.m_aos[i_prt].pos(0) = x;
         prt.m_aos[i_prt].pos(1) = y;
         prt.m_aos[i_prt].pos(2) = z;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(ARTEMIS_DIM_XZ) || defined(ARTEMIS_DIM_RZ)
         prt.m_aos[i_prt].pos(0) = x;
         prt.m_aos[i_prt].pos(1) = z;
         amrex::ignore_unused(y);

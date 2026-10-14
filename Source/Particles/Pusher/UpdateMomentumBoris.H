@@ -1,12 +1,12 @@
 /* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
  * Weiqun Zhang
  *
- * This file is part of WarpX.
+ * This file is part of Artemis.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
-#define WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
+#ifndef ARTEMIS_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
+#define ARTEMIS_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
 
 #include <AMReX_REAL.H>
 
@@ -52,4 +52,4 @@ void UpdateMomentumBoris(
     uz += econst*Ez;
 }
 
-#endif // WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
+#endif // ARTEMIS_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
