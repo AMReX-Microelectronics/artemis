@@ -234,7 +234,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             capacitor_z_arr = lumped_capacitor_z_mf->array(mfi);
         }
 
-        
+
 #ifndef WARPX_MAG_LLG
         amrex::Array4<amrex::Real> const& mu_arr = mu_mf.array(mfi);
 #endif
@@ -281,9 +281,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                                                                     Ex_stag, macro_cr, i, j, k, scomp);
 
                 // Extra conductance term from a lumped resistor on Ex edges
-                amrex::Real const fac1 = (dt/epsilon_interp) * 
+                amrex::Real const fac1 = (dt/epsilon_interp) *
                                          ( sigma_interp + ((use_lumped_resistor && resistor_x_arr(i,j,k)!=0._rt)
-                                            ? dx[0] / (dx[1]*dx[2]*resistor_x_arr(i,j,k)) 
+                                            ? dx[0] / (dx[1]*dx[2]*resistor_x_arr(i,j,k))
                                             : 0._rt) );
 
                 // Extra term from a lumped capacitor on Ex edges
@@ -296,7 +296,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
                 Ex(i, j, k) = alpha_compact * Ex(i, j, k)
                             + dt/epsilon_interp * beta_compact * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
-                                       + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)) 
+                                       + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0))
                             - dt/epsilon_interp * beta_compact * jx(i, j, k);
             },
 
@@ -318,11 +318,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                                                                     Ey_stag, macro_cr, i, j, k, scomp);
 
                 // Extra conductance term from a lumped resistor on Ey edges
-                amrex::Real const fac1 = (dt/epsilon_interp) * 
+                amrex::Real const fac1 = (dt/epsilon_interp) *
                                          ( sigma_interp + ((use_lumped_resistor && resistor_y_arr(i,j,k)!=0._rt)
-                                            ? dx[1] / (dx[0]*dx[2]*resistor_y_arr(i,j,k)) 
+                                            ? dx[1] / (dx[0]*dx[2]*resistor_y_arr(i,j,k))
                                             : 0._rt) );
-                // if (use_lumped_resistor && resistor_y_arr(i,j,k)!=0._rt){ 
+                // if (use_lumped_resistor && resistor_y_arr(i,j,k)!=0._rt){
                 //     printf("fac1=%f\n", fac1);
                 // }
 
@@ -336,7 +336,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
                 Ey(i, j, k) = alpha_compact * Ey(i, j, k)
                             + dt/epsilon_interp * beta_compact * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
-                                       + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0)) 
+                                       + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0))
                             - dt/epsilon_interp * beta_compact * jy(i, j, k);
             },
 
@@ -353,22 +353,22 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                                                                     Ez_stag, macro_cr, i, j, k, scomp);
 
                 // Extra conductance term from a lumped resistor on Ez edges
-                amrex::Real const fac1 = (dt/epsilon_interp) * 
+                amrex::Real const fac1 = (dt/epsilon_interp) *
                                          ( sigma_interp + ((use_lumped_resistor && resistor_z_arr(i,j,k)!=0._rt)
-                                            ? dx[2] / (dx[0]*dx[1]*resistor_z_arr(i,j,k)) 
+                                            ? dx[2] / (dx[0]*dx[1]*resistor_z_arr(i,j,k))
                                             : 0._rt) );
-                
+
                 // Extra term from a lumped capacitor on Ez edges
                 amrex::Real const fac2 = (use_lumped_capacitor && capacitor_z_arr(i,j,k)!=0._rt)
                                             ? capacitor_z_arr(i,j,k) * dx[2] / (dx[0]*dx[1]*epsilon_interp)
                                             : 0._rt;
-                
+
                 amrex::Real alpha_compact = T_MacroAlgo::alpha_compact(fac1, fac2);
                 amrex::Real beta_compact = T_MacroAlgo::beta_compact(fac1, fac2);
 
                 Ez(i, j, k) = alpha_compact * Ez(i, j, k)
                             + dt/epsilon_interp * beta_compact * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
-                                       + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0)) 
+                                       + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0))
                             - dt/epsilon_interp * beta_compact * jz(i, j, k);
             }
         );

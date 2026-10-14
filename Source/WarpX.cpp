@@ -1036,7 +1036,7 @@ WarpX::ReadParameters ()
         }
 
         pp_warpx.query("use_lumped_resistor", use_lumped_resistor);
-        pp_warpx.query("use_lumped_capacitor", use_lumped_capacitor);    
+        pp_warpx.query("use_lumped_capacitor", use_lumped_capacitor);
 
 #ifdef WARPX_MAG_LLG
         // Read the value of the time advancement scheme of M field

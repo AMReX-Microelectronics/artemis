@@ -322,7 +322,7 @@ public:
     static int use_lumped_inductor;
     static int use_lumped_resistor;
     static int use_lumped_capacitor;
-    
+
     //! Integer that corresponds to the order of the PSATD solution
     //! (whether the PSATD equations are derived from first-order or
     //! second-order solution)
