@@ -1,0 +1,127 @@
+# set up to duplicate perpendicular standing spin wave for exchange boundary condition demo
+# max step
+max_step = 5000000
+
+# number of grid points
+amr.n_cell = n_cellx n_celly n_cellz
+
+# Maximum allowable size of each subdomain
+amr.max_grid_size = grid_number
+amr.blocking_factor = 8
+
+amr.max_level = 0
+
+# Geometry
+geometry.coord_sys   = 0                     # 0: Cartesian
+geometry.prob_lo     =  -width/2 -length/2 -thickness
+geometry.prob_hi     =   width/2  length/2  thickness
+
+# Boundary condition
+boundary.field_lo = periodic periodic pec
+boundary.field_hi = periodic periodic pec
+warpx.serialize_ics = 1
+
+# Verbosity
+warpx.verbose = 1
+warpx.use_filter = 0
+warpx.cfl = 1000.0 # We can use a large cfl number here because the Maxwell equations are not included.
+warpx.mag_time_scheme_order = 2 # default 1
+warpx.mag_M_normalization = 1
+warpx.mag_LLG_coupling = 0
+warpx.mag_LLG_exchange_coupling = 1
+warpx.mag_LLG_anisotropy_coupling = 0
+
+# Algorithms
+algo.current_deposition = esirkepov
+algo.em_solver_medium = macroscopic # vacuum/macroscopic
+
+my_constants.thickness = 345.0e-9
+my_constants.width = 6900.0e-9
+my_constants.length = 6900.0e-9
+my_constants.n_cellx = 8
+my_constants.n_celly = 8
+my_constants.n_cellz = 256
+my_constants.grid_number = 256
+
+my_constants.epsilon_r = 13.0
+my_constants.pi = 3.14159265359
+my_constants.mu0 = 1.25663706212e-6
+my_constants.epsilon0 = 8.84e-12
+my_constants.Ms_ga = 1750.
+
+my_constants.flag_none = 0
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
+
+algo.macroscopic_sigma_method = laxwendroff # laxwendroff or backwardeuler
+macroscopic.sigma_function(x,y,z) = "0.0"
+macroscopic.epsilon_function(x,y,z) = "epsilon0 * epsilon_r"
+macroscopic.mu_function(x,y,z) = "mu0"
+
+#unit conversion: 1 Gauss = (1000/4pi) A/m
+macroscopic.mag_Ms_init_style = "parse_mag_Ms_function" # parse or "constant"
+macroscopic.mag_Ms_function(x,y,z) = "(z < thickness/2 + 1e-12) * (z > -thickness/2 - 1e-12) * Ms_ga*1000/4/pi" # in unit A/m
+
+macroscopic.mag_alpha_init_style = "parse_mag_alpha_function" # parse or "constant"
+macroscopic.mag_alpha_function(x,y,z) = "(z < thickness/2 + 1e-12) * (z > -thickness/2 - 1e-12) * 0.005" # alpha is unitless, typical values range from 1e-3 ~ 1e-5
+
+macroscopic.mag_gamma_init_style = "parse_mag_gamma_function" # parse or "constant"
+macroscopic.mag_gamma_function(x,y,z) = " -1.759e11 " # gyromagnetic ratio is constant for electrons in all materials
+
+macroscopic.mag_exchange_init_style = "parse_mag_exchange_function" # parse or "constant"
+macroscopic.mag_exchange_function(x,y,z) = "(z < thickness/2 + 1e-12) * (z > -thickness/2 - 1e-12) * 3.1e-12" # YIG
+
+#macroscopic.mag_anisotropy_init_style = "parse_mag_anisotropy_function" # parse or "constant"
+#macroscopic.mag_anisotropy_function(x,y,z) = "0.0" # Ku = mu0 * Ms * H_anis / 2.0, all fields in SI units, H_anis = 20 Oe
+
+macroscopic.mag_max_iter = 100 # maximum number of M iteration in each time step
+macroscopic.mag_tol = 1.e-6 # M magnitude relative error tolerance compared to previous iteration
+macroscopic.mag_normalized_error = 0.1 # if M magnitude relatively changes more than this value, raise a red flag
+#macroscopic.mag_LLG_anisotropy_axis = 0.0 1.0 0.0
+
+#################################
+############ FIELDS #############
+#################################
+my_constants.Hy_bias_oe = 300 # in Oe
+my_constants.Hx_rf_oe = 0.3 # in Oe
+my_constants.c = 299792458.
+my_constants.frequency = 2.5e9 # frequency of input microwave H
+my_constants.TP = 1/frequency
+my_constants.flag_none = 0
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
+
+#warpx.E_excitation_on_grid_style = "parse_E_excitation_grid_function"
+#warpx.Ex_excitation_grid_function(x,y,z,t) = "0.0"
+#warpx.Ey_excitation_grid_function(x,y,z,t) = "0.0"
+#warpx.Ez_excitation_grid_function(x,y,z,t) = "0.0"
+#warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
+# warpx.Ey_excitation_flag_function(x,y,z) = "flag_ss * (z > -domain_size/2.0 + thickness - domain_size/grid_number/2.0) * (z <= -domain_size/2.0 + thickness + domain_size/grid_number/2.0)"
+#warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
+#warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+
+#unit conversion: 1 Gauss = 1 Oersted = (1000/4pi) A/m
+#calculation of H_bias: H_bias (oe) = frequency / 2.8e6
+
+warpx.H_bias_excitation_on_grid_style = parse_h_bias_excitation_grid_function
+warpx.Hx_bias_excitation_grid_function(x,y,z,t) = "Hx_rf_oe * 1000/4/pi * (exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*frequency*t))" 
+#warpx.Hx_bias_excitation_grid_function(x,y,z,t) = "0.0"
+warpx.Hy_bias_excitation_grid_function(x,y,z,t) = "Hy_bias_oe * 1000/4/pi"
+warpx.Hz_bias_excitation_grid_function(x,y,z,t) = "0.0"
+
+warpx.Hx_bias_excitation_flag_function(x,y,z) = "flag_hs"
+warpx.Hy_bias_excitation_flag_function(x,y,z) = "flag_hs"
+warpx.Hz_bias_excitation_flag_function(x,y,z) = "flag_none"
+
+warpx.M_ext_grid_init_style = parse_M_ext_grid_function
+warpx.Mx_external_grid_function(x,y,z)= "0.0"
+warpx.My_external_grid_function(x,y,z)= " (z < thickness/2 + 1e-12) * (z > -thickness/2 - 1e-12) * Ms_ga*1000/4/pi "
+warpx.Mz_external_grid_function(x,y,z)= "0.0"
+
+
+# Diagnostics
+diagnostics.diags_names = plt
+plt.intervals = 500
+plt.diag_type = Full
+plt.fields_to_plot = Mx_xface Mx_yface Mx_zface My_xface My_yface My_zface Mz_xface Mz_yface Mz_zface
+plt.file_min_digits = 9
