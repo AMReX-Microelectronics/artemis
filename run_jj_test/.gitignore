@@ -1,0 +1,5 @@
+# Generated simulation data
+diags*/
+logs/
+metadata/
+results/

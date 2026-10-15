@@ -1,0 +1,162 @@
+################################
+####### GENERAL PARAMETERS ######
+#################################
+# Linear control: L_J + R + C at the same cell as the RCSJ case.
+# L_J = hbar/(2*e*Ic) with Ic=2e-9 A  =>  plasma freq matches linearized JJ.
+max_step = 2500
+
+amr.n_cell = n_cellx n_celly n_cellz
+amr.max_grid_size_x = max_grid_sizex
+amr.max_grid_size_y = max_grid_sizey
+amr.max_grid_size_z = max_grid_sizez
+amr.blocking_factor = blocking_factor
+amr.refine_grid_layout = 1
+
+geometry.dims = 3
+geometry.prob_lo = prob_lox prob_loy prob_loz
+geometry.prob_hi = prob_hix prob_hiy prob_hiz
+
+amr.max_level = 0
+
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 0
+warpx.cfl = cfl
+
+algo.em_solver_medium = macroscopic
+algo.macroscopic_sigma_method = laxwendroff
+algo.time_stepping_scheme = adi
+
+macroscopic.npy_k_index = 25
+macroscopic.sigma_npy_file = "artemis_crosstalk-v0p0_flipped.npy"
+macroscopic.sigma_npy_value = 1.e10
+algo.use_PEC_mask = 1
+macroscopic.mu_npy_file = "artemis_crosstalk-v0p0_flipped.npy"
+macroscopic.mu_npy_value = 1.25663706213e-06
+
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_si - sigma_0) * (z <= h_si)"
+macroscopic.epsilon_function(x,y,z) = "eps_0 + eps_0 * (eps_r_si - 1.) * (z <= h_si)"
+macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si)"
+
+#################################
+# Linear LRC (no Josephson): L = L_J = hbar/(2 e Ic)
+#################################
+algo.use_lumped_inductor = 1
+algo.use_josephson_junction = 0
+warpx.use_lumped_resistor = 1
+warpx.use_lumped_capacitor = 1
+
+inductor.inductor_x_function(x,y,z) = "L_jj * (x > x_jj - dx/2 - ddx) * (x < x_jj + dx/2 + ddx) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
+inductor.inductor_y_function(x,y,z) = "0."
+inductor.inductor_z_function(x,y,z) = "0."
+
+macroscopic.lumped_capacitor_x_function(x,y,z) = "C_jj * (x > x_jj - dx/2 - ddx) * (x < x_jj + dx/2 + ddx) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
+macroscopic.lumped_capacitor_y_function(x,y,z) = "0."
+macroscopic.lumped_capacitor_z_function(x,y,z) = "0."
+
+macroscopic.lumped_resistor_x_function(x,y,z) = "R_jj * (x > x_jj - dx/2 - ddx) * (x < x_jj + dx/2 + ddx) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
+macroscopic.lumped_resistor_y_function(x,y,z) = "0."
+macroscopic.lumped_resistor_z_function(x,y,z) = "0."
+
+#################################
+############ FIELDS #############
+#################################
+my_constants.n_cellx = 264
+my_constants.n_celly = 336
+my_constants.n_cellz = 50
+
+my_constants.max_grid_sizex = 264
+my_constants.max_grid_sizey = 336
+my_constants.max_grid_sizez = 50
+my_constants.blocking_factor = 2
+
+my_constants.prob_lox = 0.
+my_constants.prob_loy = 0.
+my_constants.prob_loz = 0.
+
+my_constants.prob_hix = 660.e-6
+my_constants.prob_hiy = 840.e-6
+my_constants.prob_hiz = 150.e-6
+
+my_constants.Lx = prob_hix - prob_lox
+my_constants.Ly = prob_hiy - prob_loy
+my_constants.Lz = prob_hiz - prob_loz
+
+my_constants.sigma_0 = 0.0
+my_constants.sigma_si = 0.
+my_constants.sigma_metal = 1.e10
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_si = 11.7
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_si = 1.0
+my_constants.mu_r_test = 0.999999
+
+my_constants.h_si = 75.e-6
+
+my_constants.pi = 3.14159265358979
+my_constants.cfl = 8.0
+my_constants.freq = 7.5e10
+my_constants.TP = 1./freq
+
+my_constants.dx = Lx / n_cellx
+my_constants.dy = Ly / n_celly
+my_constants.dz = Lz / n_cellz
+
+my_constants.ddx = dx/1.e6
+my_constants.ddy = dy/1.e6
+my_constants.ddz = dz/1.e6
+
+my_constants.flag_none = 0
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
+
+my_constants.x_jj = 330.e-6
+my_constants.y_jj = 425.e-6
+# Match RCSJ: L_J=hbar/(2e*Ic) with Ic=1e-7 A; tiny C
+my_constants.L_jj = 3.29106e-9
+my_constants.C_jj = 1.0e-25
+my_constants.R_jj = 5.0e7
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_ss * (x >= 297.5e-6) * (x <= 362.5e-6) * (z > h_si - ddz) * (z < h_si + ddz) * (y > 675.e-6 - ddy) * (y < 675.e-6 + ddy)"
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+
+warpx.Ex_excitation_grid_function(x,y,z,t) = "Edrive * exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) * (x >= 297.5e-6) * (x <= 362.5e-6) * (z > h_si - ddz) * (z < h_si + ddz) * (y > 675.e-6 - ddy) * (y < 675.e-6 + ddy)"
+warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+my_constants.Edrive = 40000.
+
+diagnostics.diags_names = chk
+chk.format = checkpoint
+chk.intervals = 100000
+chk.diag_type = Full
+chk.file_min_digits = 7
+
+warpx.reduced_diags_names = Eobs0 Eobs1
+
+my_constants.x0 = 330.e-6
+my_constants.y0 = 670.e-6
+my_constants.z0 = h_si
+Eobs0.type = RawEFieldReduction
+Eobs0.reduction_type = integral
+Eobs0.integration_type = volume
+Eobs0.intervals = 1
+Eobs0.reduced_function(x,y,z) = (x > x0 - dx/2-ddx) * (x < x0 + dx/2+ddx) * (y > y0 - dy/2-ddy) * (y < y0 + dy/2+ddy) * (z > z0 - dz/2-ddz) * (z < z0 + dz/2+ddz)
+
+my_constants.x1 = 330.e-6
+my_constants.y1 = 425.e-6
+my_constants.z1 = h_si
+Eobs1.type = RawEFieldReduction
+Eobs1.reduction_type = integral
+Eobs1.integration_type = volume
+Eobs1.intervals = 1
+Eobs1.reduced_function(x,y,z) = (x > x1 - dx/2-ddx) * (x < x1 + dx/2+ddx) * (y > y1 - dy/2-ddy) * (y < y1 + dy/2+ddy) * (z > z1 - dz/2-ddz) * (z < z1 + dz/2+ddz)
