@@ -36,6 +36,7 @@ MacroscopicProperties::MacroscopicProperties ()
 void
 MacroscopicProperties::ReadParameters ()
 {
+    auto &warpx = WarpX::GetInstance();
     ParmParse pp_macroscopic("macroscopic");
     // Since macroscopic maxwell solve is turned on,
     // user-defined sigma, mu, and epsilon are queried.
@@ -164,8 +165,37 @@ MacroscopicProperties::ReadParameters ()
             utils::parser::makeParser(m_str_mu_function,{"x","y","z"}));
     }
 
+
+    if (warpx.use_lumped_resistor == 1){
+        utils::parser::Store_parserString(pp_macroscopic, "lumped_resistor_x_function(x,y,z)", m_str_lumped_resistor_x_function);
+        m_lumped_resistor_x_parser = std::make_unique<amrex::Parser>(
+                                        utils::parser::makeParser(m_str_lumped_resistor_x_function,{"x","y","z"}));
+
+        utils::parser::Store_parserString(pp_macroscopic, "lumped_resistor_y_function(x,y,z)", m_str_lumped_resistor_y_function);
+        m_lumped_resistor_y_parser = std::make_unique<amrex::Parser>(
+                                        utils::parser::makeParser(m_str_lumped_resistor_y_function,{"x","y","z"}));
+
+        utils::parser::Store_parserString(pp_macroscopic, "lumped_resistor_z_function(x,y,z)", m_str_lumped_resistor_z_function);
+        m_lumped_resistor_z_parser = std::make_unique<amrex::Parser>(
+                                        utils::parser::makeParser(m_str_lumped_resistor_z_function,{"x","y","z"}));
+    }
+
+    if (warpx.use_lumped_capacitor == 1){
+        utils::parser::Store_parserString(pp_macroscopic, "lumped_capacitor_x_function(x,y,z)", m_str_lumped_capacitor_x_function);
+        m_lumped_capacitor_x_parser = std::make_unique<amrex::Parser>(
+                                        utils::parser::makeParser(m_str_lumped_capacitor_x_function,{"x","y","z"}));
+
+        utils::parser::Store_parserString(pp_macroscopic, "lumped_capacitor_y_function(x,y,z)", m_str_lumped_capacitor_y_function);
+        m_lumped_capacitor_y_parser = std::make_unique<amrex::Parser>(
+                                        utils::parser::makeParser(m_str_lumped_capacitor_y_function,{"x","y","z"}));
+
+        utils::parser::Store_parserString(pp_macroscopic, "lumped_capacitor_z_function(x,y,z)", m_str_lumped_capacitor_z_function);
+        m_lumped_capacitor_z_parser = std::make_unique<amrex::Parser>(
+                                        utils::parser::makeParser(m_str_lumped_capacitor_z_function,{"x","y","z"}));
+    }
+
 #ifdef WARPX_MAG_LLG
-    auto &warpx = WarpX::GetInstance();
+    // auto &warpx = WarpX::GetInstance();
     pp_macroscopic.get("mag_Ms_init_style", m_mag_Ms_s);
     if (m_mag_Ms_s == "constant") pp_macroscopic.get("mag_Ms", m_mag_Ms);
     // _mag_ such that it's clear the Ms variable is only meaningful for magnetic materials
@@ -251,6 +281,19 @@ MacroscopicProperties::InitData ()
     amrex::BoxArray ba = warpx.boxArray(lev);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     const amrex::IntVect ng_EB_alloc = warpx.getngEB();
+
+    // lumped elements are defined on edges, so we get the index type of the current
+    // which is defined on edges
+    amrex::IntVect jx_stag = warpx.get_pointer_current_fp(lev,0)->ixType().toIntVect();
+    amrex::IntVect jy_stag = warpx.get_pointer_current_fp(lev,1)->ixType().toIntVect();
+    amrex::IntVect jz_stag = warpx.get_pointer_current_fp(lev,2)->ixType().toIntVect();
+
+    for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        jx_IndexType[idim] = jx_stag[idim];
+        jy_IndexType[idim] = jy_stag[idim];
+        jz_IndexType[idim] = jz_stag[idim];
+    }
+
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
     m_sigma_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EB_alloc);
@@ -351,6 +394,26 @@ MacroscopicProperties::InitData ()
         if (!m_mu_npy_filename2.empty()) {
             InitializeMacroMultiFabFromNumpy(m_mu_mf.get(), m_mu_npy_filename2, lev, m_npy_k_index2, m_mu_npy_value);
         }
+    }
+
+    if (warpx.use_lumped_resistor == 1){
+        m_lumped_resistor_x_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jx_stag), dmap, 1, ng_EB_alloc);
+        m_lumped_resistor_y_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jy_stag), dmap, 1, ng_EB_alloc);
+        m_lumped_resistor_z_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jz_stag), dmap, 1, ng_EB_alloc);
+
+        InitializeMacroMultiFabUsingParser(m_lumped_resistor_x_mf.get(), m_lumped_resistor_x_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_lumped_resistor_y_mf.get(), m_lumped_resistor_y_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_lumped_resistor_z_mf.get(), m_lumped_resistor_z_parser->compile<3>(), lev);
+    }
+
+    if (warpx.use_lumped_capacitor == 1){
+        m_lumped_capacitor_x_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jx_stag), dmap, 1, ng_EB_alloc);
+        m_lumped_capacitor_y_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jy_stag), dmap, 1, ng_EB_alloc);
+        m_lumped_capacitor_z_mf = std::make_unique<amrex::MultiFab>(amrex::convert(ba,jz_stag), dmap, 1, ng_EB_alloc);
+
+        InitializeMacroMultiFabUsingParser(m_lumped_capacitor_x_mf.get(), m_lumped_capacitor_x_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_lumped_capacitor_y_mf.get(), m_lumped_capacitor_y_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_lumped_capacitor_z_mf.get(), m_lumped_capacitor_z_parser->compile<3>(), lev);
     }
 
 #ifdef WARPX_MAG_LLG
