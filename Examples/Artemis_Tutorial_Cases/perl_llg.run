@@ -1,0 +1,20 @@
+#!/bin/bash
+#SBATCH -N 2
+#SBATCH -C gpu
+#SBATCH -G 8
+#SBATCH -q regular
+#SBATCH -J wg_LLG_test
+#SBATCH -A m3766
+#SBATCH -t 03:00:00
+
+# OpenMP settings:
+export OMP_NUM_THREADS=1
+export OMP_PLACES=threads
+export OMP_PROC_BIND=spread
+
+export MPICH_GPU_SUPPORT_ENABLED=1
+export AMREX_CUDA_SHARE_PARAM_MEM=1
+
+#run the application: 
+# applications may perform better with --gpu-bind=none instead of --gpu-bind=single:1
+srun -n 4 -c 32 --cpu_bind=cores -G 8 ./main3d.gnu.TPROF.MTMPI.CUDA.LLG.ex inputs_3d_LLG_filter
