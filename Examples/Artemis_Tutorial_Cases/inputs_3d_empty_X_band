@@ -42,8 +42,8 @@ my_constants.dx = width/Nx
 my_constants.dy = height/Ny
 my_constants.dz = length/Nz
 
-my_constants.rjx = dx/100 
-my_constants.rjz = dz/100 
+my_constants.rjx = dx/100
+my_constants.rjz = dz/100
 
 #################################
 ############ NUMERICS ###########
