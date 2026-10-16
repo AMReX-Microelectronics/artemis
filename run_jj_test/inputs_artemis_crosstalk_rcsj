@@ -1,7 +1,7 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 2500
+max_step = 7500
 # amr.restart = diags/chk0100000
 
 amr.n_cell = n_cellx n_celly n_cellz
@@ -25,6 +25,7 @@ boundary.field_hi = pec pec pec
 ############ NUMERICS ###########
 #################################
 warpx.verbose = 0
+warpx.used_inputs_file = "results/rcsj/warpx_used_inputs"
 
 warpx.cfl = cfl
 
@@ -51,9 +52,9 @@ macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si)"
 
 #################################
 # ADI RCSJ: Josephson junction + shunt R + shunt C
-# Localized to one cell at the former inductor site (x=330um, y=425um, z=h_si).
-# Ic chosen so omega_p ~ drive (with eps_eff ~ 2 eps0 from C);
-# drive amplitude raised for O(1) phase excursion (nonlinear).
+# Localized to one Ex edge at the former inductor site.
+# The added capacitance complements the silicon grid capacitance so that the
+# small-signal plasma frequency is approximately the 75 GHz drive frequency.
 #################################
 algo.use_lumped_inductor = 0
 algo.use_josephson_junction = 1
@@ -66,12 +67,14 @@ josephson.newton_rtol = 1e-10
 josephson.newton_atol = 1e-8
 josephson.max_iterations = 40
 
-# Ic ~ 2e-9 A: omega_p a bit below drive => soft nonlinear plasma
+# Ic = 100 nA; the corresponding small-signal Josephson inductance is 3.291 nH.
 josephson.Ic_x_function(x,y,z) = "Ic_jj * (x > x_jj - dx/2 - ddx) * (x < x_jj + dx/2 + ddx) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
 josephson.Ic_y_function(x,y,z) = "0."
 josephson.Ic_z_function(x,y,z) = "0."
 
-# C = eps0 * area / dx ; R set for ~0.1 omega_p shunt damping
+# A coupled weak-signal calibration with this geometry gives about 0.94 fF of
+# effective grid/loading capacitance.  Adding 0.43 fF targets a 75 GHz mode.
+# R gives 1/(R*C_eff) ~ 0.01 omega_p, retaining several nonlinear ring-down cycles.
 macroscopic.lumped_capacitor_x_function(x,y,z) = "C_jj * (x > x_jj - dx/2 - ddx) * (x < x_jj + dx/2 + ddx) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
 macroscopic.lumped_capacitor_y_function(x,y,z) = "0."
 macroscopic.lumped_capacitor_z_function(x,y,z) = "0."
@@ -155,15 +158,15 @@ my_constants.flag_ss = 2
 ###############
 # RCSJ lumped values (single Ex-edge cell)
 ###############
-my_constants.x_jj = 330.e-6
+my_constants.x_jj = 328.75e-6
 my_constants.y_jj = 425.e-6
-# JJ-dominant: tiny C; larger Ic (stronger nonlinear branch vs EM clamp)
+# One 100 nA RCSJ edge, tuned near 75 GHz with light shunt damping.
 my_constants.Ic_jj = 1.0e-7
-my_constants.C_jj = 1.0e-25
-my_constants.R_jj = 5.0e7
+my_constants.C_jj = 0.43e-15
+my_constants.R_jj = 1.55e5
 
 ###############
-# excitation (amplitude ~80 V/m for O(1) Josephson phase swing)
+# Weak excitation for validating the RCSJ against its linearization.
 ###############
 
 warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
@@ -176,18 +179,20 @@ warpx.Ex_excitation_grid_function(x,y,z,t) = "Edrive * exp(-(t-3*TP)**2/(2*TP**2
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 
-my_constants.Edrive = 40000.
+my_constants.Edrive = 100.
 
 ###############
 # diagnostics: probes only (no plotfiles)
 ###############
 
 # rare checkpoints only; no plt
-diagnostics.diags_names = chk
+# Probe-only validation run: avoid multi-hundred-MB initial/final checkpoints.
+# diagnostics.diags_names = chk
 chk.format = checkpoint
 chk.intervals = 100000
 chk.diag_type = Full
 chk.file_min_digits = 7
+chk.file_prefix = "results/rcsj/diags/chk"
 
 warpx.reduced_diags_names = Eobs0 Eobs1
 
@@ -199,14 +204,16 @@ Eobs0.type = RawEFieldReduction
 Eobs0.reduction_type = integral
 Eobs0.integration_type = volume
 Eobs0.intervals = 1
+Eobs0.path = "results/rcsj/diags/reducedfiles/"
 Eobs0.reduced_function(x,y,z) = (x > x0 - dx/2-ddx) * (x < x0 + dx/2+ddx) * (y > y0 - dy/2-ddy) * (y < y0 + dy/2+ddy) * (z > z0 - dz/2-ddz) * (z < z0 + dz/2+ddz)
 
 # at RCSJ / inductor site
-my_constants.x1 = 330.e-6
+my_constants.x1 = 328.75e-6
 my_constants.y1 = 425.e-6
 my_constants.z1 = h_si
 Eobs1.type = RawEFieldReduction
 Eobs1.reduction_type = integral
 Eobs1.integration_type = volume
 Eobs1.intervals = 1
+Eobs1.path = "results/rcsj/diags/reducedfiles/"
 Eobs1.reduced_function(x,y,z) = (x > x1 - dx/2-ddx) * (x < x1 + dx/2+ddx) * (y > y1 - dy/2-ddy) * (y < y1 + dy/2+ddy) * (z > z1 - dz/2-ddz) * (z < z1 + dz/2+ddz)
