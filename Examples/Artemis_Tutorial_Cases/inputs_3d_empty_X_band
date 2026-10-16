@@ -12,14 +12,14 @@ amr.n_cell = Nx Ny Nz # number of cells spanning the domain in each coordinate d
 amr.max_grid_size = 64 # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 4 # only meaningful for AMR
 geometry.dims = 3
-boundary.field_lo = pec pec pml  # PEC on side walls; PML at -z end
-boundary.field_hi = pec pec pec  # PEC on side walls; PEC at +z end
+boundary.field_lo = pec pec pml # PEC on side walls; PML at -z end
+boundary.field_hi = pec pec pec # PEC on side walls; PEC at +z end
 
 # waveguide width 14.95mm, height is 11.43mm, and length is 500mm
 # 14.95mm to make the wave guide work on fundamental mode at 10.5GHz
 # 11.43mm < 14.95mm so that the fundamental mode is TE10
 geometry.prob_lo = -width/2 -height/2 -length/2 # must be consistent with my_constants.length and .diag_hi/lo
-geometry.prob_hi =  width/2  height/2  length/2
+geometry.prob_hi = width/2 height/2 length/2
 
 amr.max_level = 0
 
@@ -80,7 +80,7 @@ diagnostics.diags_names = plt chk
 
 plt.intervals = 100
 plt.diag_lo = 0.0 0.0 -length/2
-plt.diag_hi = 0.0 0.0  length/2
+plt.diag_hi = 0.0 0.0 length/2
 plt.diag_type = Full
 plt.fields_to_plot = Ey Bx
 
