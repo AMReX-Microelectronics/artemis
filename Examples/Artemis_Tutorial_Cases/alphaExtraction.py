@@ -38,22 +38,22 @@ MU0 = 4 * math.pi * 1e-7
 CC = 3e8
 
 # GENERAL PARAMETERS
-freq = 10.5e9 # frequency
-XX, YY, ZZ = 14.95e-3, 10.16e-3, 500.0e-3 # dimensions
-NX, NY, NZ = 128, 4, 128 # number of cells
+freq = 10.5e9  # frequency
+XX, YY, ZZ = 14.95e-3, 10.16e-3, 500.0e-3  # dimensions
+NX, NY, NZ = 128, 4, 128  # number of cells
 
 DX, DY, DZ = XX / NX, YY / NY, ZZ / NZ
 
-DT = 3.11275047e-13 # time step in seconds
+DT = 3.11275047e-13  # time step in seconds
 TP = 1.0 / freq
-Tstep_end = 1000000 # maximumm time steps
-Tstep_int = 100 # interval between time steps
+Tstep_end = 1000000  # maximum time steps
+Tstep_int = 100  # interval between time steps
 
-file_pattern = "./raw_data_empty/*.txt" # data location
+file_pattern = "./raw_data_empty/*.txt"  # data location
 
 k0 = 1
 k1 = NZ - 1
-dk = 1 
+dk = 1
 NZ_record = int(math.floor(k1 / dk))
 
 Tstep_record = math.floor((4.7 / 6.3 * Tstep_end) / Tstep_int)
@@ -176,7 +176,7 @@ plt.xlim([8.5, 12])
 plt.ylim([0, 90])
 plt.xlabel("Frequency [GHz]")
 plt.ylabel("Attenuation over 49mm [dB]")
-plt.title('Attenuation Spectrum')
+plt.title("Attenuation Spectrum")
 plt.savefig("fig4_atten_total.png", dpi=300)
 plt.close()
 
