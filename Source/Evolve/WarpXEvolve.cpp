@@ -632,7 +632,8 @@ void WarpX::SyncCurrentAndRho ()
                 SyncCurrent(current_fp, current_cp);
                 SyncRho(rho_fp, rho_cp);
             }
-#endif // ifndef WARPX_DIM_RZ
+#ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
             // H and M are up-to-date in the domain, but all guard cells are
             // outdated.
             if ( safe_guard_cells ){
@@ -643,6 +644,8 @@ void WarpX::SyncCurrentAndRho ()
                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
 
             }
+#endif // ifndef WARPX_DIM_RZ
+#endif // WARPX_MAG_LLG
         }
     }
     else // FDTD

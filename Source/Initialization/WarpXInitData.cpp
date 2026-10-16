@@ -712,6 +712,8 @@ WarpX::PostRestart ()
 void
 WarpX::InitLevelData (int lev, Real /*time*/)
 {
+    using utils::parser::makeParser;
+    using utils::parser::Store_parserString;
 
     ParmParse pp_warpx("warpx");
 
