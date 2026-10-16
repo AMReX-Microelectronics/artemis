@@ -506,8 +506,8 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryH(guard_cells.ng_FieldSolver);
             FillBoundaryM(guard_cells.ng_FieldSolver);
             // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal, DtType::FirstHalf); // apply H external excitation; soft source to be fixed
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal, DtType::FirstHalf); // apply H external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
 
         } else {
             amrex::Abort("unsupported em_solver_medium for M field");
@@ -632,12 +632,16 @@ void WarpX::SyncCurrentAndRho ()
                 SyncCurrent(current_fp, current_cp);
                 SyncRho(rho_fp, rho_cp);
             }
+#endif // ifndef WARPX_DIM_RZ
+            // H and M are up-to-date in the domain, but all guard cells are
+            // outdated.
+            if ( safe_guard_cells ){
+                FillBoundaryH(guard_cells.ng_alloc_EB);
+                FillBoundaryM(guard_cells.ng_alloc_EB);
+               // ApplyExternalFieldExcitation
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
 
-            if (current_deposition_algo == CurrentDepositionAlgo::Vay)
-            {
-                // TODO This works only without mesh refinement
-                const int lev = 0;
-                if (use_filter) ApplyFilterJ(current_fp_vay, lev);
             }
         }
     }
