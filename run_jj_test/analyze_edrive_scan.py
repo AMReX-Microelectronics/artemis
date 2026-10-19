@@ -9,15 +9,20 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent
 SCAN = ROOT / "results" / "edrive_scan"
-DRIVES = (100, 2000, 4000, 6000, 8000, 10000, 12000)
+# RCSJ drives present. The linear deck is exactly linear in Edrive, so one linear run
+# (the weakest present) is rescaled to every drive.
+DRIVES = tuple(sorted(float(d.name[1:]) for d in (SCAN / "rcsj").glob("E*")))
+LINEAR_REF = min(float(d.name[1:]) for d in (SCAN / "linear").glob("E*"))
 AREA = 2.5e-6 * 3.0e-6
+N_JJ = 26  # junctions in series across the gap
 QE = 1.602176634e-19
 HBAR = 1.054571817e-34
 
 
 def load(kind: str, drive: int):
-    data = np.loadtxt(SCAN / kind / f"E{drive:06d}" / "reducedfiles" / "Eobs1.txt")
-    voltage = data[:, 2] / AREA
+    source = drive if kind == "rcsj" else LINEAR_REF
+    data = np.loadtxt(SCAN / kind / f"E{source:g}" / "reducedfiles" / "Egap.txt")
+    voltage = data[:, 2] / AREA / N_JJ * (drive / source)  # per junction
     phase = np.zeros(len(data))
     phase[1:] = np.cumsum(
         0.5 * (voltage[1:] + voltage[:-1]) * np.diff(data[:, 1])
@@ -25,7 +30,7 @@ def load(kind: str, drive: int):
     return data[:, 1], phase
 
 
-def first_postpulse_cycle(time, phase, start=80e-12):
+def first_postpulse_cycle(time, phase, start=1.09e-9):  # drive envelope ~0 after 6*TP
     indices = np.where(
         (phase[:-1] < 0.0) & (phase[1:] >= 0.0) & (time[:-1] > start)
     )[0]
@@ -50,6 +55,29 @@ def pendulum_ratio(amplitude):
         )
     return arithmetic
 
+
+def check_linearity(tolerance=1e-6):
+    """Compare every extra linear run with the rescaled reference run."""
+    for folder in sorted((SCAN / "linear").glob("E*")):
+        drive = float(folder.name[1:])
+        if drive == LINEAR_REF:
+            continue
+        data = np.loadtxt(folder / "reducedfiles" / "Egap.txt")
+        voltage = data[:, 2] / AREA / N_JJ
+        phase = np.zeros(len(data))
+        phase[1:] = np.cumsum(
+            0.5 * (voltage[1:] + voltage[:-1]) * np.diff(data[:, 1])
+        ) * (2.0 * QE / HBAR)
+        time, scaled = load("linear", drive)
+        n = min(len(phase), len(scaled))
+        assert np.allclose(time[:n], data[:n, 1]), f"time grids differ for E={drive}"
+        error = np.max(np.abs(phase[:n] - scaled[:n])) / np.max(np.abs(phase[:n]))
+        status = "OK" if error < tolerance else "WARNING: linear rescaling is not exact"
+        print(f"linearity check E={drive} vs {drive / LINEAR_REF:g} x E={LINEAR_REF}: "
+              f"max relative phase difference {error:.2e} ({status})")
+
+
+check_linearity()
 
 rows = []
 for drive in DRIVES:

@@ -1,15 +1,18 @@
 ################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 7500
-# amr.restart = diags/chk0100000
+# Josephson version of inputs_artemis_crosstalk_L. Same geometry and element
+# location as /global/cfs/cdirs/m4602/artemis_crosstalk_LConly_PEC_all/inputs_artemis_crosstalk: one junction on each of the 26 Ex
+# edges filling the metal gap x in (297.5, 362.5) um at y = 425 um.
+# Shunt R in parallel on each edge; capacitance comes from the grid.
+max_step = 30000
 
 amr.n_cell = n_cellx n_celly n_cellz
 amr.max_grid_size_x = max_grid_sizex
 amr.max_grid_size_y = max_grid_sizey
 amr.max_grid_size_z = max_grid_sizez
 amr.blocking_factor = blocking_factor
-amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
+amr.refine_grid_layout = 1
 
 geometry.dims = 3
 geometry.prob_lo = prob_lox prob_loy prob_loz
@@ -17,7 +20,6 @@ geometry.prob_hi = prob_hix prob_hiy prob_hiz
 
 amr.max_level = 0
 
-# use pec instead of pml overlaying current source so you don't get a reflection
 boundary.field_lo = pec pec pec
 boundary.field_hi = pec pec pec
 
@@ -26,23 +28,16 @@ boundary.field_hi = pec pec pec
 #################################
 warpx.verbose = 0
 warpx.used_inputs_file = "results/rcsj/warpx_used_inputs"
-
 warpx.cfl = cfl
 
-# vacuum or macroscopic
 algo.em_solver_medium = macroscopic
-
-# laxwendroff or backwardeuler
 algo.macroscopic_sigma_method = laxwendroff
 algo.time_stepping_scheme = adi
 
-macroscopic.npy_k_index = 25
-
+macroscopic.npy_k_index = 50
 macroscopic.sigma_npy_file = "artemis_crosstalk-v0p0_flipped.npy"
 macroscopic.sigma_npy_value = 1.e10
-
 algo.use_PEC_mask = 1
-
 macroscopic.mu_npy_file = "artemis_crosstalk-v0p0_flipped.npy"
 macroscopic.mu_npy_value = 1.25663706213e-06
 
@@ -51,53 +46,37 @@ macroscopic.epsilon_function(x,y,z) = "eps_0 + eps_0 * (eps_r_si - 1.) * (z <= h
 macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si)"
 
 #################################
-# ADI RCSJ: Josephson junction + shunt R + shunt C
-# Localized to one Ex edge at the former inductor site.
-# The added capacitance complements the silicon grid capacitance so that the
-# small-signal plasma frequency is approximately the 75 GHz drive frequency.
+# Josephson junctions across the gap (no added R or C)
 #################################
 algo.use_lumped_inductor = 0
 algo.use_josephson_junction = 1
-warpx.use_lumped_resistor = 1
-warpx.use_lumped_capacitor = 1
 
-# Zero IC: nonlinearity must come from the driven response (fair vs L_J)
 josephson.initial_phase = 0.
 josephson.newton_rtol = 1e-10
 josephson.newton_atol = 1e-8
 josephson.max_iterations = 40
 
-# Ic = 100 nA; the corresponding small-signal Josephson inductance is 3.291 nH.
-josephson.Ic_x_function(x,y,z) = "Ic_jj * (x > x_jj - dx/2 - ddx) * (x < x_jj + dx/2 + ddx) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
+# critical current per edge; small-signal inductance hbar/(2 e Ic_jj) = L_jj
+josephson.Ic_x_function(x,y,z) = "Ic_jj * (x > x_gap_lo) * (x < x_gap_hi) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
 josephson.Ic_y_function(x,y,z) = "0."
 josephson.Ic_z_function(x,y,z) = "0."
 
-# A coupled weak-signal calibration with this geometry gives about 0.94 fF of
-# effective grid/loading capacitance.  Adding 0.43 fF targets a 75 GHz mode.
-# R gives 1/(R*C_eff) ~ 0.01 omega_p, retaining several nonlinear ring-down cycles.
-macroscopic.lumped_capacitor_x_function(x,y,z) = "C_jj * (x > x_jj - dx/2 - ddx) * (x < x_jj + dx/2 + ddx) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
-macroscopic.lumped_capacitor_y_function(x,y,z) = "0."
-macroscopic.lumped_capacitor_z_function(x,y,z) = "0."
-
-macroscopic.lumped_resistor_x_function(x,y,z) = "R_jj * (x > x_jj - dx/2 - ddx) * (x < x_jj + dx/2 + ddx) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
+# Shunt resistor in parallel on the same edges (RCSJ / R||L), ohms per edge
+warpx.use_lumped_resistor = 1
+macroscopic.lumped_resistor_x_function(x,y,z) = "R_jj * (x > x_gap_lo) * (x < x_gap_hi) * (y > y_jj - ddy) * (y < y_jj + ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
 macroscopic.lumped_resistor_y_function(x,y,z) = "0."
 macroscopic.lumped_resistor_z_function(x,y,z) = "0."
 
 #################################
 ############ FIELDS #############
 #################################
-
-###############
-# domain size
-# n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
-###############
 my_constants.n_cellx = 264
 my_constants.n_celly = 336
-my_constants.n_cellz = 50
+my_constants.n_cellz = 100
 
 my_constants.max_grid_sizex = 264
 my_constants.max_grid_sizey = 336
-my_constants.max_grid_sizez = 50
+my_constants.max_grid_sizez = 100
 my_constants.blocking_factor = 2
 
 my_constants.prob_lox = 0.
@@ -106,15 +85,12 @@ my_constants.prob_loz = 0.
 
 my_constants.prob_hix = 660.e-6
 my_constants.prob_hiy = 840.e-6
-my_constants.prob_hiz = 150.e-6
+my_constants.prob_hiz = 300.e-6
 
 my_constants.Lx = prob_hix - prob_lox
 my_constants.Ly = prob_hiy - prob_loy
 my_constants.Lz = prob_hiz - prob_loz
 
-###############
-# material properties
-###############
 my_constants.sigma_0 = 0.0
 my_constants.sigma_si = 0.
 my_constants.sigma_metal = 1.e10
@@ -126,23 +102,13 @@ my_constants.mu_0 = 1.25663706212e-06
 my_constants.mu_r_si = 1.0
 my_constants.mu_r_test = 0.999999
 
-###############
-# silicon and palladium cross section
-###############
-my_constants.h_si = 75.e-6
-
-###############
-# derived quantities and fundamental constants - don't touch these
-###############
+my_constants.h_si = 150.e-6
 
 my_constants.pi = 3.14159265358979
-
-# Moderate CFL so Josephson Newton stays robust under ADI
-my_constants.cfl = 8.0
-my_constants.freq = 7.5e10
+my_constants.cfl = 16.
+my_constants.freq = 5.556e9  # drive at the resonance
 my_constants.TP = 1./freq
 
-# grid spacing
 my_constants.dx = Lx / n_cellx
 my_constants.dy = Ly / n_celly
 my_constants.dz = Lz / n_cellz
@@ -155,19 +121,21 @@ my_constants.flag_none = 0
 my_constants.flag_hs = 1
 my_constants.flag_ss = 2
 
-###############
-# RCSJ lumped values (single Ex-edge cell)
-###############
-my_constants.x_jj = 328.75e-6
+# Metal gap spanned by the element (same as /global/cfs/cdirs/m4602/artemis_crosstalk_LConly_PEC_all/inputs_artemis_crosstalk)
+my_constants.x_gap_lo = 297.5e-6
+my_constants.x_gap_hi = 362.5e-6
 my_constants.y_jj = 425.e-6
-# One 100 nA RCSJ edge, tuned near 75 GHz with light shunt damping.
-my_constants.Ic_jj = 1.0e-7
-my_constants.C_jj = 0.43e-15
-my_constants.R_jj = 1.55e5
-
-###############
-# Weak excitation for validating the RCSJ against its linearization.
-###############
+# Per-edge inductance; 26 edges in series, same as the reference deck (10 nH total),
+# ringing at 5.556 GHz with the current code (cfl 16). The pads add only ~0.14 nH in
+# series, so the junctions carry p ~ 0.99 of the mode inductance (vs 0.88 at 16.6 GHz).
+my_constants.L_jj = 384.6153846153846e-12
+# Shunt R per edge, Q ~ 0.0845 * R here (scaled from Q = 0.283 R measured at 16.6 GHz by
+# w0*L_J): 2400 ohm -> Q ~ 200 for the softening scan; the chirp overrides it with
+# 200 ohm (Q ~ 17).
+my_constants.R_jj = 2400.
+my_constants.hbar = 1.054571817e-34
+my_constants.q_e = 1.602176634e-19
+my_constants.Ic_jj = hbar / (2. * q_e * L_jj)
 
 warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
 
@@ -175,26 +143,23 @@ warpx.Ex_excitation_flag_function(x,y,z) = "flag_ss * (x >= 297.5e-6) * (x <= 36
 warpx.Ey_excitation_flag_function(x,y,z) = "flag_none"
 warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
 
-warpx.Ex_excitation_grid_function(x,y,z,t) = "Edrive * exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) * (x >= 297.5e-6) * (x <= 362.5e-6) * (z > h_si - ddz) * (z < h_si + ddz) * (y > 675.e-6 - ddy) * (y < 675.e-6 + ddy)"
+# Soft source adds the excitation to E once per step, so scale by cfl/0.8 (as in the
+# reference deck) to keep the physical drive independent of dt; Edrive is the
+# amplitude at cfl 0.8.
+warpx.Ex_excitation_grid_function(x,y,z,t) = "Edrive * cfl/0.8 * exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) * (x >= 297.5e-6) * (x <= 362.5e-6) * (z > h_si - ddz) * (z < h_si + ddz) * (y > 675.e-6 - ddy) * (y < 675.e-6 + ddy)"
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
 
-my_constants.Edrive = 100.
+my_constants.Edrive = 1.
 
-###############
-# diagnostics: probes only (no plotfiles)
-###############
-
-# rare checkpoints only; no plt
-# Probe-only validation run: avoid multi-hundred-MB initial/final checkpoints.
-# diagnostics.diags_names = chk
+# Probe-only runs: no plotfiles, rare checkpoints.
 chk.format = checkpoint
 chk.intervals = 100000
 chk.diag_type = Full
 chk.file_min_digits = 7
 chk.file_prefix = "results/rcsj/diags/chk"
 
-warpx.reduced_diags_names = Eobs0 Eobs1
+warpx.reduced_diags_names = Eobs0 Eobs1 Egap
 
 # near excitation
 my_constants.x0 = 330.e-6
@@ -207,7 +172,7 @@ Eobs0.intervals = 1
 Eobs0.path = "results/rcsj/diags/reducedfiles/"
 Eobs0.reduced_function(x,y,z) = (x > x0 - dx/2-ddx) * (x < x0 + dx/2+ddx) * (y > y0 - dy/2-ddy) * (y < y0 + dy/2+ddy) * (z > z0 - dz/2-ddz) * (z < z0 + dz/2+ddz)
 
-# at RCSJ / inductor site
+# one element edge (middle of the gap)
 my_constants.x1 = 328.75e-6
 my_constants.y1 = 425.e-6
 my_constants.z1 = h_si
@@ -217,3 +182,11 @@ Eobs1.integration_type = volume
 Eobs1.intervals = 1
 Eobs1.path = "results/rcsj/diags/reducedfiles/"
 Eobs1.reduced_function(x,y,z) = (x > x1 - dx/2-ddx) * (x < x1 + dx/2+ddx) * (y > y1 - dy/2-ddy) * (y < y1 + dy/2+ddy) * (z > z1 - dz/2-ddz) * (z < z1 + dz/2+ddz)
+
+# all element edges: integral / (dy*dz) is the voltage across the gap
+Egap.type = RawEFieldReduction
+Egap.reduction_type = integral
+Egap.integration_type = volume
+Egap.intervals = 1
+Egap.path = "results/rcsj/diags/reducedfiles/"
+Egap.reduced_function(x,y,z) = (x > x_gap_lo) * (x < x_gap_hi) * (y > y1 - dy/2-ddy) * (y < y1 + dy/2+ddy) * (z > z1 - dz/2-ddz) * (z < z1 + dz/2+ddz)

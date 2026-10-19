@@ -11,10 +11,16 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT / "results" / "ringdown_chirp"
 AREA = 2.5e-6 * 3.0e-6
+N_JJ = 26  # junctions in series across the gap
 QE = 1.602176634e-19
 HBAR = 1.054571817e-34
-DRIVE_OFF = 250.0e-12
-F0 = 74.2944e9
+DRIVE_OFF = 1.251e-9
+# Small-signal frequency: weakest-drive RCSJ row of the Edrive scan.
+F0 = 1e9 * next(
+    float(row["first_cycle_frequency_GHz"])
+    for row in csv.DictReader((ROOT / "results" / "edrive_scan" / "frequency_vs_edrive.csv").open())
+    if row["case"] == "rcsj"
+)
 
 
 def pendulum_ratio(amplitude):
@@ -31,9 +37,9 @@ def pendulum_ratio(amplitude):
     return a
 
 
-data = np.loadtxt(RESULTS / "reducedfiles" / "Eobs1.txt")
+data = np.loadtxt(RESULTS / "reducedfiles" / "Egap.txt")
 time = data[:, 1]
-voltage = data[:, 2] / AREA
+voltage = data[:, 2] / AREA / N_JJ  # per junction
 phase = np.zeros(len(data))
 phase[1:] = np.cumsum(
     0.5 * (voltage[1:] + voltage[:-1]) * np.diff(time)
@@ -78,7 +84,7 @@ axes[1].axvspan(0.0, DRIVE_OFF * 1e9, color="0.85", alpha=0.7)
 axes[1].plot(cycles[:, 0] * 1e9, cycles[:, 1] / 1e9, "o-", markersize=3.5,
              label="measured response f (zero-crossing)")
 axes[1].plot(cycles[:, 0] * 1e9, theory / 1e9, "k--", linewidth=1.5,
-             label=r"free-pendulum prediction from $\varphi_0$")
+             label=r"pendulum $f_0\pi/(2K(\sin\varphi_0/2))$")
 axes[1].axhline(F0 / 1e9, color="green", linestyle=":", linewidth=1.3,
                label=f"small-signal limit {F0 / 1e9:.3f} GHz")
 ax_amp = axes[1].twinx()
