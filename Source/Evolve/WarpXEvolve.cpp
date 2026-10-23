@@ -506,8 +506,8 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryH(guard_cells.ng_FieldSolver);
             FillBoundaryM(guard_cells.ng_FieldSolver);
             // ApplyExternalFieldExcitation
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // apply H external excitation; soft source to be fixed
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal, DtType::FirstHalf); // apply H external excitation; soft source to be fixed
+            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal, DtType::FirstHalf); // apply H external excitation; soft source to be fixed
 
         } else {
             amrex::Abort("unsupported em_solver_medium for M field");
