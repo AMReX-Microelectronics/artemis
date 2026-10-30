@@ -439,7 +439,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                     }
 
                     if(mag_afm_coupling == 1){
-                        if (mag_afm_xface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_xface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
+                        if (mag_afm_yface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_yface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                         
                         // H_afm - use M^(old_time)
                         amrex::Real const H_afm_coeff = 4.0 * mag_afm_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
@@ -558,7 +558,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                     }
 
                     if(mag_afm_coupling == 1){
-                        if (mag_afm_xface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_xface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
+                        if (mag_afm_zface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_zface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                         
                         // H_afm - use M^(old_time)
                         amrex::Real const H_afm_coeff = 4.0 * mag_afm_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
@@ -982,7 +982,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                         }
 
                         if(mag_afm_coupling == 1){
-                            if (mag_afm_xface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_xface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
+                            if (mag_afm_yface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_yface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                             
                             // H_afm - use M^(old_time)
                             amrex::Real const H_afm_coeff = 4.0 * mag_afm_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
@@ -1153,10 +1153,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                         }
 
                         if(mag_afm_coupling == 1){
-                            if (mag_afm_xface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_xface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
+                            if (mag_afm_zface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_zface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                             
                             // H_afm - use M^(old_time)
-                            amrex::Real const H_afm_coeff = 4.0 * mag_afm_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
+                            amrex::Real const H_afm_coeff = 4.0 * mag_afm_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
                             Hx1_eff += H_afm_coeff * M2_zface(i,j,k,0);
                             Hy1_eff += H_afm_coeff * M2_zface(i,j,k,1);
                             Hz1_eff += H_afm_coeff * M2_zface(i,j,k,2);
