@@ -127,10 +127,7 @@ FullDiagnostics::BackwardCompatibility ()
 void
 FullDiagnostics::Flush ( int i_buffer )
 {
-    for (int c = 0; c < static_cast<int>(m_varnames.size()); ++c) {
-    amrex::Print() << m_varnames[c] << " out max="
-                   << m_mf_output[i_buffer][0].norm0(c) << "\n";
-    }
+    
     // This function should be moved to Diagnostics when plotfiles/openpmd format
     // is supported for BackTransformed Diagnostics, in BTDiagnostics class.
     auto & warpx = WarpX::GetInstance();
@@ -630,6 +627,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
                     return std::make_unique<CellCenterFunctor>(
                         warpx.get_pointer_Lfield_fp(lev, idir), lev, m_crse_ratio, true, 1, icomp);
                 }
+                
             }
         }
         return nullptr;

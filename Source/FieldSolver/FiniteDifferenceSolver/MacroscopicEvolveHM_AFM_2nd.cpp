@@ -1319,8 +1319,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
 
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
+
                     for(int n=0; n<3; ++n){
-                        M_xface(i,j,k,n) = (M1_xface(i,j,k,n) + M2_xface(i,j,k,n))/2    ;
+                        
+                        M_xface(i,j,k,n) = (M1_xface(i,j,k,n) + M2_xface(i,j,k,n))/2.0   ;
+                
                     }
 
                     if (mag_Ms_xface_arr(i,j,k) == 0._rt){ // nonmagnetic region
@@ -1339,7 +1342,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     for(int n=0; n<3; ++n){
-                        M_yface(i,j,k,n) = (M1_yface(i,j,k,n) + M2_yface(i,j,k,n))/2;
+                        M_yface(i,j,k,n) = (M1_yface(i,j,k,n) + M2_yface(i,j,k,n))/2.0;
                     }
 
                     if (mag_Ms_yface_arr(i,j,k) == 0._rt){ // nonmagnetic region
@@ -1358,7 +1361,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) {
 
                     for(int n=0; n<3; ++n){
-                        M_zface(i,j,k,n) = (M1_zface(i,j,k,n) + M2_zface(i,j,k,n))/2;
+                        M_zface(i,j,k,n) = (M1_zface(i,j,k,n) + M2_zface(i,j,k,n))/2.0;
                     }
 
                     if (mag_Ms_zface_arr(i,j,k) == 0._rt){ // nonmagnetic region
@@ -1523,7 +1526,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                 }
             }
         }
-        else{
+        else{                    
+            
             const auto& period = warpx.Geom(lev).periodicity();
             // Copy Mfield to Mfield_previous and fill periodic/interior ghost cells
             for (int i = 0; i < 3; i++){
@@ -1593,7 +1597,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
         amrex::ParallelFor(tbx, tby, tbz,
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-
+                
                 if (mag_Ms_xface_arr(i,j,k) == 0._rt){ // nonmagnetic region
                     amrex::Real mu_arrx = ablastr::coarsen::sample::Interp( mu_arr, mu_stag, Bx_stag, macro_cr, i, j, k, 0);
                     Bx(i, j, k) = mu_arrx * Hx(i, j, k);
@@ -1602,8 +1606,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                 }
                 
                 for(int n=0; n<3; ++n){
-                    L_xface(i,j,k,n) = (M1_xface(i,j,k,n) - M2_xface(i,j,k,n))/2;
+                    L_xface(i,j,k,n) = (M1_xface(i,j,k,n) - M2_xface(i,j,k,n))/2.0;
                 }
+
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
@@ -1616,7 +1621,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                 }
 
                 for(int n=0; n<3; ++n){
-                    L_yface(i,j,k,n) = (M1_yface(i,j,k,n) - M2_yface(i,j,k,n))/2;
+                    L_yface(i,j,k,n) = (M1_yface(i,j,k,n) - M2_yface(i,j,k,n))/2.0;
                 }
             },
 
