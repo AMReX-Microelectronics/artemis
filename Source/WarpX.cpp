@@ -991,6 +991,13 @@ WarpX::ReadParameters ()
         utils::parser::queryWithParser(pp_warpx, "pml_R", adi_pml_R);
         utils::parser::queryWithParser(pp_warpx, "pml_m", adi_pml_m);
         utils::parser::queryWithParser(pp_warpx, "pml_sigma_max", adi_pml_sigma_max);
+        for (int idim = 0; idim < 3; ++idim) {
+            std::string const stretch = std::string("adi_") + "xyz"[idim] + "stretch_";
+            utils::parser::queryWithParser(pp_warpx, (stretch + "ratio").c_str(), adi_stretch_ratio[idim]);
+            utils::parser::queryWithParser(pp_warpx, (stretch + "lo").c_str(), adi_stretch_lo[idim]);
+            utils::parser::queryWithParser(pp_warpx, (stretch + "hi").c_str(), adi_stretch_hi[idim]);
+            utils::parser::queryWithParser(pp_warpx, (stretch + "kappa_max").c_str(), adi_stretch_kappa_max[idim]);
+        }
         pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
         // Read `v_particle_pml` in units of the speed of light
         v_particle_pml = 1._rt;

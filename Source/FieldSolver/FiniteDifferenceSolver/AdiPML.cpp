@@ -38,6 +38,20 @@ namespace
         return rho;
     }
 
+    // Grid-stretch factor along one axis: 1 inside [core_lo, core_hi], then growing by
+    // `ratio` per computational cell up to kappa_max. Constant inside the PML (cells beyond
+    // the inner edges), so the PML is uniform in physical cells.
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    Real adi_stretch_kappa (
+        Real s, Real ds, Real inner_lo, Real inner_hi,
+        Real ratio, Real core_lo, Real core_hi, Real kappa_max) noexcept
+    {
+        Real const sc = amrex::max(inner_lo, amrex::min(inner_hi, s));
+        Real const ncells = amrex::max(0._rt,
+            amrex::max(core_lo - sc, sc - core_hi) / ds);
+        return amrex::min(kappa_max, std::pow(ratio, ncells));
+    }
+
     struct AdiCfsHost
     {
         GpuArray<Real, AMREX_SPACEDIM> problo{};
@@ -55,6 +69,10 @@ namespace
         Real grade_m = 3._rt;
         Real dt_half = 0._rt;
         Real ep0 = 0._rt;
+        GpuArray<Real, AMREX_SPACEDIM> stretch_ratio{};
+        GpuArray<Real, AMREX_SPACEDIM> stretch_lo{};
+        GpuArray<Real, AMREX_SPACEDIM> stretch_hi{};
+        GpuArray<Real, AMREX_SPACEDIM> stretch_kappa_max{};
     };
 
     AdiCfsHost g_adi_cfs;
@@ -239,6 +257,44 @@ WarpX::InitAdiPML ()
     FillAdiPmlProfiles();
     UpdateAdiPmlRecursionCoeffs(dt[0]);
 
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        if (adi_stretch_ratio[idim] == 1._rt) { continue; }
+        char const axis = "xyz"[idim];
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            adi_stretch_ratio[idim] > 1._rt && adi_stretch_hi[idim] >= adi_stretch_lo[idim],
+            "warpx.adi_<axis>stretch_ratio must exceed 1, with _lo <= _hi.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            adi_pml_Lo[idim] && adi_pml_Hi[idim],
+            "warpx.adi_<axis>stretch_* requires PML on both walls of that axis.");
+        Real const ds = Geom(0).CellSize(idim);
+        Real const inner_lo = Geom(0).ProbLo(idim) + static_cast<Real>(pml_ncell) * ds;
+        Real const inner_hi = Geom(0).ProbHi(idim) - static_cast<Real>(pml_ncell) * ds;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            adi_stretch_lo[idim] >= inner_lo - 1.e-6_rt * ds
+            && adi_stretch_hi[idim] <= inner_hi + 1.e-6_rt * ds,
+            "warpx.adi_<axis>stretch_lo and _hi must lie inside the PML inner edges.");
+        // Physical distance from the core to each PML inner edge: sum of ds*kappa over cells.
+        Real below = 0._rt;
+        Real above = 0._rt;
+        int const ncell_s = static_cast<int>(std::lround((inner_hi - inner_lo) / ds));
+        for (int n = 0; n < ncell_s; ++n) {
+            Real const s = inner_lo + (static_cast<Real>(n) + 0.5_rt) * ds;
+            Real const cell = ds * adi_stretch_kappa(s, ds, inner_lo, inner_hi,
+                adi_stretch_ratio[idim], adi_stretch_lo[idim], adi_stretch_hi[idim], adi_stretch_kappa_max[idim]);
+            if (s < adi_stretch_lo[idim]) { below += cell; }
+            if (s > adi_stretch_hi[idim]) { above += cell; }
+        }
+        amrex::Print() << "ADI " << axis << " stretch: ratio = " << adi_stretch_ratio[idim]
+                       << ", core " << adi_stretch_lo[idim] << " to " << adi_stretch_hi[idim]
+                       << ", physical length below core = " << below
+                       << ", above core = " << above
+                       << ", kappa at PML = " << adi_stretch_kappa(inner_lo, ds, inner_lo, inner_hi,
+                              adi_stretch_ratio[idim], adi_stretch_lo[idim], adi_stretch_hi[idim], adi_stretch_kappa_max[idim])
+                       << " and " << adi_stretch_kappa(inner_hi, ds, inner_lo, inner_hi,
+                              adi_stretch_ratio[idim], adi_stretch_lo[idim], adi_stretch_hi[idim], adi_stretch_kappa_max[idim])
+                       << "\n";
+    }
+
     amrex::Print() << "ADI CFS-PML: "
                    << (do_pml_in_domain ? "in-domain" : "outside-domain")
                    << ", pml_ncell = " << pml_ncell
@@ -333,6 +389,12 @@ WarpX::UpdateAdiPmlRecursionCoeffs (Real a_dt)
     g_adi_cfs.grade_m = grade_m;
     g_adi_cfs.dt_half = dt_half;
     g_adi_cfs.ep0 = ep0;
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        g_adi_cfs.stretch_ratio[idim] = adi_stretch_ratio[idim];
+        g_adi_cfs.stretch_lo[idim] = adi_stretch_lo[idim];
+        g_adi_cfs.stretch_hi[idim] = adi_stretch_hi[idim];
+        g_adi_cfs.stretch_kappa_max[idim] = adi_stretch_kappa_max[idim];
+    }
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         g_adi_cfs.do_lo[idim] = do_lo[idim];
         g_adi_cfs.do_hi[idim] = do_hi[idim];
@@ -452,13 +514,22 @@ FillAdiCfsOnLayout (MultiFab& dst, int dir, int quantity)
                 Real const pml_len = static_cast<Real>(p.ncell) * p.dx[idir];
                 Real const inner_lo = p.problo[idir] + pml_len;
                 Real const inner_hi = p.probhi[idir] - pml_len;
+                // A stretched grid is d/ds -> (1/kappa_s) d/ds on the uniform grid.
+                Real const kappa_s = (p.stretch_ratio[idir] != 1._rt)
+                    ? adi_stretch_kappa(coord, p.dx[idir], inner_lo, inner_hi,
+                          p.stretch_ratio[idir], p.stretch_lo[idir], p.stretch_hi[idir], p.stretch_kappa_max[idir])
+                    : 1._rt;
+                kappa = kappa_s;
                 Real const rho = adi_pml_rho(
                     coord, inner_lo, inner_hi, lo_on, hi_on);
                 if (rho > 0._rt && pml_len > 0._rt) {
                     Real frac = rho / pml_len;
                     frac = amrex::max(0._rt, amrex::min(1._rt, frac));
                     Real const poly = std::pow(frac, p.grade_m);
-                    kappa = 1._rt + (p.kappa_max - 1._rt) * poly;
+                    // s = kappa_s * (kappa + sigma_phys / (alpha + i w eps0)). The physical PML is
+                    // kappa_s times thicker, so sigma_phys = sigma / kappa_s and the product
+                    // kappa_s * sigma_phys is the sigma computed from the uniform-grid thickness.
+                    kappa = kappa_s * (1._rt + (p.kappa_max - 1._rt) * poly);
                     Real const sig = p.sigma_max[idir] * poly;
                     Real const alp = p.alpha_max * (1._rt - frac);
                     Real const expo = -((sig / kappa) + alp) * p.dt_half / p.ep0;

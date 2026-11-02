@@ -1755,6 +1755,11 @@ private:
     amrex::Real adi_pml_R = 1.e-8;
     amrex::Real adi_pml_m = 3.0;
     amrex::Real adi_pml_sigma_max = -1.0;
+    // Stretched grid per axis, as a real coordinate factor on the uniform ADI grid (ratio 1 = off).
+    std::array<amrex::Real, 3> adi_stretch_ratio = {1.0, 1.0, 1.0};
+    std::array<amrex::Real, 3> adi_stretch_lo = {0.0, 0.0, 0.0};
+    std::array<amrex::Real, 3> adi_stretch_hi = {0.0, 0.0, 0.0};
+    std::array<amrex::Real, 3> adi_stretch_kappa_max = {1.e30, 1.e30, 1.e30};
     std::array<std::unique_ptr<amrex::MultiFab>, 3> adi_pml_stretch;
     std::array<std::unique_ptr<amrex::MultiFab>, 3> adi_pml_a;
     std::array<std::unique_ptr<amrex::MultiFab>, 3> adi_pml_b;
