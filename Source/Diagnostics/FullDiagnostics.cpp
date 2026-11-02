@@ -127,6 +127,7 @@ FullDiagnostics::BackwardCompatibility ()
 void
 FullDiagnostics::Flush ( int i_buffer )
 {
+    
     // This function should be moved to Diagnostics when plotfiles/openpmd format
     // is supported for BackTransformed Diagnostics, in BTDiagnostics class.
     auto & warpx = WarpX::GetInstance();
@@ -591,7 +592,57 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 
     m_all_field_functors[lev].resize(ntot);
     // Fill vector of functors for all components except individual cylindrical modes.
+    #ifdef WARPX_MAG_LLG
+    // AFM diagnostics: M1, M2, L (3 components stored on each face,  like M)
+    // and H1, H2 (one value per direction, like H).
+    // Returns nullptr if the name is not an AFM variable.
+    const std::array<std::string,3> xyz{"x","y","z"};
+    auto make_afm_functor = [&](const std::string& name) -> std::unique_ptr<ComputeDiagFunctor>
+    {
+        for (int idir = 0; idir < 3; ++idir) {
+            // H1x, H1y, H1z, H2x, ... (same pattern as Hx, Hy, Hz)
+            if (name == "H1" + xyz[idir]) {
+                return std::make_unique<CellCenterFunctor>(
+                    warpx.get_pointer_H1field_fp(lev, idir), lev, m_crse_ratio);
+            }
+            if (name == "H2" + xyz[idir]) {
+                return std::make_unique<CellCenterFunctor>(
+                    warpx.get_pointer_H2field_fp(lev, idir), lev, m_crse_ratio);
+            }
+            // M1x_xface, M1y_xface, ..., M2z_zface, Lx_xface, ... Lz_zface
+            // idir selects the face (MultiFab), icomp selects the vector component.
+            for (int icomp = 0; icomp < 3; ++icomp) {
+                const std::string suffix = xyz[icomp] + "_" + xyz[idir] + "face";
+                if (name == "M1" + suffix) {
+                    amrex::Print() << "functor build M1 dir " << idir << " ptr="
+                                << static_cast<const void*>(warpx.get_pointer_M1field_fp(lev, idir)) << "\n";
+                    return std::make_unique<CellCenterFunctor>(
+                        warpx.get_pointer_M1field_fp(lev, idir), lev, m_crse_ratio, true, 1, icomp);
+                }
+                if (name == "M2" + suffix) {
+                    return std::make_unique<CellCenterFunctor>(
+                        warpx.get_pointer_M2field_fp(lev, idir), lev, m_crse_ratio, true, 1, icomp);
+                }
+                if (name == "L" + suffix) {
+                    return std::make_unique<CellCenterFunctor>(
+                        warpx.get_pointer_Lfield_fp(lev, idir), lev, m_crse_ratio, true, 1, icomp);
+                }
+                
+            }
+        }
+        return nullptr;
+    };
+#endif
     for (int comp=0; comp<nvar; comp++){
+        #ifdef WARPX_MAG_LLG
+        if (warpx.mag_LLG_afm_coupling == 1) {
+            auto afm_functor = make_afm_functor(m_varnames[comp]);
+            if (afm_functor) {
+                m_all_field_functors[lev][comp] = std::move(afm_functor);
+                continue;
+            }
+        }
+        #endif
          if       ( m_varnames[comp] == "Ez" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Bz" ){
@@ -797,6 +848,7 @@ FullDiagnostics::PrepareFieldDataForOutput ()
             m_output_species[i_buffer][i].m_diag_domain = m_geom_output[i_buffer][0].ProbDomain();
         }
     }
+
 }
 
 void

@@ -125,6 +125,7 @@ public:
     static amrex::Vector<amrex::Real> H_external_grid;
     static amrex::Vector<amrex::Real> M_external_grid;
     static amrex::Vector<amrex::Real> H_bias_external_grid;
+    static amrex::Vector<amrex::Real> M1_external_grid;
 #endif
 
     //! Initialization type for external magnetic field on the grid
@@ -143,6 +144,8 @@ public:
 #ifdef WARPX_MAG_LLG
     static std::string H_ext_grid_s; // added for H;
     static std::string M_ext_grid_s; // added for M;
+    static std::string M1_ext_grid_s;
+    static std::string M2_ext_grid_s;
     static std::string H_bias_ext_grid_s;
 #endif
     static int ApplyExcitationInPML;
@@ -265,10 +268,25 @@ public:
     std::unique_ptr<amrex::Parser> Hxfield_parser;
     std::unique_ptr<amrex::Parser> Hyfield_parser;
     std::unique_ptr<amrex::Parser> Hzfield_parser;
+    std::unique_ptr<amrex::Parser> H1xfield_parser;
+    std::unique_ptr<amrex::Parser> H1yfield_parser;
+    std::unique_ptr<amrex::Parser> H1zfield_parser;
+    std::unique_ptr<amrex::Parser> H2xfield_parser;
+    std::unique_ptr<amrex::Parser> H2yfield_parser;
+    std::unique_ptr<amrex::Parser> H2zfield_parser;
     // Parser for M_external on the grid
     std::unique_ptr<amrex::Parser> Mxfield_parser;
     std::unique_ptr<amrex::Parser> Myfield_parser;
     std::unique_ptr<amrex::Parser> Mzfield_parser;
+    std::unique_ptr<amrex::Parser> M1xfield_parser;
+    std::unique_ptr<amrex::Parser> M1yfield_parser;
+    std::unique_ptr<amrex::Parser> M1zfield_parser;
+    std::unique_ptr<amrex::Parser> M2xfield_parser;
+    std::unique_ptr<amrex::Parser> M2yfield_parser;
+    std::unique_ptr<amrex::Parser> M2zfield_parser;
+    std::unique_ptr<amrex::Parser> Lxfield_parser;
+    std::unique_ptr<amrex::Parser> Lyfield_parser;
+    std::unique_ptr<amrex::Parser> Lzfield_parser;
     // Parser for H_bias_external on the grid
     std::unique_ptr<amrex::Parser> Hx_biasfield_parser;
     std::unique_ptr<amrex::Parser> Hy_biasfield_parser;
@@ -342,6 +360,8 @@ public:
     int mag_LLG_exchange_coupling = 0;
     // turn off the anisotropy coupling term H_anisotropy in H_eff for the LLG updates
     int mag_LLG_anisotropy_coupling = 0;
+    // turn off the antiferromagnetic coupling term H_afm in H_eff for the LGG updates
+    int mag_LLG_afm_coupling = 0;
 #endif
     //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
@@ -641,10 +661,36 @@ public:
     amrex::MultiFab * get_pointer_Bfield_sc_fp  (int lev, int direction) const { return Bfield_sc_fp[lev][direction].get(); }
 
 #ifdef WARPX_MAG_LLG
-    amrex::MultiFab * get_pointer_Hfield_fp  (int lev, int direction) const { return Hfield_fp[lev][direction].get();}
+    amrex::MultiFab * get_pointer_Hfield_fp      (int lev, int direction) const { return Hfield_fp[lev][direction].get(); }
     // note "direction" of M means face.  For M, each face stores all 3 vector components of M
-    amrex::MultiFab * get_pointer_Mfield_fp  (int lev, int direction) const { return Mfield_fp[lev][direction].get();}
-    amrex::MultiFab * get_pointer_H_biasfield_fp  (int lev, int direction) const { return H_biasfield_fp[lev][direction].get();}
+    amrex::MultiFab * get_pointer_Mfield_fp      (int lev, int direction) const { return Mfield_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_H_biasfield_fp (int lev, int direction) const { return H_biasfield_fp[lev][direction].get(); }
+
+    amrex::MultiFab * get_pointer_H1field_fp (int lev, int direction) const {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mag_LLG_afm_coupling == 1,
+            "get_pointer_H1field_fp called but mag_LLG_afm_coupling is not enabled!");
+        return H1field_fp[lev][direction].get();
+    }
+    amrex::MultiFab * get_pointer_H2field_fp (int lev, int direction) const {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mag_LLG_afm_coupling == 1,
+            "get_pointer_H2field_fp called but mag_LLG_afm_coupling is not enabled!");
+        return H2field_fp[lev][direction].get();
+    }
+    amrex::MultiFab * get_pointer_M1field_fp (int lev, int direction) const {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mag_LLG_afm_coupling == 1,
+            "get_pointer_M1field_fp called but mag_LLG_afm_coupling is not enabled!");
+        return M1field_fp[lev][direction].get();
+    }
+    amrex::MultiFab * get_pointer_M2field_fp (int lev, int direction) const {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mag_LLG_afm_coupling == 1,
+            "get_pointer_M2field_fp called but mag_LLG_afm_coupling is not enabled!");
+        return M2field_fp[lev][direction].get();
+    }
+    amrex::MultiFab * get_pointer_Lfield_fp (int lev, int direction) const {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mag_LLG_afm_coupling == 1,
+            "get_pointer_Lfield_fp called but mag_LLG_afm_coupling is not enabled!");
+        return Lfield_fp[lev][direction].get();
+    }
 #endif
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
@@ -697,6 +743,26 @@ public:
     const amrex::MultiFab& getHfield_fp  (int lev, int direction) {return *Hfield_fp[lev][direction];}
     const amrex::MultiFab& getMfield_fp  (int lev, int direction) {return *Mfield_fp[lev][direction];}
     const amrex::MultiFab& getH_biasfield_fp  (int lev, int direction) {return *H_biasfield_fp[lev][direction];}
+    const amrex::MultiFab& getH1field_fp (int lev, int direction) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mag_LLG_afm_coupling == 1,
+            "getH1field_fp called but mag_LLG_afm_coupling is not enabled!");
+        return *H1field_fp[lev][direction];
+    }
+    const amrex::MultiFab& getM1field_fp (int lev, int direction) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mag_LLG_afm_coupling == 1,
+            "getM1field_fp called but mag_LLG_afm_coupling is not enabled!");
+        return *M1field_fp[lev][direction];
+    }
+    const amrex::MultiFab& getH2field_fp (int lev, int direction) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mag_LLG_afm_coupling == 1,
+            "getH2field_fp called but mag_LLG_afm_coupling is not enabled!");
+        return *H2field_fp[lev][direction];
+    }
+    const amrex::MultiFab& getM2field_fp (int lev, int direction) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(mag_LLG_afm_coupling == 1,
+            "getM2field_fp called but mag_LLG_afm_coupling is not enabled!");
+        return *M2field_fp[lev][direction];
+    }
 #endif
     const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
     const amrex::MultiFab& getphi_fp (int lev) {return *phi_fp[lev];}
@@ -825,6 +891,10 @@ public:
     void MacroscopicEvolveHM_2nd (         amrex::Real dt);
     void MacroscopicEvolveHM_2nd (int lev, amrex::Real dt);
     void MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real dt);
+
+    void MacroscopicEvolveHM_AFM_2nd (         amrex::Real dt);
+    void MacroscopicEvolveHM_AFM_2nd (int lev, amrex::Real dt);
+    void MacroscopicEvolveHM_AFM_2nd (int lev, PatchType patch_type, amrex::Real dt);
 #endif
 
     /** apply QED correction on electric field
@@ -1596,6 +1666,13 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_aux;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Hfield_aux;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H_biasfield_aux;
+
+    // Auxiliary AFM coupling fields (allocated at runtime if mag_LLG_afm_coupling == 1)
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > M1field_aux;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > M2field_aux;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H1field_aux;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H2field_aux;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Lfield_aux;
 #endif
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_aux;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_aux;
@@ -1614,6 +1691,13 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Hfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H_biasfield_fp;
+
+    // AFM coupling fields (allocated at runtime if mag_LLG_afm_coupling == 1)
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > M1field_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > M2field_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H1field_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H2field_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Lfield_fp;
 #endif
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
@@ -1690,6 +1774,13 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Hfield_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H_biasfield_cp;
+
+    // Coarse patch AFM coupling fields (allocated at runtime if mag_LLG_afm_coupling == 1)
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > M1field_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > M2field_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H1field_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > H2field_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Lfield_cp;
 #endif
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_cp;
