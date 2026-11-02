@@ -85,4 +85,5 @@ adi_grid_convergence/
 adi_cfl_convergence/
 adi_mms*/
 diags*
+run_*_test
 *.log
