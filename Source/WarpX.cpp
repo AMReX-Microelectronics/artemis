@@ -397,6 +397,13 @@ WarpX::WarpX ()
     Mfield_fp.resize(nlevs_max);
     Hfield_fp.resize(nlevs_max);
     H_biasfield_fp.resize(nlevs_max);
+    if (mag_LLG_afm_coupling == 1) {
+        M1field_fp.resize(nlevs_max);
+        M2field_fp.resize(nlevs_max);
+        H1field_fp.resize(nlevs_max);
+        H2field_fp.resize(nlevs_max);
+        Lfield_fp.resize(nlevs_max);
+    }
 #endif
 
     // Only allocate vector potential arrays when using the Magnetostatic Solver
@@ -1053,6 +1060,8 @@ WarpX::ReadParameters ()
         pp_warpx.query("mag_LLG_exchange_coupling",mag_LLG_exchange_coupling);
         // turn on the anisotropy coupling term H_anisotropy for H_eff in the LLG equation
         pp_warpx.query("mag_LLG_anisotropy_coupling",mag_LLG_anisotropy_coupling);
+        // turn on the antiferromagnetic coupling term H_afm for H_eff in the LLG equation
+        pp_warpx.query("mag_LLG_afm_coupling",mag_LLG_afm_coupling);
 #endif
 
 #ifdef WARPX_DIM_RZ
@@ -2012,6 +2021,13 @@ WarpX::ClearLevel (int lev)
         Mfield_fp [lev][i].reset();
         Hfield_fp [lev][i].reset();
         H_biasfield_fp [lev][i].reset();
+        if (mag_LLG_afm_coupling == 1) {
+            M1field_fp[lev][i].reset();
+            M2field_fp[lev][i].reset();
+            H1field_fp[lev][i].reset();
+            H2field_fp[lev][i].reset();
+            Lfield_fp[lev][i].reset();
+        }
 #endif
         current_store[lev][i].reset();
 
@@ -2300,6 +2316,24 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         tagname.append("[l=").append(std::to_string(lev)).append("]");
         return tagname;
     };
+    if (mag_LLG_afm_coupling == 1) {
+        AllocInitMultiFab(M1field_fp[lev][0], amrex::convert(ba,Mx_nodal_flag), dm, 3, ngEB, tag("M1field_fp[x]"));
+        AllocInitMultiFab(M1field_fp[lev][1], amrex::convert(ba,My_nodal_flag), dm, 3, ngEB, tag("M1field_fp[y]"));
+        AllocInitMultiFab(M1field_fp[lev][2], amrex::convert(ba,Mz_nodal_flag), dm, 3, ngEB, tag("M1field_fp[z]"));
+        AllocInitMultiFab(M2field_fp[lev][0], amrex::convert(ba,Mx_nodal_flag), dm, 3, ngEB, tag("M2field_fp[x]"));
+        AllocInitMultiFab(M2field_fp[lev][1], amrex::convert(ba,My_nodal_flag), dm, 3, ngEB, tag("M2field_fp[y]"));
+        AllocInitMultiFab(M2field_fp[lev][2], amrex::convert(ba,Mz_nodal_flag), dm, 3, ngEB, tag("M2field_fp[z]"));
+        AllocInitMultiFab(Lfield_fp[lev][0], amrex::convert(ba,Mx_nodal_flag), dm, 3, ngEB, tag("Lfield_fp[x]"));
+        AllocInitMultiFab(Lfield_fp[lev][1], amrex::convert(ba,My_nodal_flag), dm, 3, ngEB, tag("Lfield_fp[y]"));
+        AllocInitMultiFab(Lfield_fp[lev][2], amrex::convert(ba,Mz_nodal_flag), dm, 3, ngEB, tag("Lfield_fp[z]"));
+
+        AllocInitMultiFab(H1field_fp[lev][0], amrex::convert(ba,Hx_nodal_flag), dm, 3, ngEB, tag("H1field_fp[x]"));
+        AllocInitMultiFab(H1field_fp[lev][1], amrex::convert(ba,Hy_nodal_flag), dm, 3, ngEB, tag("H1field_fp[y]"));
+        AllocInitMultiFab(H1field_fp[lev][2], amrex::convert(ba,Hz_nodal_flag), dm, 3, ngEB, tag("H1field_fp[z]"));
+        AllocInitMultiFab(H2field_fp[lev][0], amrex::convert(ba,Hx_nodal_flag), dm, 3, ngEB, tag("H2field_fp[x]"));
+        AllocInitMultiFab(H2field_fp[lev][1], amrex::convert(ba,Hy_nodal_flag), dm, 3, ngEB, tag("H2field_fp[y]"));
+        AllocInitMultiFab(H2field_fp[lev][2], amrex::convert(ba,Hz_nodal_flag), dm, 3, ngEB, tag("H2field_fp[z]"));
+    }
 
     //
     // The fine patch

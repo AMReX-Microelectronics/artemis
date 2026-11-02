@@ -1297,12 +1297,283 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     'H',
                                                     lev, PatchType::coarse);
        }
+       if (mag_LLG_afm_coupling==1){
+            H1xfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hx_ext_grid_function,{"x","y","z"}));
+            H1yfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hy_ext_grid_function,{"x","y","z"}));
+            H1zfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hz_ext_grid_function,{"x","y","z"}));
+
+       // Initialize H1field_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(H1field_fp[lev][0].get(),
+                                                 H1field_fp[lev][1].get(),
+                                                 H1field_fp[lev][2].get(),
+                                                 H1xfield_parser->compile<3>(),
+                                                 H1yfield_parser->compile<3>(),
+                                                 H1zfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'S', //H1 field
+                                                 lev, PatchType::fine);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(H1field_aux[lev][0].get(),
+                                                    H1field_aux[lev][1].get(),
+                                                    H1field_aux[lev][2].get(),
+                                                    H1xfield_parser->compile<3>(),
+                                                    H1yfield_parser->compile<3>(),
+                                                    H1zfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'S', //H1 field
+                                                    lev, PatchType::coarse);
+
+          InitializeExternalFieldsOnGridUsingParser(H1field_cp[lev][0].get(),
+                                                    H1field_cp[lev][1].get(),
+                                                    H1field_cp[lev][2].get(),
+                                                    H1xfield_parser->compile<3>(),
+                                                    H1yfield_parser->compile<3>(),
+                                                    H1zfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'S', //H1 field
+                                                    lev, PatchType::coarse);
+       }
+       H2xfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hx_ext_grid_function,{"x","y","z"}));
+       H2yfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hy_ext_grid_function,{"x","y","z"}));
+       H2zfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser(str_Hz_ext_grid_function,{"x","y","z"}));
+
+       // Initialize H2field_fp with external function
+       InitializeExternalFieldsOnGridUsingParser(H2field_fp[lev][0].get(),
+                                                 H2field_fp[lev][1].get(),
+                                                 H2field_fp[lev][2].get(),
+                                                 H2xfield_parser->compile<3>(),
+                                                 H2yfield_parser->compile<3>(),
+                                                 H2zfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'C', //H2 field
+                                                 lev, PatchType::fine);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(H2field_aux[lev][0].get(),
+                                                    H2field_aux[lev][1].get(),
+                                                    H2field_aux[lev][2].get(),
+                                                    H2xfield_parser->compile<3>(),
+                                                    H2yfield_parser->compile<3>(),
+                                                    H2zfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'C', //H2 field
+                                                    lev, PatchType::coarse);
+
+          InitializeExternalFieldsOnGridUsingParser(H2field_cp[lev][0].get(),
+                                                    H2field_cp[lev][1].get(),
+                                                    H2field_cp[lev][2].get(),
+                                                    H2xfield_parser->compile<3>(),
+                                                    H2yfield_parser->compile<3>(),
+                                                    H2zfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'C', //H2 field
+                                                    lev, PatchType::coarse);
+       }
+       }
     }
 
     if (M_ext_grid_s == "parse_m_ext_grid_function") {
 #ifdef WARPX_DIM_RZ
         amrex::Abort("M-field parser for external fields does not work with RZ");
 #endif
+    if(mag_LLG_afm_coupling == 1){
+        utils::parser::Store_parserString(pp_warpx, "Mx_external_grid_function(x,y,z)",
+                                                    str_Mx_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "My_external_grid_function(x,y,z)",
+                                                    str_My_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Mz_external_grid_function(x,y,z)",
+                                                    str_Mz_ext_grid_function);
+
+        M1xfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser(str_Mx_ext_grid_function,{"x","y","z"}));
+        M1yfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser(str_My_ext_grid_function,{"x","y","z"}));
+        M1zfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser(str_Mz_ext_grid_function,{"x","y","z"}));
+
+       // Initialize M1field_fp with external function directly on the faces
+
+amrex::Print() << "M1field_fp.size()=" << M1field_fp.size() << " lev=" << lev << "\n";
+if (static_cast<int>(M1field_fp.size()) <= lev || !M1field_fp[lev][0]) {
+    amrex::Abort("M1field_fp not allocated at this level");
+}
+
+       InitializeExternalFieldsOnGridUsingParser(M1field_fp[lev][0].get(),
+                                                 M1field_fp[lev][1].get(),
+                                                 M1field_fp[lev][2].get(),
+                                                 M1xfield_parser->compile<3>(),
+                                                 M1yfield_parser->compile<3>(),
+                                                 M1zfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'U', //M1 field
+                                                 lev, PatchType::fine);
+       if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(M1field_aux[lev][0].get(),
+                                                    M1field_aux[lev][1].get(),
+                                                    M1field_aux[lev][2].get(),
+                                                    M1xfield_parser->compile<3>(),
+                                                    M1yfield_parser->compile<3>(),
+                                                    M1zfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'U', //M1 field
+                                                    lev, PatchType::coarse);
+
+          InitializeExternalFieldsOnGridUsingParser(M1field_cp[lev][0].get(),
+                                                    M1field_cp[lev][1].get(),
+                                                    M1field_cp[lev][2].get(),
+                                                    M1xfield_parser->compile<3>(),
+                                                    M1yfield_parser->compile<3>(),
+                                                    M1zfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'U', //M1 field
+                                                    lev, PatchType::coarse);
+       }
+       // Construct M2 parsers using the negated string from M1
+        M2xfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser("-(" + str_Mx_ext_grid_function + ")", {"x","y","z"}));
+        M2yfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser("-(" + str_My_ext_grid_function + ")", {"x","y","z"}));
+        M2zfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser("-(" + str_Mz_ext_grid_function + ")", {"x","y","z"}));
+
+        // Initialize M2field_fp with the negated M1 function directly on the faces
+        InitializeExternalFieldsOnGridUsingParser(M2field_fp[lev][0].get(),
+                                                   M2field_fp[lev][1].get(),
+                                                   M2field_fp[lev][2].get(),
+                                                   M2xfield_parser->compile<3>(),
+                                                   M2yfield_parser->compile<3>(),
+                                                   M2zfield_parser->compile<3>(),
+                                                   m_edge_lengths[lev],
+                                                   m_face_areas[lev],
+                                                   'D', //M2 field
+                                                   lev, PatchType::fine);
+        if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(M2field_aux[lev][0].get(),
+                                                     M2field_aux[lev][1].get(),
+                                                     M2field_aux[lev][2].get(),
+                                                     M2xfield_parser->compile<3>(),
+                                                     M2yfield_parser->compile<3>(),
+                                                     M2zfield_parser->compile<3>(),
+                                                     m_edge_lengths[lev],
+                                                     m_face_areas[lev],
+                                                     'D', //M2 field
+                                                     lev, PatchType::coarse);
+
+          InitializeExternalFieldsOnGridUsingParser(M2field_cp[lev][0].get(),
+                                                     M2field_cp[lev][1].get(),
+                                                     M2field_cp[lev][2].get(),
+                                                     M2xfield_parser->compile<3>(),
+                                                     M2yfield_parser->compile<3>(),
+                                                     M2zfield_parser->compile<3>(),
+                                                     m_edge_lengths[lev],
+                                                     m_face_areas[lev],
+                                                     'D', //M2 field
+                                                     lev, PatchType::coarse);
+        }
+        // Construct M parsers by adding the M1 and M2 string expressions
+        // (Note:  M2 is strictly -M1, this evaluates to 0)
+        Mxfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser("0.0", {"x","y","z"}));
+        Myfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser("0.0", {"x","y","z"}));
+        Mzfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser("0.0", {"x","y","z"}));
+
+        // Initialize Mfield_fp directly on the faces
+        InitializeExternalFieldsOnGridUsingParser(Mfield_fp[lev][0].get(),
+                                                   Mfield_fp[lev][1].get(),
+                                                   Mfield_fp[lev][2].get(),
+                                                   Mxfield_parser->compile<3>(),
+                                                   Myfield_parser->compile<3>(),
+                                                   Mzfield_parser->compile<3>(),
+                                                   m_edge_lengths[lev],
+                                                   m_face_areas[lev],
+                                                   'M',
+                                                   lev, PatchType::fine);
+        if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Mfield_aux[lev][0].get(),
+                                                     Mfield_aux[lev][1].get(),
+                                                     Mfield_aux[lev][2].get(),
+                                                     Mxfield_parser->compile<3>(),
+                                                     Myfield_parser->compile<3>(),
+                                                     Mzfield_parser->compile<3>(),
+                                                     m_edge_lengths[lev],
+                                                     m_face_areas[lev],
+                                                     'M',
+                                                     lev, PatchType::coarse);
+
+          InitializeExternalFieldsOnGridUsingParser(Mfield_cp[lev][0].get(),
+                                                     Mfield_cp[lev][1].get(),
+                                                     Mfield_cp[lev][2].get(),
+                                                     Mxfield_parser->compile<3>(),
+                                                     Myfield_parser->compile<3>(),
+                                                     Mzfield_parser->compile<3>(),
+                                                     m_edge_lengths[lev],
+                                                     m_face_areas[lev],
+                                                     'M',
+                                                     lev, PatchType::coarse);
+        }
+        // Construct L parsers by subtracting the M1 and M2 string expressions
+        // (Note:  M2 is strictly -M1, this evaluates to 2*M1)
+        Lxfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser("(" + str_Mx_ext_grid_function + ")", {"x","y","z"}));
+        Lyfield_parser = std::make_unique<amrex::Parser>(
+                                utils::parser::makeParser("(" + str_My_ext_grid_function + ")", {"x","y","z"}));
+        Lzfield_parser = std::make_unique<amrex::Parser>(
+                                 utils::parser::makeParser("(" + str_Mz_ext_grid_function + ")", {"x","y","z"}));
+
+        // Initialize Mfield_fp directly on the faces
+        InitializeExternalFieldsOnGridUsingParser(Lfield_fp[lev][0].get(),
+                                                   Lfield_fp[lev][1].get(),
+                                                   Lfield_fp[lev][2].get(),
+                                                   Lxfield_parser->compile<3>(),
+                                                   Lyfield_parser->compile<3>(),
+                                                   Lzfield_parser->compile<3>(),
+                                                   m_edge_lengths[lev],
+                                                   m_face_areas[lev],
+                                                   'L',
+                                                   lev, PatchType::fine);
+        if (lev > 0) {
+          InitializeExternalFieldsOnGridUsingParser(Lfield_aux[lev][0].get(),
+                                                     Lfield_aux[lev][1].get(),
+                                                     Lfield_aux[lev][2].get(),
+                                                     Lxfield_parser->compile<3>(),
+                                                     Lyfield_parser->compile<3>(),
+                                                     Lzfield_parser->compile<3>(),
+                                                     m_edge_lengths[lev],
+                                                     m_face_areas[lev],
+                                                     'L',
+                                                     lev, PatchType::coarse);
+
+          InitializeExternalFieldsOnGridUsingParser(Lfield_cp[lev][0].get(),
+                                                     Lfield_cp[lev][1].get(),
+                                                     Lfield_cp[lev][2].get(),
+                                                     Lxfield_parser->compile<3>(),
+                                                     Lyfield_parser->compile<3>(),
+                                                     Lzfield_parser->compile<3>(),
+                                                     m_edge_lengths[lev],
+                                                     m_face_areas[lev],
+                                                     'L',
+                                                     lev, PatchType::coarse);
+        }
+       }
+
+
+    else{
         utils::parser::Store_parserString(pp_warpx, "Mx_external_grid_function(x,y,z)",
                                                     str_Mx_ext_grid_function);
         utils::parser::Store_parserString(pp_warpx, "My_external_grid_function(x,y,z)",
@@ -1351,6 +1622,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     'M',
                                                     lev, PatchType::coarse);
        }
+    }
     }
 
 #endif //closes #ifdef WARPX_MAG_LLG

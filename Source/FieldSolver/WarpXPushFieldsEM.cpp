@@ -1233,6 +1233,49 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
     }
 }
 
+// define WarpX::MacroscopicEvolveHM_AFM_2nd
+void
+WarpX::MacroscopicEvolveHM_AFM_2nd (amrex::Real a_dt)
+{
+    for (int lev = 0; lev <= finest_level; ++lev ) {
+        MacroscopicEvolveHM_AFM_2nd(lev, a_dt);
+    }
+}
+
+void
+WarpX::MacroscopicEvolveHM_AFM_2nd (int lev, amrex::Real a_dt) {
+
+    WARPX_PROFILE("WarpX::MacroscopicEvolveHM_AFM_2nd()");
+    MacroscopicEvolveHM_AFM_2nd(lev, PatchType::fine, a_dt);
+    if (lev > 0) {
+        amrex::Abort("Macroscopic EvolveHM_AFM_2nd is not implemented for lev>0, yet.");
+    }
+}
+
+void
+WarpX::MacroscopicEvolveHM_AFM_2nd (int lev, PatchType patch_type, amrex::Real a_dt) {
+
+    // Evolve H field in regular cells
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->MacroscopicEvolveHM_AFM_2nd(lev, M1field_fp[lev], M2field_fp[lev], Mfield_fp[lev], Hfield_fp[lev], H1field_fp[lev], H2field_fp[lev], Bfield_fp[lev], Lfield_fp[lev], H_biasfield_fp[lev],  Efield_fp[lev],
+                                                       a_dt, m_macroscopic_properties);
+    }
+    else {
+        amrex::Abort("Macroscopic EvolveHM_AFM_2nd is not implemented for lev > 0 yet");
+    }
+
+    // Evolve H field in PML cells
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveHPML(
+                pml[lev]->GetH_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveHPML(
+                pml[lev]->GetH_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning );
+        }
+    }
+}
+
 #endif
 #endif // ifndef WARPX_DIM_RZ
 

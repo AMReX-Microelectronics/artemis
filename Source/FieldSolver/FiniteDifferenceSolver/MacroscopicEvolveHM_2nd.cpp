@@ -15,7 +15,7 @@ blank
 #include "Utils/WarpXConst.H"
 #include <ablastr/coarsen/sample.H>
 #include "Utils/WarpXUtil.H"
-#include <AMReX_Gpu.H>
+
 
 using namespace amrex;
 
