@@ -229,6 +229,7 @@ amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,P
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 int WarpX::yee_coupled_solver_algo;
 int WarpX::use_PEC_mask = 0;
+int WarpX::extend_PEC_mask_into_pml = 1;
 int WarpX::use_lumped_inductor = 0;
 int WarpX::use_lumped_resistor = 0;
 int WarpX::use_lumped_capacitor = 0;
@@ -1302,6 +1303,7 @@ WarpX::ReadParameters ()
         yee_coupled_solver_algo = GetAlgorithmInteger(pp_algo, "yee_coupled_solver");
 
         pp_algo.query("use_PEC_mask",use_PEC_mask);
+        pp_algo.query("extend_PEC_mask_into_pml",extend_PEC_mask_into_pml);
         pp_algo.query("use_lumped_inductor",use_lumped_inductor);
 
         // Load balancing parameters

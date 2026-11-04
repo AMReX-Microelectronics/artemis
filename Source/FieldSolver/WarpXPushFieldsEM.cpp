@@ -1124,6 +1124,22 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 #endif
                                                current_fp[lev], m_edge_lengths[lev], a_dt,
                                                m_macroscopic_properties);
+
+    // Apply the PEC mask to the interior E right after the update, *before* the
+    // E guard cells and the PML are filled (FillBoundaryE -> PML::Exchange).
+    // Previously the mask was only applied after FillBoundaryE (in OneStep), so the
+    // guard cells of the interior grids, and the PML copy of the interface plane
+    // (which the PML receives from the interior), kept unmasked tangential E on the
+    // PEC edges until the next exchange. The following B update then saw
+    // inconsistent E on the two sides of the PML interface (and of interior box
+    // boundaries) along the PEC layer. The mask is applied again after the
+    // excitation in OneStep, so masked edges stay exactly zero.
+    if (use_PEC_mask) {
+        MultiFab::Multiply(*Efield_fp[lev][0], *PEC_fp[lev][0], 0, 0, 1, 0);
+        MultiFab::Multiply(*Efield_fp[lev][1], *PEC_fp[lev][1], 0, 0, 1, 0);
+        MultiFab::Multiply(*Efield_fp[lev][2], *PEC_fp[lev][2], 0, 0, 1, 0);
+    }
+
     // Evolve E field in PML cells
     if (do_pml && pml[lev]->ok()) {
         if (pml[lev]->isConvolutional()) {
@@ -1192,7 +1208,7 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 pml[lev]->Getsigma_cp() );
         }
 
-        if (use_PEC_mask) {
+        if (use_PEC_mask && extend_PEC_mask_into_pml) {
             amrex::MultiFab* Ex_PEC = pml[lev]->GetE_fp(0);
             amrex::MultiFab* Ey_PEC = pml[lev]->GetE_fp(1);
             amrex::MultiFab* Ez_PEC = pml[lev]->GetE_fp(2);

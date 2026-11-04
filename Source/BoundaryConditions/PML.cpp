@@ -827,11 +827,17 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             pml_PEC_fp[1]->setVal(1.);
             pml_PEC_fp[2]->setVal(1.);
 
-            macroscopic_properties->InitializePECFromSigma(pml_sigma_fp.get(), pml_PEC_fp[0].get(), pml_PEC_fp[1].get(),
-                                                           macroscopic_properties->m_npy_k_index);
-            if (!macroscopic_properties->m_sigma_npy_filename2.empty()) {
+            // Extend the PEC layer(s) into the PML (algo.extend_PEC_mask_into_pml, default on).
+            // pml_sigma_fp was filled from the numpy mask with the edge values of the domain
+            // continued into the PML, so the PEC edges in the PML continue the interior ones.
+            // If disabled, the PEC mask stays 1 (no PEC) everywhere in the PML.
+            if (WarpX::extend_PEC_mask_into_pml) {
                 macroscopic_properties->InitializePECFromSigma(pml_sigma_fp.get(), pml_PEC_fp[0].get(), pml_PEC_fp[1].get(),
-                                                               macroscopic_properties->m_npy_k_index2);
+                                                               macroscopic_properties->m_npy_k_index);
+                if (!macroscopic_properties->m_sigma_npy_filename2.empty()) {
+                    macroscopic_properties->InitializePECFromSigma(pml_sigma_fp.get(), pml_PEC_fp[0].get(), pml_PEC_fp[1].get(),
+                                                                   macroscopic_properties->m_npy_k_index2);
+                }
             }
 
             // no need for sigma anymore

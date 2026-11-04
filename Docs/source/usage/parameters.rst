@@ -404,6 +404,12 @@ Additional PML parameters
       typically lowers the reflection further; a too-large ``alpha_max`` degrades absorption
       of the low frequencies.
 
+* ``algo.extend_PEC_mask_into_pml`` (`int`; default: 1)
+    Only used with ``algo.use_PEC_mask = 1``. If 1, the PEC mask built from the numpy (GDS)
+    layer is extended into the PML (the mask values on the domain edge are continued through
+    the PML), for both ``warpx.pml_type = split`` and ``convolutional``. If 0, no PEC mask is
+    applied in the PML.
+
 * ``warpx.cpml_kappa_max`` (`float`; default: 1)
     CPML only. Maximum of the real stretching factor :math:`\kappa`, graded as
     :math:`\kappa(d) = 1 + (\kappa_{max}-1)\,d^m` with :math:`d \in [0,1]` the normalized

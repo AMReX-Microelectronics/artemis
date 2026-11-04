@@ -330,6 +330,9 @@ public:
     static int yee_coupled_solver_algo;
 
     static int use_PEC_mask;
+    //! With use_PEC_mask: extend the PEC mask of the numpy/GDS layer into the PML
+    //! (algo.extend_PEC_mask_into_pml, default 1). If 0, the PML has no PEC mask.
+    static int extend_PEC_mask_into_pml;
     static int use_lumped_inductor;
     static int use_lumped_resistor;
     static int use_lumped_capacitor;
