@@ -203,19 +203,9 @@ WarpX::InitAdiPML ()
 
     BoxArray const& ba = boxArray(0);
     DistributionMapping const& dm = DistributionMap(0);
-    IntVect const ng = IntVect(1);
 
-    for (int idim = 0; idim < 3; ++idim) {
-        AllocInitMultiFab(
-            adi_pml_stretch[idim], ba, dm, 1, ng,
-            "adi_pml_stretch[" + std::to_string(idim) + "]", 1._rt);
-        AllocInitMultiFab(
-            adi_pml_a[idim], ba, dm, 1, ng,
-            "adi_pml_a[" + std::to_string(idim) + "]", 0._rt);
-        AllocInitMultiFab(
-            adi_pml_b[idim], ba, dm, 1, ng,
-            "adi_pml_b[" + std::to_string(idim) + "]", 1._rt);
-    }
+    // The PML profiles kappa(s), a(s), b(s) are evaluated analytically from g_adi_cfs (FillAdiCfsOnLayout);
+    // the 3D adi_pml_stretch / adi_pml_a / adi_pml_b arrays were never read and are no longer allocated.
 
     auto const& eflag = std::array<IntVect, 3>{
         Efield_fp[0][0]->ixType().toIntVect(),
@@ -308,54 +298,7 @@ WarpX::InitAdiPML ()
 void
 WarpX::FillAdiPmlProfiles ()
 {
-    if (!adi_pml) { return; }
-
-    auto const problo = Geom(0).ProbLoArray();
-    auto const probhi = Geom(0).ProbHiArray();
-    auto const dx = Geom(0).CellSizeArray();
-    IntVect const domain_lo = Geom(0).Domain().smallEnd();
-    int const ncell = pml_ncell;
-    Real const kappa_max = adi_pml_kappa_max;
-    Real const grade_m = adi_pml_m;
-    IntVect const do_lo = adi_pml_Lo;
-    IntVect const do_hi = adi_pml_Hi;
-
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        MultiFab& kappa_mf = *adi_pml_stretch[idim];
-        kappa_mf.setVal(1._rt);
-        int const idir = idim;
-        int const lo_on = do_lo[idim];
-        int const hi_on = do_hi[idim];
-        if (!lo_on && !hi_on) { continue; }
-
-        for (MFIter mfi(kappa_mf); mfi.isValid(); ++mfi) {
-            auto const arr = kappa_mf.array(mfi);
-            Box const bx = mfi.fabbox();
-            ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-            {
-                int const idx = (idir == 0) ? i : ((idir == 1) ? j : k);
-                Real const coord =
-                    problo[idir]
-                    + (static_cast<Real>(idx - domain_lo[idir]) + 0.5_rt)
-                        * dx[idir];
-                Real const pml_len = static_cast<Real>(ncell) * dx[idir];
-                Real const inner_lo = problo[idir] + pml_len;
-                Real const inner_hi = probhi[idir] - pml_len;
-                Real const rho = adi_pml_rho(
-                    coord, inner_lo, inner_hi, lo_on, hi_on);
-                if (rho <= 0._rt || pml_len <= 0._rt) {
-                    arr(i,j,k) = 1._rt;
-                    return;
-                }
-                Real frac = rho / pml_len;
-                frac = amrex::max(0._rt, amrex::min(1._rt, frac));
-                Real const poly = std::pow(frac, grade_m);
-                arr(i,j,k) = 1._rt + (kappa_max - 1._rt) * poly;
-            });
-        }
-        adi_pml_stretch[idim]->setBndry(1._rt);
-        adi_pml_stretch[idim]->FillBoundary(Geom(0).periodicity());
-    }
+    // Kept for the call in InitAdiPML; the profiles are evaluated analytically where they are used.
 }
 
 void
@@ -407,66 +350,13 @@ WarpX::UpdateAdiPmlRecursionCoeffs (Real a_dt)
     }
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        MultiFab& a_mf = *adi_pml_a[idim];
-        MultiFab& b_mf = *adi_pml_b[idim];
-        MultiFab const& kappa_mf = *adi_pml_stretch[idim];
-        a_mf.setVal(0._rt);
-        b_mf.setVal(1._rt);
-
-        int const idir = idim;
-        int const lo_on = do_lo[idim];
-        int const hi_on = do_hi[idim];
-        if (!lo_on && !hi_on) { continue; }
-
-        Real const pml_len = static_cast<Real>(ncell) * dx[idir];
+        if (!do_lo[idim] && !do_hi[idim]) { continue; }
+        Real const pml_len = static_cast<Real>(ncell) * dx[idim];
         Real sigma_max = sigma_max_user;
         if (sigma_max < 0._rt && pml_len > 0._rt) {
             sigma_max = -(grade_m + 1._rt) * std::log(R) / (2._rt * eta0 * pml_len);
         }
         g_adi_cfs.sigma_max[idim] = sigma_max;
-
-        for (MFIter mfi(a_mf); mfi.isValid(); ++mfi) {
-            auto const a_arr = a_mf.array(mfi);
-            auto const b_arr = b_mf.array(mfi);
-            auto const k_arr = kappa_mf.const_array(mfi);
-            Box const bx = mfi.fabbox();
-            ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-            {
-                int const idx = (idir == 0) ? i : ((idir == 1) ? j : k);
-                Real const coord =
-                    problo[idir]
-                    + (static_cast<Real>(idx - domain_lo[idir]) + 0.5_rt)
-                        * dx[idir];
-                Real const inner_lo = problo[idir] + pml_len;
-                Real const inner_hi = probhi[idir] - pml_len;
-                Real const rho = adi_pml_rho(
-                    coord, inner_lo, inner_hi, lo_on, hi_on);
-                if (rho <= 0._rt || pml_len <= 0._rt) {
-                    a_arr(i,j,k) = 0._rt;
-                    b_arr(i,j,k) = 1._rt;
-                    return;
-                }
-                Real frac = rho / pml_len;
-                frac = amrex::max(0._rt, amrex::min(1._rt, frac));
-                Real const poly = std::pow(frac, grade_m);
-                Real const sig = sigma_max * poly;
-                Real const alp = alpha_max * (1._rt - frac);
-                Real const kapp = k_arr(i,j,k);
-                Real const expo = -((sig / kapp) + alp) * dt_half / ep0;
-                Real const bval = std::exp(expo);
-                b_arr(i,j,k) = bval;
-                Real const denom = kapp * (sig + kapp * alp);
-                if (std::abs(denom) > 0._rt) {
-                    a_arr(i,j,k) = (sig / denom) * (bval - 1._rt);
-                } else {
-                    a_arr(i,j,k) = 0._rt;
-                }
-            });
-        }
-        adi_pml_a[idim]->setBndry(0._rt);
-        adi_pml_b[idim]->setBndry(1._rt);
-        adi_pml_a[idim]->FillBoundary(Geom(0).periodicity());
-        adi_pml_b[idim]->FillBoundary(Geom(0).periodicity());
     }
 }
 
