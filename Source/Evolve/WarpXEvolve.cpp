@@ -640,13 +640,20 @@ void WarpX::SyncCurrentAndRho ()
                 SyncCurrent(current_fp, current_cp);
                 SyncRho(rho_fp, rho_cp);
             }
+#ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
+            // H and M are up-to-date in the domain, but all guard cells are
+            // outdated.
+            if ( safe_guard_cells ){
+                FillBoundaryH(guard_cells.ng_alloc_EB);
+                FillBoundaryM(guard_cells.ng_alloc_EB);
+               // ApplyExternalFieldExcitation
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
 
-            if (current_deposition_algo == CurrentDepositionAlgo::Vay)
-            {
-                // TODO This works only without mesh refinement
-                const int lev = 0;
-                if (use_filter) ApplyFilterJ(current_fp_vay, lev);
             }
+#endif // ifndef WARPX_DIM_RZ
+#endif // WARPX_MAG_LLG
         }
     }
     else // FDTD
