@@ -225,6 +225,9 @@ amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,P
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 int WarpX::yee_coupled_solver_algo;
 int WarpX::use_PEC_mask = 0;
+int WarpX::adi_line_solver = 2;
+bool WarpX::adi_use_pipeline = false;
+int WarpX::adi_pipeline_batches = 2;
 int WarpX::use_lumped_inductor = 0;
 int WarpX::use_lumped_resistor = 0;
 int WarpX::use_lumped_capacitor = 0;
@@ -997,6 +1000,17 @@ WarpX::ReadParameters ()
             utils::parser::queryWithParser(pp_warpx, (stretch + "lo").c_str(), adi_stretch_lo[idim]);
             utils::parser::queryWithParser(pp_warpx, (stretch + "hi").c_str(), adi_stretch_hi[idim]);
             utils::parser::queryWithParser(pp_warpx, (stretch + "kappa_max").c_str(), adi_stretch_kappa_max[idim]);
+        }
+        {
+            std::string solver = "auto";
+            pp_warpx.query("adi_line_solver", solver);
+            if (solver == "pencil") { adi_line_solver = 0; }
+            else if (solver == "pipeline") { adi_line_solver = 1; }
+            else if (solver == "auto") { adi_line_solver = 2; }
+            else { WARPX_ABORT_WITH_MESSAGE("warpx.adi_line_solver must be pencil, pipeline or auto."); }
+            pp_warpx.query("adi_pipeline_batches", adi_pipeline_batches);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(adi_pipeline_batches >= 1,
+                "warpx.adi_pipeline_batches must be at least 1.");
         }
         pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
         // Read `v_particle_pml` in units of the speed of light
@@ -2403,6 +2417,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
 #if defined(WARPX_DIM_3D)
     if (macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI)
+    {
+        // The pipelined line solver works on the block layout and needs non-periodic lines.
+        bool const any_periodic = Geom(lev).isAnyPeriodic();
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(adi_line_solver == 1 && any_periodic),
+            "warpx.adi_line_solver = pipeline needs PEC or PML walls in every direction; use pencil or auto.");
+        adi_use_pipeline = (adi_line_solver == 1) || (adi_line_solver == 2 && !any_periodic);
+        amrex::Print() << "ADI line solver: " << (adi_use_pipeline ? "pipeline" : "pencil")
+                       << (adi_use_pipeline ? " (" + std::to_string(adi_pipeline_batches) + " batches)" : "") << "\n";
+    }
+    if (macroscopic_time_integrator_algo == MacroscopicTimeSteppingScheme::ADI && !adi_use_pipeline)
     {
         Box const domain = Geom(lev).Domain();
         int const nprocs = ParallelDescriptor::NProcs();

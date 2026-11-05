@@ -323,6 +323,12 @@ public:
     static int yee_coupled_solver_algo;
 
     static int use_PEC_mask;
+    // ADI line solver: 0 pencil (copy lines onto x/y/z pencil layouts), 1 pipeline (pipelined Thomas across the
+    // blocks along each line, no pencil copies), 2 auto (pipeline unless a direction is periodic). adi_use_pipeline
+    // is the resolved choice; adi_pipeline_batches is the number of line batches in flight through the pipeline.
+    static int adi_line_solver;
+    static bool adi_use_pipeline;
+    static int adi_pipeline_batches;
     static int use_lumped_inductor;
     static int use_lumped_resistor;
     static int use_lumped_capacitor;

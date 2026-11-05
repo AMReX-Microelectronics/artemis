@@ -1214,7 +1214,8 @@ WarpX::MacroscopicEvolveADI (int lev, PatchType patch_type, amrex::Real a_dt) {
         }
 
         Periodicity const& periodicity = Geom(lev).periodicity();
-        for (int solve_dir = 0; solve_dir < 3; ++solve_dir)
+        // The pipelined line solver reads PEC_fp directly; only pencil layouts need their own mask copies.
+        for (int solve_dir = 0; solve_dir < 3 && !adi_use_pipeline; ++solve_dir)
         {
             for (int component = 0; component < 3; ++component)
             {

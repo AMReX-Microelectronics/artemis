@@ -16,6 +16,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_REAL.H>
 
 #include <algorithm>
@@ -393,6 +394,358 @@ namespace
         }
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Pipelined line solver (warpx.adi_line_solver = pipeline). Each line along `dir` is cut by the
+    // block layout into segments, one per box. The Thomas forward sweep runs segment by segment from
+    // the low wall up, passing (c', d') of the last row to the next box; the back substitution runs
+    // from the high wall down, passing x of the first row back. The arithmetic and its order are those
+    // of solve_tridiagonal on the whole line, so the result is bitwise the same as the pencil solve.
+    // Lines are split into batches so different boxes along a line work on different batches at once.
+
+    // For every box, the box sharing its low (high) face along dir with the same transverse extent.
+    struct LineChain
+    {
+        BoxArray ba;
+        DistributionMapping dm;
+        int dir = -1;
+        Vector<int> lo_nbr;
+        Vector<int> hi_nbr;
+    };
+
+    LineChain const& line_chain (MultiFab const& field, int dir)
+    {
+        static Vector<std::unique_ptr<LineChain>> chains;
+        for (auto const& ch : chains) {
+            if (ch->dir == dir && ch->ba == field.boxArray() && ch->dm == field.DistributionMap()) {
+                return *ch;
+            }
+        }
+        auto ch = std::make_unique<LineChain>();
+        ch->ba = field.boxArray();
+        ch->dm = field.DistributionMap();
+        ch->dir = dir;
+        BoxArray const& ba = ch->ba;
+        Box const domain = ba.minimalBox();
+        int const n = static_cast<int>(ba.size());
+        ch->lo_nbr.assign(n, -1);
+        ch->hi_nbr.assign(n, -1);
+        auto same_transverse = [dir] (Box const& a, Box const& b) {
+            for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+                if (d == dir) { continue; }
+                if (a.smallEnd(d) != b.smallEnd(d) || a.bigEnd(d) != b.bigEnd(d)) { return false; }
+            }
+            return true;
+        };
+        for (int b = 0; b < n; ++b) {
+            Box const bx = ba[b];
+            for (int side = 0; side < 2; ++side) {
+                int const plane = (side == 0) ? bx.smallEnd(dir) : bx.bigEnd(dir);
+                bool const at_wall = (side == 0) ? (plane == domain.smallEnd(dir))
+                                                 : (plane == domain.bigEnd(dir));
+                int found = -1;
+                int count = 0;
+                for (auto const& is : ba.intersections(amrex::makeSlab(bx, dir, plane))) {
+                    int const nb = is.first;
+                    if (nb == b) { continue; }
+                    Box const& other = ba[nb];
+                    int const other_plane = (side == 0) ? other.bigEnd(dir) : other.smallEnd(dir);
+                    if (other_plane == plane && same_transverse(bx, other)) {
+                        found = nb;
+                        ++count;
+                    }
+                }
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (at_wall && count == 0) || (!at_wall && count == 1),
+                    "warpx.adi_line_solver = pipeline needs a regular grid of boxes (each box face matched by "
+                    "exactly one neighbour box); use warpx.adi_line_solver = pencil for this layout.");
+                if (side == 0) { ch->lo_nbr[b] = found; } else { ch->hi_nbr[b] = found; }
+            }
+        }
+        chains.push_back(std::move(ch));
+        return *chains.back();
+    }
+
+    MPI_Comm pipeline_comm ()
+    {
+        static MPI_Comm comm = MPI_COMM_NULL;
+        if (comm == MPI_COMM_NULL) {
+            MPI_Comm_dup(ParallelDescriptor::Communicator(), &comm);
+            amrex::ExecOnFinalize([] () {
+                MPI_Comm c = pipeline_comm();
+                MPI_Comm_free(&c);
+            });
+        }
+        return comm;
+    }
+
+    void solve_dirichlet_lines_pipelined (
+        MultiFab& field, MultiFab const& rhs,
+        MultiFab const& Cb, MultiFab const& Db,
+        int dir, Real inv_d2,
+        MultiFab const* pec_mask,
+        MultiFab const* stretch_e = nullptr,
+        MultiFab const* stretch_h = nullptr)
+    {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(field.ixType().nodeCentered(dir),
+            "Macroscopic ADI PEC solve expects a nodal line along the implicit direction.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(rhs.boxArray() == field.boxArray() &&
+            rhs.DistributionMap() == field.DistributionMap(),
+            "Pipelined ADI solve expects the right-hand side on the field's layout.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(stretch_e == nullptr || stretch_h != nullptr,
+            "ADI PML requires both E-node and H-face stretch.");
+
+        Box const domain = field.boxArray().minimalBox();
+        int const lo = domain.smallEnd(dir);
+        int const hi = domain.bigEnd(dir);
+        int const nsolve = hi - lo - 1;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nsolve >= 2,
+            "ADI PEC solve needs at least two interior nodes per line.");
+
+        LineChain const& ch = line_chain(field, dir);
+        int const nbatch = WarpX::adi_pipeline_batches;
+        MPI_Comm const comm = pipeline_comm();
+        int const myproc = ParallelDescriptor::MyProc();
+
+        struct Segment
+        {
+            int gid;
+            Box bx;
+            int r0;       // first and last row (node index along dir) solved in this box
+            int r1;
+            int xlo, ylo, zlo, xlen, ylen;
+            Long nlines;
+            Gpu::DeviceVector<Real> cp, dp;
+            Gpu::PinnedVector<Real> fsend, frecv, bsend, brecv;
+        };
+        // This box owns rows [smallEnd, bigEnd - 1] along dir (the shared top node belongs to the box above),
+        // limited to the interior rows lo + 1 .. hi - 1.
+        Vector<Segment> segs;
+        for (int gid : field.IndexArray()) {
+            Segment sg;
+            sg.gid = gid;
+            sg.bx = field.boxArray()[gid];
+            sg.r0 = std::max(sg.bx.smallEnd(dir), lo + 1);
+            sg.r1 = std::min(sg.bx.bigEnd(dir) - 1, hi - 1);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(sg.r1 >= sg.r0,
+                "Pipelined ADI solve needs every box to own at least one interior row along the solve direction.");
+            Box const slab = amrex::makeSlab(sg.bx, dir, sg.bx.smallEnd(dir));
+            sg.xlo = slab.smallEnd(0); sg.ylo = slab.smallEnd(1); sg.zlo = slab.smallEnd(2);
+            sg.xlen = slab.length(0); sg.ylen = slab.length(1);
+            sg.nlines = slab.numPts();
+            segs.push_back(std::move(sg));
+        }
+        // Lower boxes first, so a box whose lower neighbour is on this rank finds its carry already computed.
+        std::sort(segs.begin(), segs.end(), [dir] (Segment const& a, Segment const& b) {
+            return a.bx.smallEnd(dir) < b.bx.smallEnd(dir);
+        });
+        Vector<int> seg_of_gid(ch.ba.size(), -1);
+        for (int s = 0; s < static_cast<int>(segs.size()); ++s) {
+            Segment& sg = segs[s];
+            seg_of_gid[sg.gid] = s;
+            Long const ncell = sg.nlines * (sg.r1 - sg.r0 + 1);
+            sg.cp.resize(ncell);
+            sg.dp.resize(ncell);
+            if (ch.hi_nbr[sg.gid] >= 0) { sg.fsend.resize(2 * sg.nlines); sg.brecv.resize(sg.nlines); }
+            if (ch.lo_nbr[sg.gid] >= 0) { sg.frecv.resize(2 * sg.nlines); sg.bsend.resize(sg.nlines); }
+        }
+        auto batch_lo = [nbatch] (Long nl, int q) { return (nl * q) / nbatch; };
+        auto remote = [&] (int nbr) { return nbr >= 0 && ch.dm[nbr] != myproc; };
+        auto tag = [] (int receiver_gid, int phase) { return 2 * receiver_gid + phase; };
+
+        // Post every receive up front; each batch is a separate message, matched in order.
+        Vector<MPI_Request> recv_fwd(segs.size() * nbatch, MPI_REQUEST_NULL);
+        Vector<MPI_Request> recv_bwd(segs.size() * nbatch, MPI_REQUEST_NULL);
+        Vector<MPI_Request> sends;
+        for (int s = 0; s < static_cast<int>(segs.size()); ++s) {
+            Segment& sg = segs[s];
+            for (int q = 0; q < nbatch; ++q) {
+                Long const l0 = batch_lo(sg.nlines, q);
+                int const cnt = static_cast<int>(batch_lo(sg.nlines, q + 1) - l0);
+                if (remote(ch.lo_nbr[sg.gid])) {
+                    MPI_Irecv(sg.frecv.data() + 2 * l0, 2 * cnt, ParallelDescriptor::Mpi_typemap<Real>::type(),
+                              ch.dm[ch.lo_nbr[sg.gid]], tag(sg.gid, 0), comm, &recv_fwd[s * nbatch + q]);
+                }
+                if (remote(ch.hi_nbr[sg.gid])) {
+                    MPI_Irecv(sg.brecv.data() + l0, cnt, ParallelDescriptor::Mpi_typemap<Real>::type(),
+                              ch.dm[ch.hi_nbr[sg.gid]], tag(sg.gid, 1), comm, &recv_bwd[s * nbatch + q]);
+                }
+            }
+        }
+
+        // Forward elimination, batch by batch, lower boxes first.
+        for (int q = 0; q < nbatch; ++q) {
+            for (int s = 0; s < static_cast<int>(segs.size()); ++s) {
+                Segment& sg = segs[s];
+                // A box spanning the whole line has nothing to pipeline: solve all its lines in one batch.
+                bool const alone = ch.lo_nbr[sg.gid] < 0 && ch.hi_nbr[sg.gid] < 0;
+                Long const l0 = alone ? 0 : batch_lo(sg.nlines, q);
+                Long const cnt = alone ? (q == 0 ? sg.nlines : 0) : batch_lo(sg.nlines, q + 1) - l0;
+                int const lo_nbr = ch.lo_nbr[sg.gid];
+                int const hi_nbr = ch.hi_nbr[sg.gid];
+                if (remote(lo_nbr)) { MPI_Wait(&recv_fwd[s * nbatch + q], MPI_STATUS_IGNORE); }
+                // A lower neighbour on this rank wrote its carry into its own send buffer.
+                Real const* carry_in = (lo_nbr < 0) ? nullptr
+                    : (remote(lo_nbr) ? sg.frecv.data() : segs[seg_of_gid[lo_nbr]].fsend.data());
+                Real* carry_out = (hi_nbr < 0) ? nullptr : sg.fsend.data();
+
+                auto const cb_arr = Cb.const_array(sg.gid);
+                auto const db_arr = Db.const_array(sg.gid);
+                auto const rhs_arr = rhs.const_array(sg.gid);
+                bool const masked = pec_mask != nullptr;
+                Array4<Real const> pec_arr;
+                if (masked) { pec_arr = pec_mask->const_array(sg.gid); }
+                bool const use_s = stretch_e != nullptr;
+                Array4<Real const> se_arr;
+                Array4<Real const> sh_arr;
+                if (use_s) { se_arr = stretch_e->const_array(sg.gid); sh_arr = stretch_h->const_array(sg.gid); }
+                Real* cp = sg.cp.data();
+                Real* dp = sg.dp.data();
+                int const r0 = sg.r0, r1 = sg.r1;
+                int const xlo = sg.xlo, ylo = sg.ylo, zlo = sg.zlo, xlen = sg.xlen, ylen = sg.ylen;
+                Long const nl = sg.nlines;
+
+                if (cnt > 0) ParallelFor(cnt, [=] AMREX_GPU_DEVICE (Long t) noexcept
+                {
+                    Long const line = l0 + t;
+                    int const i = xlo + static_cast<int>(line % xlen);
+                    int const j = ylo + static_cast<int>((line / xlen) % ylen);
+                    int const k = zlo + static_cast<int>(line / (static_cast<Long>(xlen) * ylen));
+                    Real cprev = 0._rt;
+                    Real dprev = 0._rt;
+                    if (carry_in != nullptr) {
+                        cprev = carry_in[2 * line];
+                        dprev = carry_in[2 * line + 1];
+                    }
+                    for (int s_ = r0; s_ <= r1; ++s_) {
+                        int const p = s_ - (lo + 1);
+                        Real const db_lo = line_value(db_arr, dir, s_ - 1, i, j, k);
+                        Real const db_hi = line_value(db_arr, dir, s_, i, j, k);
+                        Real s_e = 1._rt;
+                        Real s_h_lo = 1._rt;
+                        Real s_h_hi = 1._rt;
+                        if (use_s) {
+                            s_e = line_value(se_arr, dir, s_, i, j, k);
+                            s_h_lo = line_value(sh_arr, dir, s_ - 1, i, j, k);
+                            s_h_hi = line_value(sh_arr, dir, s_, i, j, k);
+                        }
+                        Real const al = db_lo * s_e * s_h_lo * inv_d2;
+                        Real const ga = db_hi * s_e * s_h_hi * inv_d2;
+                        Real b = 1._rt / line_value(cb_arr, dir, s_, i, j, k) + al + ga;
+                        Real a = (p == 0) ? 0._rt : -al;
+                        Real c = (p == nsolve - 1) ? 0._rt : -ga;
+                        Real r = line_value(rhs_arr, dir, s_, i, j, k);
+                        if (masked) {
+                            Real const m = line_value(pec_arr, dir, s_, i, j, k);
+                            a *= m;
+                            b = m * b + (1._rt - m);
+                            c *= m;
+                            r *= m;
+                        }
+                        Real cpv;
+                        Real dpv;
+                        if (p == 0) {
+                            Real const denom = b;
+                            AMREX_ALWAYS_ASSERT(std::abs(denom) > 0._rt);
+                            cpv = c / denom;
+                            dpv = r / denom;
+                        } else {
+                            Real const denom = b - a * cprev;
+                            AMREX_ALWAYS_ASSERT(std::abs(denom) > 0._rt);
+                            cpv = (p < nsolve - 1) ? c / denom : 0._rt;
+                            dpv = (r - a * dprev) / denom;
+                        }
+                        Long const idx = static_cast<Long>(s_ - r0) * nl + line;
+                        cp[idx] = cpv;
+                        dp[idx] = dpv;
+                        cprev = cpv;
+                        dprev = dpv;
+                    }
+                    if (carry_out != nullptr) {
+                        carry_out[2 * line] = cprev;
+                        carry_out[2 * line + 1] = dprev;
+                    }
+                });
+                if (remote(hi_nbr)) {
+                    Gpu::streamSynchronize();
+                    sends.emplace_back();
+                    MPI_Isend(sg.fsend.data() + 2 * l0, static_cast<int>(2 * cnt),
+                              ParallelDescriptor::Mpi_typemap<Real>::type(),
+                              ch.dm[hi_nbr], tag(hi_nbr, 0), comm, &sends.back());
+                }
+            }
+        }
+
+        // Back substitution, batch by batch, upper boxes first.
+        for (int q = 0; q < nbatch; ++q) {
+            for (int s = static_cast<int>(segs.size()) - 1; s >= 0; --s) {
+                Segment& sg = segs[s];
+                // A box spanning the whole line has nothing to pipeline: solve all its lines in one batch.
+                bool const alone = ch.lo_nbr[sg.gid] < 0 && ch.hi_nbr[sg.gid] < 0;
+                Long const l0 = alone ? 0 : batch_lo(sg.nlines, q);
+                Long const cnt = alone ? (q == 0 ? sg.nlines : 0) : batch_lo(sg.nlines, q + 1) - l0;
+                int const lo_nbr = ch.lo_nbr[sg.gid];
+                int const hi_nbr = ch.hi_nbr[sg.gid];
+                if (remote(hi_nbr)) { MPI_Wait(&recv_bwd[s * nbatch + q], MPI_STATUS_IGNORE); }
+                Real const* x_in = (hi_nbr < 0) ? nullptr
+                    : (remote(hi_nbr) ? sg.brecv.data() : segs[seg_of_gid[hi_nbr]].bsend.data());
+                Real* x_out = (lo_nbr < 0) ? nullptr : sg.bsend.data();
+
+                auto const field_arr = field.array(sg.gid);
+                bool const masked = pec_mask != nullptr;
+                Array4<Real const> pec_arr;
+                if (masked) { pec_arr = pec_mask->const_array(sg.gid); }
+                Real const* cp = sg.cp.data();
+                Real const* dp = sg.dp.data();
+                int const r0 = sg.r0, r1 = sg.r1;
+                int const blo = sg.bx.smallEnd(dir), bhi = sg.bx.bigEnd(dir);
+                int const xlo = sg.xlo, ylo = sg.ylo, zlo = sg.zlo, xlen = sg.xlen, ylen = sg.ylen;
+                Long const nl = sg.nlines;
+
+                if (cnt > 0) ParallelFor(cnt, [=] AMREX_GPU_DEVICE (Long t) noexcept
+                {
+                    Long const line = l0 + t;
+                    int const i = xlo + static_cast<int>(line % xlen);
+                    int const j = ylo + static_cast<int>((line / xlen) % ylen);
+                    int const k = zlo + static_cast<int>(line / (static_cast<Long>(xlen) * ylen));
+                    Real xnext = 0._rt;
+                    if (x_in != nullptr) {
+                        // The node shared with the box above: its value was solved there.
+                        xnext = x_in[line];
+                        Real const m = masked ? line_value(pec_arr, dir, bhi, i, j, k) : 1._rt;
+                        set_line_value(field_arr, dir, bhi, i, j, k, masked ? m * xnext : xnext);
+                    }
+                    for (int s_ = r1; s_ >= r0; --s_) {
+                        int const p = s_ - (lo + 1);
+                        Long const idx = static_cast<Long>(s_ - r0) * nl + line;
+                        Real const x = (p == nsolve - 1) ? dp[idx] : dp[idx] - cp[idx] * xnext;
+                        if (masked) {
+                            Real const m = line_value(pec_arr, dir, s_, i, j, k);
+                            set_line_value(field_arr, dir, s_, i, j, k, m * x);
+                        } else {
+                            set_line_value(field_arr, dir, s_, i, j, k, x);
+                        }
+                        xnext = x;
+                    }
+                    if (x_out != nullptr) { x_out[line] = xnext; }
+                    if (blo == lo) { set_line_value(field_arr, dir, lo, i, j, k, 0._rt); }
+                    if (bhi == hi) { set_line_value(field_arr, dir, hi, i, j, k, 0._rt); }
+                });
+                if (remote(lo_nbr)) {
+                    Gpu::streamSynchronize();
+                    sends.emplace_back();
+                    MPI_Isend(sg.bsend.data() + l0, static_cast<int>(cnt),
+                              ParallelDescriptor::Mpi_typemap<Real>::type(),
+                              ch.dm[lo_nbr], tag(lo_nbr, 1), comm, &sends.back());
+                }
+            }
+        }
+        if (!sends.empty()) {
+            MPI_Waitall(static_cast<int>(sends.size()), sends.data(), MPI_STATUSES_IGNORE);
+        }
+        // The work and carry buffers are freed on return; the kernels must be done with them.
+        Gpu::streamSynchronize();
+    }
+
     PecConfig get_pec_config (Periodicity const& periodicity)
     {
         PecConfig pec;
@@ -427,6 +780,20 @@ namespace
         return WarpX::GetInstance().AdiPmlOn() != 0;
     }
 
+    bool pipeline_on () { return WarpX::adi_use_pipeline; }
+
+    // The field a right-hand side or line solve works on: its pencil copy, or in pipeline mode the block field.
+    MultiFab& field_on (AdiFieldArray& pencils, FieldArray const& block, int layout, int comp)
+    {
+        return pipeline_on() ? *block[comp] : *pencils[layout][comp];
+    }
+
+    MultiFab const* pec_mask_on (AdiFieldArray const& pec_masks, int layout, int comp)
+    {
+        if (!pipeline_on()) { return pec_masks[layout][comp].get(); }
+        return WarpX::use_PEC_mask ? WarpX::GetInstance().get_pointer_PEC_fp(0, comp) : nullptr;
+    }
+
     bool use_pec_dirichlet_solve (int e_comp, int solve_dir, PecConfig const& pec)
     {
         return pec.normal[solve_dir] && e_comp != solve_dir;
@@ -440,7 +807,12 @@ namespace
                                    MultiFab const* stretch_e = nullptr,
                                    MultiFab const* stretch_h = nullptr)
     {
-        if (use_pec_dirichlet_solve(e_comp, solve_dir, pec)) {
+        if (pipeline_on()) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(use_pec_dirichlet_solve(e_comp, solve_dir, pec),
+                "Pipelined ADI solve supports only PEC/PML (Dirichlet) lines.");
+            solve_dirichlet_lines_pipelined(field, rhs, Cb, Db, solve_dir, inv_d2,
+                                            pec_mask, stretch_e, stretch_h);
+        } else if (use_pec_dirichlet_solve(e_comp, solve_dir, pec)) {
             solve_dirichlet_nodal_lines(field, rhs, Cb, Db, solve_dir, inv_d2,
                                         pec_mask, stretch_e, stretch_h);
         } else {
@@ -556,6 +928,28 @@ namespace
         }
     }
 
+    // `src` on the layout of `layout` (0 ghosts and layout's index type when `like` is null, as make_rhs; else
+    // like's index type and ghosts, as make_coeff_like). Returns src itself when it already has that layout
+    // (pipeline mode), otherwise copies it into `own`.
+    MultiFab const& layout_or_copy (
+        MultiFab const& layout, MultiFab const* like, MultiFab const& src, MultiFab& own,
+        Periodicity const& periodicity)
+    {
+        BoxArray ba(layout.boxArray());
+        IntVect ngrow(0);
+        if (like != nullptr) {
+            ba.convert(like->ixType());
+            ngrow = like->nGrowVect();
+        }
+        if (src.boxArray() == ba && src.DistributionMap() == layout.DistributionMap() &&
+            src.nGrowVect().allGE(ngrow)) {
+            return src;
+        }
+        own.define(ba, layout.DistributionMap(), 1, ngrow, MFInfo().SetArena(The_Async_Arena()));
+        copy_coeff_to_layout(own, src, periodicity);
+        return own;
+    }
+
     // Material coefficients (Cb, p, kappa, Db) are fixed once dt is fixed, so each one is copied onto a
     // pencil layout once and reused; copying them every half-step was an all-to-all ParallelCopy each time.
     enum class CoeffKind : int { Cb, p, kappa, Db };
@@ -597,6 +991,10 @@ namespace
         if (like != nullptr) {
             ba.convert(like->ixType());
             ngrow = like->nGrowVect();
+        }
+        if (src.boxArray() == ba && src.DistributionMap() == layout.DistributionMap() &&
+            src.nGrowVect().allGE(ngrow)) {
+            return src;  // already on this layout (pipeline mode): no copy, no cache
         }
         for (auto const& e : cache.entries) {
             if (e.kind == kind && e.comp == comp && e.mf->nGrowVect() == ngrow &&
@@ -864,6 +1262,7 @@ namespace
     void copy_fields (FieldArray& dst, FieldArray const& src,
                       Periodicity const& periodicity, int a, int b)
     {
+        if (pipeline_on()) { return; }  // the block fields are used in place
         for (int component : {a, b}) {
             dst[component]->ParallelCopy(
                 *src[component], 0, 0, 1, IntVect(0),
@@ -874,6 +1273,7 @@ namespace
     void copy_field_component (FieldArray& dst, FieldArray const& src,
                                int component, Periodicity const& periodicity)
     {
+        if (pipeline_on()) { return; }  // the block fields are used in place
         dst[component]->ParallelCopy(
             *src[component], 0, 0, 1, IntVect(0), IntVect(0), periodicity);
     }
@@ -886,8 +1286,9 @@ namespace
 
         WarpX& warpx = WarpX::GetInstance();
         MultiFab const& current = *warpx.get_pointer_current_fp(0, e_comp);
-        MultiFab current_field = make_rhs(rhs);
-        copy_coeff_to_layout(current_field, current, periodicity);
+        MultiFab current_field_own;
+        MultiFab const& current_field = layout_or_copy(
+            rhs, nullptr, current, current_field_own, periodicity);
         MultiFab const& kappa_field = static_coeff_on_layout(
             rhs, nullptr, CoeffKind::kappa, e_comp, kappa, periodicity);
 
@@ -950,17 +1351,21 @@ namespace
             MultiFab Sy = make_rhs(ex);
             MultiFab kz = make_rhs(ex);
             MultiFab kx_db = make_coeff_like(ex, *mat.Db[2]);
-            MultiFab psi_e0 = make_rhs(ex);
-            MultiFab psi_e1 = make_rhs(ex);
-            MultiFab psi_himp = make_coeff_like(ex, *mat.Db[2]);
-            MultiFab psi_hexp = make_coeff_like(ex, *mat.Db[2]);
+            MultiFab psi_e0_own;
+            MultiFab const& psi_e0 = layout_or_copy(
+                ex, nullptr, warpx.get_adi_psi_e(AdiPsiE::EXY), psi_e0_own, periodicity);
+            MultiFab psi_e1_own;
+            MultiFab const& psi_e1 = layout_or_copy(
+                ex, nullptr, warpx.get_adi_psi_e(AdiPsiE::EXZ), psi_e1_own, periodicity);
+            MultiFab psi_himp_own;
+            MultiFab const& psi_himp = layout_or_copy(
+                ex, mat.Db[2].get(), warpx.get_adi_psi_h(AdiPsiH::HZY), psi_himp_own, periodicity);
+            MultiFab psi_hexp_own;
+            MultiFab const& psi_hexp = layout_or_copy(
+                ex, mat.Db[2].get(), warpx.get_adi_psi_h(AdiPsiH::HZX), psi_hexp_own, periodicity);
             copy_cc_profile_to_layout(Sy, 1, 3, periodicity);
             copy_cc_profile_to_layout(kz, 2, 0, periodicity);
             copy_cc_profile_to_layout(kx_db, 0, 0, periodicity);
-            copy_coeff_to_layout(psi_e0, warpx.get_adi_psi_e(AdiPsiE::EXY), periodicity);
-            copy_coeff_to_layout(psi_e1, warpx.get_adi_psi_e(AdiPsiE::EXZ), periodicity);
-            copy_coeff_to_layout(psi_himp, warpx.get_adi_psi_h(AdiPsiH::HZY), periodicity);
-            copy_coeff_to_layout(psi_hexp, warpx.get_adi_psi_h(AdiPsiH::HZX), periodicity);
             for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
                 auto const rhs_arr = rhs.array(mfi);
                 auto const ex_arr = ex.const_array(mfi);
@@ -1048,17 +1453,21 @@ namespace
             MultiFab Sz = make_rhs(ey);
             MultiFab kx = make_rhs(ey);
             MultiFab ky_db = make_coeff_like(ey, *mat.Db[0]);
-            MultiFab psi_e0 = make_rhs(ey);
-            MultiFab psi_e1 = make_rhs(ey);
-            MultiFab psi_himp = make_coeff_like(ey, *mat.Db[0]);
-            MultiFab psi_hexp = make_coeff_like(ey, *mat.Db[0]);
+            MultiFab psi_e0_own;
+            MultiFab const& psi_e0 = layout_or_copy(
+                ey, nullptr, warpx.get_adi_psi_e(AdiPsiE::EYZ), psi_e0_own, periodicity);
+            MultiFab psi_e1_own;
+            MultiFab const& psi_e1 = layout_or_copy(
+                ey, nullptr, warpx.get_adi_psi_e(AdiPsiE::EYX), psi_e1_own, periodicity);
+            MultiFab psi_himp_own;
+            MultiFab const& psi_himp = layout_or_copy(
+                ey, mat.Db[0].get(), warpx.get_adi_psi_h(AdiPsiH::HXZ), psi_himp_own, periodicity);
+            MultiFab psi_hexp_own;
+            MultiFab const& psi_hexp = layout_or_copy(
+                ey, mat.Db[0].get(), warpx.get_adi_psi_h(AdiPsiH::HXY), psi_hexp_own, periodicity);
             copy_cc_profile_to_layout(Sz, 2, 3, periodicity);
             copy_cc_profile_to_layout(kx, 0, 0, periodicity);
             copy_cc_profile_to_layout(ky_db, 1, 0, periodicity);
-            copy_coeff_to_layout(psi_e0, warpx.get_adi_psi_e(AdiPsiE::EYZ), periodicity);
-            copy_coeff_to_layout(psi_e1, warpx.get_adi_psi_e(AdiPsiE::EYX), periodicity);
-            copy_coeff_to_layout(psi_himp, warpx.get_adi_psi_h(AdiPsiH::HXZ), periodicity);
-            copy_coeff_to_layout(psi_hexp, warpx.get_adi_psi_h(AdiPsiH::HXY), periodicity);
             for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
                 auto const rhs_arr = rhs.array(mfi);
                 auto const ey_arr = ey.const_array(mfi);
@@ -1146,17 +1555,21 @@ namespace
             MultiFab Sx = make_rhs(ez);
             MultiFab ky = make_rhs(ez);
             MultiFab kz_db = make_coeff_like(ez, *mat.Db[1]);
-            MultiFab psi_e0 = make_rhs(ez);
-            MultiFab psi_e1 = make_rhs(ez);
-            MultiFab psi_himp = make_coeff_like(ez, *mat.Db[1]);
-            MultiFab psi_hexp = make_coeff_like(ez, *mat.Db[1]);
+            MultiFab psi_e0_own;
+            MultiFab const& psi_e0 = layout_or_copy(
+                ez, nullptr, warpx.get_adi_psi_e(AdiPsiE::EZX), psi_e0_own, periodicity);
+            MultiFab psi_e1_own;
+            MultiFab const& psi_e1 = layout_or_copy(
+                ez, nullptr, warpx.get_adi_psi_e(AdiPsiE::EZY), psi_e1_own, periodicity);
+            MultiFab psi_himp_own;
+            MultiFab const& psi_himp = layout_or_copy(
+                ez, mat.Db[1].get(), warpx.get_adi_psi_h(AdiPsiH::HYX), psi_himp_own, periodicity);
+            MultiFab psi_hexp_own;
+            MultiFab const& psi_hexp = layout_or_copy(
+                ez, mat.Db[1].get(), warpx.get_adi_psi_h(AdiPsiH::HYZ), psi_hexp_own, periodicity);
             copy_cc_profile_to_layout(Sx, 0, 3, periodicity);
             copy_cc_profile_to_layout(ky, 1, 0, periodicity);
             copy_cc_profile_to_layout(kz_db, 2, 0, periodicity);
-            copy_coeff_to_layout(psi_e0, warpx.get_adi_psi_e(AdiPsiE::EZX), periodicity);
-            copy_coeff_to_layout(psi_e1, warpx.get_adi_psi_e(AdiPsiE::EZY), periodicity);
-            copy_coeff_to_layout(psi_himp, warpx.get_adi_psi_h(AdiPsiH::HYX), periodicity);
-            copy_coeff_to_layout(psi_hexp, warpx.get_adi_psi_h(AdiPsiH::HYZ), periodicity);
             for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
                 auto const rhs_arr = rhs.array(mfi);
                 auto const ez_arr = ez.const_array(mfi);
@@ -1244,17 +1657,21 @@ namespace
             MultiFab Sz = make_rhs(ex);
             MultiFab ky = make_rhs(ex);
             MultiFab kx_db = make_coeff_like(ex, *mat.Db[1]);
-            MultiFab psi_e0 = make_rhs(ex);
-            MultiFab psi_e1 = make_rhs(ex);
-            MultiFab psi_himp = make_coeff_like(ex, *mat.Db[1]);
-            MultiFab psi_hexp = make_coeff_like(ex, *mat.Db[1]);
+            MultiFab psi_e0_own;
+            MultiFab const& psi_e0 = layout_or_copy(
+                ex, nullptr, warpx.get_adi_psi_e(AdiPsiE::EXY), psi_e0_own, periodicity);
+            MultiFab psi_e1_own;
+            MultiFab const& psi_e1 = layout_or_copy(
+                ex, nullptr, warpx.get_adi_psi_e(AdiPsiE::EXZ), psi_e1_own, periodicity);
+            MultiFab psi_himp_own;
+            MultiFab const& psi_himp = layout_or_copy(
+                ex, mat.Db[1].get(), warpx.get_adi_psi_h(AdiPsiH::HYZ), psi_himp_own, periodicity);
+            MultiFab psi_hexp_own;
+            MultiFab const& psi_hexp = layout_or_copy(
+                ex, mat.Db[1].get(), warpx.get_adi_psi_h(AdiPsiH::HYX), psi_hexp_own, periodicity);
             copy_cc_profile_to_layout(Sz, 2, 3, periodicity);
             copy_cc_profile_to_layout(ky, 1, 0, periodicity);
             copy_cc_profile_to_layout(kx_db, 0, 0, periodicity);
-            copy_coeff_to_layout(psi_e0, warpx.get_adi_psi_e(AdiPsiE::EXY), periodicity);
-            copy_coeff_to_layout(psi_e1, warpx.get_adi_psi_e(AdiPsiE::EXZ), periodicity);
-            copy_coeff_to_layout(psi_himp, warpx.get_adi_psi_h(AdiPsiH::HYZ), periodicity);
-            copy_coeff_to_layout(psi_hexp, warpx.get_adi_psi_h(AdiPsiH::HYX), periodicity);
             for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
                 auto const rhs_arr = rhs.array(mfi);
                 auto const ex_arr = ex.const_array(mfi);
@@ -1342,17 +1759,21 @@ namespace
             MultiFab Sx = make_rhs(ey);
             MultiFab kz = make_rhs(ey);
             MultiFab ky_db = make_coeff_like(ey, *mat.Db[2]);
-            MultiFab psi_e0 = make_rhs(ey);
-            MultiFab psi_e1 = make_rhs(ey);
-            MultiFab psi_himp = make_coeff_like(ey, *mat.Db[2]);
-            MultiFab psi_hexp = make_coeff_like(ey, *mat.Db[2]);
+            MultiFab psi_e0_own;
+            MultiFab const& psi_e0 = layout_or_copy(
+                ey, nullptr, warpx.get_adi_psi_e(AdiPsiE::EYZ), psi_e0_own, periodicity);
+            MultiFab psi_e1_own;
+            MultiFab const& psi_e1 = layout_or_copy(
+                ey, nullptr, warpx.get_adi_psi_e(AdiPsiE::EYX), psi_e1_own, periodicity);
+            MultiFab psi_himp_own;
+            MultiFab const& psi_himp = layout_or_copy(
+                ey, mat.Db[2].get(), warpx.get_adi_psi_h(AdiPsiH::HZX), psi_himp_own, periodicity);
+            MultiFab psi_hexp_own;
+            MultiFab const& psi_hexp = layout_or_copy(
+                ey, mat.Db[2].get(), warpx.get_adi_psi_h(AdiPsiH::HZY), psi_hexp_own, periodicity);
             copy_cc_profile_to_layout(Sx, 0, 3, periodicity);
             copy_cc_profile_to_layout(kz, 2, 0, periodicity);
             copy_cc_profile_to_layout(ky_db, 1, 0, periodicity);
-            copy_coeff_to_layout(psi_e0, warpx.get_adi_psi_e(AdiPsiE::EYZ), periodicity);
-            copy_coeff_to_layout(psi_e1, warpx.get_adi_psi_e(AdiPsiE::EYX), periodicity);
-            copy_coeff_to_layout(psi_himp, warpx.get_adi_psi_h(AdiPsiH::HZX), periodicity);
-            copy_coeff_to_layout(psi_hexp, warpx.get_adi_psi_h(AdiPsiH::HZY), periodicity);
             for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
                 auto const rhs_arr = rhs.array(mfi);
                 auto const ey_arr = ey.const_array(mfi);
@@ -1440,17 +1861,21 @@ namespace
             MultiFab Sy = make_rhs(ez);
             MultiFab kx = make_rhs(ez);
             MultiFab kz_db = make_coeff_like(ez, *mat.Db[0]);
-            MultiFab psi_e0 = make_rhs(ez);
-            MultiFab psi_e1 = make_rhs(ez);
-            MultiFab psi_himp = make_coeff_like(ez, *mat.Db[0]);
-            MultiFab psi_hexp = make_coeff_like(ez, *mat.Db[0]);
+            MultiFab psi_e0_own;
+            MultiFab const& psi_e0 = layout_or_copy(
+                ez, nullptr, warpx.get_adi_psi_e(AdiPsiE::EZX), psi_e0_own, periodicity);
+            MultiFab psi_e1_own;
+            MultiFab const& psi_e1 = layout_or_copy(
+                ez, nullptr, warpx.get_adi_psi_e(AdiPsiE::EZY), psi_e1_own, periodicity);
+            MultiFab psi_himp_own;
+            MultiFab const& psi_himp = layout_or_copy(
+                ez, mat.Db[0].get(), warpx.get_adi_psi_h(AdiPsiH::HXY), psi_himp_own, periodicity);
+            MultiFab psi_hexp_own;
+            MultiFab const& psi_hexp = layout_or_copy(
+                ez, mat.Db[0].get(), warpx.get_adi_psi_h(AdiPsiH::HXZ), psi_hexp_own, periodicity);
             copy_cc_profile_to_layout(Sy, 1, 3, periodicity);
             copy_cc_profile_to_layout(kx, 0, 0, periodicity);
             copy_cc_profile_to_layout(kz_db, 2, 0, periodicity);
-            copy_coeff_to_layout(psi_e0, warpx.get_adi_psi_e(AdiPsiE::EZX), periodicity);
-            copy_coeff_to_layout(psi_e1, warpx.get_adi_psi_e(AdiPsiE::EZY), periodicity);
-            copy_coeff_to_layout(psi_himp, warpx.get_adi_psi_h(AdiPsiH::HXY), periodicity);
-            copy_coeff_to_layout(psi_hexp, warpx.get_adi_psi_h(AdiPsiH::HXZ), periodicity);
             for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
                 auto const rhs_arr = rhs.array(mfi);
                 auto const ez_arr = ez.const_array(mfi);
@@ -1614,7 +2039,7 @@ namespace
             ex, nullptr, CoeffKind::Cb, 0, *mat.Cb[0], periodicity);
         MultiFab const& Db = static_coeff_on_layout(
             ex, mat.Db[2].get(), CoeffKind::Db, 2, *mat.Db[2], periodicity);
-        MultiFab const* pec_mask = pec_masks[1][0].get();
+        MultiFab const* pec_mask = pec_mask_on(pec_masks, 1, 0);
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
         MultiFab const* stretch_h = nullptr;
@@ -1640,7 +2065,7 @@ namespace
             ey, nullptr, CoeffKind::Cb, 1, *mat.Cb[1], periodicity);
         MultiFab const& Db = static_coeff_on_layout(
             ey, mat.Db[0].get(), CoeffKind::Db, 0, *mat.Db[0], periodicity);
-        MultiFab const* pec_mask = pec_masks[2][1].get();
+        MultiFab const* pec_mask = pec_mask_on(pec_masks, 2, 1);
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
         MultiFab const* stretch_h = nullptr;
@@ -1666,7 +2091,7 @@ namespace
             ez, nullptr, CoeffKind::Cb, 2, *mat.Cb[2], periodicity);
         MultiFab const& Db = static_coeff_on_layout(
             ez, mat.Db[1].get(), CoeffKind::Db, 1, *mat.Db[1], periodicity);
-        MultiFab const* pec_mask = pec_masks[0][2].get();
+        MultiFab const* pec_mask = pec_mask_on(pec_masks, 0, 2);
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
         MultiFab const* stretch_h = nullptr;
@@ -1692,7 +2117,7 @@ namespace
             ex, nullptr, CoeffKind::Cb, 0, *mat.Cb[0], periodicity);
         MultiFab const& Db = static_coeff_on_layout(
             ex, mat.Db[1].get(), CoeffKind::Db, 1, *mat.Db[1], periodicity);
-        MultiFab const* pec_mask = pec_masks[2][0].get();
+        MultiFab const* pec_mask = pec_mask_on(pec_masks, 2, 0);
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
         MultiFab const* stretch_h = nullptr;
@@ -1718,7 +2143,7 @@ namespace
             ey, nullptr, CoeffKind::Cb, 1, *mat.Cb[1], periodicity);
         MultiFab const& Db = static_coeff_on_layout(
             ey, mat.Db[2].get(), CoeffKind::Db, 2, *mat.Db[2], periodicity);
-        MultiFab const* pec_mask = pec_masks[0][1].get();
+        MultiFab const* pec_mask = pec_mask_on(pec_masks, 0, 1);
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
         MultiFab const* stretch_h = nullptr;
@@ -1744,7 +2169,7 @@ namespace
             ez, nullptr, CoeffKind::Cb, 2, *mat.Cb[2], periodicity);
         MultiFab const& Db = static_coeff_on_layout(
             ez, mat.Db[0].get(), CoeffKind::Db, 0, *mat.Db[0], periodicity);
-        MultiFab const* pec_mask = pec_masks[1][2].get();
+        MultiFab const* pec_mask = pec_mask_on(pec_masks, 1, 2);
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
         MultiFab const* stretch_h = nullptr;
@@ -2066,24 +2491,24 @@ namespace
         copy_fields(Efield_adi[1], Efield, periodicity, 0, 1);
         copy_fields(Bfield_adi[1], mat.H, periodicity, 1, 2);
         MultiFab rhs_ex = build_rhs_ex1(
-            *Efield_adi[1][0], *Efield_adi[1][1],
-            *Bfield_adi[1][1], *Bfield_adi[1][2], c, mat, periodicity);
+            field_on(Efield_adi, Efield, 1, 0), field_on(Efield_adi, Efield, 1, 1),
+            field_on(Bfield_adi, mat.H, 1, 1), field_on(Bfield_adi, mat.H, 1, 2), c, mat, periodicity);
 
         copy_fields(Efield_adi[2], Efield, periodicity, 1, 2);
         copy_fields(Bfield_adi[2], mat.H, periodicity, 0, 2);
         MultiFab rhs_ey = build_rhs_ey1(
-            *Efield_adi[2][1], *Efield_adi[2][2],
-            *Bfield_adi[2][0], *Bfield_adi[2][2], c, mat, periodicity);
+            field_on(Efield_adi, Efield, 2, 1), field_on(Efield_adi, Efield, 2, 2),
+            field_on(Bfield_adi, mat.H, 2, 0), field_on(Bfield_adi, mat.H, 2, 2), c, mat, periodicity);
 
         copy_fields(Efield_adi[0], Efield, periodicity, 2, 0);
         copy_fields(Bfield_adi[0], mat.H, periodicity, 0, 1);
         MultiFab rhs_ez = build_rhs_ez1(
-            *Efield_adi[0][2], *Efield_adi[0][0],
-            *Bfield_adi[0][0], *Bfield_adi[0][1], c, mat, periodicity);
+            field_on(Efield_adi, Efield, 0, 2), field_on(Efield_adi, Efield, 0, 0),
+            field_on(Bfield_adi, mat.H, 0, 0), field_on(Bfield_adi, mat.H, 0, 1), c, mat, periodicity);
 
-        solve_implicit_ex1(*Efield_adi[1][0], rhs_ex, c, mat, periodicity, pec, pec_masks);
-        solve_implicit_ey1(*Efield_adi[2][1], rhs_ey, c, mat, periodicity, pec, pec_masks);
-        solve_implicit_ez1(*Efield_adi[0][2], rhs_ez, c, mat, periodicity, pec, pec_masks);
+        solve_implicit_ex1(field_on(Efield_adi, Efield, 1, 0), rhs_ex, c, mat, periodicity, pec, pec_masks);
+        solve_implicit_ey1(field_on(Efield_adi, Efield, 2, 1), rhs_ey, c, mat, periodicity, pec, pec_masks);
+        solve_implicit_ez1(field_on(Efield_adi, Efield, 0, 2), rhs_ez, c, mat, periodicity, pec, pec_masks);
 
         copy_field_component(Efield, Efield_adi[1], 0, periodicity);
         copy_field_component(Efield, Efield_adi[2], 1, periodicity);
@@ -2150,24 +2575,24 @@ namespace
         copy_fields(Efield_adi[2], Efield, periodicity, 0, 2);
         copy_fields(Bfield_adi[2], mat.H, periodicity, 1, 2);
         MultiFab rhs_ex = build_rhs_ex2(
-            *Efield_adi[2][0], *Efield_adi[2][2],
-            *Bfield_adi[2][1], *Bfield_adi[2][2], c, mat, periodicity);
+            field_on(Efield_adi, Efield, 2, 0), field_on(Efield_adi, Efield, 2, 2),
+            field_on(Bfield_adi, mat.H, 2, 1), field_on(Bfield_adi, mat.H, 2, 2), c, mat, periodicity);
 
         copy_fields(Efield_adi[0], Efield, periodicity, 1, 0);
         copy_fields(Bfield_adi[0], mat.H, periodicity, 0, 2);
         MultiFab rhs_ey = build_rhs_ey2(
-            *Efield_adi[0][1], *Efield_adi[0][0],
-            *Bfield_adi[0][0], *Bfield_adi[0][2], c, mat, periodicity);
+            field_on(Efield_adi, Efield, 0, 1), field_on(Efield_adi, Efield, 0, 0),
+            field_on(Bfield_adi, mat.H, 0, 0), field_on(Bfield_adi, mat.H, 0, 2), c, mat, periodicity);
 
         copy_fields(Efield_adi[1], Efield, periodicity, 2, 1);
         copy_fields(Bfield_adi[1], mat.H, periodicity, 0, 1);
         MultiFab rhs_ez = build_rhs_ez2(
-            *Efield_adi[1][2], *Efield_adi[1][1],
-            *Bfield_adi[1][0], *Bfield_adi[1][1], c, mat, periodicity);
+            field_on(Efield_adi, Efield, 1, 2), field_on(Efield_adi, Efield, 1, 1),
+            field_on(Bfield_adi, mat.H, 1, 0), field_on(Bfield_adi, mat.H, 1, 1), c, mat, periodicity);
 
-        solve_implicit_ex2(*Efield_adi[2][0], rhs_ex, c, mat, periodicity, pec, pec_masks);
-        solve_implicit_ey2(*Efield_adi[0][1], rhs_ey, c, mat, periodicity, pec, pec_masks);
-        solve_implicit_ez2(*Efield_adi[1][2], rhs_ez, c, mat, periodicity, pec, pec_masks);
+        solve_implicit_ex2(field_on(Efield_adi, Efield, 2, 0), rhs_ex, c, mat, periodicity, pec, pec_masks);
+        solve_implicit_ey2(field_on(Efield_adi, Efield, 0, 1), rhs_ey, c, mat, periodicity, pec, pec_masks);
+        solve_implicit_ez2(field_on(Efield_adi, Efield, 1, 2), rhs_ez, c, mat, periodicity, pec, pec_masks);
 
         copy_field_component(Efield, Efield_adi[2], 0, periodicity);
         copy_field_component(Efield, Efield_adi[0], 1, periodicity);
