@@ -22,6 +22,7 @@
 #include <array>
 #include <cmath>
 #include <memory>
+#include <vector>
 
 using namespace amrex;
 
@@ -555,6 +556,60 @@ namespace
         }
     }
 
+    // Material coefficients (Cb, p, kappa, Db) are fixed once dt is fixed, so each one is copied onto a
+    // pencil layout once and reused; copying them every half-step was an all-to-all ParallelCopy each time.
+    enum class CoeffKind : int { Cb, p, kappa, Db };
+
+    struct CachedCoeff
+    {
+        CoeffKind kind;
+        int comp;
+        std::unique_ptr<MultiFab> mf;
+    };
+
+    struct PencilCoeffCache
+    {
+        Real dt = -1._rt;
+        bool finalize_registered = false;
+        std::vector<CachedCoeff> entries;
+    };
+
+    PencilCoeffCache& pencil_coeff_cache ()
+    {
+        static PencilCoeffCache cache;
+        return cache;
+    }
+
+    // The coefficient `src` (kind, comp) on the layout of `layout`: with 0 ghosts and layout's index type
+    // when `like` is null (as make_rhs), else with like's index type and ghosts (as make_coeff_like).
+    MultiFab const& static_coeff_on_layout (
+        MultiFab const& layout, MultiFab const* like, CoeffKind kind, int comp,
+        MultiFab const& src, Periodicity const& periodicity)
+    {
+        PencilCoeffCache& cache = pencil_coeff_cache();
+        if (!cache.finalize_registered) {
+            // Free the cached MultiFabs while AMReX's arenas still exist.
+            amrex::ExecOnFinalize([] () { pencil_coeff_cache().entries.clear(); });
+            cache.finalize_registered = true;
+        }
+        BoxArray ba(layout.boxArray());
+        IntVect ngrow(0);
+        if (like != nullptr) {
+            ba.convert(like->ixType());
+            ngrow = like->nGrowVect();
+        }
+        for (auto const& e : cache.entries) {
+            if (e.kind == kind && e.comp == comp && e.mf->nGrowVect() == ngrow &&
+                e.mf->boxArray() == ba && e.mf->DistributionMap() == layout.DistributionMap()) {
+                return *e.mf;
+            }
+        }
+        auto mf = std::make_unique<MultiFab>(ba, layout.DistributionMap(), 1, ngrow);
+        copy_coeff_to_layout(*mf, src, periodicity);
+        cache.entries.push_back(CachedCoeff{kind, comp, std::move(mf)});
+        return *cache.entries.back().mf;
+    }
+
     // Fill CFS kappa (0), a (1), b (2), or 1/κ (3) at dst's Yee location.
     void copy_cc_profile_to_layout (
         MultiFab& dst, int dir, int quantity, Periodicity const&)
@@ -805,10 +860,11 @@ namespace
         fill_boundary_and_sync(coeffs.H, periodicity);
     }
 
+    // Copy components a and b only: each right-hand side reads two E and two H components.
     void copy_fields (FieldArray& dst, FieldArray const& src,
-                      Periodicity const& periodicity)
+                      Periodicity const& periodicity, int a, int b)
     {
-        for (int component = 0; component < 3; ++component) {
+        for (int component : {a, b}) {
             dst[component]->ParallelCopy(
                 *src[component], 0, 0, 1, IntVect(0),
                 dst[component]->nGrowVect(), periodicity);
@@ -831,9 +887,9 @@ namespace
         WarpX& warpx = WarpX::GetInstance();
         MultiFab const& current = *warpx.get_pointer_current_fp(0, e_comp);
         MultiFab current_field = make_rhs(rhs);
-        MultiFab kappa_field = make_rhs(rhs);
         copy_coeff_to_layout(current_field, current, periodicity);
-        copy_coeff_to_layout(kappa_field, kappa, periodicity);
+        MultiFab const& kappa_field = static_coeff_on_layout(
+            rhs, nullptr, CoeffKind::kappa, e_comp, kappa, periodicity);
 
         for (MFIter mfi(rhs, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
             Array4<Real> const rhs_arr = rhs.array(mfi);
@@ -858,12 +914,12 @@ namespace
         Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ex);
-        MultiFab p_field = make_rhs(ex);
-        MultiFab cb_field = make_rhs(ex);
-        MultiFab db_field = make_coeff_like(ex, *mat.Db[2]);
-        copy_coeff_to_layout(p_field, *mat.p[0], periodicity);
-        copy_coeff_to_layout(cb_field, *mat.Cb[0], periodicity);
-        copy_coeff_to_layout(db_field, *mat.Db[2], periodicity);
+        MultiFab const& p_field = static_coeff_on_layout(
+            ex, nullptr, CoeffKind::p, 0, *mat.p[0], periodicity);
+        MultiFab const& cb_field = static_coeff_on_layout(
+            ex, nullptr, CoeffKind::Cb, 0, *mat.Cb[0], periodicity);
+        MultiFab const& db_field = static_coeff_on_layout(
+            ex, mat.Db[2].get(), CoeffKind::Db, 2, *mat.Db[2], periodicity);
         if (!adi_pml_on()) {
         for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
             auto const rhs_arr = rhs.array(mfi);
@@ -957,12 +1013,12 @@ namespace
         Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ey);
-        MultiFab p_field = make_rhs(ey);
-        MultiFab cb_field = make_rhs(ey);
-        MultiFab db_field = make_coeff_like(ey, *mat.Db[0]);
-        copy_coeff_to_layout(p_field, *mat.p[1], periodicity);
-        copy_coeff_to_layout(cb_field, *mat.Cb[1], periodicity);
-        copy_coeff_to_layout(db_field, *mat.Db[0], periodicity);
+        MultiFab const& p_field = static_coeff_on_layout(
+            ey, nullptr, CoeffKind::p, 1, *mat.p[1], periodicity);
+        MultiFab const& cb_field = static_coeff_on_layout(
+            ey, nullptr, CoeffKind::Cb, 1, *mat.Cb[1], periodicity);
+        MultiFab const& db_field = static_coeff_on_layout(
+            ey, mat.Db[0].get(), CoeffKind::Db, 0, *mat.Db[0], periodicity);
         if (!adi_pml_on()) {
         for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
             auto const rhs_arr = rhs.array(mfi);
@@ -1055,12 +1111,12 @@ namespace
         Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ez);
-        MultiFab p_field = make_rhs(ez);
-        MultiFab cb_field = make_rhs(ez);
-        MultiFab db_field = make_coeff_like(ez, *mat.Db[1]);
-        copy_coeff_to_layout(p_field, *mat.p[2], periodicity);
-        copy_coeff_to_layout(cb_field, *mat.Cb[2], periodicity);
-        copy_coeff_to_layout(db_field, *mat.Db[1], periodicity);
+        MultiFab const& p_field = static_coeff_on_layout(
+            ez, nullptr, CoeffKind::p, 2, *mat.p[2], periodicity);
+        MultiFab const& cb_field = static_coeff_on_layout(
+            ez, nullptr, CoeffKind::Cb, 2, *mat.Cb[2], periodicity);
+        MultiFab const& db_field = static_coeff_on_layout(
+            ez, mat.Db[1].get(), CoeffKind::Db, 1, *mat.Db[1], periodicity);
         if (!adi_pml_on()) {
         for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
             auto const rhs_arr = rhs.array(mfi);
@@ -1153,12 +1209,12 @@ namespace
         Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ex);
-        MultiFab p_field = make_rhs(ex);
-        MultiFab cb_field = make_rhs(ex);
-        MultiFab db_field = make_coeff_like(ex, *mat.Db[1]);
-        copy_coeff_to_layout(p_field, *mat.p[0], periodicity);
-        copy_coeff_to_layout(cb_field, *mat.Cb[0], periodicity);
-        copy_coeff_to_layout(db_field, *mat.Db[1], periodicity);
+        MultiFab const& p_field = static_coeff_on_layout(
+            ex, nullptr, CoeffKind::p, 0, *mat.p[0], periodicity);
+        MultiFab const& cb_field = static_coeff_on_layout(
+            ex, nullptr, CoeffKind::Cb, 0, *mat.Cb[0], periodicity);
+        MultiFab const& db_field = static_coeff_on_layout(
+            ex, mat.Db[1].get(), CoeffKind::Db, 1, *mat.Db[1], periodicity);
         if (!adi_pml_on()) {
         for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
             auto const rhs_arr = rhs.array(mfi);
@@ -1251,12 +1307,12 @@ namespace
         Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ey);
-        MultiFab p_field = make_rhs(ey);
-        MultiFab cb_field = make_rhs(ey);
-        MultiFab db_field = make_coeff_like(ey, *mat.Db[2]);
-        copy_coeff_to_layout(p_field, *mat.p[1], periodicity);
-        copy_coeff_to_layout(cb_field, *mat.Cb[1], periodicity);
-        copy_coeff_to_layout(db_field, *mat.Db[2], periodicity);
+        MultiFab const& p_field = static_coeff_on_layout(
+            ey, nullptr, CoeffKind::p, 1, *mat.p[1], periodicity);
+        MultiFab const& cb_field = static_coeff_on_layout(
+            ey, nullptr, CoeffKind::Cb, 1, *mat.Cb[1], periodicity);
+        MultiFab const& db_field = static_coeff_on_layout(
+            ey, mat.Db[2].get(), CoeffKind::Db, 2, *mat.Db[2], periodicity);
         if (!adi_pml_on()) {
         for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
             auto const rhs_arr = rhs.array(mfi);
@@ -1349,12 +1405,12 @@ namespace
         Periodicity const& periodicity)
     {
         MultiFab rhs = make_rhs(ez);
-        MultiFab p_field = make_rhs(ez);
-        MultiFab cb_field = make_rhs(ez);
-        MultiFab db_field = make_coeff_like(ez, *mat.Db[0]);
-        copy_coeff_to_layout(p_field, *mat.p[2], periodicity);
-        copy_coeff_to_layout(cb_field, *mat.Cb[2], periodicity);
-        copy_coeff_to_layout(db_field, *mat.Db[0], periodicity);
+        MultiFab const& p_field = static_coeff_on_layout(
+            ez, nullptr, CoeffKind::p, 2, *mat.p[2], periodicity);
+        MultiFab const& cb_field = static_coeff_on_layout(
+            ez, nullptr, CoeffKind::Cb, 2, *mat.Cb[2], periodicity);
+        MultiFab const& db_field = static_coeff_on_layout(
+            ez, mat.Db[0].get(), CoeffKind::Db, 0, *mat.Db[0], periodicity);
         if (!adi_pml_on()) {
         for (MFIter mfi(rhs); mfi.isValid(); ++mfi) {
             auto const rhs_arr = rhs.array(mfi);
@@ -1554,10 +1610,10 @@ namespace
                              Periodicity const& periodicity, PecConfig const& pec,
                              AdiFieldArray const& pec_masks)
     {
-        MultiFab Cb = make_rhs(ex);
-        MultiFab Db = make_coeff_like(ex, *mat.Db[2]);
-        copy_coeff_to_layout(Cb, *mat.Cb[0], periodicity);
-        copy_coeff_to_layout(Db, *mat.Db[2], periodicity);
+        MultiFab const& Cb = static_coeff_on_layout(
+            ex, nullptr, CoeffKind::Cb, 0, *mat.Cb[0], periodicity);
+        MultiFab const& Db = static_coeff_on_layout(
+            ex, mat.Db[2].get(), CoeffKind::Db, 2, *mat.Db[2], periodicity);
         MultiFab const* pec_mask = pec_masks[1][0].get();
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
@@ -1580,10 +1636,10 @@ namespace
                              Periodicity const& periodicity, PecConfig const& pec,
                              AdiFieldArray const& pec_masks)
     {
-        MultiFab Cb = make_rhs(ey);
-        MultiFab Db = make_coeff_like(ey, *mat.Db[0]);
-        copy_coeff_to_layout(Cb, *mat.Cb[1], periodicity);
-        copy_coeff_to_layout(Db, *mat.Db[0], periodicity);
+        MultiFab const& Cb = static_coeff_on_layout(
+            ey, nullptr, CoeffKind::Cb, 1, *mat.Cb[1], periodicity);
+        MultiFab const& Db = static_coeff_on_layout(
+            ey, mat.Db[0].get(), CoeffKind::Db, 0, *mat.Db[0], periodicity);
         MultiFab const* pec_mask = pec_masks[2][1].get();
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
@@ -1606,10 +1662,10 @@ namespace
                              Periodicity const& periodicity, PecConfig const& pec,
                              AdiFieldArray const& pec_masks)
     {
-        MultiFab Cb = make_rhs(ez);
-        MultiFab Db = make_coeff_like(ez, *mat.Db[1]);
-        copy_coeff_to_layout(Cb, *mat.Cb[2], periodicity);
-        copy_coeff_to_layout(Db, *mat.Db[1], periodicity);
+        MultiFab const& Cb = static_coeff_on_layout(
+            ez, nullptr, CoeffKind::Cb, 2, *mat.Cb[2], periodicity);
+        MultiFab const& Db = static_coeff_on_layout(
+            ez, mat.Db[1].get(), CoeffKind::Db, 1, *mat.Db[1], periodicity);
         MultiFab const* pec_mask = pec_masks[0][2].get();
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
@@ -1632,10 +1688,10 @@ namespace
                              Periodicity const& periodicity, PecConfig const& pec,
                              AdiFieldArray const& pec_masks)
     {
-        MultiFab Cb = make_rhs(ex);
-        MultiFab Db = make_coeff_like(ex, *mat.Db[1]);
-        copy_coeff_to_layout(Cb, *mat.Cb[0], periodicity);
-        copy_coeff_to_layout(Db, *mat.Db[1], periodicity);
+        MultiFab const& Cb = static_coeff_on_layout(
+            ex, nullptr, CoeffKind::Cb, 0, *mat.Cb[0], periodicity);
+        MultiFab const& Db = static_coeff_on_layout(
+            ex, mat.Db[1].get(), CoeffKind::Db, 1, *mat.Db[1], periodicity);
         MultiFab const* pec_mask = pec_masks[2][0].get();
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
@@ -1658,10 +1714,10 @@ namespace
                              Periodicity const& periodicity, PecConfig const& pec,
                              AdiFieldArray const& pec_masks)
     {
-        MultiFab Cb = make_rhs(ey);
-        MultiFab Db = make_coeff_like(ey, *mat.Db[2]);
-        copy_coeff_to_layout(Cb, *mat.Cb[1], periodicity);
-        copy_coeff_to_layout(Db, *mat.Db[2], periodicity);
+        MultiFab const& Cb = static_coeff_on_layout(
+            ey, nullptr, CoeffKind::Cb, 1, *mat.Cb[1], periodicity);
+        MultiFab const& Db = static_coeff_on_layout(
+            ey, mat.Db[2].get(), CoeffKind::Db, 2, *mat.Db[2], periodicity);
         MultiFab const* pec_mask = pec_masks[0][1].get();
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
@@ -1684,10 +1740,10 @@ namespace
                              Periodicity const& periodicity, PecConfig const& pec,
                              AdiFieldArray const& pec_masks)
     {
-        MultiFab Cb = make_rhs(ez);
-        MultiFab Db = make_coeff_like(ez, *mat.Db[0]);
-        copy_coeff_to_layout(Cb, *mat.Cb[2], periodicity);
-        copy_coeff_to_layout(Db, *mat.Db[0], periodicity);
+        MultiFab const& Cb = static_coeff_on_layout(
+            ez, nullptr, CoeffKind::Cb, 2, *mat.Cb[2], periodicity);
+        MultiFab const& Db = static_coeff_on_layout(
+            ez, mat.Db[0].get(), CoeffKind::Db, 0, *mat.Db[0], periodicity);
         MultiFab const* pec_mask = pec_masks[1][2].get();
         MultiFab stretch_e_mf, stretch_h_mf;
         MultiFab const* stretch_e = nullptr;
@@ -2007,20 +2063,20 @@ namespace
             }
         }
 
-        copy_fields(Efield_adi[1], Efield, periodicity);
-        copy_fields(Bfield_adi[1], mat.H, periodicity);
+        copy_fields(Efield_adi[1], Efield, periodicity, 0, 1);
+        copy_fields(Bfield_adi[1], mat.H, periodicity, 1, 2);
         MultiFab rhs_ex = build_rhs_ex1(
             *Efield_adi[1][0], *Efield_adi[1][1],
             *Bfield_adi[1][1], *Bfield_adi[1][2], c, mat, periodicity);
 
-        copy_fields(Efield_adi[2], Efield, periodicity);
-        copy_fields(Bfield_adi[2], mat.H, periodicity);
+        copy_fields(Efield_adi[2], Efield, periodicity, 1, 2);
+        copy_fields(Bfield_adi[2], mat.H, periodicity, 0, 2);
         MultiFab rhs_ey = build_rhs_ey1(
             *Efield_adi[2][1], *Efield_adi[2][2],
             *Bfield_adi[2][0], *Bfield_adi[2][2], c, mat, periodicity);
 
-        copy_fields(Efield_adi[0], Efield, periodicity);
-        copy_fields(Bfield_adi[0], mat.H, periodicity);
+        copy_fields(Efield_adi[0], Efield, periodicity, 2, 0);
+        copy_fields(Bfield_adi[0], mat.H, periodicity, 0, 1);
         MultiFab rhs_ez = build_rhs_ez1(
             *Efield_adi[0][2], *Efield_adi[0][0],
             *Bfield_adi[0][0], *Bfield_adi[0][1], c, mat, periodicity);
@@ -2091,20 +2147,20 @@ namespace
             }
         }
 
-        copy_fields(Efield_adi[2], Efield, periodicity);
-        copy_fields(Bfield_adi[2], mat.H, periodicity);
+        copy_fields(Efield_adi[2], Efield, periodicity, 0, 2);
+        copy_fields(Bfield_adi[2], mat.H, periodicity, 1, 2);
         MultiFab rhs_ex = build_rhs_ex2(
             *Efield_adi[2][0], *Efield_adi[2][2],
             *Bfield_adi[2][1], *Bfield_adi[2][2], c, mat, periodicity);
 
-        copy_fields(Efield_adi[0], Efield, periodicity);
-        copy_fields(Bfield_adi[0], mat.H, periodicity);
+        copy_fields(Efield_adi[0], Efield, periodicity, 1, 0);
+        copy_fields(Bfield_adi[0], mat.H, periodicity, 0, 2);
         MultiFab rhs_ey = build_rhs_ey2(
             *Efield_adi[0][1], *Efield_adi[0][0],
             *Bfield_adi[0][0], *Bfield_adi[0][2], c, mat, periodicity);
 
-        copy_fields(Efield_adi[1], Efield, periodicity);
-        copy_fields(Bfield_adi[1], mat.H, periodicity);
+        copy_fields(Efield_adi[1], Efield, periodicity, 2, 1);
+        copy_fields(Bfield_adi[1], mat.H, periodicity, 0, 1);
         MultiFab rhs_ez = build_rhs_ez2(
             *Efield_adi[1][2], *Efield_adi[1][1],
             *Bfield_adi[1][0], *Bfield_adi[1][1], c, mat, periodicity);
@@ -2196,6 +2252,12 @@ FiniteDifferenceSolver::MacroscopicEvolveADI (
     apply_pec_mask(Efield);
     fill_boundary_and_sync(Efield, periodicity);
     fill_boundary_and_sync(Bfield, periodicity);
+
+    // The cached pencil coefficients depend on dt; drop them if dt changes.
+    if (dt != pencil_coeff_cache().dt) {
+        pencil_coeff_cache().entries.clear();
+        pencil_coeff_cache().dt = dt;
+    }
 
     AdiMaterialCoeffs mat;
     define_material_coeffs(Efield, Bfield, mat);
