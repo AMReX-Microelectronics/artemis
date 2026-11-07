@@ -190,6 +190,11 @@ WarpX::InitAdiPML ()
             adi_pml_Hi[idim] = 1;
             adi_pml = 1;
         }
+        // Grid stretching uses the same coordinate-factor machinery as the PML, independently of
+        // the wall type: a stretched axis turns it on even with no PML wall (psi then stays zero).
+        if (adi_stretch_ratio[idim] != 1._rt) {
+            adi_pml = 1;
+        }
     }
     if (!adi_pml) {
         return;
@@ -253,16 +258,14 @@ WarpX::InitAdiPML ()
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             adi_stretch_ratio[idim] > 1._rt && adi_stretch_hi[idim] >= adi_stretch_lo[idim],
             "warpx.adi_<axis>stretch_ratio must exceed 1, with _lo <= _hi.");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            adi_pml_Lo[idim] && adi_pml_Hi[idim],
-            "warpx.adi_<axis>stretch_* requires PML on both walls of that axis.");
         Real const ds = Geom(0).CellSize(idim);
-        Real const inner_lo = Geom(0).ProbLo(idim) + static_cast<Real>(pml_ncell) * ds;
-        Real const inner_hi = Geom(0).ProbHi(idim) - static_cast<Real>(pml_ncell) * ds;
+        // Inner edge of each side: the PML inner edge on a PML side, the domain edge otherwise.
+        Real const inner_lo = Geom(0).ProbLo(idim) + (adi_pml_Lo[idim] ? static_cast<Real>(pml_ncell) * ds : 0._rt);
+        Real const inner_hi = Geom(0).ProbHi(idim) - (adi_pml_Hi[idim] ? static_cast<Real>(pml_ncell) * ds : 0._rt);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             adi_stretch_lo[idim] >= inner_lo - 1.e-6_rt * ds
             && adi_stretch_hi[idim] <= inner_hi + 1.e-6_rt * ds,
-            "warpx.adi_<axis>stretch_lo and _hi must lie inside the PML inner edges.");
+            "warpx.adi_<axis>stretch_lo and _hi must lie inside the domain (inside the PML inner edges on PML sides).");
         // Physical distance from the core to each PML inner edge: sum of ds*kappa over cells.
         Real below = 0._rt;
         Real above = 0._rt;
@@ -278,7 +281,7 @@ WarpX::InitAdiPML ()
                        << ", core " << adi_stretch_lo[idim] << " to " << adi_stretch_hi[idim]
                        << ", physical length below core = " << below
                        << ", above core = " << above
-                       << ", kappa at PML = " << adi_stretch_kappa(inner_lo, ds, inner_lo, inner_hi,
+                       << ", kappa at the lo / hi inner edges = " << adi_stretch_kappa(inner_lo, ds, inner_lo, inner_hi,
                               adi_stretch_ratio[idim], adi_stretch_lo[idim], adi_stretch_hi[idim], adi_stretch_kappa_max[idim])
                        << " and " << adi_stretch_kappa(inner_hi, ds, inner_lo, inner_hi,
                               adi_stretch_ratio[idim], adi_stretch_lo[idim], adi_stretch_hi[idim], adi_stretch_kappa_max[idim])
@@ -400,16 +403,17 @@ FillAdiCfsOnLayout (MultiFab& dst, int dir, int quantity)
             Real bval = 1._rt;
             int const lo_on = p.do_lo[idir];
             int const hi_on = p.do_hi[idir];
+            Real const pml_len = static_cast<Real>(p.ncell) * p.dx[idir];
+            // Inner edge of each side: the PML inner edge on a PML side, the domain edge otherwise.
+            Real const inner_lo = p.problo[idir] + (lo_on ? pml_len : 0._rt);
+            Real const inner_hi = p.probhi[idir] - (hi_on ? pml_len : 0._rt);
+            // A stretched grid is d/ds -> (1/kappa_s) d/ds on the uniform grid, with or without PML.
+            Real const kappa_s = (p.stretch_ratio[idir] != 1._rt)
+                ? adi_stretch_kappa(coord, p.dx[idir], inner_lo, inner_hi,
+                      p.stretch_ratio[idir], p.stretch_lo[idir], p.stretch_hi[idir], p.stretch_kappa_max[idir])
+                : 1._rt;
+            kappa = kappa_s;
             if (lo_on || hi_on) {
-                Real const pml_len = static_cast<Real>(p.ncell) * p.dx[idir];
-                Real const inner_lo = p.problo[idir] + pml_len;
-                Real const inner_hi = p.probhi[idir] - pml_len;
-                // A stretched grid is d/ds -> (1/kappa_s) d/ds on the uniform grid.
-                Real const kappa_s = (p.stretch_ratio[idir] != 1._rt)
-                    ? adi_stretch_kappa(coord, p.dx[idir], inner_lo, inner_hi,
-                          p.stretch_ratio[idir], p.stretch_lo[idir], p.stretch_hi[idir], p.stretch_kappa_max[idir])
-                    : 1._rt;
-                kappa = kappa_s;
                 Real const rho = adi_pml_rho(
                     coord, inner_lo, inner_hi, lo_on, hi_on);
                 if (rho > 0._rt && pml_len > 0._rt) {
