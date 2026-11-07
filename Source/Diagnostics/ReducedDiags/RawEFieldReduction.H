@@ -13,7 +13,9 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_Box.H>
+#include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
+#include <AMReX_DistributionMapping.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_Geometry.H>
@@ -29,6 +31,7 @@
 #include <AMReX_Reduce.H>
 #include <AMReX_Tuple.H>
 
+#include <array>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -79,6 +82,17 @@ private:
     std::vector<amrex::Real> m_scaling_factor={1.0,1.0,1.0};
 #endif
 
+    /// For every local box and field component (Ex, Ey, Ez): the smallest sub-box of the box that
+    /// holds every point where the reduced function is nonzero (empty when there is none).
+    /// The function does not depend on time, so this is found once; sums then run only over
+    /// these sub-boxes, because the other points contribute exactly zero.
+    amrex::BoxArray m_bounds_ba;
+    amrex::DistributionMapping m_bounds_dm;
+    std::vector<std::array<amrex::Box,3>> m_nonzero_bounds;
+
+    /// Compute m_nonzero_bounds for the current field layout, unless already done for it.
+    void UpdateNonzeroBounds ();
+
 public:
 
     /**
@@ -98,6 +112,11 @@ public:
         auto reduction_function_parser = m_parser->compile<m_nvars>();
         int integral_type = m_integral_type;
         int* surface_normal = &m_surface_normal[0];
+
+        // A sum over the box equals the sum over the sub-box that holds all nonzero terms, so
+        // sums are restricted to it. Max and min keep the whole box: there the zero terms count.
+        constexpr bool restrict_to_nonzero = std::is_same<ReduceOp, amrex::ReduceOpSum>::value;
+        if (restrict_to_nonzero) { UpdateNonzeroBounds(); }
 
         for (int lev = 0; lev < nLevel; ++lev) {
             const amrex::MultiFab &Ex = warpx.getEfield(lev,0);
@@ -146,7 +165,19 @@ public:
                 const auto& Ey_arr = Ey[mfi].array();
                 const auto& Ez_arr = Ez[mfi].array();
 
-                reduceEx_op.eval(tx, reduceEx_data,
+                // Boxes to iterate over. The edge weights above still use the whole tile.
+                amrex::Box bx_x = tx;
+                amrex::Box bx_y = ty;
+                amrex::Box bx_z = tz;
+                if (restrict_to_nonzero) {
+                    const auto& nz = m_nonzero_bounds[mfi.LocalIndex()];
+                    bx_x &= nz[index_Ex];
+                    bx_y &= nz[index_Ey];
+                    bx_z &= nz[index_Ez];
+                }
+
+                if (bx_x.ok()) {
+                reduceEx_op.eval(bx_x, reduceEx_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
                     // Shift x, y, z position based on index type
@@ -177,7 +208,9 @@ public:
                     }
                     return weight*reduction_function_parser(x,y,z)*Ex_arr(i,j,k);
                 });
-                reduceEy_op.eval(ty, reduceEy_data,
+                }
+                if (bx_y.ok()) {
+                reduceEy_op.eval(bx_y, reduceEy_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
                     // Shift x, y, z position based on index type
@@ -208,7 +241,9 @@ public:
                     }
                     return weight*reduction_function_parser(x,y,z)*Ey_arr(i,j,k);
                 });
-                reduceEz_op.eval(tz, reduceEz_data,
+                }
+                if (bx_z.ok()) {
+                reduceEz_op.eval(bx_z, reduceEz_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) ->ReduceTuple
                 {
                     // Shift x, y, z position based on index type
@@ -239,8 +274,10 @@ public:
                     }
                     return weight*reduction_function_parser(x,y,z)*Ez_arr(i,j,k);
                 });
+                }
             }
 
+            // A ReduceData with no eval on this rank yields the identity (0 for a sum).
             amrex::Real reducedEx_value = amrex::get<0>(reduceEx_data.value());
             amrex::Real reducedEy_value = amrex::get<0>(reduceEy_data.value());
             amrex::Real reducedEz_value = amrex::get<0>(reduceEz_data.value());

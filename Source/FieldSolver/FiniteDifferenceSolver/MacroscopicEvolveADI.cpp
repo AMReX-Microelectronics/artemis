@@ -18,10 +18,12 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Reduce.H>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -1028,10 +1030,100 @@ namespace
           - (r * psi_exp_hi - q * psi_exp_lo));
     }
 
+    // Where the soft E source of one component acts on one layout: for every local box, the
+    // smallest sub-box holding all points whose excitation flag is 2 (empty when there are none).
+    // The flag function does not depend on time, so this is found once; each half-step then
+    // evaluates the source only inside these sub-boxes instead of over the whole domain.
+    struct SoftSourceBoxes
+    {
+        int comp = -1;
+        BoxArray ba;
+        DistributionMapping dm;
+        std::vector<Box> boxes;  // indexed by MFIter::LocalIndex()
+        bool any = false;        // true if any local box has a flagged point
+    };
+
+    std::vector<SoftSourceBoxes>& soft_source_box_cache ()
+    {
+        static std::vector<SoftSourceBoxes> cache;
+        static bool finalize_registered = false;
+        if (!finalize_registered) {
+            amrex::ExecOnFinalize([] () { soft_source_box_cache().clear(); });
+            finalize_registered = true;
+        }
+        return cache;
+    }
+
+    SoftSourceBoxes const& soft_source_boxes (MultiFab const& rhs, int e_comp)
+    {
+        auto& cache = soft_source_box_cache();
+        for (auto const& e : cache) {
+            if (e.comp == e_comp && e.ba == rhs.boxArray() && e.dm == rhs.DistributionMap()) {
+                return e;
+            }
+        }
+
+        WarpX& warpx = WarpX::GetInstance();
+        auto const flag_parser =
+            (e_comp == 0) ? warpx.Exfield_flag_parser->compile<3>() :
+            (e_comp == 1) ? warpx.Eyfield_flag_parser->compile<3>() :
+                            warpx.Ezfield_flag_parser->compile<3>();
+        GpuArray<int, 3> rhs_stag;
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            rhs_stag[idim] = rhs.ixType()[idim];
+        }
+        auto const problo = warpx.Geom(0).ProbLoArray();
+        auto const dx = warpx.Geom(0).CellSizeArray();
+        IntVect const rhs_nodal_flag = rhs.ixType().toIntVect();
+        int const imax = std::numeric_limits<int>::max();
+        int const imin = std::numeric_limits<int>::lowest();
+
+        SoftSourceBoxes entry;
+        entry.comp = e_comp;
+        entry.ba = rhs.boxArray();
+        entry.dm = rhs.DistributionMap();
+        entry.boxes.resize(rhs.local_size());
+        for (MFIter mfi(rhs, false); mfi.isValid(); ++mfi) {
+            Box const& bx = mfi.tilebox(rhs_nodal_flag);
+            // Bounds of the flagged points, and a count of unsupported flags (hard sources, > 2).
+            ReduceOps<ReduceOpMin, ReduceOpMin, ReduceOpMin,
+                      ReduceOpMax, ReduceOpMax, ReduceOpMax, ReduceOpSum> rop;
+            ReduceData<int, int, int, int, int, int, int> rdata(rop);
+            using RT = typename decltype(rdata)::Type;
+            rop.eval(bx, rdata, [=] AMREX_GPU_DEVICE (int i, int j, int k) -> RT
+            {
+                Real x, y, z;
+                WarpXUtilAlgo::getCellCoordinates(i, j, k, rhs_stag, problo, dx, x, y, z);
+                Real const flag_type = flag_parser(x, y, z);
+                if (flag_type == 2._rt) {
+                    return {i, j, k, i, j, k, 0};
+                }
+                int const bad = (flag_type > 0._rt) ? 1 : 0;
+                return {imax, imax, imax, imin, imin, imin, bad};
+            });
+            auto const r = rdata.value(rop);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(amrex::get<6>(r) == 0,
+                "Macroscopic ADI RHS-coupled E excitation supports only soft sources: "
+                "the excitation flag must be 0 (off) or 2 (soft source).");
+            if (amrex::get<0>(r) <= amrex::get<3>(r)) {
+                IntVect const lo(AMREX_D_DECL(amrex::get<0>(r), amrex::get<1>(r), amrex::get<2>(r)));
+                IntVect const hi(AMREX_D_DECL(amrex::get<3>(r), amrex::get<4>(r), amrex::get<5>(r)));
+                entry.boxes[mfi.LocalIndex()] = Box(lo, hi, IndexType(rhs_nodal_flag));
+                entry.any = true;
+            }
+        }
+        cache.push_back(std::move(entry));
+        return cache.back();
+    }
+
     void add_soft_e_source_to_rhs (
         MultiFab& rhs, MultiFab const& Cb, int e_comp, int half_step)
     {
         if (WarpX::E_excitation_grid_s != "parse_e_excitation_grid_function") {
+            return;
+        }
+        SoftSourceBoxes const& src = soft_source_boxes(rhs, e_comp);
+        if (!src.any) {
             return;
         }
 
@@ -1061,25 +1153,24 @@ namespace
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
         for (MFIter mfi(rhs, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+            // Only the part of this tile that can hold flagged points.
+            Box const bx = mfi.tilebox(rhs_nodal_flag) & src.boxes[mfi.LocalIndex()];
+            if (!bx.ok()) {
+                continue;
+            }
             Array4<Real> const rhs_arr = rhs.array(mfi);
             Array4<Real const> const cb_arr = Cb.const_array(mfi);
-            Box const& bx = mfi.tilebox(rhs_nodal_flag);
             ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
             {
                 Real x, y, z;
                 WarpXUtilAlgo::getCellCoordinates(i, j, k, rhs_stag, problo, dx, x, y, z);
                 Real const flag_type = flag_parser(x, y, z);
-                if (flag_type > 2._rt) {
-                    amrex::Abort("flag type for excitation must be <= 2");
-                } else if (flag_type == 2._rt) {
+                if (flag_type == 2._rt) {
                     // Flag=2 is a soft *field* increment (E += S), not an
                     // Ampère current. Divide by Cb so the contribution to E is
                     // independent of the material prefactor on the RHS curl terms.
                     rhs_arr(i,j,k) +=
                         weight * field_parser(x, y, z, time) / cb_arr(i,j,k);
-                } else if (flag_type > 0._rt) {
-                    amrex::Abort(
-                        "Macroscopic ADI RHS-coupled E excitation supports only soft sources.");
                 }
             });
         }
