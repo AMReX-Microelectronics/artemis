@@ -540,18 +540,9 @@ WarpX::OneStep_nosub (Real cur_time)
             ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternalPML);
         }
 
-        if (use_PEC_mask) {
-            // multiply E field by PEC mask
-            amrex::MultiFab& Ex = *Efield_fp[0][0].get();
-            amrex::MultiFab& Ey = *Efield_fp[0][1].get();
-            amrex::MultiFab& Ez = *Efield_fp[0][2].get();
-            amrex::MultiFab& PECx = *PEC_fp[0][0].get();
-            amrex::MultiFab& PECy = *PEC_fp[0][1].get();
-            amrex::MultiFab& PECz = *PEC_fp[0][2].get();
-            MultiFab::Multiply(Ex, PECx, 0, 0, 1, 0);
-            MultiFab::Multiply(Ey, PECy, 0, 0, 1, 0);
-            MultiFab::Multiply(Ez, PECz, 0, 0, 1, 0);
-        }
+        // The PEC mask (use_PEC_mask) is applied in MacroscopicEvolveE, and again inside
+        // ApplyExternalFieldExcitationOnGrid after any E excitation (grid and PML), so
+        // masked edges are exactly zero at this point.
 
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);

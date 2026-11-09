@@ -931,6 +931,18 @@ public:
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
+    /**
+     * \brief With algo.use_PEC_mask (macroscopic solver only), zero the tangential E
+     * on the PEC edges of the numpy/GDS layer(s): on the fine patch of the grid and,
+     * with algo.extend_PEC_mask_into_pml, on the PML E fields (both split components)
+     * together with the CPML memory variables.
+     *
+     * \param[in] lev                 mesh refinement level
+     * \param[in] include_guard_cells also mask the guard cells of the grid E field
+     *                                (the PML is always masked on its valid region only)
+     */
+    void ApplyPECMaskToEfield (const int lev, const bool include_guard_cells);
+
     void DampPML ();
     void DampPML (const int lev);
     void DampPML (const int lev, PatchType patch_type);
