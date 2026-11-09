@@ -132,6 +132,8 @@ public:
      amrex::GpuArray<int, 3> Mz_IndexType;
      /** Gpu Vector of the anisotropy_axis for the anisotropy coupling term H_anisotropy in H_eff */
      amrex::GpuArray<amrex::Real, 3> mag_LLG_anisotropy_axis;
+     amrex::GpuArray<amrex::Real, 3> mag_LLG_cubic_ani_axis_1;
+     amrex::GpuArray<amrex::Real, 3> mag_LLG_cubic_ani_axis_2;
 
      amrex::MultiFab& getmag_Ms_mf        (int dir) {return (*m_mag_Ms_mf[dir]);}
      amrex::MultiFab * getmag_pointer_Ms (int dir) {return m_mag_Ms_mf[dir].get();}
@@ -145,6 +147,10 @@ public:
      amrex::MultiFab * getmag_pointer_anisotropy (int dir) {return m_mag_anisotropy_mf[dir].get();}
      amrex::MultiFab& getmag_afm_mf(int dir) {return (*m_mag_afm_mf[dir]);}
      amrex::MultiFab * getmag_pointer_afm (int dir) {return m_mag_afm_mf[dir].get();}
+     amrex::MultiFab& getmag_cubic_ani_1_mf(int dir) {return (*m_mag_cubic_ani_1_mf[dir]);}
+     amrex::MultiFab * getmag_pointer_cubic_ani_1 (int dir) {return m_mag_cubic_ani_1_mf[dir].get();}
+     amrex::MultiFab& getmag_cubic_ani_2_mf(int dir) {return (*m_mag_cubic_ani_2_mf[dir]);}
+     amrex::MultiFab * getmag_pointer_cubic_ani_2 (int dir) {return m_mag_cubic_ani_2_mf[dir].get();}
 
      amrex::Real getmag_normalized_error () {return m_mag_normalized_error;}
      int getmag_max_iter () {return m_mag_max_iter;}
@@ -276,6 +282,10 @@ public:
      amrex::Real m_mag_anisotropy;
      /** The coefficient of the antiferromagnetic coupling term, only applies for magnetic materials */
      amrex::Real m_mag_afm;
+     /** The coefficient of the cubic anisotropy coupling term, only applies for magnetic materials */
+     amrex::Real m_mag_cubic_ani_1;
+     amrex::Real m_mag_cubic_ani_2;
+     
 
      // If the magnitude of the magnetization deviates by more than this amount relative
      // to the user-defined Ms, abort.  Default 0.1.
@@ -299,6 +309,9 @@ public:
      std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_anisotropy_mf;
      /** Multifabs storing spatially varying coefficient of the antiferromagnetic coupling term on three faces  */
      std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_afm_mf;
+     /** Multifabs storing spatially varying coefficient of the cubic anisotropy coupling term on three faces  */
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_cubic_ani_1_mf;
+     std::array<std::unique_ptr<amrex::MultiFab>, 3> m_mag_cubic_ani_2_mf;
 
      // these store the type of initialization, e.g., "constant", "parse_X_function", etc.
      std::string m_mag_Ms_s;
@@ -307,6 +320,7 @@ public:
      std::string m_mag_exchange_s;
      std::string m_mag_anisotropy_s;
      std::string m_mag_afm_s;
+     std::string m_mag_cubic_ani_s;
 
      // these store the parsed expression for the material properties
      std::string m_str_mag_Ms_function;
@@ -315,6 +329,8 @@ public:
      std::string m_str_mag_exchange_function;
      std::string m_str_mag_anisotropy_function;
      std::string m_str_mag_afm_function;
+     std::string m_str_mag_cubic_ani_1_function;
+     std::string m_str_mag_cubic_ani_2_function;
 
      std::unique_ptr<amrex::Parser> m_mag_Ms_parser;
      std::unique_ptr<amrex::Parser> m_mag_alpha_parser;
@@ -322,6 +338,8 @@ public:
      std::unique_ptr<amrex::Parser> m_mag_exchange_parser;
      std::unique_ptr<amrex::Parser> m_mag_anisotropy_parser;
      std::unique_ptr<amrex::Parser> m_mag_afm_parser;
+     std::unique_ptr<amrex::Parser> m_mag_cubic_ani_1_parser;
+     std::unique_ptr<amrex::Parser> m_mag_cubic_ani_2_parser;
 #endif
 
 private:
