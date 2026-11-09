@@ -75,6 +75,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
     int M_normalization = warpx.mag_M_normalization;
     int mag_exchange_coupling = warpx.mag_LLG_exchange_coupling;
     int mag_anisotropy_coupling = warpx.mag_LLG_anisotropy_coupling;
+    int mag_cubic_ani = warpx.mag_LLG_cubic_ani;
     int mag_afm_coupling = warpx.mag_LLG_afm_coupling;
 
     // build temporary vector<multifab,3> Mfield_prev, Mfield_error, a_temp, a_temp_static, b_temp_static
@@ -106,6 +107,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
     amrex::GpuArray<int, 3> const& Hz_stag  = macroscopic_properties->Hz_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr = macroscopic_properties->macro_cr_ratio;
     amrex::GpuArray<amrex::Real, 3> const& anisotropy_axis = macroscopic_properties->mag_LLG_anisotropy_axis;
+    amrex::GpuArray<amrex::Real, 3> const& anisotropy_axis_1 = macroscopic_properties->mag_LLG_cubic_ani_axis_1;
+    amrex::GpuArray<amrex::Real, 3> const& anisotropy_axis_2 = macroscopic_properties->mag_LLG_cubic_ani_axis_2;
 
     // Initialize Hfield_old (H^(old_time)), Mfield_old (M^(old_time)), Mfield_prev (M^[(new_time),r-1]), Mfield_error
     for (int i = 0; i < 3; i++){
@@ -164,6 +167,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
         auto& mag_anisotropy_xface_mf = macroscopic_properties->getmag_anisotropy_mf(0);
         auto& mag_anisotropy_yface_mf = macroscopic_properties->getmag_anisotropy_mf(1);
         auto& mag_anisotropy_zface_mf = macroscopic_properties->getmag_anisotropy_mf(2);
+        auto& mag_cubic_ani_1_xface_mf = macroscopic_properties->getmag_cubic_ani_1_mf(0);
+        auto& mag_cubic_ani_1_yface_mf = macroscopic_properties->getmag_cubic_ani_1_mf(1);
+        auto& mag_cubic_ani_1_zface_mf = macroscopic_properties->getmag_cubic_ani_1_mf(2);
+        auto& mag_cubic_ani_2_xface_mf = macroscopic_properties->getmag_cubic_ani_2_mf(0);
+        auto& mag_cubic_ani_2_yface_mf = macroscopic_properties->getmag_cubic_ani_2_mf(1);
+        auto& mag_cubic_ani_2_zface_mf = macroscopic_properties->getmag_cubic_ani_2_mf(2);
         auto& mag_afm_xface_mf = macroscopic_properties->getmag_afm_mf(0);
         auto& mag_afm_yface_mf = macroscopic_properties->getmag_afm_mf(1);
         auto& mag_afm_zface_mf = macroscopic_properties->getmag_afm_mf(2);
@@ -187,6 +196,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
         Array4<Real> const& mag_afm_xface_arr = mag_afm_xface_mf.array(mfi);
         Array4<Real> const& mag_afm_yface_arr = mag_afm_yface_mf.array(mfi);
         Array4<Real> const& mag_afm_zface_arr = mag_afm_zface_mf.array(mfi);
+        Array4<Real> const& mag_cubic_ani_1_xface_arr = mag_cubic_ani_1_xface_mf.array(mfi);
+        Array4<Real> const& mag_cubic_ani_1_yface_arr = mag_cubic_ani_1_yface_mf.array(mfi);
+        Array4<Real> const& mag_cubic_ani_1_zface_arr = mag_cubic_ani_1_zface_mf.array(mfi);
+        Array4<Real> const& mag_cubic_ani_2_xface_arr = mag_cubic_ani_2_xface_mf.array(mfi);
+        Array4<Real> const& mag_cubic_ani_2_yface_arr = mag_cubic_ani_2_yface_mf.array(mfi);
+        Array4<Real> const& mag_cubic_ani_2_zface_arr = mag_cubic_ani_2_zface_mf.array(mfi);
+
 
         // extract field data
         Array4<Real> const &M_xface = Mfield[0]->array(mfi);      // note M_xface include x,y,z components at |_x faces
@@ -312,12 +328,32 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                         Hy1_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[1];
                         Hz1_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
                     }
+                    
+                    //2nd order cubic anisotropy
+                    if (mag_cubic_ani == 1){
+
+                        // H_anisotropy - use M^(old_time)
+                        amrex::Real L_dot_anisotropy_axis_1 = 0.0;
+                        amrex::Real L_dot_anisotropy_axis_2 = 0.0;
+                        for (int comp=0; comp<3; ++comp) {
+                            L_dot_anisotropy_axis_1 += (M1_xface(i, j, k, comp) - M2_xface(i, j, k, comp)) * anisotropy_axis_1[comp];
+                            L_dot_anisotropy_axis_2 += (M1_xface(i, j, k, comp) - M2_xface(i, j, k, comp)) * anisotropy_axis_2[comp];
+                        }
+                        amrex::Real const H_anisotropy_coeff_1 = - 1.0 * mag_cubic_ani_1_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k) / 2.0;
+                        amrex::Real const H_anisotropy_coeff_2 = - 1.0 *  mag_cubic_ani_2_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k) / 2.0;
+                        Hx1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                        Hx2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                    }
 
                     if(mag_afm_coupling == 1){
                         if (mag_afm_xface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_xface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                         
                         // H_afm - use M^(old_time)
-                        amrex::Real const H_afm_coeff = 4.0 * mag_afm_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
+                        amrex::Real const H_afm_coeff = 2.0 * mag_afm_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
                         Hx1_eff += H_afm_coeff * M2_xface(i,j,k,0);
                         Hy1_eff += H_afm_coeff * M2_xface(i,j,k,1);
                         Hz1_eff += H_afm_coeff * M2_xface(i,j,k,2);
@@ -438,11 +474,31 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                         Hz1_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
                     }
 
+                    //2nd order cubic anisotropy
+                    if (mag_cubic_ani == 1){
+
+                        // H_anisotropy - use M^(old_time)
+                        amrex::Real L_dot_anisotropy_axis_1 = 0.0;
+                        amrex::Real L_dot_anisotropy_axis_2 = 0.0;
+                        for (int comp=0; comp<3; ++comp) {
+                            L_dot_anisotropy_axis_1 += (M1_yface(i, j, k, comp) - M2_yface(i, j, k, comp)) * anisotropy_axis_1[comp];
+                            L_dot_anisotropy_axis_2 += (M1_yface(i, j, k, comp) - M2_yface(i, j, k, comp)) * anisotropy_axis_2[comp];
+                        }
+                        amrex::Real const H_anisotropy_coeff_1 = -1.0 * mag_cubic_ani_1_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k) / 2.0;
+                        amrex::Real const H_anisotropy_coeff_2 = -1.0*  mag_cubic_ani_2_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k) / 2.0;
+                        Hx1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                        Hx2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                    }
+
                     if(mag_afm_coupling == 1){
                         if (mag_afm_yface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_yface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                         
                         // H_afm - use M^(old_time)
-                        amrex::Real const H_afm_coeff = 4.0 * mag_afm_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
+                        amrex::Real const H_afm_coeff = 2.0 * mag_afm_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
                         Hx1_eff += H_afm_coeff * M2_yface(i,j,k,0);
                         Hy1_eff += H_afm_coeff * M2_yface(i,j,k,1);
                         Hz1_eff += H_afm_coeff * M2_yface(i,j,k,2);
@@ -557,11 +613,31 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                         Hz1_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
                     }
 
+                    //2nd order cubic anisotropy
+                    if (mag_cubic_ani == 1){
+
+                        // H_anisotropy - use M^(old_time)
+                        amrex::Real L_dot_anisotropy_axis_1 = 0.0;
+                        amrex::Real L_dot_anisotropy_axis_2 = 0.0;
+                        for (int comp=0; comp<3; ++comp) {
+                            L_dot_anisotropy_axis_1 += (M1_zface(i, j, k, comp) - M2_zface(i, j, k, comp)) * anisotropy_axis_1[comp];
+                            L_dot_anisotropy_axis_2 += (M1_zface(i, j, k, comp) - M2_zface(i, j, k, comp)) * anisotropy_axis_2[comp];
+                        }
+                        amrex::Real const H_anisotropy_coeff_1 = -1.0 * mag_cubic_ani_1_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k) / 2.0;
+                        amrex::Real const H_anisotropy_coeff_2 = -1.0*  mag_cubic_ani_2_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k) / 2.0;
+                        Hx1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                        Hx2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                    }
+
                     if(mag_afm_coupling == 1){
                         if (mag_afm_zface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_zface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                         
                         // H_afm - use M^(old_time)
-                        amrex::Real const H_afm_coeff = 4.0 * mag_afm_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
+                        amrex::Real const H_afm_coeff = 2.0 * mag_afm_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
                         Hx1_eff += H_afm_coeff * M2_zface(i,j,k,0);
                         Hy1_eff += H_afm_coeff * M2_zface(i,j,k,1);
                         Hz1_eff += H_afm_coeff * M2_zface(i,j,k,2);
@@ -636,6 +712,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
             auto& mag_anisotropy_xface_mf = macroscopic_properties->getmag_anisotropy_mf(0);
             auto& mag_anisotropy_yface_mf = macroscopic_properties->getmag_anisotropy_mf(1);
             auto& mag_anisotropy_zface_mf = macroscopic_properties->getmag_anisotropy_mf(2);
+            auto& mag_cubic_ani_1_xface_mf = macroscopic_properties->getmag_cubic_ani_1_mf(0);
+            auto& mag_cubic_ani_1_yface_mf = macroscopic_properties->getmag_cubic_ani_1_mf(1);
+            auto& mag_cubic_ani_1_zface_mf = macroscopic_properties->getmag_cubic_ani_1_mf(2);
+            auto& mag_cubic_ani_2_xface_mf = macroscopic_properties->getmag_cubic_ani_2_mf(0);
+            auto& mag_cubic_ani_2_yface_mf = macroscopic_properties->getmag_cubic_ani_2_mf(1);
+            auto& mag_cubic_ani_2_zface_mf = macroscopic_properties->getmag_cubic_ani_2_mf(2);
             auto& mag_afm_xface_mf = macroscopic_properties->getmag_afm_mf(0);
             auto& mag_afm_yface_mf = macroscopic_properties->getmag_afm_mf(1);
             auto& mag_afm_zface_mf = macroscopic_properties->getmag_afm_mf(2);
@@ -656,6 +738,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
             Array4<Real> const& mag_anisotropy_xface_arr = mag_anisotropy_xface_mf.array(mfi);
             Array4<Real> const& mag_anisotropy_yface_arr = mag_anisotropy_yface_mf.array(mfi);
             Array4<Real> const& mag_anisotropy_zface_arr = mag_anisotropy_zface_mf.array(mfi);
+            Array4<Real> const& mag_cubic_ani_1_xface_arr = mag_cubic_ani_1_xface_mf.array(mfi);
+            Array4<Real> const& mag_cubic_ani_1_yface_arr = mag_cubic_ani_1_yface_mf.array(mfi);
+            Array4<Real> const& mag_cubic_ani_1_zface_arr = mag_cubic_ani_1_zface_mf.array(mfi);
+            Array4<Real> const& mag_cubic_ani_2_xface_arr = mag_cubic_ani_2_xface_mf.array(mfi);
+            Array4<Real> const& mag_cubic_ani_2_yface_arr = mag_cubic_ani_2_yface_mf.array(mfi);
+            Array4<Real> const& mag_cubic_ani_2_zface_arr = mag_cubic_ani_2_zface_mf.array(mfi);
             Array4<Real> const& mag_afm_xface_arr = mag_afm_xface_mf.array(mfi);
             Array4<Real> const& mag_afm_yface_arr = mag_afm_yface_mf.array(mfi);
             Array4<Real> const& mag_afm_zface_arr = mag_afm_zface_mf.array(mfi);
@@ -812,11 +900,31 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                             Hz1_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
                         }
 
+                            //2nd order cubic anisotropy
+                    if (mag_cubic_ani == 1){
+
+                        // H_anisotropy - use M^(old_time)
+                        amrex::Real L_dot_anisotropy_axis_1 = 0.0;
+                        amrex::Real L_dot_anisotropy_axis_2 = 0.0;
+                        for (int comp=0; comp<3; ++comp) {
+                            L_dot_anisotropy_axis_1 += (M1_xface(i, j, k, comp) - M2_xface(i, j, k, comp)) * anisotropy_axis_1[comp];
+                            L_dot_anisotropy_axis_2 += (M1_xface(i, j, k, comp) - M2_xface(i, j, k, comp)) * anisotropy_axis_2[comp];
+                        }
+                        amrex::Real const H_anisotropy_coeff_1 = -1.0 * mag_cubic_ani_1_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k) / 2.0;
+                        amrex::Real const H_anisotropy_coeff_2 = -1.0*  mag_cubic_ani_2_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k) / 2.0;
+                        Hx1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                        Hx2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                    }
+
                         if(mag_afm_coupling == 1){
                             if (mag_afm_xface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_xface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                             
                             // H_afm - use M^(old_time)
-                            amrex::Real const H_afm_coeff = 4.0 * mag_afm_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
+                            amrex::Real const H_afm_coeff = 2.0 * mag_afm_xface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_xface_arr(i,j,k) / mag_Ms_xface_arr(i,j,k);
                             Hx1_eff += H_afm_coeff * M2_xface(i,j,k,0);
                             Hy1_eff += H_afm_coeff * M2_xface(i,j,k,1);
                             Hz1_eff += H_afm_coeff * M2_xface(i,j,k,2);
@@ -981,11 +1089,31 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                             Hz1_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
                         }
 
+                        //2nd order cubic anisotropy
+                    if (mag_cubic_ani == 1){
+
+                        // H_anisotropy - use M^(old_time)
+                        amrex::Real L_dot_anisotropy_axis_1 = 0.0;
+                        amrex::Real L_dot_anisotropy_axis_2 = 0.0;
+                        for (int comp=0; comp<3; ++comp) {
+                            L_dot_anisotropy_axis_1 += (M1_yface(i, j, k, comp) - M2_yface(i, j, k, comp)) * anisotropy_axis_1[comp];
+                            L_dot_anisotropy_axis_2 += (M1_yface(i, j, k, comp) - M2_yface(i, j, k, comp)) * anisotropy_axis_2[comp];
+                        }
+                        amrex::Real const H_anisotropy_coeff_1 = -1.0 * mag_cubic_ani_1_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k) / 2.0;
+                        amrex::Real const H_anisotropy_coeff_2 = -1.0*  mag_cubic_ani_2_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k) / 2.0;
+                        Hx1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                        Hx2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                    }
+
                         if(mag_afm_coupling == 1){
                             if (mag_afm_yface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_yface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                             
                             // H_afm - use M^(old_time)
-                            amrex::Real const H_afm_coeff = 4.0 * mag_afm_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
+                            amrex::Real const H_afm_coeff = 2.0 * mag_afm_yface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_yface_arr(i,j,k) / mag_Ms_yface_arr(i,j,k);
                             Hx1_eff += H_afm_coeff * M2_yface(i,j,k,0);
                             Hy1_eff += H_afm_coeff * M2_yface(i,j,k,1);
                             Hz1_eff += H_afm_coeff * M2_yface(i,j,k,2);
@@ -1152,11 +1280,31 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_AFM_2nd(
                             Hz1_eff += H_anisotropy_coeff * M_dot_anisotropy_axis * anisotropy_axis[2];
                         }
 
+                        //2nd order cubic anisotropy
+                    if (mag_cubic_ani == 1){
+
+                        // H_anisotropy - use M^(old_time)
+                        amrex::Real L_dot_anisotropy_axis_1 = 0.0;
+                        amrex::Real L_dot_anisotropy_axis_2 = 0.0;
+                        for (int comp=0; comp<3; ++comp) {
+                            L_dot_anisotropy_axis_1 += (M1_zface(i, j, k, comp) - M2_zface(i, j, k, comp)) * anisotropy_axis_1[comp];
+                            L_dot_anisotropy_axis_2 += (M1_zface(i, j, k, comp) - M2_zface(i, j, k, comp)) * anisotropy_axis_2[comp];
+                        }
+                        amrex::Real const H_anisotropy_coeff_1 = -1.0 * mag_cubic_ani_1_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k) / 2.0;
+                        amrex::Real const H_anisotropy_coeff_2 = -1.0*  mag_cubic_ani_2_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k) / 2.0;
+                        Hx1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz1_eff += H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] + H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                        Hx2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[0] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[0];
+                        Hy2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[1] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[1];
+                        Hz2_eff += -1.0 * H_anisotropy_coeff_1 * L_dot_anisotropy_axis_1 * anisotropy_axis_1[2] - H_anisotropy_coeff_2 * L_dot_anisotropy_axis_2 * anisotropy_axis_2[2];
+                    }
+
                         if(mag_afm_coupling == 1){
                             if (mag_afm_zface_arr(i,j,k) == 0._rt) amrex::Abort("The mag_afm_zface_arr(i,j,k) is 0.0 while including the afm coupling term H_afm for H_eff");
                             
                             // H_afm - use M^(old_time)
-                            amrex::Real const H_afm_coeff = 4.0 * mag_afm_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
+                            amrex::Real const H_afm_coeff = 2.0 * mag_afm_zface_arr(i,j,k) / PhysConst::mu0 / mag_Ms_zface_arr(i,j,k) / mag_Ms_zface_arr(i,j,k);
                             Hx1_eff += H_afm_coeff * M2_zface(i,j,k,0);
                             Hy1_eff += H_afm_coeff * M2_zface(i,j,k,1);
                             Hz1_eff += H_afm_coeff * M2_zface(i,j,k,2);

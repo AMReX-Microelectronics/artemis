@@ -1062,6 +1062,8 @@ WarpX::ReadParameters ()
         pp_warpx.query("mag_LLG_anisotropy_coupling",mag_LLG_anisotropy_coupling);
         // turn on the antiferromagnetic coupling term H_afm for H_eff in the LLG equation
         pp_warpx.query("mag_LLG_afm_coupling",mag_LLG_afm_coupling);
+        // turn on the antiferromagnetic coupling term H_afm for H_eff in the LLG equation
+        pp_warpx.query("mag_LLG_cubic_ani",mag_LLG_cubic_ani);
 #endif
 
 #ifdef WARPX_DIM_RZ

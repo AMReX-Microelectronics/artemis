@@ -362,6 +362,8 @@ public:
     int mag_LLG_anisotropy_coupling = 0;
     // turn off the antiferromagnetic coupling term H_afm in H_eff for the LGG updates
     int mag_LLG_afm_coupling = 0;
+    // turn off the antiferromagnetic coupling term H_afm in H_eff for the LGG updates
+    int mag_LLG_cubic_ani = 0;
 #endif
     //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
