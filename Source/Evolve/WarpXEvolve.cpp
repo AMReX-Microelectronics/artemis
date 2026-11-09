@@ -499,7 +499,12 @@ WarpX::OneStep_nosub (Real cur_time)
             if (mag_time_scheme_order==1){
                 MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+                if (mag_LLG_afm_coupling==1){ //if afm is required
+                    MacroscopicEvolveHM_AFM_2nd(0.5*dt[0]);
+                }
+                else{
+                    MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+                }
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }
@@ -559,7 +564,12 @@ WarpX::OneStep_nosub (Real cur_time)
             if (mag_time_scheme_order==1){
                 MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
+                if (mag_LLG_afm_coupling==1){ //if afm is required
+                    MacroscopicEvolveHM_AFM_2nd(0.5*dt[0]);
+                }
+                else{
+                    MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+                }
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }

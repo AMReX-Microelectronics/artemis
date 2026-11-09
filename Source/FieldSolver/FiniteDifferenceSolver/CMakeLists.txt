@@ -20,6 +20,7 @@ if(WarpX_MAG_LLG)
     target_sources(WarpX
       PRIVATE
         MacroscopicEvolveHM_2nd.cpp
+        MacroscopicEvolveHM_AFM_2nd.cpp
         MacroscopicEvolveHM.cpp
         EvolveHPML.cpp
     )

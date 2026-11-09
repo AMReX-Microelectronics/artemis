@@ -250,6 +250,18 @@ MacroscopicProperties::ReadParameters ()
         }
     }
 
+    if (warpx.mag_LLG_afm_coupling == 1) { // magnetic crystal is considered to have one sublattice by default
+        pp_macroscopic.get("mag_afm_init_style", m_mag_afm_s);
+        if (m_mag_afm_s == "constant") pp_macroscopic.get("mag_afm", m_mag_afm);
+        // _mag_ such that it's clear the exch variable is only meaningful for magnetic materials
+        //initialization with parser
+        if (m_mag_afm_s == "parse_mag_afm_function") {
+            utils::parser::Store_parserString(pp_macroscopic, "mag_afm_function(x,y,z)", m_str_mag_afm_function);
+            m_mag_afm_parser = std::make_unique<amrex::Parser>(
+                                      utils::parser::makeParser(m_str_mag_afm_function,{"x","y","z"}));
+        }
+    }
+
     m_mag_normalized_error = 0.1;
     pp_macroscopic.query("mag_normalized_error",m_mag_normalized_error);
 
@@ -425,6 +437,7 @@ MacroscopicProperties::InitData ()
         m_mag_gamma_mf[i]      = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheDimensionVector(i)), dmap, 1, ng_EB_alloc);
         m_mag_exchange_mf[i]   = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheDimensionVector(i)), dmap, 1, ng_EB_alloc);
         m_mag_anisotropy_mf[i] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheDimensionVector(i)), dmap, 1, ng_EB_alloc);
+        m_mag_afm_mf[i]        = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheDimensionVector(i)), dmap, 1, ng_EB_alloc);
     }
 
     // mag_Ms - defined at cell centers
@@ -508,6 +521,18 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[0].get(), m_mag_anisotropy_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[1].get(), m_mag_anisotropy_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_mag_anisotropy_mf[2].get(), m_mag_anisotropy_parser->compile<3>(), lev);
+    }
+
+    // mag_afm - defined at faces
+    if (m_mag_afm_s == "constant") {
+        m_mag_afm_mf[0]->setVal(m_mag_afm);
+        m_mag_afm_mf[1]->setVal(m_mag_afm);
+        m_mag_afm_mf[2]->setVal(m_mag_afm);
+    }
+    else if (m_mag_afm_s == "parse_mag_afm_function"){
+        InitializeMacroMultiFabUsingParser(m_mag_afm_mf[0].get(), m_mag_afm_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_afm_mf[1].get(), m_mag_afm_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_mag_afm_mf[2].get(), m_mag_afm_parser->compile<3>(), lev);
     }
 #endif
 

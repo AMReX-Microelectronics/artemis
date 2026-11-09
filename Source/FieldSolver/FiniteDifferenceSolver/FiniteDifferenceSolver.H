@@ -163,6 +163,21 @@ class FiniteDifferenceSolver
                        amrex::Real const dt,
                        std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
 
+        void MacroscopicEvolveHM_AFM_2nd(
+                       int lev,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &M1field,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &M2field,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield, // Mfield contains three components MultiFab
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &H1field,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &H2field,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> &Lfield,
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
+                       amrex::Real const dt,
+                       std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
+
 #endif
 #endif // ifndef WARPX_DIM_RZ
 
@@ -352,6 +367,22 @@ class FiniteDifferenceSolver
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
+            amrex::Real const dt,
+            std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
+            
+        template< typename T_Algo >
+        void MacroscopicEvolveHMCartesian_AFM_2nd(
+            int lev,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &M1field,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &M2field,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield, // Mfield contains three components MultiFab
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &H1field,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &H2field,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &Bfield,
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> &Lfield,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
             std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
             amrex::Real const dt,
