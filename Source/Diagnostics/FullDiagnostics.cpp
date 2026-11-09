@@ -716,6 +716,18 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
              m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getInductor().m_inductor_y_mf.get(), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "inductorz" ){
              m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getInductor().m_inductor_z_mf.get(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "josephson_phi_x" ){
+             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getJosephsonJunction().m_phi_x_mf.get(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "josephson_phi_y" ){
+             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getJosephsonJunction().m_phi_y_mf.get(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "josephson_phi_z" ){
+             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getJosephsonJunction().m_phi_z_mf.get(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "josephson_Ic_x" ){
+             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getJosephsonJunction().m_Ic_x_mf.get(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "josephson_Ic_y" ){
+             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getJosephsonJunction().m_Ic_y_mf.get(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "josephson_Ic_z" ){
+             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getJosephsonJunction().m_Ic_z_mf.get(), lev, m_crse_ratio);
         }
         else {
 

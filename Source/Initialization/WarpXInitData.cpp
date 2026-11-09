@@ -424,16 +424,28 @@ WarpX::InitData ()
         m_london->InitData();
     }
 
+    // Lumped-element InitData must run BEFORE diagnostics InitData so that
+    // their multifabs exist when CellCenterFunctor captures the pointer.
+    if (use_lumped_inductor) {
+        amrex::Print() << " calling inductor \n";
+        m_inductor->InitData();
+    }
+    if (use_josephson_junction) {
+        amrex::Print() << " calling Josephson junction \n";
+        m_jj->InitData();
+        if (!restart_chkfile.empty()) {
+            // InitData() allocates and ZEROES phi/Js. Restore them from the checkpoint
+            // so the junction continues its phase; otherwise phi restarts at 0 while the
+            // fields are restored, which silently corrupts the post-restart dynamics.
+            m_jj->ReadCheckpoint(restart_chkfile);
+        }
+    }
+
     if (restart_chkfile.empty()) {
         InitDiagnostics();
     } else {
         reduced_diags->InitData();
         multi_diags->InitData();
-    }
-
-    if (use_lumped_inductor) {
-        amrex::Print() << " calling inductor \n";
-        m_inductor->InitData();
     }
 
     if (ParallelDescriptor::IOProcessor()) {

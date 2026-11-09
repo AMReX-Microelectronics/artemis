@@ -154,6 +154,10 @@ WarpX::Evolve (int numsteps)
                 m_inductor->EvolveInductorJ(-0.5_rt*dt[0]); // J^(n) to J^(n-1/2) using E^(n)
                 FillBoundaryJ(guard_cells.ng_alloc_EB);
             }
+            if (use_josephson_junction) {
+                m_jj->EvolveJunctionJ(-0.5_rt*dt[0]); // phi^(0) to phi^(-1/2), add JJ J^(-1/2)
+                FillBoundaryJ(guard_cells.ng_alloc_EB);
+            }
             is_synchronized = false;
         } else {
             if (electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
@@ -429,6 +433,10 @@ WarpX::OneStep_nosub (Real cur_time)
 #endif
     if (use_lumped_inductor == 1) {
         m_inductor->EvolveInductorJ(dt[0]); // J^(n-1/2) to J^(n+1/2) using E^(n)
+        FillBoundaryJ(guard_cells.ng_alloc_EB);
+    }
+    if (use_josephson_junction == 1) {
+        m_jj->EvolveJunctionJ(dt[0]); // phi^(n-1/2) to phi^(n+1/2), add JJ J^(n+1/2)
         FillBoundaryJ(guard_cells.ng_alloc_EB);
     }
 

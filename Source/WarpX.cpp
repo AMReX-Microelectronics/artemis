@@ -233,6 +233,7 @@ int WarpX::extend_PEC_mask_into_pml = 1;
 int WarpX::use_lumped_inductor = 0;
 int WarpX::use_lumped_resistor = 0;
 int WarpX::use_lumped_capacitor = 0;
+int WarpX::use_josephson_junction = 0;
 
 bool WarpX::do_current_centering = false;
 
@@ -501,6 +502,11 @@ WarpX::WarpX ()
     // Lumped inductor
     if (use_lumped_inductor) {
         m_inductor = std::make_unique<Inductor>();
+    }
+
+    // Josephson junction (nonlinear inductor)
+    if (use_josephson_junction) {
+        m_jj = std::make_unique<JosephsonJunction>();
     }
 
     // Set default values for particle and cell weights for costs update;
@@ -1305,6 +1311,7 @@ WarpX::ReadParameters ()
         pp_algo.query("use_PEC_mask",use_PEC_mask);
         pp_algo.query("extend_PEC_mask_into_pml",extend_PEC_mask_into_pml);
         pp_algo.query("use_lumped_inductor",use_lumped_inductor);
+        pp_algo.query("use_josephson_junction",use_josephson_junction);
 
         // Load balancing parameters
         std::vector<std::string> load_balance_intervals_string_vec = {"0"};
