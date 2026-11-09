@@ -51,6 +51,14 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a
                                                        Eyfield_flag_parser->compile<3>(),
                                                        Ezfield_flag_parser->compile<3>(),
                                                        lev, a_dt_type );
+                    if (pml[lev]->isConvolutional()) {
+                        // With the CPML the total field is in component 0 and component 1
+                        // must stay zero (the excitation above was applied to every component)
+                        for (int idir = 0; idir < 3; ++idir) {
+                            amrex::MultiFab* mf = pml[lev]->GetE_fp(idir);
+                            mf->setVal(0._rt, 1, mf->nComp()-1, mf->nGrowVect());
+                        }
+                    }
             }
         }
         if (externalfieldtype == ExternalFieldType::AllExternal || externalfieldtype == ExternalFieldType::BfieldExternal) {

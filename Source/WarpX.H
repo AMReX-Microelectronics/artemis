@@ -148,6 +148,17 @@ public:
     static std::string H_bias_ext_grid_s;
 #endif
     static int ApplyExcitationInPML;
+
+    //! PML formulation: PMLType::Split (default) or PMLType::Convolutional (warpx.pml_type)
+    static int pml_type;
+    //! CPML: maximum of the real coordinate-stretching factor kappa (warpx.cpml_kappa_max, default 1)
+    static amrex::Real cpml_kappa_max;
+    //! CPML: maximum of the CFS parameter alpha, as a rate alpha_SI/eps0 in 1/s (warpx.cpml_alpha_max, default 0)
+    static amrex::Real cpml_alpha_max;
+    //! CPML: polynomial grading order of kappa (warpx.cpml_grading_order, default 2, same as sigma)
+    static amrex::Real cpml_grading_order;
+    //! CPML: polynomial grading order of alpha (warpx.cpml_alpha_grading_order, default 1)
+    static amrex::Real cpml_alpha_grading_order;
     //! Whether to apply the effect of an externally-defined electric field
     static bool add_external_E_field;
     //! Whether to apply the effect of an externally-defined magnetic field
@@ -321,6 +332,9 @@ public:
     static int yee_coupled_solver_algo;
 
     static int use_PEC_mask;
+    //! With use_PEC_mask: extend the PEC mask of the numpy/GDS layer into the PML
+    //! (algo.extend_PEC_mask_into_pml, default 1). If 0, the PML has no PEC mask.
+    static int extend_PEC_mask_into_pml;
     static int use_lumped_inductor;
     static int use_lumped_resistor;
     static int use_lumped_capacitor;
@@ -821,13 +835,13 @@ public:
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
 #ifdef WARPX_MAG_LLG
-    void MacroscopicEvolveHM (         amrex::Real dt);
-    void MacroscopicEvolveHM (int lev, amrex::Real dt);
-    void MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real dt);
+    void MacroscopicEvolveHM (         amrex::Real dt, DtType dt_type = DtType::Full);
+    void MacroscopicEvolveHM (int lev, amrex::Real dt, DtType dt_type = DtType::Full);
+    void MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type = DtType::Full);
 
-    void MacroscopicEvolveHM_2nd (         amrex::Real dt);
-    void MacroscopicEvolveHM_2nd (int lev, amrex::Real dt);
-    void MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real dt);
+    void MacroscopicEvolveHM_2nd (         amrex::Real dt, DtType dt_type = DtType::Full);
+    void MacroscopicEvolveHM_2nd (int lev, amrex::Real dt, DtType dt_type = DtType::Full);
+    void MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type = DtType::Full);
 #endif
 
     /** apply QED correction on electric field
