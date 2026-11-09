@@ -70,6 +70,20 @@ struct SigmaBox
     SigmaVect sigma_star_cumsum_fac;
     amrex::Real v_sigma;
 
+    // Convolutional PML (CPML) coordinate-stretching parameters,
+    // s_i = kappa_i + sigma_i/(alpha_i + j*omega), using the same staggering as
+    // sigma (nodal) and sigma_star (cell-centered). sigma and alpha are rates (1/s),
+    // i.e. sigma_SI/eps0 and alpha_SI/eps0.
+    SigmaVect kappa;
+    SigmaVect kappa_star;
+    SigmaVect alpha;
+    SigmaVect alpha_star;
+    amrex::IntVect m_ncell;
+    amrex::Real m_cpml_kappa_max = 1.0;
+    amrex::Real m_cpml_alpha_max = 0.0;
+    amrex::Real m_cpml_grading_order = 2.0;
+    amrex::Real m_cpml_alpha_grading_order = 1.0;
+
 };
 
 class SigmaBoxFactory
@@ -163,6 +177,20 @@ public:
     amrex::MultiFab* GetE_fp (int comp);
     amrex::MultiFab* GetPEC_fp (int comp);
 
+    /** Convolutional PML (warpx.pml_type = convolutional) auxiliary fields.
+     *  psi_E[d] lives at the location of E_d and stores, in its two components,
+     *  the recursive convolutions of the two curl(H) derivatives entering the
+     *  update of E_d (same component ordering as PMLComp, e.g. Ex: xy=0 (d/dy), xz=1 (d/dz)).
+     *  psi_B[d] is the analog for the B (or H, with LLG) update, using curl(E).
+     *  These return nullptr with the split-field PML. */
+    std::array<amrex::MultiFab*,3> GetPsiE_fp ();
+    std::array<amrex::MultiFab*,3> GetPsiB_fp ();
+    std::array<amrex::MultiFab*,3> GetPsiE_cp ();
+    std::array<amrex::MultiFab*,3> GetPsiB_cp ();
+
+    /** True if this PML uses the convolutional (CPML) formulation */
+    bool isConvolutional () const { return m_convolutional; }
+
     // Used when WarpX::do_pml_dive_cleaning = true
     amrex::MultiFab* GetF_fp ();
     amrex::MultiFab* GetF_cp ();
@@ -251,6 +279,13 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_j_fp;
 
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_PEC_fp;
+
+    // CPML auxiliary (memory) variables
+    bool m_convolutional = false;
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_psiE_fp;
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_psiB_fp;
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_psiE_cp;
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_psiB_cp;
 
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_edge_lengths;
 

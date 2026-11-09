@@ -3,6 +3,7 @@ target_sources(WarpX
     ComputeDivE.cpp
     EvolveB.cpp
     EvolveBPML.cpp
+    EvolveCPML.cpp
     EvolveE.cpp
     EvolveEPML.cpp
     EvolveF.cpp

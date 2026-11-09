@@ -497,9 +497,9 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifndef WARPX_DIM_RZ
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
             if (mag_time_scheme_order==1){
-                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+                MacroscopicEvolveHM(0.5*dt[0], DtType::FirstHalf); // we now have M^{n+1/2} and H^{n+1/2}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+                MacroscopicEvolveHM_2nd(0.5*dt[0], DtType::FirstHalf); // we now have M^{n+1/2} and H^{n+1/2}
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }
@@ -557,9 +557,9 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifndef WARPX_DIM_RZ
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
             if (mag_time_scheme_order==1){
-                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
+                MacroscopicEvolveHM(0.5*dt[0], DtType::SecondHalf); // we now have M^{n+1} and H^{n+1}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
+                MacroscopicEvolveHM_2nd(0.5*dt[0], DtType::SecondHalf); // we now have M^{n+1} and H^{n+1}
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }

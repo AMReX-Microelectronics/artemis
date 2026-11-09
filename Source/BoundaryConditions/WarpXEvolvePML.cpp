@@ -67,7 +67,9 @@ WarpX::DampPML (const int lev, PatchType patch_type)
                                   dt[lev]);
     }
 #endif
-    if (pml[lev]) {
+    // The convolutional PML absorbs through the stretched derivatives in the
+    // field updates; no separate damping step is applied
+    if (pml[lev] && !pml[lev]->isConvolutional()) {
         DampPML_Cartesian (lev, patch_type);
     }
 }

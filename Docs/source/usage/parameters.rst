@@ -381,6 +381,51 @@ Additional PML parameters
     The characteristic depth, in number of cells, over which
     the absorption coefficients of the PML increases.
 
+* ``warpx.pml_type`` (`string`; default: ``split``)
+    PML formulation used with the FDTD solver.
+
+    * ``split``: split-field (Berenger) PML (original implementation).
+
+    * ``convolutional`` (or ``cpml``): convolutional PML (Roden & Gedney, 2000), using the
+      complex-frequency-shifted coordinate stretching
+      :math:`s_i = \kappa_i + \sigma_i/(\alpha_i + i\omega)`. The total (unsplit) field is
+      advanced in the PML with the *same* material update as in the interior (local
+      :math:`\epsilon`, :math:`\mu`, :math:`\sigma`, including spatially varying properties and
+      the ``laxwendroff``/``backwardeuler`` macroscopic schemes); only the spatial derivatives are
+      stretched, through auxiliary convolution variables. The PEC mask built from the GDS/numpy
+      layer (``algo.use_PEC_mask``) and its extension into the PML is applied to the CPML fields
+      in the same way as for the split-field PML. The :math:`\sigma` profile is the same as for the
+      split-field PML (set by ``warpx.pml_ncell`` and ``warpx.pml_delta``).
+      Only implemented for the (staggered) Yee solver, without divergence cleaning in the PML,
+      J-damping, or moving window.
+      With the default parameters (``kappa_max = 1``, ``alpha_max = 0``) its absorption is
+      essentially the same as the split-field PML. Using ``warpx.pml_delta`` around 15-20 together
+      with a small ``warpx.cpml_alpha_max`` (and optionally ``warpx.cpml_kappa_max = 2``)
+      typically lowers the reflection further; a too-large ``alpha_max`` degrades absorption
+      of the low frequencies.
+
+* ``algo.extend_PEC_mask_into_pml`` (`int`; default: 1)
+    Only used with ``algo.use_PEC_mask = 1``. If 1, the PEC mask built from the numpy (GDS)
+    layer is extended into the PML (the mask values on the domain edge are continued through
+    the PML), for both ``warpx.pml_type = split`` and ``convolutional``. If 0, no PEC mask is
+    applied in the PML.
+
+* ``warpx.cpml_kappa_max`` (`float`; default: 1)
+    CPML only. Maximum of the real stretching factor :math:`\kappa`, graded as
+    :math:`\kappa(d) = 1 + (\kappa_{max}-1)\,d^m` with :math:`d \in [0,1]` the normalized
+    depth into the PML. Values > 1 improve absorption of evanescent waves.
+
+* ``warpx.cpml_alpha_max`` (`float`, in 1/s; default: 0)
+    CPML only. Maximum of the complex-frequency-shift parameter, given as the rate
+    :math:`\alpha_{SI}/\epsilon_0`, graded as :math:`\alpha(d) = \alpha_{max} (1-d)^{m_a}`.
+    A typical choice is :math:`2\pi f_{min}`, with :math:`f_{min}` the lowest frequency of interest.
+
+* ``warpx.cpml_grading_order`` (`float`; default: 2)
+    CPML only. Polynomial order :math:`m` of the :math:`\kappa` grading.
+
+* ``warpx.cpml_alpha_grading_order`` (`float`; default: 1)
+    CPML only. Polynomial order :math:`m_a` of the :math:`\alpha` grading.
+
 * ``warpx.do_pml_in_domain`` (`int`; default: 0)
     Whether to create the PML inside the simulation area or outside. If inside,
     it allows the user to propagate particles in PML and to use extended PML

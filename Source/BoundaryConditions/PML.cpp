@@ -60,19 +60,47 @@ using namespace amrex;
 
 namespace
 {
-    static void FillLo (Sigma& sigma, Sigma& sigma_cumsum,
-                        Sigma& sigma_star, Sigma& sigma_star_cumsum,
+    // Grading of the CPML stretching parameters kappa and alpha, as a function of the
+    // normalized depth d in [0,1] into the PML (d=0 at the PML/domain interface,
+    // d=1 at the outer edge of the PML).
+    //   kappa(d) = 1 + (kappa_max - 1) d^m,    alpha(d) = alpha_max (1 - d)^ma
+    // (Roden & Gedney, 2000). These arrays are only used by the convolutional PML;
+    // the split-field PML only uses sigma and sigma_star.
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    Real cpml_kappa (Real d, Real kappa_max, Real m) noexcept
+    {
+        d = amrex::max(Real(0.), amrex::min(Real(1.), d));
+        return Real(1.) + (kappa_max - Real(1.))*std::pow(d, m);
+    }
+
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    Real cpml_alpha (Real d, Real alpha_max, Real ma) noexcept
+    {
+        d = amrex::max(Real(0.), amrex::min(Real(1.), d));
+        return alpha_max*std::pow(Real(1.) - d, ma);
+    }
+
+    static void FillLo (SigmaBox& sb, const int idim,
                         const int olo, const int ohi, const int glo, Real fac,
                         const amrex::Real v_sigma)
     {
-        const int slo = sigma.m_lo;
-        const int sslo = sigma_star.m_lo;
+        const int slo = sb.sigma[idim].m_lo;
+        const int sslo = sb.sigma_star[idim].m_lo;
 
         const int N = ohi+1-olo+1;
-        Real* p_sigma = sigma.data();
-        Real* p_sigma_cumsum = sigma_cumsum.data();
-        Real* p_sigma_star = sigma_star.data();
-        Real* p_sigma_star_cumsum = sigma_star_cumsum.data();
+        Real* p_sigma = sb.sigma[idim].data();
+        Real* p_sigma_cumsum = sb.sigma_cumsum[idim].data();
+        Real* p_sigma_star = sb.sigma_star[idim].data();
+        Real* p_sigma_star_cumsum = sb.sigma_star_cumsum[idim].data();
+        Real* p_kappa = sb.kappa[idim].data();
+        Real* p_kappa_star = sb.kappa_star[idim].data();
+        Real* p_alpha = sb.alpha[idim].data();
+        Real* p_alpha_star = sb.alpha_star[idim].data();
+        const Real inv_ncell = Real(1.)/static_cast<Real>(sb.m_ncell[idim]);
+        const Real kmax = sb.m_cpml_kappa_max;
+        const Real amax = sb.m_cpml_alpha_max;
+        const Real m = sb.m_cpml_grading_order;
+        const Real ma = sb.m_cpml_alpha_grading_order;
         amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
         {
             i += olo;
@@ -80,63 +108,86 @@ namespace
             p_sigma[i-slo] = fac*(offset*offset);
             // sigma_cumsum is the analytical integral of sigma function at same points than sigma
             p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3._rt)/v_sigma;
+            p_kappa[i-slo] = cpml_kappa(offset*inv_ncell, kmax, m);
+            p_alpha[i-slo] = cpml_alpha(offset*inv_ncell, amax, ma);
             if (i <= ohi+1) {
                 offset = static_cast<Real>(glo-i) - 0.5_rt;
                 p_sigma_star[i-sslo] = fac*(offset*offset);
                 // sigma_star_cumsum is the analytical integral of sigma function at same points than sigma_star
                 p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3._rt)/v_sigma;
+                p_kappa_star[i-sslo] = cpml_kappa(offset*inv_ncell, kmax, m);
+                p_alpha_star[i-sslo] = cpml_alpha(offset*inv_ncell, amax, ma);
             }
         });
     }
 
-    static void FillHi (Sigma& sigma, Sigma& sigma_cumsum,
-                        Sigma& sigma_star, Sigma& sigma_star_cumsum,
+    static void FillHi (SigmaBox& sb, const int idim,
                         const int olo, const int ohi, const int ghi, Real fac,
                         const amrex::Real v_sigma)
     {
-        const int slo = sigma.m_lo;
-        const int sslo = sigma_star.m_lo;
+        const int slo = sb.sigma[idim].m_lo;
+        const int sslo = sb.sigma_star[idim].m_lo;
 
         const int N = ohi+1-olo+1;
-        Real* p_sigma = sigma.data();
-        Real* p_sigma_cumsum = sigma_cumsum.data();
-        Real* p_sigma_star = sigma_star.data();
-        Real* p_sigma_star_cumsum = sigma_star_cumsum.data();
+        Real* p_sigma = sb.sigma[idim].data();
+        Real* p_sigma_cumsum = sb.sigma_cumsum[idim].data();
+        Real* p_sigma_star = sb.sigma_star[idim].data();
+        Real* p_sigma_star_cumsum = sb.sigma_star_cumsum[idim].data();
+        Real* p_kappa = sb.kappa[idim].data();
+        Real* p_kappa_star = sb.kappa_star[idim].data();
+        Real* p_alpha = sb.alpha[idim].data();
+        Real* p_alpha_star = sb.alpha_star[idim].data();
+        const Real inv_ncell = Real(1.)/static_cast<Real>(sb.m_ncell[idim]);
+        const Real kmax = sb.m_cpml_kappa_max;
+        const Real amax = sb.m_cpml_alpha_max;
+        const Real m = sb.m_cpml_grading_order;
+        const Real ma = sb.m_cpml_alpha_grading_order;
         amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
         {
             i += olo;
             Real offset = static_cast<Real>(i-ghi-1);
             p_sigma[i-slo] = fac*(offset*offset);
             p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3._rt)/v_sigma;
+            p_kappa[i-slo] = cpml_kappa(offset*inv_ncell, kmax, m);
+            p_alpha[i-slo] = cpml_alpha(offset*inv_ncell, amax, ma);
             if (i <= ohi+1) {
                 offset = static_cast<Real>(i-ghi) - 0.5_rt;
                 p_sigma_star[i-sslo] = fac*(offset*offset);
                 p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3._rt)/v_sigma;
+                p_kappa_star[i-sslo] = cpml_kappa(offset*inv_ncell, kmax, m);
+                p_alpha_star[i-sslo] = cpml_alpha(offset*inv_ncell, amax, ma);
             }
         });
     }
 
 #if (AMREX_SPACEDIM != 1)
-    static void FillZero (Sigma& sigma, Sigma& sigma_cumsum,
-                          Sigma& sigma_star, Sigma& sigma_star_cumsum,
+    static void FillZero (SigmaBox& sb, const int idim,
                           const int olo, const int ohi)
     {
-        const int slo = sigma.m_lo;
-        const int sslo = sigma_star.m_lo;
+        const int slo = sb.sigma[idim].m_lo;
+        const int sslo = sb.sigma_star[idim].m_lo;
 
         const int N = ohi+1-olo+1;
-        Real* p_sigma = sigma.data();
-        Real* p_sigma_cumsum = sigma_cumsum.data();
-        Real* p_sigma_star = sigma_star.data();
-        Real* p_sigma_star_cumsum = sigma_star_cumsum.data();
+        Real* p_sigma = sb.sigma[idim].data();
+        Real* p_sigma_cumsum = sb.sigma_cumsum[idim].data();
+        Real* p_sigma_star = sb.sigma_star[idim].data();
+        Real* p_sigma_star_cumsum = sb.sigma_star_cumsum[idim].data();
+        Real* p_kappa = sb.kappa[idim].data();
+        Real* p_kappa_star = sb.kappa_star[idim].data();
+        Real* p_alpha = sb.alpha[idim].data();
+        Real* p_alpha_star = sb.alpha_star[idim].data();
         amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
         {
             i += olo;
             p_sigma[i-slo] = Real(0.0);
             p_sigma_cumsum[i-slo] = Real(0.0);
+            p_kappa[i-slo] = Real(1.0);
+            p_alpha[i-slo] = Real(0.0);
             if (i <= ohi+1) {
                 p_sigma_star[i-sslo] = Real(0.0);
                 p_sigma_star_cumsum[i-sslo] = Real(0.0);
+                p_kappa_star[i-sslo] = Real(1.0);
+                p_alpha_star[i-sslo] = Real(0.0);
             }
         });
     }
@@ -180,7 +231,27 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, const
         sigma_star_fac       [idim].m_hi = hi[idim]+1;
         sigma_star_cumsum_fac[idim].m_lo = lo[idim];
         sigma_star_cumsum_fac[idim].m_hi = hi[idim]+1;
+
+        // CPML stretching parameters (same staggering/indexing as sigma and sigma_star)
+        kappa                [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        kappa_star           [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        alpha                [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        alpha_star           [idim].resize(sz[idim]+1,std::numeric_limits<Real>::quiet_NaN());
+        kappa                [idim].m_lo = lo[idim];
+        kappa                [idim].m_hi = hi[idim]+1;
+        kappa_star           [idim].m_lo = lo[idim];
+        kappa_star           [idim].m_hi = hi[idim]+1;
+        alpha                [idim].m_lo = lo[idim];
+        alpha                [idim].m_hi = hi[idim]+1;
+        alpha_star           [idim].m_lo = lo[idim];
+        alpha_star           [idim].m_hi = hi[idim]+1;
     }
+
+    m_ncell = ncell;
+    m_cpml_kappa_max = WarpX::cpml_kappa_max;
+    m_cpml_alpha_max = WarpX::cpml_alpha_max;
+    m_cpml_grading_order = WarpX::cpml_grading_order;
+    m_cpml_alpha_grading_order = WarpX::cpml_alpha_grading_order;
 
     Array<Real,AMREX_SPACEDIM> fac;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -208,8 +279,7 @@ void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
         int olo = std::max(slo, dlo-ncell[idim]);
         int ohi = std::min(shi, dlo-1);
         if (ohi >= olo) {
-            FillLo(sigma[idim], sigma_cumsum[idim],
-                   sigma_star[idim], sigma_star_cumsum[idim],
+            FillLo(*this, idim,
                    olo, ohi, dlo, fac[idim], v_sigma_sb);
         }
 
@@ -218,8 +288,7 @@ void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
         olo = std::max(slo, dlo);
         ohi = std::min(shi, dhi);
         if (ohi >= olo) {
-            FillZero(sigma[idim], sigma_cumsum[idim],
-                     sigma_star[idim], sigma_star_cumsum[idim],
+            FillZero(*this, idim,
                      olo, ohi);
         }
 #endif
@@ -228,8 +297,7 @@ void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
         olo = std::max(slo, dhi+1);
         ohi = std::min(shi, dhi+ncell[idim]);
         if (ohi >= olo) {
-            FillHi(sigma[idim], sigma_cumsum[idim],
-                   sigma_star[idim], sigma_star_cumsum[idim],
+            FillHi(*this, idim,
                    olo, ohi, dhi, fac[idim], v_sigma_sb);
         }
     }
@@ -306,8 +374,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
             Box looverlap = lobox & box;
 
             if (looverlap.ok()) {
-                FillLo(sigma[idim], sigma_cumsum[idim],
-                       sigma_star[idim], sigma_star_cumsum[idim],
+                FillLo(*this, idim,
                        looverlap.smallEnd(idim), looverlap.bigEnd(idim),
                        grid_box.smallEnd(idim), fac[idim], v_sigma_sb);
             }
@@ -319,8 +386,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
 #endif
             Box hioverlap = hibox & box;
             if (hioverlap.ok()) {
-                FillHi(sigma[idim], sigma_cumsum[idim],
-                       sigma_star[idim],  sigma_star_cumsum[idim],
+                FillHi(*this, idim,
                        hioverlap.smallEnd(idim), hioverlap.bigEnd(idim),
                        grid_box.bigEnd(idim), fac[idim], v_sigma_sb);
             }
@@ -343,8 +409,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                 "SigmaBox::SigmaBox(): side_side_edges, how did this happen?"
             );
 
-            FillZero(sigma[idim], sigma_cumsum[idim],
-                sigma_star[idim], sigma_star_cumsum[idim],
+            FillZero(*this, idim,
                 overlap.smallEnd(idim), overlap.bigEnd(idim));
         }
 
@@ -355,8 +420,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
             Box lobox = amrex::adjCellLo(grid_box, idim, ncell[idim]);
             Box looverlap = lobox.grow(jdim,ncell[jdim]).grow(kdim,ncell[kdim]) & box;
             if (looverlap.ok()) {
-                FillLo(sigma[idim], sigma_cumsum[idim],
-                       sigma_star[idim],  sigma_star_cumsum[idim],
+                FillLo(*this, idim,
                        looverlap.smallEnd(idim), looverlap.bigEnd(idim),
                        grid_box.smallEnd(idim), fac[idim], v_sigma_sb);
             }
@@ -364,8 +428,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
             Box hibox = amrex::adjCellHi(grid_box, idim, ncell[idim]);
             Box hioverlap = hibox.grow(jdim,ncell[jdim]).grow(kdim,ncell[kdim]) & box;
             if (hioverlap.ok()) {
-                FillHi(sigma[idim], sigma_cumsum[idim],
-                       sigma_star[idim], sigma_star_cumsum[idim],
+                FillHi(*this, idim,
                        hioverlap.smallEnd(idim), hioverlap.bigEnd(idim),
                        grid_box.bigEnd(idim), fac[idim], v_sigma_sb);
             }
@@ -392,8 +455,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                 "SigmaBox::SigmaBox(): side_faces, how did this happen?"
             );
 
-            FillZero(sigma[idim], sigma_cumsum[idim],
-                sigma_star[idim], sigma_star_cumsum[idim],
+            FillZero(*this, idim,
                 overlap.smallEnd(idim), overlap.bigEnd(idim));
         }
 #endif
@@ -405,8 +467,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
             const Box& lobox = amrex::adjCellLo(grid_box, idim, ncell[idim]);
             Box looverlap = lobox & box;
             if (looverlap.ok()) {
-                FillLo(sigma[idim], sigma_cumsum[idim],
-                       sigma_star[idim], sigma_star_cumsum[idim],
+                FillLo(*this, idim,
                        looverlap.smallEnd(idim), looverlap.bigEnd(idim),
                        grid_box.smallEnd(idim), fac[idim], v_sigma_sb);
             }
@@ -414,8 +475,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
             const Box& hibox = amrex::adjCellHi(grid_box, idim, ncell[idim]);
             Box hioverlap = hibox & box;
             if (hioverlap.ok()) {
-                FillHi(sigma[idim], sigma_cumsum[idim],
-                       sigma_star[idim], sigma_star_cumsum[idim],
+                FillHi(*this, idim,
                        hioverlap.smallEnd(idim), hioverlap.bigEnd(idim),
                        grid_box.bigEnd(idim), fac[idim], v_sigma_sb);
             }
@@ -596,6 +656,18 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         m_ok = true;
     }
 
+    m_convolutional = (WarpX::pml_type == PMLType::Convolutional);
+    if (m_convolutional) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee &&
+            grid_type != GridType::Collocated,
+            "warpx.pml_type = convolutional is only implemented for the (staggered) Yee FDTD solver");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_pml_dive_cleaning && !do_pml_divb_cleaning,
+            "warpx.pml_type = convolutional does not support divergence cleaning in the PML");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_moving_window,
+            "warpx.pml_type = convolutional does not support the moving window");
+    }
+
     // Define the number of guard cells in each direction, for E, B, and F
     IntVect nge = IntVect(AMREX_D_DECL(2, 2, 2));
     IntVect ngb = IntVect(AMREX_D_DECL(2, 2, 2));
@@ -696,6 +768,24 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     WarpX::AllocInitMultiFab(pml_H_fp[2], ba_Hz, dm, 2, ngb, "pml_H_fp[z]");
 #endif
 
+    if (m_convolutional) {
+        // CPML memory variables: 2 components each, no guard cells needed
+        // (they are only read/written at the point where they are defined)
+        WarpX::AllocInitMultiFab(pml_psiE_fp[0], ba_Ex, dm, 2, IntVect(0), "pml_psiE_fp[x]", 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_psiE_fp[1], ba_Ey, dm, 2, IntVect(0), "pml_psiE_fp[y]", 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_psiE_fp[2], ba_Ez, dm, 2, IntVect(0), "pml_psiE_fp[z]", 0.0_rt);
+#ifdef WARPX_MAG_LLG
+        // with LLG, H (not B) is advanced in the PML
+        WarpX::AllocInitMultiFab(pml_psiB_fp[0], ba_Hx, dm, 2, IntVect(0), "pml_psiB_fp[x]", 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_psiB_fp[1], ba_Hy, dm, 2, IntVect(0), "pml_psiB_fp[y]", 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_psiB_fp[2], ba_Hz, dm, 2, IntVect(0), "pml_psiB_fp[z]", 0.0_rt);
+#else
+        WarpX::AllocInitMultiFab(pml_psiB_fp[0], ba_Bx, dm, 2, IntVect(0), "pml_psiB_fp[x]", 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_psiB_fp[1], ba_By, dm, 2, IntVect(0), "pml_psiB_fp[y]", 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_psiB_fp[2], ba_Bz, dm, 2, IntVect(0), "pml_psiB_fp[z]", 0.0_rt);
+#endif
+    }
+
     if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
         // Allocating macroproperties in pml at cell-centers
         pml_eps_fp = std::make_unique<MultiFab>(ba, dm, 1, nge);
@@ -737,11 +827,17 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             pml_PEC_fp[1]->setVal(1.);
             pml_PEC_fp[2]->setVal(1.);
 
-            macroscopic_properties->InitializePECFromSigma(pml_sigma_fp.get(), pml_PEC_fp[0].get(), pml_PEC_fp[1].get(),
-                                                           macroscopic_properties->m_npy_k_index);
-            if (!macroscopic_properties->m_sigma_npy_filename2.empty()) {
+            // Extend the PEC layer(s) into the PML (algo.extend_PEC_mask_into_pml, default on).
+            // pml_sigma_fp was filled from the numpy mask with the edge values of the domain
+            // continued into the PML, so the PEC edges in the PML continue the interior ones.
+            // If disabled, the PEC mask stays 1 (no PEC) everywhere in the PML.
+            if (WarpX::extend_PEC_mask_into_pml) {
                 macroscopic_properties->InitializePECFromSigma(pml_sigma_fp.get(), pml_PEC_fp[0].get(), pml_PEC_fp[1].get(),
-                                                               macroscopic_properties->m_npy_k_index2);
+                                                               macroscopic_properties->m_npy_k_index);
+                if (!macroscopic_properties->m_sigma_npy_filename2.empty()) {
+                    macroscopic_properties->InitializePECFromSigma(pml_sigma_fp.get(), pml_PEC_fp[0].get(), pml_PEC_fp[1].get(),
+                                                                   macroscopic_properties->m_npy_k_index2);
+                }
             }
 
             // no need for sigma anymore
@@ -936,6 +1032,21 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         WarpX::AllocInitMultiFab(pml_H_cp[1], cba_Hy, cdm, 2, ngb, "pml_H_cp[y]");
         WarpX::AllocInitMultiFab(pml_H_cp[2], cba_Hz, cdm, 2, ngb, "pml_H_cp[z]");
 #endif
+
+        if (m_convolutional) {
+            WarpX::AllocInitMultiFab(pml_psiE_cp[0], cba_Ex, cdm, 2, IntVect(0), "pml_psiE_cp[x]", 0.0_rt);
+            WarpX::AllocInitMultiFab(pml_psiE_cp[1], cba_Ey, cdm, 2, IntVect(0), "pml_psiE_cp[y]", 0.0_rt);
+            WarpX::AllocInitMultiFab(pml_psiE_cp[2], cba_Ez, cdm, 2, IntVect(0), "pml_psiE_cp[z]", 0.0_rt);
+#ifdef WARPX_MAG_LLG
+            WarpX::AllocInitMultiFab(pml_psiB_cp[0], cba_Hx, cdm, 2, IntVect(0), "pml_psiB_cp[x]", 0.0_rt);
+            WarpX::AllocInitMultiFab(pml_psiB_cp[1], cba_Hy, cdm, 2, IntVect(0), "pml_psiB_cp[y]", 0.0_rt);
+            WarpX::AllocInitMultiFab(pml_psiB_cp[2], cba_Hz, cdm, 2, IntVect(0), "pml_psiB_cp[z]", 0.0_rt);
+#else
+            WarpX::AllocInitMultiFab(pml_psiB_cp[0], cba_Bx, cdm, 2, IntVect(0), "pml_psiB_cp[x]", 0.0_rt);
+            WarpX::AllocInitMultiFab(pml_psiB_cp[1], cba_By, cdm, 2, IntVect(0), "pml_psiB_cp[y]", 0.0_rt);
+            WarpX::AllocInitMultiFab(pml_psiB_cp[2], cba_Bz, cdm, 2, IntVect(0), "pml_psiB_cp[z]", 0.0_rt);
+#endif
+        }
 
         // Allocating macroproperties in pml at cell-centers
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
@@ -1191,6 +1302,30 @@ amrex::MultiFab*
 PML::GetPEC_fp (int comp)
 {
     return pml_PEC_fp[comp].get();
+}
+
+std::array<MultiFab*,3>
+PML::GetPsiE_fp ()
+{
+    return {pml_psiE_fp[0].get(), pml_psiE_fp[1].get(), pml_psiE_fp[2].get()};
+}
+
+std::array<MultiFab*,3>
+PML::GetPsiB_fp ()
+{
+    return {pml_psiB_fp[0].get(), pml_psiB_fp[1].get(), pml_psiB_fp[2].get()};
+}
+
+std::array<MultiFab*,3>
+PML::GetPsiE_cp ()
+{
+    return {pml_psiE_cp[0].get(), pml_psiE_cp[1].get(), pml_psiE_cp[2].get()};
+}
+
+std::array<MultiFab*,3>
+PML::GetPsiB_cp ()
+{
+    return {pml_psiB_cp[0].get(), pml_psiB_cp[1].get(), pml_psiB_cp[2].get()};
 }
 
 std::array<MultiFab*,3>
@@ -1647,6 +1782,14 @@ PML::CheckPoint (const std::string& dir) const
         VisMF::AsyncWrite(*pml_H_fp[1], dir+"_Hy_fp");
         VisMF::AsyncWrite(*pml_H_fp[2], dir+"_Hz_fp");
 #endif
+        if (m_convolutional) {
+            VisMF::AsyncWrite(*pml_psiE_fp[0], dir+"_psiEx_fp");
+            VisMF::AsyncWrite(*pml_psiE_fp[1], dir+"_psiEy_fp");
+            VisMF::AsyncWrite(*pml_psiE_fp[2], dir+"_psiEz_fp");
+            VisMF::AsyncWrite(*pml_psiB_fp[0], dir+"_psiBx_fp");
+            VisMF::AsyncWrite(*pml_psiB_fp[1], dir+"_psiBy_fp");
+            VisMF::AsyncWrite(*pml_psiB_fp[2], dir+"_psiBz_fp");
+        }
     }
 
     if (pml_E_cp[0])
@@ -1662,6 +1805,14 @@ PML::CheckPoint (const std::string& dir) const
         VisMF::AsyncWrite(*pml_H_cp[1], dir+"_Hy_cp");
         VisMF::AsyncWrite(*pml_H_cp[2], dir+"_Hz_cp");
 #endif
+        if (m_convolutional) {
+            VisMF::AsyncWrite(*pml_psiE_cp[0], dir+"_psiEx_cp");
+            VisMF::AsyncWrite(*pml_psiE_cp[1], dir+"_psiEy_cp");
+            VisMF::AsyncWrite(*pml_psiE_cp[2], dir+"_psiEz_cp");
+            VisMF::AsyncWrite(*pml_psiB_cp[0], dir+"_psiBx_cp");
+            VisMF::AsyncWrite(*pml_psiB_cp[1], dir+"_psiBy_cp");
+            VisMF::AsyncWrite(*pml_psiB_cp[2], dir+"_psiBz_cp");
+        }
     }
 }
 
@@ -1681,6 +1832,14 @@ PML::Restart (const std::string& dir)
         VisMF::Read(*pml_H_fp[1], dir+"_Hy_fp");
         VisMF::Read(*pml_H_fp[2], dir+"_Hz_fp");
 #endif
+        if (m_convolutional) {
+            VisMF::Read(*pml_psiE_fp[0], dir+"_psiEx_fp");
+            VisMF::Read(*pml_psiE_fp[1], dir+"_psiEy_fp");
+            VisMF::Read(*pml_psiE_fp[2], dir+"_psiEz_fp");
+            VisMF::Read(*pml_psiB_fp[0], dir+"_psiBx_fp");
+            VisMF::Read(*pml_psiB_fp[1], dir+"_psiBy_fp");
+            VisMF::Read(*pml_psiB_fp[2], dir+"_psiBz_fp");
+        }
     }
 
     if (pml_E_cp[0])
@@ -1696,6 +1855,14 @@ PML::Restart (const std::string& dir)
         VisMF::Read(*pml_H_cp[1], dir+"_Hy_cp");
         VisMF::Read(*pml_H_cp[2], dir+"_Hz_cp");
 #endif
+        if (m_convolutional) {
+            VisMF::Read(*pml_psiE_cp[0], dir+"_psiEx_cp");
+            VisMF::Read(*pml_psiE_cp[1], dir+"_psiEy_cp");
+            VisMF::Read(*pml_psiE_cp[2], dir+"_psiEz_cp");
+            VisMF::Read(*pml_psiB_cp[0], dir+"_psiBx_cp");
+            VisMF::Read(*pml_psiB_cp[1], dir+"_psiBy_cp");
+            VisMF::Read(*pml_psiB_cp[2], dir+"_psiBz_cp");
+        }
     }
 }
 
