@@ -134,12 +134,12 @@ warpx.Ez_excitation_flag_function(x,y,z) = "
   flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - tiny) * (x < w_line/2 + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x > -w_line/2 - gap_cpw - w_gnd - tiny) * (x < -w_line/2 - gap_cpw + tiny)
 + flag_hs * (z > -Lz/2 + th_si - tiny) * (z < -Lz/2 + th_si + th_nb + tiny) * (x < +w_line/2 + gap_cpw + w_gnd + tiny) * (x > +w_line/2 + gap_cpw - tiny)
-+ flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < -Lz/2 + h_port) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
++ flag_hs * (x < w_port/2) * (x > -w_port/2) * (z < -Lz/2 + h_port) * (y > -Ly/2 + dy - tiny) * (y < -Ly/2 + dy + tiny)"
 
 warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ey_excitation_grid_function(x,y,z,t) = "0."
 warpx.Ez_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*cos(2*pi*c/wavelength*t) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
-warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength) * (y > -Ly/2 - tiny) * (y < -Ly/2 + tiny)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "sin(2*pi*c*t/wavelength) * (y > -Ly/2 - dy + tiny) * (y < -Ly/2 + dy + tiny)"
 
 # Diagnostics
 
