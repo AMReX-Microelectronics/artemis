@@ -1,8 +1,7 @@
-# Copyright 2019-2020 Axel Huebl, Maxence Thevenet
+# Read the Docs configuration.
 #
-# This file is part of WarpX.
-#
-# License: BSD-3-Clause-LBNL
+# The ARTEMIS documentation is maintained at https://amrex-microelectronics.github.io/
+# This build only publishes a single page that redirects there.
 
 version: 2
 
@@ -17,8 +16,3 @@ sphinx:
 python:
    install:
    - requirements: Docs/requirements.txt
-
-formats:
-  - htmlzip
-#  - pdf
-#  - epub
