@@ -1125,21 +1125,6 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                                                current_fp[lev], m_edge_lengths[lev], a_dt,
                                                m_macroscopic_properties);
 
-    // Apply the PEC mask to the interior E right after the update, *before* the
-    // E guard cells and the PML are filled (FillBoundaryE -> PML::Exchange).
-    // Previously the mask was only applied after FillBoundaryE (in OneStep), so the
-    // guard cells of the interior grids, and the PML copy of the interface plane
-    // (which the PML receives from the interior), kept unmasked tangential E on the
-    // PEC edges until the next exchange. The following B update then saw
-    // inconsistent E on the two sides of the PML interface (and of interior box
-    // boundaries) along the PEC layer. The mask is applied again after the
-    // excitation in OneStep, so masked edges stay exactly zero.
-    if (use_PEC_mask) {
-        MultiFab::Multiply(*Efield_fp[lev][0], *PEC_fp[lev][0], 0, 0, 1, 0);
-        MultiFab::Multiply(*Efield_fp[lev][1], *PEC_fp[lev][1], 0, 0, 1, 0);
-        MultiFab::Multiply(*Efield_fp[lev][2], *PEC_fp[lev][2], 0, 0, 1, 0);
-    }
-
     // Evolve E field in PML cells
     if (do_pml && pml[lev]->ok()) {
         if (pml[lev]->isConvolutional()) {
@@ -1207,37 +1192,20 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 pml[lev]->Getmu_cp(),
                 pml[lev]->Getsigma_cp() );
         }
-
-        if (use_PEC_mask && extend_PEC_mask_into_pml) {
-            amrex::MultiFab* Ex_PEC = pml[lev]->GetE_fp(0);
-            amrex::MultiFab* Ey_PEC = pml[lev]->GetE_fp(1);
-            amrex::MultiFab* Ez_PEC = pml[lev]->GetE_fp(2);
-            amrex::MultiFab* PECx_PEC = pml[lev]->GetPEC_fp(0);
-            amrex::MultiFab* PECy_PEC = pml[lev]->GetPEC_fp(1);
-            amrex::MultiFab* PECz_PEC = pml[lev]->GetPEC_fp(2);
-
-            // 0 ghost cells or nge?
-            // Split-field PML: both split components are zeroed on the PEC edges.
-            // CPML: component 0 holds the total field (component 1 is zero), so the
-            // same multiply enforces E_tan = 0 on the PEC mask extended into the PML.
-            MultiFab::Multiply(*Ex_PEC, *PECx_PEC, 0, 0, 2, 0);
-            MultiFab::Multiply(*Ey_PEC, *PECy_PEC, 0, 0, 2, 0);
-            MultiFab::Multiply(*Ez_PEC, *PECz_PEC, 0, 0, 2, 0);
-
-            if (pml[lev]->isConvolutional()) {
-                // Also reset the CPML memory variables on PEC edges, so that no
-                // stale convolution history is carried by masked E components
-                const auto psiE = pml[lev]->GetPsiE_fp();
-                MultiFab::Multiply(*psiE[0], *PECx_PEC, 0, 0, 1, 0);
-                MultiFab::Multiply(*psiE[0], *PECx_PEC, 0, 1, 1, 0);
-                MultiFab::Multiply(*psiE[1], *PECy_PEC, 0, 0, 1, 0);
-                MultiFab::Multiply(*psiE[1], *PECy_PEC, 0, 1, 1, 0);
-                MultiFab::Multiply(*psiE[2], *PECz_PEC, 0, 0, 1, 0);
-                MultiFab::Multiply(*psiE[2], *PECz_PEC, 0, 1, 1, 0);
-            }
-        }
-
     }
+
+    // Apply the PEC mask to the interior E (and, if extended, to the PML E and the
+    // CPML memory variables) right after the update, *before* the E guard cells and
+    // the PML are filled (FillBoundaryE -> PML::Exchange). If the mask were only
+    // applied after FillBoundaryE, the guard cells of the interior grids, and the PML
+    // copy of the interface plane (which the PML receives from the interior), would
+    // keep unmasked tangential E on the PEC edges until the next exchange, and the
+    // following B update would see inconsistent E on the two sides of the PML
+    // interface (and of interior box boundaries) along the PEC layer. The mask is
+    // applied again after any E excitation (ApplyExternalFieldExcitationOnGrid),
+    // so masked edges stay exactly zero.
+    const bool include_guard_cells = false;
+    ApplyPECMaskToEfield(lev, include_guard_cells);
 
     ApplyEfieldBoundary(lev, patch_type);
 }

@@ -330,6 +330,13 @@ MacroscopicProperties::InitData ()
         if (!m_sigma_npy_filename2.empty()) {
             InitializePECFromSigma(m_sigma_mf.get(), PECx, PECy, m_npy_k_index2);
         }
+        // InitializePECFromSigma only sets the valid region. Fill the guard cells from
+        // the neighboring grids so the mask can also be applied to the E guard cells
+        // (e.g., after an excitation, which writes into them). Guard cells outside the
+        // domain keep the value 1; the PML has its own mask.
+        PECx->FillBoundary(warpx.Geom(lev).periodicity());
+        PECy->FillBoundary(warpx.Geom(lev).periodicity());
+        PECz->FillBoundary(warpx.Geom(lev).periodicity());
         // zero sigma
         m_sigma_mf->setVal(0.);
     }
