@@ -87,6 +87,13 @@ public:
                                  amrex::MultiFab* PECy,
                                  const int npy_k_index);
 
+    /** Sets the PEC mask of one E component (1 = free, 0 = PEC) to PEC wherever
+     *  macroscopic.pec_function(x,y,z) is nonzero at the position of the edge.
+     */
+    void InitializePECFromParser (amrex::MultiFab* PEC,
+                                  amrex::ParserExecutor<3> const& pec_parser,
+                                  const int lev);
+
     /** Gpu Vector with index type of the conductivity multifab */
      amrex::GpuArray<int, 3> sigma_IndexType;
      /** Gpu Vector with index type of the permittivity multifab */
@@ -134,6 +141,8 @@ public:
      amrex::Real m_mu_npy_value = 0.;
      /** Parser Wrappers */
      std::unique_ptr<amrex::Parser> m_sigma_parser;
+     /** optional: PEC wherever this function is nonzero (macroscopic.pec_function(x,y,z)) */
+     std::unique_ptr<amrex::Parser> m_pec_parser;
      std::unique_ptr<amrex::Parser> m_epsilon_parser;
      std::unique_ptr<amrex::Parser> m_mu_parser;
 
@@ -347,6 +356,7 @@ private:
 
      /** string for storing parser function */
      std::string m_str_sigma_function;
+     std::string m_str_pec_function;
      std::string m_str_epsilon_function;
      std::string m_str_mu_function;
 

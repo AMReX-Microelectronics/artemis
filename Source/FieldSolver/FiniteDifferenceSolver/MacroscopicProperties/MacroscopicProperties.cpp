@@ -133,6 +133,15 @@ MacroscopicProperties::ReadParameters ()
             utils::parser::makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
+    // Optional PEC regions from a function (needs algo.use_PEC_mask = 1): an E edge is PEC wherever
+    // pec_function(x,y,z) is nonzero at the position of that edge. Applied on top of the numpy PEC mask.
+    if (pp_macroscopic.query("pec_function(x,y,z)", m_str_pec_function) ) {
+        utils::parser::Store_parserString(
+            pp_macroscopic, "pec_function(x,y,z)", m_str_pec_function);
+        m_pec_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(m_str_pec_function,{"x","y","z"}));
+    }
+
     // Query input for material permittivity, epsilon
     pp_macroscopic.query("epsilon_npy_value", m_epsilon_npy_value);
     bool epsilon_specified = false;
@@ -357,6 +366,10 @@ MacroscopicProperties::InitData ()
     // PEC mask
 
     // call this before setting sigma in the rest of the domain since this zeros sigma once the PEC mask is defined
+    if (m_pec_parser && !warpx.use_PEC_mask) {
+        amrex::Abort("macroscopic.pec_function(x,y,z) requires algo.use_PEC_mask = 1");
+    }
+
     if (warpx.use_PEC_mask) {
 
         // read in the layer(s) from the numpy file(s)
@@ -380,6 +393,12 @@ MacroscopicProperties::InitData ()
         InitializePECFromSigma(m_sigma_mf.get(), PECx, PECy, m_npy_k_index);
         if (!m_sigma_npy_filename2.empty()) {
             InitializePECFromSigma(m_sigma_mf.get(), PECx, PECy, m_npy_k_index2);
+        }
+        // PEC regions from macroscopic.pec_function(x,y,z), any component and any layer
+        if (m_pec_parser) {
+            InitializePECFromParser(PECx, m_pec_parser->compile<3>(), lev);
+            InitializePECFromParser(PECy, m_pec_parser->compile<3>(), lev);
+            InitializePECFromParser(PECz, m_pec_parser->compile<3>(), lev);
         }
         // zero sigma
         m_sigma_mf->setVal(0.);
@@ -817,6 +836,51 @@ MacroscopicProperties::InitializePECFromSigma (amrex::MultiFab* sigma_mf,
                 }
             }
 
+        });
+    }
+}
+
+// Set the PEC mask (1 = free, 0 = PEC) of one E component to PEC wherever pec_parser(x,y,z) is nonzero.
+// The function is evaluated at the position of each edge of that component (same coordinates as
+// sigma_function), on valid and ghost points, so it can describe PEC on any layer and for Ex, Ey and Ez.
+void
+MacroscopicProperties::InitializePECFromParser (amrex::MultiFab* PEC,
+                                                amrex::ParserExecutor<3> const& pec_parser,
+                                                const int lev)
+{
+    WarpX& warpx = WarpX::GetInstance();
+    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = warpx.Geom(lev).CellSizeArray();
+    const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    amrex::IntVect iv = PEC->ixType().toIntVect();
+    const int nComp = PEC->nComp();
+    for ( amrex::MFIter mfi(*PEC, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        const amrex::Box& tb = mfi.tilebox( iv, PEC->nGrowVect());
+        amrex::Array4<amrex::Real> const& pec_fab = PEC->array(mfi);
+        amrex::ParallelFor (tb, nComp,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+                // Shift x, y, z position based on index type
+#if defined(WARPX_DIM_1D_Z)
+                const amrex::Real x = 0._rt;
+                const amrex::Real y = 0._rt;
+                const amrex::Real fac_z = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real z = j * dx_lev[0] + real_box.lo(0) + fac_z;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real y = 0._rt;
+                const amrex::Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                const amrex::Real z = j * dx_lev[1] + real_box.lo(1) + fac_z;
+#else
+                const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                const amrex::Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
+                const amrex::Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
+                const amrex::Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
+#endif
+                if (pec_parser(x,y,z) != 0._rt) {
+                    pec_fab(i,j,k,n) = 0._rt;
+                }
         });
     }
 }
