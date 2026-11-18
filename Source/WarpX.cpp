@@ -92,6 +92,10 @@ Vector<Real> WarpX::H_bias_external_grid(3, 0.0);
 // M could be one 9-comp vector or a vector of vectors
 #endif
 
+#ifdef WARPX_FERROE
+Vector<Real> WarpX::P_external_grid(3, 0.0);
+#endif
+
 std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
@@ -116,6 +120,12 @@ std::string WarpX::H_ext_grid_s = "default";
 std::string WarpX::H_bias_ext_grid_s = "default";
 // "default" sets M to zero but will be overwritten by user defined input file
 #endif
+
+#ifdef WARPX_FERROE
+std::string WarpX::P_ext_grid_s = "default";
+// "default" sets P to zero but will be overwritten by user defined input file
+#endif
+
 bool WarpX::add_external_E_field = false;
 bool WarpX::add_external_B_field = false;
 
@@ -174,6 +184,13 @@ std::string WarpX::str_Hz_ext_grid_function;
 std::string WarpX::str_Hx_bias_ext_grid_function;
 std::string WarpX::str_Hy_bias_ext_grid_function;
 std::string WarpX::str_Hz_bias_ext_grid_function;
+#endif
+
+#ifdef WARPX_FERROE
+// Parser for P_external on the grid
+std::string WarpX::str_Px_ext_grid_function;
+std::string WarpX::str_Py_ext_grid_function;
+std::string WarpX::str_Pz_ext_grid_function;
 #endif
 
 int WarpX::do_moving_window = 0;
@@ -400,6 +417,9 @@ WarpX::WarpX ()
     PEC_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
     Bfield_sc_fp.resize(nlevs_max);
+#ifdef WARPX_FERROE
+    polarization_fp.resize(nlevs_max);
+#endif
 #ifdef WARPX_MAG_LLG
     Mfield_fp.resize(nlevs_max);
     Hfield_fp.resize(nlevs_max);
@@ -453,6 +473,9 @@ WarpX::WarpX ()
     current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
     Bfield_cp.resize(nlevs_max);
+#ifdef WARPX_FERROE
+    polarization_cp.resize(nlevs_max);
+#endif
 #ifdef WARPX_MAG_LLG
     Mfield_cp.resize(nlevs_max);
     Hfield_cp.resize(nlevs_max);
@@ -499,6 +522,11 @@ WarpX::WarpX ()
         m_london = std::make_unique<London>();
     }
 
+#ifdef WARPX_FERROE
+    if (yee_coupled_solver_algo == CoupledYeeSolver::MaxwellFerroE) {
+        m_ferroe = std::make_unique<FerroE>();
+    }
+#endif
     // Lumped inductor
     if (use_lumped_inductor) {
         m_inductor = std::make_unique<Inductor>();
@@ -2048,6 +2076,9 @@ WarpX::ClearLevel (int lev)
         PEC_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
         Bfield_sc_fp [lev][i].reset();
+#ifdef WARPX_FERROE
+    polarization_fp [lev][i].reset();
+#endif
 #ifdef WARPX_MAG_LLG
         Mfield_fp [lev][i].reset();
         Hfield_fp [lev][i].reset();
@@ -2075,6 +2106,9 @@ WarpX::ClearLevel (int lev)
         current_cp[lev][i].reset();
         Efield_cp [lev][i].reset();
         Bfield_cp [lev][i].reset();
+#ifdef WARPX_FERROE
+    polarization_cp [lev][i].reset();
+#endif
 #ifdef WARPX_MAG_LLG
         Mfield_cp [lev][i].reset();
         Hfield_cp [lev][i].reset();
@@ -2378,6 +2412,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(current_fp[lev][0], amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, tag("current_fp[x]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][1], amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, tag("current_fp[y]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][2], amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, tag("current_fp[z]"), 0.0_rt);
+
+#ifdef WARPX_FERROE
+    AllocInitMultiFab(polarization_fp[lev][0], amrex::convert(ba, jx_nodal_flag), dm, 2, ngEB, tag("polarization_fp[x]"), 0.0_rt);
+    AllocInitMultiFab(polarization_fp[lev][1], amrex::convert(ba, jy_nodal_flag), dm, 2, ngEB, tag("polarization_fp[y]"), 0.0_rt);
+    AllocInitMultiFab(polarization_fp[lev][2], amrex::convert(ba, jz_nodal_flag), dm, 2, ngEB, tag("polarization_fp[z]"), 0.0_rt);
+#endif
 
     // Match external field MultiFabs to fine patch
     if (add_external_B_field) {
@@ -2716,6 +2756,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(current_cp[lev][0], amrex::convert(cba, jx_nodal_flag), dm, ncomps, ngJ, tag("current_cp[x]"), 0.0_rt);
         AllocInitMultiFab(current_cp[lev][1], amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, tag("current_cp[y]"), 0.0_rt);
         AllocInitMultiFab(current_cp[lev][2], amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, tag("current_cp[z]"), 0.0_rt);
+
+#ifdef WARPX_FERROE
+        // Create the MultiFabs for the current
+        AllocInitMultiFab(polarization_cp[lev][0], amrex::convert(cba, jx_nodal_flag), dm, 2, ngEB, tag("polarization_cp[x]"), 0.0_rt);
+        AllocInitMultiFab(polarization_cp[lev][1], amrex::convert(cba, jy_nodal_flag), dm, 2, ngEB, tag("polarization_cp[y]"), 0.0_rt);
+        AllocInitMultiFab(polarization_cp[lev][2], amrex::convert(cba, jz_nodal_flag), dm, 2, ngEB, tag("polarization_cp[z]"), 0.0_rt);
+#endif
 
         if (deposit_charge) {
             // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)

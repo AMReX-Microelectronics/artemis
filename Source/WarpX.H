@@ -39,6 +39,9 @@
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldSolver/London/London.H"
+#ifdef WARPX_FERROE
+#include "FieldSolver/FerroE/FerroE.H"
+#endif
 #include "FieldSolver/LumpedElement/Inductor.H"
 #include "FieldSolver/LumpedElement/JosephsonJunction.H"
 
@@ -102,6 +105,9 @@ public:
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     London& getLondon () { return *m_london; }
+#ifdef WARPX_FERROE
+    FerroE& getFerroE () { return *m_ferroe; }
+#endif
     Inductor& getInductor () { return *m_inductor; }
     JosephsonJunction& getJosephsonJunction () { return *m_jj; }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
@@ -129,6 +135,10 @@ public:
     static amrex::Vector<amrex::Real> H_bias_external_grid;
 #endif
 
+#ifdef WARPX_FERROE
+    static amrex::Vector<amrex::Real> P_external_grid;
+#endif
+
     //! Initialization type for external magnetic field on the grid
     static std::string B_ext_grid_s;
     //! Initialization type for external electric field on the grid
@@ -147,6 +157,11 @@ public:
     static std::string M_ext_grid_s; // added for M;
     static std::string H_bias_ext_grid_s;
 #endif
+
+#ifdef WARPX_FERROE
+    static std::string P_ext_grid_s; // added for P;
+#endif
+
     static int ApplyExcitationInPML;
 
     //! PML formulation: PMLType::Split (default) or PMLType::Convolutional (warpx.pml_type)
@@ -226,6 +241,13 @@ public:
     static std::string str_Hz_bias_ext_grid_function;
 #endif
 
+#ifdef WARPX_FERROE
+    // Parser for P_external on the grid
+    static std::string str_Px_ext_grid_function;
+    static std::string str_Py_ext_grid_function;
+    static std::string str_Pz_ext_grid_function;
+#endif
+
     //! User-defined parser to initialize x-component of the magnetic field on the grid
     std::unique_ptr<amrex::Parser> Bxfield_parser;
     //! User-defined parser to initialize y-component of the magnetic field on the grid
@@ -286,6 +308,13 @@ public:
     std::unique_ptr<amrex::Parser> Hx_biasfield_parser;
     std::unique_ptr<amrex::Parser> Hy_biasfield_parser;
     std::unique_ptr<amrex::Parser> Hz_biasfield_parser;
+#endif
+
+#ifdef WARPX_FERROE
+    // Parser for M_external on the grid
+    std::unique_ptr<amrex::Parser> Pxfield_parser;
+    std::unique_ptr<amrex::Parser> Pyfield_parser;
+    std::unique_ptr<amrex::Parser> Pzfield_parser;
 #endif
 
     // Algorithms
@@ -663,6 +692,9 @@ public:
     amrex::MultiFab * get_pointer_Mfield_fp  (int lev, int direction) const { return Mfield_fp[lev][direction].get();}
     amrex::MultiFab * get_pointer_H_biasfield_fp  (int lev, int direction) const { return H_biasfield_fp[lev][direction].get();}
 #endif
+#ifdef WARPX_FERROE
+    amrex::MultiFab * get_pointer_polarization_fp  (int lev, int direction) const { return polarization_fp[lev][direction].get(); }
+#endif
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
@@ -678,6 +710,9 @@ public:
     amrex::MultiFab * get_pointer_Mfield_cp  (int lev, int direction) const { return Mfield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_H_biasfield_cp  (int lev, int direction) const { return H_biasfield_cp[lev][direction].get(); }
 #endif
+#ifdef WARPX_FERROE
+    amrex::MultiFab * get_pointer_polarization_cp  (int lev, int direction) const { return polarization_cp[lev][direction].get(); }
+#endif
     amrex::MultiFab * get_pointer_current_cp  (int lev, int direction) const { return current_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_cp  (int lev) const { return rho_cp[lev].get(); }
     amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
@@ -692,6 +727,9 @@ public:
     const amrex::MultiFab& getHfield  (int lev, int direction) {return *Hfield_aux[lev][direction];}
     const amrex::MultiFab& getMfield  (int lev, int direction) {return *Mfield_aux[lev][direction];}
     const amrex::MultiFab& getH_biasfield  (int lev, int direction) {return *H_biasfield_aux[lev][direction];}
+#endif
+#ifdef WARPX_FERROE
+    const amrex::MultiFab& getpolarization_cp (int lev, int direction) {return *polarization_cp[lev][direction];}
 #endif
     const amrex::MultiFab& getcurrent_cp (int lev, int direction) {return *current_cp[lev][direction];}
     const amrex::MultiFab& getEfield_cp  (int lev, int direction) {return  *Efield_cp[lev][direction];}
@@ -710,6 +748,9 @@ public:
     const amrex::MultiFab& getPEC_fp  (int lev, int direction) {return *PEC_fp[lev][direction];}
     const amrex::MultiFab& getBfield_fp  (int lev, int direction) {return *Bfield_fp[lev][direction];}
     const amrex::MultiFab& getBfield_sc_fp  (int lev, int direction) {return *Bfield_sc_fp[lev][direction];}
+#ifdef WARPX_FERROE
+    const amrex::MultiFab& getpolarization_fp (int lev, int direction) {return *polarization_fp[lev][direction];}
+#endif
 #ifdef WARPX_MAG_LLG
     const amrex::MultiFab& getHfield_fp  (int lev, int direction) {return *Hfield_fp[lev][direction];}
     const amrex::MultiFab& getMfield_fp  (int lev, int direction) {return *Mfield_fp[lev][direction];}
@@ -829,6 +870,7 @@ public:
     void EvolveBLondon (         amrex::Real dt, DtType dt_type);
     void EvolveBLondon (int lev, amrex::Real dt, DtType dt_type);
     void EvolveBLondon (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+
 
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
@@ -1019,6 +1061,10 @@ public:
     void FillBoundaryM   (amrex::IntVect ng);
     void FillBoundaryH   (amrex::IntVect ng);
 #endif
+#ifdef WARPX_FERROE
+    void FillBoundaryP   (amrex::IntVect ng);
+#endif
+
 
     void FillBoundaryF   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryG   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
@@ -1031,6 +1077,11 @@ public:
     void FillBoundaryM   (int lev, amrex::IntVect ng);
     void FillBoundaryH   (int lev, amrex::IntVect ng);
 #endif
+
+#ifdef WARPX_FERROE
+    void FillBoundaryP   (int lev, amrex::IntVect ng);
+#endif
+
 
     void FillBoundaryF   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryG   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
@@ -1415,6 +1466,9 @@ private:
     void FillBoundaryM (const int lev, const PatchType patch_type, const amrex::IntVect ng);
     void FillBoundaryH (const int lev, const PatchType patch_type, const amrex::IntVect ng);
 #endif
+#ifdef WARPX_FERROE
+    void FillBoundaryP (const int lev, const PatchType patch_type, const amrex::IntVect ng);
+#endif
     void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
@@ -1639,6 +1693,9 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > PEC_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
+#ifdef WARPX_FERROE
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > polarization_fp;
+#endif
 #ifdef WARPX_MAG_LLG
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Hfield_fp;
@@ -1715,6 +1772,9 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_cp;
+#ifdef WARPX_FERROE
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > polarization_cp;
+#endif
 #ifdef WARPX_MAG_LLG
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Mfield_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Hfield_cp;
@@ -1771,6 +1831,12 @@ private:
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
     // London solver
     std::unique_ptr<London> m_london;
+#ifdef WARPX_FERROE
+    // Ferroelectric solver
+    std::unique_ptr<FerroE> m_ferroe;
+#endif
+
+
     // Lumped inductor
     std::unique_ptr<Inductor> m_inductor;
     // Josephson junction (nonlinear inductor)

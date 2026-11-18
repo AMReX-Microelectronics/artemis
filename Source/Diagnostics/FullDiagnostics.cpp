@@ -16,6 +16,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/London/London.H"
+#include "FieldSolver/FerroE/FerroE.H"
 #include "WarpX.H"
 
 
@@ -701,6 +702,22 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if (m_varnames[comp] == "mag_anisotropy_zface" ){
             MacroscopicProperties& macroscopic = warpx.GetMacroscopicProperties();
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(macroscopic.getmag_pointer_anisotropy(2), lev, m_crse_ratio);
+#endif
+#ifdef WARPX_FERROE
+        } else if ( m_varnames[comp] == "ferroelectric") {
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getFerroE().m_ferroelectric_mf.get(), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "px" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_polarization_fp(lev, 0), lev, m_crse_ratio, true, 1, 0);
+        } else if ( m_varnames[comp] == "py" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_polarization_fp(lev, 1), lev, m_crse_ratio, true, 1, 0);
+        } else if ( m_varnames[comp] == "pz" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_polarization_fp(lev, 2), lev, m_crse_ratio, true, 1, 0);
+        } else if ( m_varnames[comp] == "dpxdt" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_polarization_fp(lev, 0), lev, m_crse_ratio, true, 1, 1);
+        } else if ( m_varnames[comp] == "dpydt" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_polarization_fp(lev, 1), lev, m_crse_ratio, true, 1, 1);
+        } else if ( m_varnames[comp] == "dpzdt" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_polarization_fp(lev, 2), lev, m_crse_ratio, true, 1, 1);
 #endif
         } else if ( m_varnames[comp] == "superconductor") {
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.getLondon().m_superconductor_mf.get(), lev, m_crse_ratio);

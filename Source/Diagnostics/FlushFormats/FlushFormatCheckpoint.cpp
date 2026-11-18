@@ -96,6 +96,15 @@ FlushFormatCheckpoint::WriteToFile (
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hzbias_fp"));
 #endif
 
+#ifdef WARPX_FERROE
+        VisMF::Write(warpx.getpolarization_fp(lev, 0),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "px_fp"));
+        VisMF::Write(warpx.getpolarization_fp(lev, 1),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "py_fp"));
+        VisMF::Write(warpx.getpolarization_fp(lev, 2),
+                     amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pz_fp"));
+#endif
+
         if (WarpX::fft_do_time_averaging)
         {
             VisMF::Write(warpx.getEfield_avg_fp(lev, 0),
@@ -119,6 +128,16 @@ FlushFormatCheckpoint::WriteToFile (
             || warpx.use_josephson_junction == 1) {
             // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
             // London / lumped inductor / Josephson junction all treat j as persistent state.
+            VisMF::Write(warpx.getcurrent_fp(lev, 0),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_fp"));
+            VisMF::Write(warpx.getcurrent_fp(lev, 1),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jy_fp"));
+            VisMF::Write(warpx.getcurrent_fp(lev, 2),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jz_fp"));
+        }
+
+        if (warpx.getis_synchronized() || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellFerroE) {
+            // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
             VisMF::Write(warpx.getcurrent_fp(lev, 0),
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_fp"));
             VisMF::Write(warpx.getcurrent_fp(lev, 1),
@@ -163,6 +182,15 @@ FlushFormatCheckpoint::WriteToFile (
                          amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Hzbias_fp"));
 #endif
 
+#ifdef WARPX_FERROE
+            VisMF::Write(warpx.getpolarization_cp(lev, 0),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "px_cp"));
+            VisMF::Write(warpx.getpolarization_cp(lev, 1),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "py_cp"));
+            VisMF::Write(warpx.getpolarization_cp(lev, 2),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pz_cp"));
+#endif
+
             if (WarpX::fft_do_time_averaging)
             {
                 VisMF::Write(warpx.getEfield_avg_cp(lev, 0),
@@ -184,6 +212,16 @@ FlushFormatCheckpoint::WriteToFile (
                 || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon
                 || warpx.use_lumped_inductor == 1
                 || warpx.use_josephson_junction == 1) {
+                // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
+                VisMF::Write(warpx.getcurrent_cp(lev, 0),
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_cp"));
+                VisMF::Write(warpx.getcurrent_cp(lev, 1),
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jy_cp"));
+                VisMF::Write(warpx.getcurrent_cp(lev, 2),
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jz_cp"));
+            }
+
+            if (warpx.getis_synchronized() || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellFerroE) {
                 // Need to save j if synchronized because after restart we need j to evolve E by dt/2.
                 VisMF::Write(warpx.getcurrent_cp(lev, 0),
                              amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "jx_cp"));
