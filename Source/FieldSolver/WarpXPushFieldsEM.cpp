@@ -1289,7 +1289,42 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt,
 
     // Evolve H field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->MacroscopicEvolveHM_2nd(lev, Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev], H_biasfield_fp[lev],  Efield_fp[lev],
+
+        // The 2nd-order scheme evaluates H_bias at the old time in the "static" part of the
+        // update and at the new time in the iterative part. If H_bias has a (possibly time-varying)
+        // excitation, save H_bias at the start of this half step, then advance it to the end of
+        // this half step (t^{n+1/2} for FirstHalf, t^{n+1} for SecondHalf; t_new = t^n here).
+        // This replaces the HbiasfieldExternal excitation that the 1st-order scheme applies after
+        // MacroscopicEvolveHM, so the number of (soft source) applications per step is unchanged.
+        const bool Hbias_excitation = (H_bias_excitation_grid_s == "parse_h_bias_excitation_grid_function");
+
+        std::array<std::unique_ptr<amrex::MultiFab>, 3> H_biasfield_old_tmp;
+        if (Hbias_excitation) {
+            for (int i = 0; i < 3; ++i) {
+                amrex::MultiFab const& Hb = *H_biasfield_fp[lev][i];
+                H_biasfield_old_tmp[i] = std::make_unique<amrex::MultiFab>(Hb.boxArray(), Hb.DistributionMap(),
+                                                                          Hb.nComp(), Hb.nGrowVect());
+                amrex::MultiFab::Copy(*H_biasfield_old_tmp[i], Hb, 0, 0, Hb.nComp(), Hb.nGrowVect());
+            }
+
+            amrex::Real const time_offset = (a_dt_type == DtType::SecondHalf) ? dt[lev] : a_dt;
+            ApplyExternalFieldExcitationOnGrid(H_biasfield_fp[lev][0].get(),
+                                               H_biasfield_fp[lev][1].get(),
+                                               H_biasfield_fp[lev][2].get(),
+                                               Hx_biasfield_xt_grid_parser->compile<4>(),
+                                               Hy_biasfield_xt_grid_parser->compile<4>(),
+                                               Hz_biasfield_xt_grid_parser->compile<4>(),
+                                               Hx_biasfield_flag_parser->compile<3>(),
+                                               Hy_biasfield_flag_parser->compile<3>(),
+                                               Hz_biasfield_flag_parser->compile<3>(),
+                                               lev, a_dt_type, time_offset);
+        }
+
+        // without an H_bias excitation, H_bias is constant in time and old == new
+        auto const& H_biasfield_old = Hbias_excitation ? H_biasfield_old_tmp : H_biasfield_fp[lev];
+
+        m_fdtd_solver_fp[lev]->MacroscopicEvolveHM_2nd(lev, Mfield_fp[lev], Hfield_fp[lev], Bfield_fp[lev],
+                                                       H_biasfield_old, H_biasfield_fp[lev], Efield_fp[lev],
                                                        a_dt, m_macroscopic_properties);
     }
     else {
