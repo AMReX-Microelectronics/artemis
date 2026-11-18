@@ -253,22 +253,23 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
 
         amrex::Real const inv_dx = coefs_x[0];
+
         if (nodality == 0){ // at x face (normal face). dM/dx = 0
-           if (Ms_hi_x == 0.){
-               return 0.5 * inv_dx * inv_dx * (8. * F(i-1, j, k, ncomp) - F(i-2, j, k, ncomp) - 7. * F(i, j, k, ncomp));
-           } else if (Ms_lo_x == 0){
-               return 0.5 * inv_dx * inv_dx * (8. * F(i+1, j, k, ncomp) - F(i+2, j, k, ncomp) - 7. * F(i, j, k, ncomp));
-           } else {
-               return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
-           }
+            if (Ms_hi_x == 0.){
+                return 0.5 * inv_dx * inv_dx * (8. * F(i-1, j, k, ncomp) - F(i-2, j, k, ncomp) - 7. * F(i, j, k, ncomp));
+            } else if (Ms_lo_x == 0){
+                return 0.5 * inv_dx * inv_dx * (8. * F(i+1, j, k, ncomp) - F(i+2, j, k, ncomp) - 7. * F(i, j, k, ncomp));
+            } else {
+                return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
+            }
         } else { // at y or z faces
-           if (Ms_hi_x == 0.){
-               return inv_dx*(0. - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
-           } else if (Ms_lo_x == 0.){
-               return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - 0.);
-           } else {
-               return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
-           }
+            if (Ms_hi_x == 0.){
+                return inv_dx*(0. - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
+            } else if (Ms_lo_x == 0.){
+                return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - 0.);
+            } else {
+                return inv_dx*(UpwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp) - DownwardDx(F, coefs_x, n_coefs_x, i, j, k, ncomp));
+            }
         }
     }
 
@@ -281,28 +282,60 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
 
         amrex::Real const inv_dy = coefs_y[0];
+
         if (nodality == 1){ // y face (normal face), dM/dy = 0
-           if (Ms_hi_y == 0.){
-               return 0.5 * inv_dy * inv_dy * (8. * F(i, j-1, k, ncomp) - F(i, j-2, k, ncomp) - 7. * F(i, j, k, ncomp));
-           } else if (Ms_lo_y == 0.) {
-               return 0.5 * inv_dy * inv_dy * (8. * F(i, j+1, k, ncomp) - F(i, j+2, k, ncomp) - 7. * F(i, j, k, ncomp));
-           } else {
-               return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
-           }
+            if (Ms_hi_y == 0.){
+                return 0.5 * inv_dy * inv_dy * (8. * F(i, j-1, k, ncomp) - F(i, j-2, k, ncomp) - 7. * F(i, j, k, ncomp));
+            } else if (Ms_lo_y == 0.) {
+                return 0.5 * inv_dy * inv_dy * (8. * F(i, j+1, k, ncomp) - F(i, j+2, k, ncomp) - 7. * F(i, j, k, ncomp));
+            } else {
+                return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+            }
 
         } else { // x or z faces
-           if (Ms_hi_y == 0.){
-               return inv_dy*(0. - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
-           } else if (Ms_lo_y == 0.) {
-               return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - 0.);
-           } else {
-               return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
-           }
+            if (Ms_hi_y == 0.){
+                return inv_dy*(0. - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+            } else if (Ms_lo_y == 0.) {
+                return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - 0.);
+            } else {
+                return inv_dy*(UpwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp) - DownwardDy(F, coefs_y, n_coefs_y, i, j, k, ncomp));
+            }
         }
     }
 
-     /**
+//      /**
+//      * Perform divergence of gradient along z on M field when exchange coupling is on*/
+//    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+//     static amrex::Real LaplacianDz_Mag (
+//         amrex::Array4<amrex::Real> const& F,
+//         amrex::Real const * const coefs_z, int const n_coefs_z, amrex::Real const Ms_lo_z, amrex::Real const Ms_hi_z,
+//         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
+
+//         amrex::Real const inv_dz = coefs_z[0];
+
+//         if (nodality == 2){
+//             if ( Ms_hi_z == 0.) {
+//                 return 0.5 * inv_dz * inv_dz * (8. * F(i, j, k-1, ncomp) - F(i, j, k-2, ncomp) - 7. * F(i, j, k, ncomp));
+//             } else if ( Ms_lo_z == 0.){
+//                 return 0.5 * inv_dz * inv_dz * (8. * F(i, j, k+1, ncomp) - F(i, j, k+2, ncomp) - 7. * F(i, j, k, ncomp));
+//             } else {
+//                 return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+//             }
+
+//         } else {
+//             if ( Ms_hi_z == 0.) {
+//                 return inv_dz*(0. - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+//             } else if ( Ms_lo_z == 0.){
+//                 return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - 0.);
+//             } else {
+//                 return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+//             }
+//         }
+//     }
+
+    /**
      * Perform divergence of gradient along z on M field when exchange coupling is on*/
+    // Dirichlet B.C. hacked in at both hi-z and lo-z boundary
    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real LaplacianDz_Mag (
         amrex::Array4<amrex::Real> const& F,
@@ -310,25 +343,67 @@ struct CartesianYeeAlgorithm {
         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
 
         amrex::Real const inv_dz = coefs_z[0];
-        if (nodality == 2){ // z face (normal face) dM/dz = 0
-           if ( Ms_hi_z == 0.) {
-               return 0.5 * inv_dz * inv_dz * (8. * F(i, j, k-1, ncomp) - F(i, j, k-2, ncomp) - 7. * F(i, j, k, ncomp));
-           } else if ( Ms_lo_z == 0.){
-               return 0.5 * inv_dz * inv_dz * (8. * F(i, j, k+1, ncomp) - F(i, j, k+2, ncomp) - 7. * F(i, j, k, ncomp));
-           } else {
-               return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
-           }
 
-        } else { // x or y face
-           if ( Ms_hi_z == 0.) {
-               return inv_dz*(0. - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
-           } else if ( Ms_lo_z == 0.){
-               return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - 0.);
-           } else {
-               return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
-           }
+// if (i == 1 && j == 1 && ((k > 190 && k < 194) || (k > 62 && k < 66))){
+//         std::cout << "code gets here 2" << std::endl;
+//         std::cout << "k = " << k << " nodality = " << nodality << " Ms_hi_z = " << Ms_hi_z << " Ms_lo_z = " << Ms_lo_z << std::endl;
+// }
+        if (nodality == 2){ // at z face
+            if ( Ms_hi_z == 0.) {
+                // return inv_dz * inv_dz * ( -2. * F(i, j, k-1, ncomp) + F(i, j, k-2, ncomp) + F(i, j, k, ncomp));
+                return inv_dz * inv_dz * ( -2. * F(i, j, k-1, ncomp) + F(i, j, k-2, ncomp) + (ncomp % 2) * Ms_lo_z);
+            } else if ( Ms_lo_z == 0.){
+                // return inv_dz * inv_dz * ( -2. * F(i, j, k+1, ncomp) + F(i, j, k+2, ncomp) + F(i, j, k, ncomp));
+                return inv_dz * inv_dz * ( -2. * F(i, j, k+1, ncomp) + F(i, j, k+2, ncomp) + (ncomp % 2) * Ms_hi_z);
+            } else {
+                return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+            }
+
+        } else {
+            if ( Ms_hi_z == 0.) {
+                return (4./3.) * inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - 2 * inv_dz * (F(i,j,k,ncomp) - (ncomp % 2) * Ms_hi_z));
+            } else if ( Ms_lo_z == 0.){
+                return (4./3.) * inv_dz*(2 * inv_dz * ((ncomp % 2) * Ms_lo_z - F(i,j,k,ncomp) ) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+            } else {
+                return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+            }
         }
     }
+
+//     /**
+//      * Perform divergence of gradient along z on M field when exchange coupling is on*/
+//     // Dirichlet B.C. hacked in
+//    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+//     static amrex::Real LaplacianDz_Mag (
+//         amrex::Array4<amrex::Real> const& F,
+//         amrex::Real const * const coefs_z, int const n_coefs_z, amrex::Real const Ms_lo_z, amrex::Real const Ms_hi_z,
+//         int const i, int const j, int const k, int const ncomp=0, int const nodality=0) {
+
+//         amrex::Real const inv_dz = coefs_z[0];
+    
+//     if ( Ms_hi_z == 0.) //non-magnetic on right
+//         {
+//             if (ncomp != nodality){ // if tangential components
+//                 return inv_dz*inv_dz*(F(i,j,k,ncomp) - 2.*F(i,j,k-1,ncomp) + F(i,j,k-2,ncomp));
+//             }
+//             else{ // normal components
+//                 return inv_dz*(0. - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+//             }
+//         }
+//     else if (Ms_lo_z == 0.) //non-magnetic on left
+//         {
+//             if (nodality == 2){ // at z face
+//                 return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+//             }
+//             else { // x or y faces
+//                 return (3./4.) * inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - 2 * inv_dz * (F(i,j,k,ncomp) - (ncomp % 2) * F(i,j,k,ncomp)));
+//             }
+//         } 
+//     else // regular cases inside material
+//         {
+//             return inv_dz*(UpwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp) - DownwardDz(F, coefs_z, n_coefs_z, i, j, k, ncomp));
+//         }
+//     }
 
      /**
      * Compute the sum to get Laplacian of M field when exchange coupling is on*/

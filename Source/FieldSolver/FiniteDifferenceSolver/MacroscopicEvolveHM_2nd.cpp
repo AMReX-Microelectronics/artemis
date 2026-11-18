@@ -867,6 +867,16 @@ void FiniteDifferenceSolver::MacroscopicEvolveHMCartesian_2nd(
                             }
                         }
 
+                        // Hack in Dirichlet BC
+                        if (k == 64 || k == 192){
+                            //amrex::Abort("code gets here");
+                            M_zface(i, j, k, 0) = 0;
+                            M_zface(i, j, k, 1) = mag_Ms_arrz; // pin M to be in y direction
+                            M_zface(i, j, k, 2) = 0;
+                            // if (i == 1 && j == 1){
+                            // std::cout << "code gets here 1" << " k=" << k << std::endl;}
+                        }
+
                         // calculate M_error_zface
                         // x,y,z component on z-faces of grid
                         for (int icomp = 0; icomp < 3; ++icomp) {
