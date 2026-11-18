@@ -50,6 +50,19 @@ struct MacroscopicSolverAlgo {
     };
 };
 
+/**
+  * \brief struct to select the PML formulation used with the FDTD solver
+  *        Split: split-field (Berenger) PML (default, original implementation)
+  *        Convolutional: convolutional PML (CPML, Roden & Gedney 2000) with the
+  *                       complex-frequency-shifted stretching s = kappa + sigma/(alpha + i omega)
+  */
+struct PMLType {
+    enum {
+        Split = 0,
+        Convolutional = 1
+    };
+};
+
 struct GridType {
     enum {
         Collocated = 0,

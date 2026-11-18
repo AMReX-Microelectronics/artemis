@@ -42,6 +42,45 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
     }
 }
 
+void WarpX::ApplyPECMaskToEfield (const int lev, const bool include_guard_cells)
+{
+    // The PEC mask is only initialized by the macroscopic solver (MacroscopicProperties)
+    if (!use_PEC_mask || em_solver_medium != MediumForEM::Macroscopic) { return; }
+
+    // Grid: the guard cells of PEC_fp are filled at initialization
+    // (see MacroscopicProperties::InitData), so the mask can also be applied
+    // to the E guard cells, e.g., after an excitation has written into them.
+    for (int idim = 0; idim < 3; ++idim) {
+        const amrex::IntVect ng = include_guard_cells ?
+            amrex::min(Efield_fp[lev][idim]->nGrowVect(), PEC_fp[lev][idim]->nGrowVect()) :
+            amrex::IntVect::TheZeroVector();
+        amrex::MultiFab::Multiply(*Efield_fp[lev][idim], *PEC_fp[lev][idim], 0, 0, 1, ng);
+    }
+
+    // PML: mask extended into the PML (algo.extend_PEC_mask_into_pml)
+    if (do_pml && extend_PEC_mask_into_pml && pml[lev] && pml[lev]->ok()) {
+        const auto E_pml   = pml[lev]->GetE_fp();
+        const auto PEC_pml = pml[lev]->GetPEC_fp();
+
+        // Split-field PML: both split components are zeroed on the PEC edges.
+        // CPML: component 0 holds the total field (component 1 is zero), so the
+        // same multiply enforces E_tan = 0 on the PEC mask extended into the PML.
+        for (int idim = 0; idim < 3; ++idim) {
+            amrex::MultiFab::Multiply(*E_pml[idim], *PEC_pml[idim], 0, 0, 2, 0);
+        }
+
+        if (pml[lev]->isConvolutional()) {
+            // Also reset the CPML memory variables on PEC edges, so that no
+            // stale convolution history is carried by masked E components
+            const auto psiE = pml[lev]->GetPsiE_fp();
+            for (int idim = 0; idim < 3; ++idim) {
+                amrex::MultiFab::Multiply(*psiE[idim], *PEC_pml[idim], 0, 0, 1, 0);
+                amrex::MultiFab::Multiply(*psiE[idim], *PEC_pml[idim], 0, 1, 1, 0);
+            }
+        }
+    }
+}
+
 void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_dt_type)
 {
     if (PEC::isAnyBoundaryPEC()) {

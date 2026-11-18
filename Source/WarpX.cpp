@@ -96,6 +96,11 @@ std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
 int WarpX::ApplyExcitationInPML = 0; // default is 0
+int WarpX::pml_type = PMLType::Split;
+amrex::Real WarpX::cpml_kappa_max = 1.0_rt;
+amrex::Real WarpX::cpml_alpha_max = 0.0_rt;
+amrex::Real WarpX::cpml_grading_order = 2.0_rt;
+amrex::Real WarpX::cpml_alpha_grading_order = 1.0_rt;
 
 // default type is constant
 std::string WarpX::B_excitation_grid_s = "default";
@@ -224,7 +229,11 @@ amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,P
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_hi(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
 int WarpX::yee_coupled_solver_algo;
 int WarpX::use_PEC_mask = 0;
+int WarpX::extend_PEC_mask_into_pml = 1;
 int WarpX::use_lumped_inductor = 0;
+int WarpX::use_lumped_resistor = 0;
+int WarpX::use_lumped_capacitor = 0;
+int WarpX::use_josephson_junction = 0;
 
 bool WarpX::do_current_centering = false;
 
@@ -493,6 +502,11 @@ WarpX::WarpX ()
     // Lumped inductor
     if (use_lumped_inductor) {
         m_inductor = std::make_unique<Inductor>();
+    }
+
+    // Josephson junction (nonlinear inductor)
+    if (use_josephson_junction) {
+        m_jj = std::make_unique<JosephsonJunction>();
     }
 
     // Set default values for particle and cell weights for costs update;
@@ -976,6 +990,32 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
         pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
+
+        // PML formulation: "split" (default) or "convolutional" (CPML)
+        {
+            std::string pml_type_str = "split";
+            pp_warpx.query("pml_type", pml_type_str);
+            std::transform(pml_type_str.begin(), pml_type_str.end(), pml_type_str.begin(), ::tolower);
+            if (pml_type_str == "split") {
+                pml_type = PMLType::Split;
+            } else if (pml_type_str == "convolutional" || pml_type_str == "cpml") {
+                pml_type = PMLType::Convolutional;
+            } else {
+                WARPX_ABORT_WITH_MESSAGE("warpx.pml_type must be 'split' or 'convolutional'");
+            }
+            utils::parser::queryWithParser(pp_warpx, "cpml_kappa_max", cpml_kappa_max);
+            utils::parser::queryWithParser(pp_warpx, "cpml_alpha_max", cpml_alpha_max);
+            utils::parser::queryWithParser(pp_warpx, "cpml_grading_order", cpml_grading_order);
+            utils::parser::queryWithParser(pp_warpx, "cpml_alpha_grading_order", cpml_alpha_grading_order);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(cpml_kappa_max >= 1._rt,
+                "warpx.cpml_kappa_max must be >= 1");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(cpml_alpha_max >= 0._rt,
+                "warpx.cpml_alpha_max must be >= 0");
+            if (pml_type == PMLType::Convolutional) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_pml_j_damping == 0,
+                    "warpx.do_pml_j_damping is not used/supported with warpx.pml_type = convolutional");
+            }
+        }
         // Read `v_particle_pml` in units of the speed of light
         v_particle_pml = 1._rt;
         utils::parser::queryWithParser(pp_warpx, "v_particle_pml", v_particle_pml);
@@ -1032,6 +1072,9 @@ WarpX::ReadParameters ()
                 + " please set both parameters to the same value"
             );
         }
+
+        pp_warpx.query("use_lumped_resistor", use_lumped_resistor);
+        pp_warpx.query("use_lumped_capacitor", use_lumped_capacitor);
 
 #ifdef WARPX_MAG_LLG
         // Read the value of the time advancement scheme of M field
@@ -1266,7 +1309,9 @@ WarpX::ReadParameters ()
         yee_coupled_solver_algo = GetAlgorithmInteger(pp_algo, "yee_coupled_solver");
 
         pp_algo.query("use_PEC_mask",use_PEC_mask);
+        pp_algo.query("extend_PEC_mask_into_pml",extend_PEC_mask_into_pml);
         pp_algo.query("use_lumped_inductor",use_lumped_inductor);
+        pp_algo.query("use_josephson_junction",use_josephson_junction);
 
         // Load balancing parameters
         std::vector<std::string> load_balance_intervals_string_vec = {"0"};

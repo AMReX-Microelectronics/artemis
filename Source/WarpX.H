@@ -40,6 +40,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldSolver/London/London.H"
 #include "FieldSolver/LumpedElement/Inductor.H"
+#include "FieldSolver/LumpedElement/JosephsonJunction.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -102,6 +103,7 @@ public:
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     London& getLondon () { return *m_london; }
     Inductor& getInductor () { return *m_inductor; }
+    JosephsonJunction& getJosephsonJunction () { return *m_jj; }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
@@ -146,6 +148,17 @@ public:
     static std::string H_bias_ext_grid_s;
 #endif
     static int ApplyExcitationInPML;
+
+    //! PML formulation: PMLType::Split (default) or PMLType::Convolutional (warpx.pml_type)
+    static int pml_type;
+    //! CPML: maximum of the real coordinate-stretching factor kappa (warpx.cpml_kappa_max, default 1)
+    static amrex::Real cpml_kappa_max;
+    //! CPML: maximum of the CFS parameter alpha, as a rate alpha_SI/eps0 in 1/s (warpx.cpml_alpha_max, default 0)
+    static amrex::Real cpml_alpha_max;
+    //! CPML: polynomial grading order of kappa (warpx.cpml_grading_order, default 2, same as sigma)
+    static amrex::Real cpml_grading_order;
+    //! CPML: polynomial grading order of alpha (warpx.cpml_alpha_grading_order, default 1)
+    static amrex::Real cpml_alpha_grading_order;
     //! Whether to apply the effect of an externally-defined electric field
     static bool add_external_E_field;
     //! Whether to apply the effect of an externally-defined magnetic field
@@ -319,7 +332,13 @@ public:
     static int yee_coupled_solver_algo;
 
     static int use_PEC_mask;
+    //! With use_PEC_mask: extend the PEC mask of the numpy/GDS layer into the PML
+    //! (algo.extend_PEC_mask_into_pml, default 1). If 0, the PML has no PEC mask.
+    static int extend_PEC_mask_into_pml;
     static int use_lumped_inductor;
+    static int use_lumped_resistor;
+    static int use_lumped_capacitor;
+    static int use_josephson_junction;
 
     //! Integer that corresponds to the order of the PSATD solution
     //! (whether the PSATD equations are derived from first-order or
@@ -816,13 +835,13 @@ public:
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
 #ifdef WARPX_MAG_LLG
-    void MacroscopicEvolveHM (         amrex::Real dt);
-    void MacroscopicEvolveHM (int lev, amrex::Real dt);
-    void MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real dt);
+    void MacroscopicEvolveHM (         amrex::Real dt, DtType dt_type = DtType::Full);
+    void MacroscopicEvolveHM (int lev, amrex::Real dt, DtType dt_type = DtType::Full);
+    void MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type = DtType::Full);
 
-    void MacroscopicEvolveHM_2nd (         amrex::Real dt);
-    void MacroscopicEvolveHM_2nd (int lev, amrex::Real dt);
-    void MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real dt);
+    void MacroscopicEvolveHM_2nd (         amrex::Real dt, DtType dt_type = DtType::Full);
+    void MacroscopicEvolveHM_2nd (int lev, amrex::Real dt, DtType dt_type = DtType::Full);
+    void MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type = DtType::Full);
 #endif
 
     /** apply QED correction on electric field
@@ -911,6 +930,18 @@ public:
 
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
+
+    /**
+     * \brief With algo.use_PEC_mask (macroscopic solver only), zero the tangential E
+     * on the PEC edges of the numpy/GDS layer(s): on the fine patch of the grid and,
+     * with algo.extend_PEC_mask_into_pml, on the PML E fields (both split components)
+     * together with the CPML memory variables.
+     *
+     * \param[in] lev                 mesh refinement level
+     * \param[in] include_guard_cells also mask the guard cells of the grid E field
+     *                                (the PML is always masked on its valid region only)
+     */
+    void ApplyPECMaskToEfield (const int lev, const bool include_guard_cells);
 
     void DampPML ();
     void DampPML (const int lev);
@@ -1742,6 +1773,8 @@ private:
     std::unique_ptr<London> m_london;
     // Lumped inductor
     std::unique_ptr<Inductor> m_inductor;
+    // Josephson junction (nonlinear inductor)
+    std::unique_ptr<JosephsonJunction> m_jj;
 
 #ifdef WARPX_MAG_LLG
     // time advancement scheme of M field

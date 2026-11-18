@@ -154,6 +154,10 @@ WarpX::Evolve (int numsteps)
                 m_inductor->EvolveInductorJ(-0.5_rt*dt[0]); // J^(n) to J^(n-1/2) using E^(n)
                 FillBoundaryJ(guard_cells.ng_alloc_EB);
             }
+            if (use_josephson_junction) {
+                m_jj->EvolveJunctionJ(-0.5_rt*dt[0]); // phi^(0) to phi^(-1/2), add JJ J^(-1/2)
+                FillBoundaryJ(guard_cells.ng_alloc_EB);
+            }
             is_synchronized = false;
         } else {
             if (electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
@@ -431,6 +435,10 @@ WarpX::OneStep_nosub (Real cur_time)
         m_inductor->EvolveInductorJ(dt[0]); // J^(n-1/2) to J^(n+1/2) using E^(n)
         FillBoundaryJ(guard_cells.ng_alloc_EB);
     }
+    if (use_josephson_junction == 1) {
+        m_jj->EvolveJunctionJ(dt[0]); // phi^(n-1/2) to phi^(n+1/2), add JJ J^(n+1/2)
+        FillBoundaryJ(guard_cells.ng_alloc_EB);
+    }
 
     ExecutePythonCallback("afterdeposition");
 
@@ -497,9 +505,9 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifndef WARPX_DIM_RZ
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
             if (mag_time_scheme_order==1){
-                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+                MacroscopicEvolveHM(0.5*dt[0], DtType::FirstHalf); // we now have M^{n+1/2} and H^{n+1/2}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+                MacroscopicEvolveHM_2nd(0.5*dt[0], DtType::FirstHalf); // we now have M^{n+1/2} and H^{n+1/2}
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }
@@ -532,18 +540,9 @@ WarpX::OneStep_nosub (Real cur_time)
             ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternalPML);
         }
 
-        if (use_PEC_mask) {
-            // multiply E field by PEC mask
-            amrex::MultiFab& Ex = *Efield_fp[0][0].get();
-            amrex::MultiFab& Ey = *Efield_fp[0][1].get();
-            amrex::MultiFab& Ez = *Efield_fp[0][2].get();
-            amrex::MultiFab& PECx = *PEC_fp[0][0].get();
-            amrex::MultiFab& PECy = *PEC_fp[0][1].get();
-            amrex::MultiFab& PECz = *PEC_fp[0][2].get();
-            MultiFab::Multiply(Ex, PECx, 0, 0, 1, 0);
-            MultiFab::Multiply(Ey, PECy, 0, 0, 1, 0);
-            MultiFab::Multiply(Ez, PECz, 0, 0, 1, 0);
-        }
+        // The PEC mask (use_PEC_mask) is applied in MacroscopicEvolveE, and again inside
+        // ApplyExternalFieldExcitationOnGrid after any E excitation (grid and PML), so
+        // masked edges are exactly zero at this point.
 
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
@@ -557,9 +556,9 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifndef WARPX_DIM_RZ
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
             if (mag_time_scheme_order==1){
-                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
+                MacroscopicEvolveHM(0.5*dt[0], DtType::SecondHalf); // we now have M^{n+1} and H^{n+1}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
+                MacroscopicEvolveHM_2nd(0.5*dt[0], DtType::SecondHalf); // we now have M^{n+1} and H^{n+1}
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }
@@ -632,13 +631,20 @@ void WarpX::SyncCurrentAndRho ()
                 SyncCurrent(current_fp, current_cp);
                 SyncRho(rho_fp, rho_cp);
             }
+#ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
+            // H and M are up-to-date in the domain, but all guard cells are
+            // outdated.
+            if ( safe_guard_cells ){
+                FillBoundaryH(guard_cells.ng_alloc_EB);
+                FillBoundaryM(guard_cells.ng_alloc_EB);
+               // ApplyExternalFieldExcitation
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
 
-            if (current_deposition_algo == CurrentDepositionAlgo::Vay)
-            {
-                // TODO This works only without mesh refinement
-                const int lev = 0;
-                if (use_filter) ApplyFilterJ(current_fp_vay, lev);
             }
+#endif // ifndef WARPX_DIM_RZ
+#endif // WARPX_MAG_LLG
         }
     }
     else // FDTD

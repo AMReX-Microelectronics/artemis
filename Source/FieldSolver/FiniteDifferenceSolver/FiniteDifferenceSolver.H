@@ -12,6 +12,7 @@
 #include "FiniteDifferenceSolver_fwd.H"
 
 #include "BoundaryConditions/PML_fwd.H"
+#include "Evolve/WarpXDtType.H"
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
 
 #include <AMReX_GpuContainers.H>
@@ -197,6 +198,46 @@ class FiniteDifferenceSolver
                       amrex::MultiFab* const eps_mf,
                       amrex::MultiFab* const mu_mf,
                       amrex::MultiFab* const sigma_mf);
+
+        /** Convolutional PML (warpx.pml_type = convolutional) updates (Yee only).
+         *  The total field is stored in component 0 of the PML MultiFabs; psi* are
+         *  the CPML memory variables (see BoundaryConditions/CPML_K.H). */
+        /** B is advanced in two half steps per time step (FirstHalf/SecondHalf).
+         *  To be consistent with leapfrog, the memory variable psiB is updated once
+         *  per full step (on the SecondHalf, with the coefficients of the full step)
+         *  and the same psiB is used by both halves. */
+        void EvolveBCPML ( std::array< amrex::MultiFab*, 3 > Bfield,
+                           std::array< amrex::MultiFab*, 3 > const Efield,
+                           std::array< amrex::MultiFab*, 3 > const psiB,
+                           MultiSigmaBox const& sigba,
+                           amrex::Real const dt, DtType const dt_type );
+
+        void EvolveECPML ( std::array< amrex::MultiFab*, 3 > Efield,
+                           std::array< amrex::MultiFab*, 3 > const Bfield,
+                           std::array< amrex::MultiFab*, 3 > const Jfield,
+                           std::array< amrex::MultiFab*, 3 > const psiE,
+                           MultiSigmaBox const& sigba,
+                           amrex::Real const dt, bool pml_has_particles );
+
+        /** BorHfield is B (H = B/mu computed with the local mu) or, with LLG, H */
+        void MacroscopicEvolveECPML ( std::array< amrex::MultiFab*, 3 > Efield,
+                           std::array< amrex::MultiFab*, 3 > const BorHfield,
+                           std::array< amrex::MultiFab*, 3 > const Jfield,
+                           std::array< amrex::MultiFab*, 3 > const psiE,
+                           MultiSigmaBox const& sigba,
+                           amrex::Real const dt, bool pml_has_particles,
+                           std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+                           amrex::MultiFab* const eps_mf,
+                           amrex::MultiFab* const mu_mf,
+                           amrex::MultiFab* const sigma_mf );
+
+#ifdef WARPX_MAG_LLG
+        void EvolveHCPML ( std::array< amrex::MultiFab*, 3 > Hfield,
+                           std::array< amrex::MultiFab*, 3 > const Efield,
+                           std::array< amrex::MultiFab*, 3 > const psiH,
+                           MultiSigmaBox const& sigba,
+                           amrex::Real const dt, DtType const dt_type );
+#endif
 
 #ifndef WARPX_DIM_RZ
 #ifdef WARPX_MAG_LLG
@@ -397,6 +438,19 @@ class FiniteDifferenceSolver
             amrex::MultiFab* const mu_mf,
             amrex::MultiFab* const sigma_mf);
 
+
+        template< typename T_MacroAlgo >
+        void MacroscopicEvolveECPMLCartesian (
+            std::array< amrex::MultiFab*, 3 > Efield,
+            std::array< amrex::MultiFab*, 3 > const BorHfield,
+            std::array< amrex::MultiFab*, 3 > const Jfield,
+            std::array< amrex::MultiFab*, 3 > const psiE,
+            MultiSigmaBox const& sigba,
+            amrex::Real const dt, bool pml_has_particles,
+            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+            amrex::MultiFab* const eps_mf,
+            amrex::MultiFab* const mu_mf,
+            amrex::MultiFab* const sigma_mf);
 
 #ifdef WARPX_MAG_LLG
         template< typename T_Algo >
