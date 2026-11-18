@@ -1454,8 +1454,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     // we will then call Redistribute on this new container and finally
     // add the new particles to the original container.
     PhysicalParticleContainer tmp_pc(&WarpX::GetInstance());
-    for (int ic = 0; ic < NumRuntimeRealComps(); ++ic) { tmp_pc.AddRealComp(false); }
-    for (int ic = 0; ic < NumRuntimeIntComps(); ++ic) { tmp_pc.AddIntComp(false); }
+    for (int ic = 0; ic < NumRuntimeRealComps(); ++ic) { tmp_pc.AddRealComp(0); }
+    for (int ic = 0; ic < NumRuntimeIntComps(); ++ic) { tmp_pc.AddIntComp(0); }
     tmp_pc.defineAllParticleTiles();
 
     const int nlevs = numLevels();

@@ -108,7 +108,7 @@ Diagnostics::BaseReadParameters ()
     }
 
     // sigma can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
-    if (utils::algorithms::is_in(m_varnames, "sigma"))
+    if (utils::algorithms::is_in(m_varnames_fields, "sigma"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::em_solver_medium == MediumForEM::Macroscopic,
@@ -116,7 +116,7 @@ Diagnostics::BaseReadParameters ()
     }
 
     // epsilon can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
-    if (utils::algorithms::is_in(m_varnames, "epsilon"))
+    if (utils::algorithms::is_in(m_varnames_fields, "epsilon"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::em_solver_medium == MediumForEM::Macroscopic,
@@ -124,7 +124,7 @@ Diagnostics::BaseReadParameters ()
     }
 
     // mu can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
-    if (utils::algorithms::is_in(m_varnames, "mu"))
+    if (utils::algorithms::is_in(m_varnames_fields, "mu"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::em_solver_medium == MediumForEM::Macroscopic,
@@ -133,21 +133,21 @@ Diagnostics::BaseReadParameters ()
 
 #ifdef WARPX_MAG_LLG
     // mag_Ms can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
-    if (utils::algorithms::is_in(m_varnames, "mag_Ms_xface") || utils::algorithms::is_in(m_varnames, "mag_Ms_yface") || utils::algorithms::is_in(m_varnames, "mag_Ms_zface"))
+    if (utils::algorithms::is_in(m_varnames_fields, "mag_Ms_xface") || utils::algorithms::is_in(m_varnames_fields, "mag_Ms_yface") || utils::algorithms::is_in(m_varnames_fields, "mag_Ms_zface"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::em_solver_medium == MediumForEM::Macroscopic,
             "mag_Ms in plotfiles only works with algo.em_solver_medium=macroscopic");
     }
     // mag_alpha can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
-    if (utils::algorithms::is_in(m_varnames, "mag_alpha_xface") || utils::algorithms::is_in(m_varnames, "mag_alpha_yface") || utils::algorithms::is_in(m_varnames, "mag_alpha_zface"))
+    if (utils::algorithms::is_in(m_varnames_fields, "mag_alpha_xface") || utils::algorithms::is_in(m_varnames_fields, "mag_alpha_yface") || utils::algorithms::is_in(m_varnames_fields, "mag_alpha_zface"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::em_solver_medium == MediumForEM::Macroscopic,
             "mag_alpha in plotfiles only works with algo.em_solver_medium=macroscopic");
     }
     // mag_exchange can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
-    if (utils::algorithms::is_in(m_varnames, "mag_exchange_xface") || utils::algorithms::is_in(m_varnames, "mag_exchange_yface") || utils::algorithms::is_in(m_varnames, "mag_exchange_zface"))
+    if (utils::algorithms::is_in(m_varnames_fields, "mag_exchange_xface") || utils::algorithms::is_in(m_varnames_fields, "mag_exchange_yface") || utils::algorithms::is_in(m_varnames_fields, "mag_exchange_zface"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::em_solver_medium == MediumForEM::Macroscopic,
@@ -159,7 +159,7 @@ Diagnostics::BaseReadParameters ()
         }
     }
     // mag_anisotropy can be written to file only if WarpX::em_solver_medium == MediumForEM::Macroscopic
-    if (utils::algorithms::is_in(m_varnames, "mag_anisotropy_xface") || utils::algorithms::is_in(m_varnames, "mag_anisotropy_yface") || utils::algorithms::is_in(m_varnames, "mag_anisotropy_zface"))
+    if (utils::algorithms::is_in(m_varnames_fields, "mag_anisotropy_xface") || utils::algorithms::is_in(m_varnames_fields, "mag_anisotropy_yface") || utils::algorithms::is_in(m_varnames_fields, "mag_anisotropy_zface"))
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::em_solver_medium == MediumForEM::Macroscopic,

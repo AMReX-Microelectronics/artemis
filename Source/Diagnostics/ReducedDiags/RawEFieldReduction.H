@@ -62,7 +62,12 @@ private:
     int m_reduction_type;
     // Type of integration (e.g. volume or surface)
     int m_integral_type;
-#if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==1)
+    // The direction of the surface for surface integration. (e.g. X)
+    int m_surface_normal[1]={0};
+    // Multipliers for Ex surface integral; default value of 1.0
+    std::vector<amrex::Real> m_scaling_factor={1.0};
+#elif (AMREX_SPACEDIM==2)
     // The direction of the surface for surface integration. (e.g. X or Z)
     int m_surface_normal[2]={0,0};
     // Multipliers for Ex and Ez surface integrals; default values of 1.0
@@ -147,7 +152,10 @@ public:
                     // Shift x, y, z position based on index type
                     amrex::Real fac_x = (1._rt - Ex_nodalType[0]) * dx[0] * 0.5_rt;
                     amrex::Real x = i * dx[0] + real_box.lo(0) + fac_x;
-#if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==1)
+                    amrex::Real y = 0._rt;
+                    amrex::Real z = 0._rt;
+#elif (AMREX_SPACEDIM==2)
                     amrex::Real y = 0._rt;
                     amrex::Real fac_z = (1._rt - Ex_nodalType[1]) * dx[1] * 0.5_rt;
                     amrex::Real z = j * dx[1] + real_box.lo(1) + fac_z;
@@ -175,7 +183,10 @@ public:
                     // Shift x, y, z position based on index type
                     amrex::Real fac_x = (1._rt - Ey_nodalType[0]) * dx[0] * 0.5_rt;
                     amrex::Real x = i * dx[0] + real_box.lo(0) + fac_x;
-#if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==1)
+                    amrex::Real y = 0._rt;
+                    amrex::Real z = 0._rt;
+#elif (AMREX_SPACEDIM==2)
                     amrex::Real y = 0._rt;
                     amrex::Real fac_z = (1._rt - Ey_nodalType[1]) * dx[1] * 0.5_rt;
                     amrex::Real z = j * dx[1] + real_box.lo(1) + fac_z;
@@ -203,7 +214,10 @@ public:
                     // Shift x, y, z position based on index type
                     amrex::Real fac_x = (1._rt - Ez_nodalType[0]) * dx[0] * 0.5_rt;
                     amrex::Real x = i * dx[0] + real_box.lo(0) + fac_x;
-#if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==1)
+                    amrex::Real y = 0._rt;
+                    amrex::Real z = 0._rt;
+#elif (AMREX_SPACEDIM==2)
                     amrex::Real y = 0._rt;
                     amrex::Real fac_z = (1._rt - Ez_nodalType[1]) * dx[1] * 0.5_rt;
                     amrex::Real z = j * dx[1] + real_box.lo(1) + fac_z;
@@ -254,7 +268,11 @@ public:
                 // If reduction operation is a surface, multiply the value by the cell face area
                 if (integral_type == 0) {
 
-#if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==1)
+                reducedEx_value *= dx[0];
+                reducedEy_value *= dx[0];
+                reducedEz_value *= dx[0];
+#elif (AMREX_SPACEDIM==2)
                 reducedEx_value *= dx[0]*dx[1];
                 reducedEy_value *= dx[0]*dx[1];
                 reducedEz_value *= dx[0]*dx[1];
@@ -264,7 +282,12 @@ public:
                 reducedEz_value *= dx[0]*dx[1]*dx[2];
 #endif
                 } else {
-#if (AMREX_SPACEDIM==2)
+#if (AMREX_SPACEDIM==1)
+                amrex::Real point = surface_normal[0]*1.0;
+                reducedEx_value *= m_scaling_factor[0]*point;
+                reducedEy_value *= point;
+                reducedEz_value *= point;
+#elif (AMREX_SPACEDIM==2)
                 amrex::Real length = surface_normal[0]*dx[1] + surface_normal[1]*dx[0];
                 reducedEx_value *= m_scaling_factor[0]*length;
                 reducedEy_value *= length;

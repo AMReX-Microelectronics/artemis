@@ -226,7 +226,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 if (!buffer[i].isDefined())
                 {
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-                    buffer[i].AddIntComp("timestamp", false);
+                    buffer[i].AddIntComp("timestamp", 0);
                 }
                 auto& species_buffer = buffer[i];
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -292,7 +292,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         if (!buffer[i].isDefined())
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-            buffer[i].AddIntComp("timestamp", false);
+            buffer[i].AddIntComp("timestamp", 0);
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)

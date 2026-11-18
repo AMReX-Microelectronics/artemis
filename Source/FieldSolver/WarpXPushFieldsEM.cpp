@@ -865,7 +865,17 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 
     // Evolve B field in PML cells
     if (do_pml && pml[lev]->ok()) {
-        if (patch_type == PatchType::fine) {
+        if (pml[lev]->isConvolutional()) {
+            if (patch_type == PatchType::fine) {
+                m_fdtd_solver_fp[lev]->EvolveBCPML(
+                    pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), pml[lev]->GetPsiB_fp(),
+                    pml[lev]->GetMultiSigmaBox_fp(), a_dt, a_dt_type);
+            } else {
+                m_fdtd_solver_cp[lev]->EvolveBCPML(
+                    pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), pml[lev]->GetPsiB_cp(),
+                    pml[lev]->GetMultiSigmaBox_cp(), a_dt, a_dt_type);
+            }
+        } else if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveBPML(
                 pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning);
         } else {
@@ -915,7 +925,29 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     }
 
     // Evolve E field in PML cells
-    if (do_pml && pml[lev]->ok()) {
+    if (do_pml && pml[lev]->ok() && pml[lev]->isConvolutional()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveECPML(
+                pml[lev]->GetE_fp(),
+#ifdef WARPX_MAG_LLG
+                pml[lev]->GetH_fp(),
+#else
+                pml[lev]->GetB_fp(),
+#endif
+                pml[lev]->Getj_fp(), pml[lev]->GetPsiE_fp(),
+                pml[lev]->GetMultiSigmaBox_fp(), a_dt, pml_has_particles );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveECPML(
+                pml[lev]->GetE_cp(),
+#ifdef WARPX_MAG_LLG
+                pml[lev]->GetH_cp(),
+#else
+                pml[lev]->GetB_cp(),
+#endif
+                pml[lev]->Getj_cp(), pml[lev]->GetPsiE_cp(),
+                pml[lev]->GetMultiSigmaBox_cp(), a_dt, pml_has_particles );
+        }
+    } else if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(
                 pml[lev]->GetE_fp(),
@@ -1092,9 +1124,44 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 #endif
                                                current_fp[lev], m_edge_lengths[lev], a_dt,
                                                m_macroscopic_properties);
+
     // Evolve E field in PML cells
     if (do_pml && pml[lev]->ok()) {
-        if (patch_type == PatchType::fine) {
+        if (pml[lev]->isConvolutional()) {
+            // CPML: same material update (alpha/beta with local eps, sigma; H = B/mu
+            // with local mu) as in the interior, applied to the stretched curl
+            if (patch_type == PatchType::fine) {
+                m_fdtd_solver_fp[lev]->MacroscopicEvolveECPML(
+                    pml[lev]->GetE_fp(),
+#ifndef WARPX_MAG_LLG
+                    pml[lev]->GetB_fp(),
+#else
+                    pml[lev]->GetH_fp(),
+#endif
+                    pml[lev]->Getj_fp(), pml[lev]->GetPsiE_fp(),
+                    pml[lev]->GetMultiSigmaBox_fp(),
+                    a_dt, pml_has_particles,
+                    m_macroscopic_properties,
+                    pml[lev]->Geteps_fp(),
+                    pml[lev]->Getmu_fp(),
+                    pml[lev]->Getsigma_fp() );
+            } else {
+                m_fdtd_solver_cp[lev]->MacroscopicEvolveECPML(
+                    pml[lev]->GetE_cp(),
+#ifndef WARPX_MAG_LLG
+                    pml[lev]->GetB_cp(),
+#else
+                    pml[lev]->GetH_cp(),
+#endif
+                    pml[lev]->Getj_cp(), pml[lev]->GetPsiE_cp(),
+                    pml[lev]->GetMultiSigmaBox_cp(),
+                    a_dt, pml_has_particles,
+                    m_macroscopic_properties,
+                    pml[lev]->Geteps_cp(),
+                    pml[lev]->Getmu_cp(),
+                    pml[lev]->Getsigma_cp() );
+            }
+        } else if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->MacroscopicEvolveEPML(
                 pml[lev]->GetE_fp(),
 #ifndef WARPX_MAG_LLG
@@ -1127,6 +1194,19 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         }
     }
 
+    // Apply the PEC mask to the interior E (and, if extended, to the PML E and the
+    // CPML memory variables) right after the update, *before* the E guard cells and
+    // the PML are filled (FillBoundaryE -> PML::Exchange). If the mask were only
+    // applied after FillBoundaryE, the guard cells of the interior grids, and the PML
+    // copy of the interface plane (which the PML receives from the interior), would
+    // keep unmasked tangential E on the PEC edges until the next exchange, and the
+    // following B update would see inconsistent E on the two sides of the PML
+    // interface (and of interior box boundaries) along the PEC layer. The mask is
+    // applied again after any E excitation (ApplyExternalFieldExcitationOnGrid),
+    // so masked edges stay exactly zero.
+    const bool include_guard_cells = false;
+    ApplyPECMaskToEfield(lev, include_guard_cells);
+
     ApplyEfieldBoundary(lev, patch_type);
 }
 
@@ -1134,25 +1214,25 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 #ifdef WARPX_MAG_LLG
 // define WarpX::MacroscopicEvolveHM
 void
-WarpX::MacroscopicEvolveHM (amrex::Real a_dt)
+WarpX::MacroscopicEvolveHM (amrex::Real a_dt, DtType a_dt_type)
 {
     for (int lev = 0; lev <= finest_level; ++lev ) {
-        MacroscopicEvolveHM(lev, a_dt);
+        MacroscopicEvolveHM(lev, a_dt, a_dt_type);
     }
 }
 
 void
-WarpX::MacroscopicEvolveHM (int lev, amrex::Real a_dt) {
+WarpX::MacroscopicEvolveHM (int lev, amrex::Real a_dt, DtType a_dt_type) {
 
     WARPX_PROFILE("WarpX::MacroscopicEvolveHM()");
-    MacroscopicEvolveHM(lev, PatchType::fine, a_dt);
+    MacroscopicEvolveHM(lev, PatchType::fine, a_dt, a_dt_type);
     if (lev > 0) {
         amrex::Abort("Macroscopic EvolveHM is not implemented for lev>0, yet.");
     }
 }
 
 void
-WarpX::MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real a_dt) {
+WarpX::MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type) {
 
     // Evolve H field in regular cells
     if (patch_type == PatchType::fine) {
@@ -1164,7 +1244,17 @@ WarpX::MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real a_dt) {
     }
 
     // Evolve H field in PML cells
-    if (do_pml && pml[lev]->ok()) {
+    if (do_pml && pml[lev]->ok() && pml[lev]->isConvolutional()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveHCPML(
+                pml[lev]->GetH_fp(), pml[lev]->GetE_fp(), pml[lev]->GetPsiB_fp(),
+                pml[lev]->GetMultiSigmaBox_fp(), a_dt, a_dt_type);
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveHCPML(
+                pml[lev]->GetH_cp(), pml[lev]->GetE_cp(), pml[lev]->GetPsiB_cp(),
+                pml[lev]->GetMultiSigmaBox_cp(), a_dt, a_dt_type);
+        }
+    } else if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveHPML(
                 pml[lev]->GetH_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning);
@@ -1177,25 +1267,25 @@ WarpX::MacroscopicEvolveHM (int lev, PatchType patch_type, amrex::Real a_dt) {
 
 // define WarpX::MacroscopicEvolveHM_2nd
 void
-WarpX::MacroscopicEvolveHM_2nd (amrex::Real a_dt)
+WarpX::MacroscopicEvolveHM_2nd (amrex::Real a_dt, DtType a_dt_type)
 {
     for (int lev = 0; lev <= finest_level; ++lev ) {
-        MacroscopicEvolveHM_2nd(lev, a_dt);
+        MacroscopicEvolveHM_2nd(lev, a_dt, a_dt_type);
     }
 }
 
 void
-WarpX::MacroscopicEvolveHM_2nd (int lev, amrex::Real a_dt) {
+WarpX::MacroscopicEvolveHM_2nd (int lev, amrex::Real a_dt, DtType a_dt_type) {
 
     WARPX_PROFILE("WarpX::MacroscopicEvolveHM_2nd()");
-    MacroscopicEvolveHM_2nd(lev, PatchType::fine, a_dt);
+    MacroscopicEvolveHM_2nd(lev, PatchType::fine, a_dt, a_dt_type);
     if (lev > 0) {
         amrex::Abort("Macroscopic EvolveHM_2nd is not implemented for lev>0, yet.");
     }
 }
 
 void
-WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt) {
+WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type) {
 
     // Evolve H field in regular cells
     if (patch_type == PatchType::fine) {
@@ -1207,7 +1297,17 @@ WarpX::MacroscopicEvolveHM_2nd (int lev, PatchType patch_type, amrex::Real a_dt)
     }
 
     // Evolve H field in PML cells
-    if (do_pml && pml[lev]->ok()) {
+    if (do_pml && pml[lev]->ok() && pml[lev]->isConvolutional()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveHCPML(
+                pml[lev]->GetH_fp(), pml[lev]->GetE_fp(), pml[lev]->GetPsiB_fp(),
+                pml[lev]->GetMultiSigmaBox_fp(), a_dt, a_dt_type);
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveHCPML(
+                pml[lev]->GetH_cp(), pml[lev]->GetE_cp(), pml[lev]->GetPsiB_cp(),
+                pml[lev]->GetMultiSigmaBox_cp(), a_dt, a_dt_type);
+        }
+    } else if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveHPML(
                 pml[lev]->GetH_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning );

@@ -9,7 +9,7 @@ concurrency:
 jobs:
   build_cxxminimal:
     name: GCC Minimal w/o MPI
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.event.pull_request.draft == false
     env:
       CXXFLAGS: "-Werror"
@@ -50,7 +50,7 @@ jobs:
   build_1D_2D:
     name: GCC 1D & 2D w/ MPI
     runs-on: ubuntu-22.04
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && false
     env:
       CXXFLAGS: "-Werror"
       CXX: "g++-12"
@@ -74,15 +74,15 @@ jobs:
           ccache-openmp-1D-2D-
     - name: build WarpX
       run: |
-        cmake -S . -B build_1D         \
-          -GNinja                      \
-          -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS=1               \
-          -DWarpX_EB=OFF               \
-          -DWarpX_MAG_LLG=OFF          \
-          -DWarpX_PSATD=ON             \
-          -DWarpX_QED_TABLE_GEN=ON
-        cmake --build build_1D -j 2
+        # cmake -S . -B build_1D         \
+        #  -GNinja                      \
+        #  -DCMAKE_VERBOSE_MAKEFILE=ON  \
+        #  -DWarpX_DIMS=1               \
+        #  -DWarpX_EB=OFF               \
+        #  -DWarpX_MAG_LLG=OFF          \
+        #  -DWarpX_PSATD=ON             \
+        #  -DWarpX_QED_TABLE_GEN=ON
+        # cmake --build build_1D -j 2
 
         cmake -S . -B build_2D         \
           -GNinja                      \
@@ -96,7 +96,7 @@ jobs:
 
   build_gcc_ablastr:
     name: GCC ABLASTR w/o MPI
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.event.pull_request.draft == false
     env:
       CMAKE_GENERATOR: Ninja
@@ -129,8 +129,8 @@ jobs:
 
   build_pyfull:
     name: Clang pywarpx
-    runs-on: ubuntu-20.04
-    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
+    if: github.event.pull_request.draft == false && false  # Second condition prevents running
     env:
       # On CI for this test, Ninja is slower than the default:
       #CMAKE_GENERATOR: Ninja

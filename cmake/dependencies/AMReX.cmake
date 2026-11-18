@@ -240,7 +240,13 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "9d2f762f4897b5f585544baf87a19edd0f0c9560"
+
+# Parse AMReX version and commit information
+file(READ "${WarpX_SOURCE_DIR}/dependencies.json" dependencies_data)
+string(JSON amrex_version GET "${dependencies_data}" version_amrex)
+string(JSON amrex_commit GET "${dependencies_data}" commit_amrex)
+
+set(WarpX_amrex_branch ${amrex_commit}
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

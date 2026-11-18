@@ -152,6 +152,9 @@ if(WarpX_PSATD)
     endif()
 endif()
 
+# Find zlib for cnpy support
+find_package(ZLIB REQUIRED)
+
 
 # Targets #####################################################################
 #
@@ -286,6 +289,9 @@ if(WarpX_QED)
     target_link_libraries(ablastr PUBLIC PXRMP_QED::PXRMP_QED)
 endif()
 
+# Link zlib for cnpy support
+target_link_libraries(ablastr PUBLIC ZLIB::ZLIB)
+
 # AMReX helper function: propagate CUDA specific target & source properties
 if(WarpX_COMPUTE STREQUAL CUDA)
     foreach(warpx_tgt IN LISTS _ALL_TARGETS)
@@ -298,6 +304,13 @@ if(WarpX_COMPUTE STREQUAL CUDA)
         CUDA_EXTENSIONS OFF
         CUDA_STANDARD_REQUIRED ON
     )
+endif()
+
+if(WarpX_COMPUTE STREQUAL "HIP")
+    # Disable libstdc++ assertions in device code
+    foreach(warpx_tgt IN LISTS _ALL_TARGETS)
+        target_compile_definitions(${warpx_tgt} PRIVATE _GLIBCXX_ASSERTIONS=0)
+    endforeach()
 endif()
 
 # avoid building all object files if we are only used as ABLASTR library

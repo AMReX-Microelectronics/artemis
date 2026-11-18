@@ -9,7 +9,7 @@ concurrency:
 jobs:
   sensei:
     name: SENSEI
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.event.pull_request.draft == false
     env:
       CXX: clang++
@@ -20,7 +20,10 @@ jobs:
     container:
       image: senseiinsitu/ci:fedora35-amrex-20220613
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - name: Install zlib
+      run: |
+        dnf install -y zlib-devel
     - name: Configure
       run: |
         cmake -S . -B build     \
@@ -33,16 +36,16 @@ jobs:
 
   ascent:
     name: Ascent
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.event.pull_request.draft == false
     env:
       CXX: g++
       CC: gcc
       CMAKE_PREFIX_PATH: /ascent/install/lib/cmake/
     container:
-      image: alpinedav/ascent:0.9.1
+      image: alpinedav/ascent:0.9.2
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Configure
       run: |
         . /ascent_docker_setup_env.sh

@@ -31,6 +31,13 @@ struct CoupledYeeSolver {
     };
 };
 
+struct LumpedInductor {
+    enum {
+        Off = 0,
+        On = 1
+    };
+};
+
 /**
   * \brief struct to select algorithm for macroscopic Maxwell solver
            LaxWendroff (semi-implicit) represents sigma*E = sigma*0.5*(E^(n) + E^(n+1))
@@ -41,6 +48,19 @@ struct MacroscopicSolverAlgo {
     enum {
         BackwardEuler = 0,
         LaxWendroff = 1
+    };
+};
+
+/**
+  * \brief struct to select the PML formulation used with the FDTD solver
+  *        Split: split-field (Berenger) PML (default, original implementation)
+  *        Convolutional: convolutional PML (CPML, Roden & Gedney 2000) with the
+  *                       complex-frequency-shifted stretching s = kappa + sigma/(alpha + i omega)
+  */
+struct PMLType {
+    enum {
+        Split = 0,
+        Convolutional = 1
     };
 };
 

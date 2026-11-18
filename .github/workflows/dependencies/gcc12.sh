@@ -27,4 +27,5 @@ sudo apt-get install -y \
     libopenmpi-dev      \
     ninja-build         \
     pkg-config          \
-    wget
+    wget                \
+    zlib1g-dev

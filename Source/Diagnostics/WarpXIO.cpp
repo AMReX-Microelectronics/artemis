@@ -373,7 +373,11 @@ WarpX::InitFromCheckpoint ()
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_avg_fp"));
         }
 
-        if (is_synchronized || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+        if (is_synchronized
+            || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon
+            || use_lumped_inductor == 1
+            || use_josephson_junction == 1)
+        {
             VisMF::Read(*current_fp[lev][0],
                         amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_fp"));
             VisMF::Read(*current_fp[lev][1],
@@ -455,7 +459,10 @@ WarpX::InitFromCheckpoint ()
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_avg_cp"));
             }
 
-            if (is_synchronized || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
+            if (is_synchronized
+                || WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon
+                || use_lumped_inductor == 1
+                || use_josephson_junction == 1) {
                 VisMF::Read(*current_cp[lev][0],
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jx_cp"));
                 VisMF::Read(*current_cp[lev][1],

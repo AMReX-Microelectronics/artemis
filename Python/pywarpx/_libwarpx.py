@@ -166,7 +166,6 @@ class LibWarpX():
 
         # set the arg and return types of the wrapped functions
         self.libwarpx_so.amrex_init.argtypes = (ctypes.c_int, _LP_LP_c_char)
-        self.libwarpx_so.amrex_init_with_inited_mpi.argtypes = (ctypes.c_int, _LP_LP_c_char, _MPI_Comm_type)
         self.libwarpx_so.warpx_getParticleStructs.restype = _LP_particle_p
         self.libwarpx_so.warpx_getParticleArrays.restype = _LP_LP_c_particlereal
         self.libwarpx_so.warpx_getParticleCompIndex.restype = ctypes.c_int
@@ -435,9 +434,7 @@ class LibWarpX():
         if mpi_comm is None or MPI is None:
             self.libwarpx_so.amrex_init(argc, argvC)
         else:
-            comm_ptr = MPI._addressof(mpi_comm)
-            comm_val = _MPI_Comm_type.from_address(comm_ptr)
-            self.libwarpx_so.amrex_init_with_inited_mpi(argc, argvC, comm_val)
+            raise Exception("mpi_comm argument not yet supported")
 
     def initialize(self, argv=None, mpi_comm=None):
         '''

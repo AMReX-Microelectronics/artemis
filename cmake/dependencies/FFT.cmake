@@ -53,6 +53,13 @@ if(WarpX_PSATD)
     # rocFFT (HIP)
     if(WarpX_COMPUTE STREQUAL HIP)
         find_package(rocfft REQUIRED)
+        # Ensure rocFFT include directory is properly exposed
+        if(TARGET roc::rocfft)
+            get_target_property(ROCFFT_INCLUDE_DIRS roc::rocfft INTERFACE_INCLUDE_DIRECTORIES)
+            if(NOT ROCFFT_INCLUDE_DIRS)
+                target_include_directories(roc::rocfft INTERFACE ${rocfft_INCLUDE_DIR})
+            endif()
+        endif()
 
     # FFTW   (NOACC, OMP, SYCL)
     elseif(NOT WarpX_COMPUTE STREQUAL CUDA)

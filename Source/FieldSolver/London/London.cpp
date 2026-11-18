@@ -64,7 +64,21 @@ London::InitData()
     }
 
 }
-
+#if( AMREX_SPACEDIM != 3)
+void
+London::EvolveLondonJ (amrex::Real )
+{
+  amrex::Abort("London only works with 3D");
+}
+void
+London::InitializeSuperconductorMultiFabUsingParser (
+                       amrex::MultiFab *,
+                       amrex::ParserExecutor<3> const& ,
+                       const int )
+{
+  amrex::Abort("London only works with 3D");
+}
+#else
 void
 London::EvolveLondonJ (amrex::Real dt)
 {
@@ -154,16 +168,32 @@ London::InitializeSuperconductorMultiFabUsingParser (
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift x, y, z position based on index type (only 3D supported for now)
+#if( AMREX_SPACEDIM >= 1)
                 amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+#if( AMREX_SPACEDIM == 1)
+                // initialize the macroparameter
+                sc_fab(i,0,0) = sc_parser(x,0,0);
+#endif
+#endif
+#if( AMREX_SPACEDIM >= 2)
                 amrex::Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
+#if( AMREX_SPACEDIM == 2)
+                // initialize the macroparameter
+                sc_fab(i,j,0) = sc_parser(x,y,0);
+#endif
+#endif
+#if( AMREX_SPACEDIM == 3)
                 amrex::Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
                 amrex::Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
+
                 // initialize the macroparameter
                 sc_fab(i,j,k) = sc_parser(x,y,z);
+#endif
         });
 
     }
 }
+#endif
 

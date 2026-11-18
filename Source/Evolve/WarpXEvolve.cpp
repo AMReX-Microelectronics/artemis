@@ -159,6 +159,14 @@ WarpX::Evolve (int numsteps)
                 FillBoundaryJ(guard_cells.ng_alloc_EB);
             }
 #endif
+            if (use_lumped_inductor) {
+                m_inductor->EvolveInductorJ(-0.5_rt*dt[0]); // J^(n) to J^(n-1/2) using E^(n)
+                FillBoundaryJ(guard_cells.ng_alloc_EB);
+            }
+            if (use_josephson_junction) {
+                m_jj->EvolveJunctionJ(-0.5_rt*dt[0]); // phi^(0) to phi^(-1/2), add JJ J^(-1/2)
+                FillBoundaryJ(guard_cells.ng_alloc_EB);
+            }
             is_synchronized = false;
         } else {
             if (electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
@@ -203,21 +211,8 @@ WarpX::Evolve (int numsteps)
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
 
-        ExecutePythonCallback("particleinjection");
-        // Electrostatic case: only gather fields and push particles,
-        // deposition and calculation of fields done further below
-        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None)
-        {
-            const bool skip_deposition = true;
-            if (WarpX::yee_coupled_solver_algo != CoupledYeeSolver::MaxwellLondon) {
-                PushParticlesandDepose(cur_time, skip_deposition);
-            }
-            if (WarpX::yee_coupled_solver_algo != CoupledYeeSolver::MaxwellFerroE) {
-                PushParticlesandDepose(cur_time, skip_deposition);
-            }
-        }
         // Electromagnetic case: multi-J algorithm
-        else if (do_multi_J)
+        if (do_multi_J)
         {
             OneStep_multiJ(cur_time);
         }
@@ -436,14 +431,6 @@ WarpX::OneStep_nosub (Real cur_time)
     // Deposit current j^{n+1/2}
     // Deposit charge density rho^{n}
 
-    ExecutePythonCallback("particlescraper");
-    ExecutePythonCallback("beforedeposition");
-    if (WarpX::yee_coupled_solver_algo != CoupledYeeSolver::MaxwellLondon) {
-        PushParticlesandDepose(cur_time);
-    }
-    if (WarpX::yee_coupled_solver_algo != CoupledYeeSolver::MaxwellFerroE) {
-        PushParticlesandDepose(cur_time);
-    }
 #ifndef WARPX_MAG_LLG
     if (WarpX::yee_coupled_solver_algo == CoupledYeeSolver::MaxwellLondon) {
         amrex::Print() << " in evolve london j\n";
@@ -463,12 +450,16 @@ WarpX::OneStep_nosub (Real cur_time)
         // fill boundary here
     }
 #endif
+    if (use_lumped_inductor == 1) {
+        m_inductor->EvolveInductorJ(dt[0]); // J^(n-1/2) to J^(n+1/2) using E^(n)
+        FillBoundaryJ(guard_cells.ng_alloc_EB);
+    }
+    if (use_josephson_junction == 1) {
+        m_jj->EvolveJunctionJ(dt[0]); // phi^(n-1/2) to phi^(n+1/2), add JJ J^(n+1/2)
+        FillBoundaryJ(guard_cells.ng_alloc_EB);
+    }
 
     ExecutePythonCallback("afterdeposition");
-
-    // Synchronize J and rho:
-    // filter (if used), exchange guard cells, interpolate across MR levels
-    SyncCurrentAndRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
@@ -533,9 +524,9 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifndef WARPX_DIM_RZ
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) { //evolveM is not applicable to vacuum
             if (mag_time_scheme_order==1){
-                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+                MacroscopicEvolveHM(0.5*dt[0], DtType::FirstHalf); // we now have M^{n+1/2} and H^{n+1/2}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1/2} and H^{n+1/2}
+                MacroscopicEvolveHM_2nd(0.5*dt[0], DtType::FirstHalf); // we now have M^{n+1/2} and H^{n+1/2}
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }
@@ -568,6 +559,10 @@ WarpX::OneStep_nosub (Real cur_time)
             ApplyExternalFieldExcitationOnGrid(ExternalFieldType::EfieldExternalPML);
         }
 
+        // The PEC mask (use_PEC_mask) is applied in MacroscopicEvolveE, and again inside
+        // ApplyExternalFieldExcitationOnGrid after any E excitation (grid and PML), so
+        // masked edges are exactly zero at this point.
+
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
 #ifndef WARPX_MAG_LLG
@@ -580,9 +575,9 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifndef WARPX_DIM_RZ
         if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
             if (mag_time_scheme_order==1){
-                MacroscopicEvolveHM(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
+                MacroscopicEvolveHM(0.5*dt[0], DtType::SecondHalf); // we now have M^{n+1} and H^{n+1}
             } else if (mag_time_scheme_order==2){
-                MacroscopicEvolveHM_2nd(0.5*dt[0]); // we now have M^{n+1} and H^{n+1}
+                MacroscopicEvolveHM_2nd(0.5*dt[0], DtType::SecondHalf); // we now have M^{n+1} and H^{n+1}
             } else {
                 amrex::Abort("unsupported mag_time_scheme_order for M field");
             }
@@ -655,13 +650,20 @@ void WarpX::SyncCurrentAndRho ()
                 SyncCurrent(current_fp, current_cp);
                 SyncRho(rho_fp, rho_cp);
             }
+#ifdef WARPX_MAG_LLG
+#ifndef WARPX_DIM_RZ
+            // H and M are up-to-date in the domain, but all guard cells are
+            // outdated.
+            if ( safe_guard_cells ){
+                FillBoundaryH(guard_cells.ng_alloc_EB);
+                FillBoundaryM(guard_cells.ng_alloc_EB);
+               // ApplyExternalFieldExcitation
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal); // redundant for hs; need to fix the way to increment ss
+               ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal); // apply H external excitation; soft source to be fixed
 
-            if (current_deposition_algo == CurrentDepositionAlgo::Vay)
-            {
-                // TODO This works only without mesh refinement
-                const int lev = 0;
-                if (use_filter) ApplyFilterJ(current_fp_vay, lev);
             }
+#endif // ifndef WARPX_DIM_RZ
+#endif // WARPX_MAG_LLG
         }
     }
     else // FDTD

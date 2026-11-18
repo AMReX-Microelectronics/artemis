@@ -38,8 +38,6 @@ extern "C" {
 
     void amrex_init (int argc, char* argv[]);
 
-    void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm);
-
     void amrex_finalize (int finalize_mpi);
 
     void warpx_init ();

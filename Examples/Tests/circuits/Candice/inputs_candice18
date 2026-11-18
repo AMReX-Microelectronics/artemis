@@ -1,0 +1,286 @@
+# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 1000000
+
+amr.n_cell = n_cellx n_celly n_cellz
+amr.max_grid_size_x = max_grid_sizex
+amr.max_grid_size_y = max_grid_sizey
+amr.max_grid_size_z = max_grid_sizez
+amr.blocking_factor = blocking_factor
+amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
+
+geometry.dims = 3
+geometry.prob_lo = prob_lox prob_loy prob_loz
+geometry.prob_hi = prob_hix prob_hiy prob_hiz
+
+amr.max_level = 0
+
+# use pec instead of pml overlaying current source so you don't get a reflection
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
+
+my_constants.offset_y = -1100.e-6
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+
+warpx.cfl = 0.8
+
+# vacuum or macroscopic
+algo.em_solver_medium = macroscopic
+
+# laxwendroff or backwardeuler
+algo.macroscopic_sigma_method = laxwendroff
+
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_si - sigma_0) * (z <= h_si) + (sigma_metal - sigma_0) * (z >= h_si) * (z <= h_si + dz) *
+                                           (1
+                                            -(x > -1750.e-6 + ddx) * (x < -795.e-6 - ddx) * (y > -32.5e-6 + ddy) * (y < -27.5e-6 - ddy)
+                                            -(x > -1750.e-6 + ddx) * (x < -795.e-6 - ddx) * (y > -20.e-6 + ddy) * (y < -15.e-6 - ddy)
+                                            -(x > -800.e-6 + ddx) * (x < -795.e-6 - ddx) * (y > -27.5e-6 - ddy) * (y < -20.e-6 + ddy)
+                                            -(x > 1237.5e-6 + ddx) * (x < 1255.e-6 - ddx) * (y > -2565.e-6 - ddy) * (y < 1795.e-6 + ddy)
+                                            -(x > 1285.5e-6 + ddx) * (x < 1302.5e-6 - ddx) * (y > -2565.e-6 - ddy) * (y < 1795.e-6 + ddy)
+                                            -(x > 1237.5e-6 + ddx) * (x < 1302.5e-6 - ddx) * (y > -2582.5e-6 + ddy) * (y < -2565.e-6 - ddy)
+                                            -(x > 1237.5e-6 + ddx) * (x < 1302.5e-6 - ddx) * (y > 1795.e-6 + ddy) * (y < 1812.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > -372.5e-6 + ddy) * (y < -272.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > 272.5e-6 + ddy) * (y < 372.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -595.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            -(x > -460.e-6 + ddx) * (x < -395.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            -(x > -260.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            -(x > -50.e-6 + ddx) * (x < -40.e-6 - ddx) * (y > -325.e-6 - ddy) * (y < 325.e-6 + ddy)
+                                            -(x > -50.e-6 + ddx) * (x < 10.e-6 - ddx) * (y > 325.e-6 + ddy) * (y < 335.e-6 - ddy)
+                                            -(x > -50.e-6 + ddx) * (x < 10.e-6 - ddx) * (y > -335.e-6 + ddy) * (y < -325.e-6 - ddy)
+                                            -(x > ddx) * (x < 10.e-6 - ddx) * (y > 20.e-6 - ddy) * (y < 325.e-6 + ddy)
+                                            -(x > ddx) * (x < 10.e-6 - ddx) * (y > -325.e-6 - ddy) * (y < -20.e-6 + ddy)
+                                            -(x > ddx) * (x < 635.e-6 + ddx) * (y > -20.e-6 + ddy) * (y < -10.e-6 - ddy)
+                                            -(x > ddx) * (x < 635.e-6 + ddx) * (y > 10.e-6 + ddy) * (y < 20.e-6 - ddy)
+                                            -(x > 635.e-6 - ddx) * (x < 745.e-6 - ddx) * (y > -20.e-6 + ddy) * (y < 90.e-6 + ddy) *
+                                                (sqrt( (x-635.e-6)*(x-635.e-6) + (y - 90.e-6)*(y - 90.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-635.e-6)*(x-635.e-6) + (y - 90.e-6)*(y - 90.e-6) ) < 80.e-6)
+                                            -(x > 635.e-6 - ddx) * (x < 745.e-6 - ddx) * (y > -20.e-6 + ddy) * (y < 90.e-6 + ddy) *
+                                                (sqrt( (x-635.e-6)*(x-635.e-6) + (y - 90.e-6)*(y - 90.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-635.e-6)*(x-635.e-6) + (y - 90.e-6)*(y - 90.e-6) ) < 110.e-6)
+                                            -(x > 705.e-6 + ddx) * (x < 715.e-6 - ddx) * (y > 90.e-6 - ddy) * (y < 100.e-6 + ddy)
+                                            -(x > 735.e-6 + ddx) * (x < 745.e-6 - ddx) * (y > 90.e-6 - ddy) * (y < 100.e-6 + ddy)
+                                            -(x > 705.e-6 + ddx) * (x < 815.e-6 + ddx) * (y > 100.e-6 - ddy) * (y < 210.e-6 - ddy) *
+                                                (sqrt( (x-815.e-6)*(x-815.e-6) + (y - 100.e-6)*(y - 100.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-815.e-6)*(x-815.e-6) + (y - 100.e-6)*(y - 100.e-6) ) < 80.e-6)
+                                            -(x > 705.e-6 + ddx) * (x < 815.e-6 + ddx) * (y > 100.e-6 - ddy) * (y < 210.e-6 - ddy) *
+                                                (sqrt( (x-815.e-6)*(x-815.e-6) + (y - 100.e-6)*(y - 100.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-815.e-6)*(x-815.e-6) + (y - 100.e-6)*(y - 100.e-6) ) < 110.e-6)
+                                            -(x > 815.e-6 - ddx) * (x < 1125.e-6 + ddx) * (y > 170.e-6 + ddy) * (y < 180.e-6 - ddy)
+                                            -(x > 815.e-6 - ddx) * (x < 1125.e-6 + ddx) * (y > 200.e-6 + ddy) * (y < 210.e-6 - ddy)
+                                            -(x > 1125.e-6 - ddx) * (x < 1235.e-6 - ddx) * (y > 100.e-6 - ddy) * (y < 210.e-6 - ddy) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + (y - 100.e-6)*(y - 100.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + (y - 100.e-6)*(y - 100.e-6) ) < 80.e-6)
+                                            -(x > 1125.e-6 - ddx) * (x < 1235.e-6 - ddx) * (y > 100.e-6 - ddy) * (y < 210.e-6 - ddy) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + (y - 100.e-6)*(y - 100.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + (y - 100.e-6)*(y - 100.e-6) ) < 110.e-6)
+                                            -(x > 1195.e-6 + ddx) * (x < 1205.e-6 - ddx) * (y < 100.e-6 + ddy) * (y > -100.e-6 - ddy)
+                                            -(x > 1225.e-6 + ddx) * (x < 1235.e-6 - ddx) * (y < 100.e-6 + ddy) * (y > -100.e-6 - ddy)
+                                            -(x > 1125.e-6 - ddx) * (x < 1235.e-6 - ddx) * (y > -210.e-6 + ddy) * (y < -100.e-6 + ddy) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + (y + 100.e-6)*(y + 100.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + (y + 100.e-6)*(y + 100.e-6) ) < 80.e-6)
+                                            -(x > 1125.e-6 - ddx) * (x < 1235.e-6 - ddx) * (y > -210.e-6 + ddy) * (y < -100.e-6 + ddy) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + (y + 100.e-6)*(y + 100.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + (y + 100.e-6)*(y + 100.e-6) ) < 110.e-6)
+                                            -(x > 495.e-6 - ddx) * (x < 1125.e-6 + ddx) * (y > -210.e-6 + ddy) * (y < -200.e-6 - ddy)
+                                            -(x > 495.e-6 - ddx) * (x < 1125.e-6 + ddx) * (y > -180.e-6 + ddy) * (y < -170.e-6 - ddy)
+                                            -(x > 385.e-6 + ddx) * (x < 495.e-6 + ddx) * (y > -390.e-6 + ddy) * (y < -170.e-6 - ddy) *
+                                                (sqrt( (x-495.e-6)*(x-495.e-6) + (y + 280.e-6)*(y + 280.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-495.e-6)*(x-495.e-6) + (y + 280.e-6)*(y + 280.e-6) ) < 80.e-6)
+                                            -(x > 385.e-6 + ddx) * (x < 495.e-6 + ddx) * (y > -390.e-6 + ddy) * (y < -170.e-6 - ddy) *
+                                                (sqrt( (x-495.e-6)*(x-495.e-6) + (y + 280.e-6)*(y + 280.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-495.e-6)*(x-495.e-6) + (y + 280.e-6)*(y + 280.e-6) ) < 110.e-6)
+                                            -(x > 495.e-6 - ddx) * (x < 885.e-6 + ddx) * (y > -390.e-6 + ddy) * (y < -380.e-6 - ddy)
+                                            -(x > 495.e-6 - ddx) * (x < 885.e-6 + ddx) * (y > -360.e-6 + ddy) * (y < -350.e-6 - ddy)
+                                            -(x > 885.e-6 - ddx) * (x < 995.e-6 - ddx) * (y > -570.e-6 + ddy) * (y < -350.e-6 - ddy) *
+                                                (sqrt( (x-880.e-6)*(x-880.e-6) + (y + 460.e-6)*(y + 460.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-880.e-6)*(x-880.e-6) + (y + 460.e-6)*(y + 460.e-6) ) < 80.e-6)
+                                            -(x > 885.e-6 - ddx) * (x < 995.e-6 - ddx) * (y > -570.e-6 + ddy) * (y < -350.e-6 - ddy) *
+                                                (sqrt( (x-880.e-6)*(x-880.e-6) + (y + 460.e-6)*(y + 460.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-880.e-6)*(x-880.e-6) + (y + 460.e-6)*(y + 460.e-6) ) < 110.e-6)
+                                            -(x > 495.e-6 - ddx) * (x < 885.e-6 + ddx) * (y > -570.e-6 + ddy) * (y < -560.e-6 - ddy)
+                                            -(x > 495.e-6 - ddx) * (x < 885.e-6 + ddx) * (y > -540.e-6 + ddy) * (y < -530.e-6 - ddy)
+                                            -(x > -1750.e-6 + ddx) * (x < -795.e-6 - ddx) * ((y - offset_y) > -32.5e-6 + ddy) * ((y - offset_y) < -27.5e-6 - ddy)
+                                            -(x > -1750.e-6 + ddx) * (x < -795.e-6 - ddx) * ((y - offset_y) > -20.e-6 + ddy) * ((y - offset_y) < -15.e-6 - ddy)
+                                            -(x > -800.e-6 + ddx) * (x < -795.e-6 - ddx) * ((y - offset_y) > -27.5e-6 - ddy) * ((y - offset_y) < -20.e-6 + ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * ((y - offset_y) > -372.5e-6 + ddy) * ((y - offset_y) < -272.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * ((y - offset_y) > 272.5e-6 + ddy) * ((y - offset_y) < 372.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -595.e-6 - ddx) * ((y - offset_y) > -272.5e-6 - ddy) * ((y - offset_y) < 272.5e-6 + ddy)
+                                            -(x > -460.e-6 + ddx) * (x < -395.e-6 - ddx) * ((y - offset_y) > -272.5e-6 - ddy) * ((y - offset_y) < 272.5e-6 + ddy)
+                                            -(x > -260.e-6 + ddx) * (x < -160.e-6 - ddx) * ((y - offset_y) > -272.5e-6 - ddy) * ((y - offset_y) < 272.5e-6 + ddy)
+                                            -(x > -50.e-6 + ddx) * (x < -40.e-6 - ddx) * ((y - offset_y) > -325.e-6 - ddy) * ((y - offset_y) < 325.e-6 + ddy)
+                                            -(x > -50.e-6 + ddx) * (x < 10.e-6 - ddx) * ((y - offset_y) > 325.e-6 + ddy) * ((y - offset_y) < 335.e-6 - ddy)
+                                            -(x > -50.e-6 + ddx) * (x < 10.e-6 - ddx) * ((y - offset_y) > -335.e-6 + ddy) * ((y - offset_y) < -325.e-6 - ddy)
+                                            -(x > ddx) * (x < 10.e-6 - ddx) * ((y - offset_y) > 20.e-6 - ddy) * ((y - offset_y) < 325.e-6 + ddy)
+                                            -(x > ddx) * (x < 10.e-6 - ddx) * ((y - offset_y) > -325.e-6 - ddy) * ((y - offset_y) < -20.e-6 + ddy)
+                                            -(x > ddx) * (x < 635.e-6 + ddx) * ((y - offset_y) > -20.e-6 + ddy) * ((y - offset_y) < -10.e-6 - ddy)
+                                            -(x > ddx) * (x < 635.e-6 + ddx) * ((y - offset_y) > 10.e-6 + ddy) * ((y - offset_y) < 20.e-6 - ddy)
+                                            -(x > 635.e-6 - ddx) * (x < 745.e-6 - ddx) * ((y - offset_y) > -20.e-6 + ddy) * ((y - offset_y) < 90.e-6 + ddy) *
+                                                (sqrt( (x-635.e-6)*(x-635.e-6) + ((y - offset_y) - 90.e-6)*((y - offset_y) - 90.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-635.e-6)*(x-635.e-6) + ((y - offset_y) - 90.e-6)*((y - offset_y) - 90.e-6) ) < 80.e-6)
+                                            -(x > 635.e-6 - ddx) * (x < 745.e-6 - ddx) * ((y - offset_y) > -20.e-6 + ddy) * ((y - offset_y) < 90.e-6 + ddy) *
+                                                (sqrt( (x-635.e-6)*(x-635.e-6) + ((y - offset_y) - 90.e-6)*((y - offset_y) - 90.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-635.e-6)*(x-635.e-6) + ((y - offset_y) - 90.e-6)*((y - offset_y) - 90.e-6) ) < 110.e-6)
+                                            -(x > 705.e-6 + ddx) * (x < 715.e-6 - ddx) * ((y - offset_y) > 90.e-6 - ddy) * ((y - offset_y) < 100.e-6 + ddy)
+                                            -(x > 735.e-6 + ddx) * (x < 745.e-6 - ddx) * ((y - offset_y) > 90.e-6 - ddy) * ((y - offset_y) < 100.e-6 + ddy)
+                                            -(x > 705.e-6 + ddx) * (x < 815.e-6 + ddx) * ((y - offset_y) > 100.e-6 - ddy) * ((y - offset_y) < 210.e-6 - ddy) *
+                                                (sqrt( (x-815.e-6)*(x-815.e-6) + ((y - offset_y) - 100.e-6)*((y - offset_y) - 100.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-815.e-6)*(x-815.e-6) + ((y - offset_y) - 100.e-6)*((y - offset_y) - 100.e-6) ) < 80.e-6)
+                                            -(x > 705.e-6 + ddx) * (x < 815.e-6 + ddx) * ((y - offset_y) > 100.e-6 - ddy) * ((y - offset_y) < 210.e-6 - ddy) *
+                                                (sqrt( (x-815.e-6)*(x-815.e-6) + ((y - offset_y) - 100.e-6)*((y - offset_y) - 100.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-815.e-6)*(x-815.e-6) + ((y - offset_y) - 100.e-6)*((y - offset_y) - 100.e-6) ) < 110.e-6)
+                                            -(x > 815.e-6 - ddx) * (x < 1125.e-6 + ddx) * ((y - offset_y) > 170.e-6 + ddy) * ((y - offset_y) < 180.e-6 - ddy)
+                                            -(x > 815.e-6 - ddx) * (x < 1125.e-6 + ddx) * ((y - offset_y) > 200.e-6 + ddy) * ((y - offset_y) < 210.e-6 - ddy)
+                                            -(x > 1125.e-6 - ddx) * (x < 1235.e-6 - ddx) * ((y - offset_y) > 100.e-6 - ddy) * ((y - offset_y) < 210.e-6 - ddy) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + ((y - offset_y) - 100.e-6)*((y - offset_y) - 100.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + ((y - offset_y) - 100.e-6)*((y - offset_y) - 100.e-6) ) < 80.e-6)
+                                            -(x > 1125.e-6 - ddx) * (x < 1235.e-6 - ddx) * ((y - offset_y) > 100.e-6 - ddy) * ((y - offset_y) < 210.e-6 - ddy) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + ((y - offset_y) - 100.e-6)*((y - offset_y) - 100.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + ((y - offset_y) - 100.e-6)*((y - offset_y) - 100.e-6) ) < 110.e-6)
+                                            -(x > 1195.e-6 + ddx) * (x < 1205.e-6 - ddx) * ((y - offset_y) < 100.e-6 + ddy) * ((y - offset_y) > -100.e-6 - ddy)
+                                            -(x > 1225.e-6 + ddx) * (x < 1235.e-6 - ddx) * ((y - offset_y) < 100.e-6 + ddy) * ((y - offset_y) > -100.e-6 - ddy)
+                                            -(x > 1125.e-6 - ddx) * (x < 1235.e-6 - ddx) * ((y - offset_y) > -210.e-6 + ddy) * ((y - offset_y) < -100.e-6 + ddy) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + ((y - offset_y) + 100.e-6)*((y - offset_y) + 100.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + ((y - offset_y) + 100.e-6)*((y - offset_y) + 100.e-6) ) < 80.e-6)
+                                            -(x > 1125.e-6 - ddx) * (x < 1235.e-6 - ddx) * ((y - offset_y) > -210.e-6 + ddy) * ((y - offset_y) < -100.e-6 + ddy) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + ((y - offset_y) + 100.e-6)*((y - offset_y) + 100.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-1125.e-6)*(x-1125.e-6) + ((y - offset_y) + 100.e-6)*((y - offset_y) + 100.e-6) ) < 110.e-6)
+                                            -(x > 495.e-6 - ddx) * (x < 1125.e-6 + ddx) * ((y - offset_y) > -210.e-6 + ddy) * ((y - offset_y) < -200.e-6 - ddy)
+                                            -(x > 495.e-6 - ddx) * (x < 1125.e-6 + ddx) * ((y - offset_y) > -180.e-6 + ddy) * ((y - offset_y) < -170.e-6 - ddy)
+                                            -(x > 385.e-6 + ddx) * (x < 495.e-6 + ddx) * ((y - offset_y) > -390.e-6 + ddy) * ((y - offset_y) < -170.e-6 - ddy) *
+                                                (sqrt( (x-495.e-6)*(x-495.e-6) + ((y - offset_y) + 280.e-6)*((y - offset_y) + 280.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-495.e-6)*(x-495.e-6) + ((y - offset_y) + 280.e-6)*((y - offset_y) + 280.e-6) ) < 80.e-6)
+                                            -(x > 385.e-6 + ddx) * (x < 495.e-6 + ddx) * ((y - offset_y) > -390.e-6 + ddy) * ((y - offset_y) < -170.e-6 - ddy) *
+                                                (sqrt( (x-495.e-6)*(x-495.e-6) + ((y - offset_y) + 280.e-6)*((y - offset_y) + 280.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-495.e-6)*(x-495.e-6) + ((y - offset_y) + 280.e-6)*((y - offset_y) + 280.e-6) ) < 110.e-6)
+                                            -(x > 495.e-6 - ddx) * (x < 885.e-6 + ddx) * ((y - offset_y) > -390.e-6 + ddy) * ((y - offset_y) < -380.e-6 - ddy)
+                                            -(x > 495.e-6 - ddx) * (x < 885.e-6 + ddx) * ((y - offset_y) > -360.e-6 + ddy) * ((y - offset_y) < -350.e-6 - ddy)
+                                            -(x > 885.e-6 - ddx) * (x < 995.e-6 - ddx) * ((y - offset_y) > -570.e-6 + ddy) * ((y - offset_y) < -350.e-6 - ddy) *
+                                                (sqrt( (x-880.e-6)*(x-880.e-6) + ((y - offset_y) + 460.e-6)*((y - offset_y) + 460.e-6) ) > 70.e-6) *
+                                                (sqrt( (x-880.e-6)*(x-880.e-6) + ((y - offset_y) + 460.e-6)*((y - offset_y) + 460.e-6) ) < 80.e-6)
+                                            -(x > 885.e-6 - ddx) * (x < 995.e-6 - ddx) * ((y - offset_y) > -570.e-6 + ddy) * ((y - offset_y) < -350.e-6 - ddy) *
+                                                (sqrt( (x-880.e-6)*(x-880.e-6) + ((y - offset_y) + 460.e-6)*((y - offset_y) + 460.e-6) ) > 100.e-6) *
+                                                (sqrt( (x-880.e-6)*(x-880.e-6) + ((y - offset_y) + 460.e-6)*((y - offset_y) + 460.e-6) ) < 110.e-6)
+                                            -(x > 495.e-6 - ddx) * (x < 885.e-6 + ddx) * ((y - offset_y) > -570.e-6 + ddy) * ((y - offset_y) < -560.e-6 - ddy)
+                                            -(x > 495.e-6 - ddx) * (x < 885.e-6 + ddx) * ((y - offset_y) > -540.e-6 + ddy) * ((y - offset_y) < -530.e-6 - ddy)
+                                            )"
+
+macroscopic.epsilon_function(x,y,z) = "eps_0 + eps_0 * (eps_r_si - 1.) * (z <= h_si)"
+
+# lines 1-4:   qubit control
+# lines 5-9:   readout resonator
+# lines 9-13:  capacitor
+# lines 14-18: entrance to meanding line
+# lines 19-68: meandering line
+macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si)"
+
+#################################
+############ FIELDS #############
+#################################
+
+###############
+# domain size
+# n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
+###############
+my_constants.n_cellx = 1400
+my_constants.n_celly = 2000
+my_constants.n_cellz = 32
+
+my_constants.max_grid_sizex = 1400
+my_constants.max_grid_sizey = 2000
+my_constants.max_grid_sizez = 32
+my_constants.blocking_factor = 2
+
+my_constants.prob_lox = -1750.e-6
+my_constants.prob_loy = -3000.e-6
+my_constants.prob_loz = 0.
+
+my_constants.prob_hix = 1750.e-6
+my_constants.prob_hiy = 2000.e-6
+my_constants.prob_hiz = 320.e-6
+
+my_constants.Lx = prob_hix - prob_lox
+my_constants.Ly = prob_hiy - prob_loy
+my_constants.Lz = prob_hiz - prob_loz
+
+###############
+# material properties
+###############
+my_constants.sigma_0 = 0.0
+my_constants.sigma_si = 0.
+my_constants.sigma_metal = 1.e11
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_si = 11.7
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_si = 1.0
+my_constants.mu_r_test = 0.999999
+
+###############
+# silicon and palladium cross section
+###############
+my_constants.h_si = 160.e-6
+
+###############
+# waveguide port parameters
+###############
+my_constants.h_port = 160.e-6
+my_constants.w_port = 320.e-6
+
+###############
+# derived quantities and fundamental constants - don't touch these
+###############
+
+my_constants.pi = 3.14159265358979
+
+my_constants.freq = 8.6e9
+my_constants.TP = 1./freq
+
+# grid spacing
+my_constants.dx = Lx / n_cellx
+my_constants.dy = Ly / n_celly
+my_constants.dz = Lz / n_cellz
+
+my_constants.ddx = dx/1.e6
+my_constants.ddy = dy/1.e6
+my_constants.ddz = dz/1.e6
+
+my_constants.flag_none = 0
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
+
+###############
+# excitation
+###############
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_ss * ( (y >= -20.e-6 + ddy) * (y <= -15.e-6 - ddy) + (y >= -32.5e-6 + ddy) * (y <= -27.5e-6 - ddy)) * (z > h_si - ddz) * (z < h_si + ddz) * (x > -1750.e-6 - ddx) * (x < -1750.e-6 + ddx)"
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+
+
+# This is a source on a qubit control line
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
+                                                      ( (y >= -20.e-6 + ddy) * (y <= -15.e-6 - ddy) - (y >= -32.5e-6 + ddy) * (y <= -27.5e-6 - ddy)) * (z > h_si - ddz) * (z < h_si + ddz) * (x > -1750.e-6 - ddx) * (x < -1750.e-6 + ddx)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+###############
+# diagnostics
+###############
+
+diagnostics.diags_names = plt
+###############
+# full plotfiles
+plt.intervals = 1000
+plt.fields_to_plot = Ex Ey Ez Bx By Bz sigma
+plt.diag_type = Full
+plt.file_min_digits = 7

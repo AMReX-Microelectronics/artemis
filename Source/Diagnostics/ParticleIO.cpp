@@ -160,7 +160,7 @@ MultiParticleContainer::Restart (const std::string& dir)
         }
 
         for (int j = PIdx::nattribs; j < nr; ++j) {
-            const auto& comp_name = real_comp_names[j];
+            std::string & comp_name = real_comp_names[j];
             auto current_comp_names = pc->getParticleComps();
             auto search = current_comp_names.find(comp_name);
             if (search == current_comp_names.end()) {
@@ -193,7 +193,7 @@ MultiParticleContainer::Restart (const std::string& dir)
         }
 
         for (int j = 0; j < ni; ++j) {
-            const auto& comp_name = int_comp_names[j];
+            std::string comp_name = int_comp_names[j];
             auto current_comp_names = pc->getParticleiComps();
             auto search = current_comp_names.find(comp_name);
             if (search == current_comp_names.end()) {

@@ -10,6 +10,7 @@ target_sources(WarpX
     WarpXUtil.cpp
     WarpXrocfftUtil.cpp
     WarpXVersion.cpp
+    cnpy.cpp
 )
 
 add_subdirectory(Logo)

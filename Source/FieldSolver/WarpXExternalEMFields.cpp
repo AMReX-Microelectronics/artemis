@@ -1,5 +1,6 @@
 #include "WarpX.H"
 #include "BoundaryConditions/PML.H"
+#include "BoundaryConditions/WarpX_PEC.H"
 #include "Evolve/WarpXDtType.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -51,6 +52,14 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a
                                                        Eyfield_flag_parser->compile<3>(),
                                                        Ezfield_flag_parser->compile<3>(),
                                                        lev, a_dt_type );
+                    if (pml[lev]->isConvolutional()) {
+                        // With the CPML the total field is in component 0 and component 1
+                        // must stay zero (the excitation above was applied to every component)
+                        for (int idir = 0; idir < 3; ++idir) {
+                            amrex::MultiFab* mf = pml[lev]->GetE_fp(idir);
+                            mf->setVal(0._rt, 1, mf->nComp()-1, mf->nGrowVect());
+                        }
+                    }
             }
         }
         if (externalfieldtype == ExternalFieldType::AllExternal || externalfieldtype == ExternalFieldType::BfieldExternal) {
@@ -98,6 +107,41 @@ WarpX::ApplyExternalFieldExcitationOnGrid (int const externalfieldtype, DtType a
         }
 #endif
     } // for loop over level
+
+    // Re-apply the field boundary conditions, and the PEC mask, on any field that
+    // was just excited. The excitation is applied after EvolveE/EvolveB, which have
+    // already applied the boundary conditions and the PEC mask, so a hard (or soft)
+    // source whose flag region touches a PEC domain boundary or a PEC (GDS/numpy)
+    // layer would otherwise overwrite them (e.g., leave a nonzero tangential E on a
+    // PEC wall). Only the fine patch is excited, so only the fine patch is corrected.
+    const bool e_excited =
+        E_excitation_grid_s == "parse_e_excitation_grid_function" &&
+        (externalfieldtype == ExternalFieldType::AllExternal ||
+         externalfieldtype == ExternalFieldType::EfieldExternal ||
+         externalfieldtype == ExternalFieldType::EfieldExternalPML);
+    const bool b_excited =
+        B_excitation_grid_s == "parse_b_excitation_grid_function" &&
+        (externalfieldtype == ExternalFieldType::AllExternal ||
+         externalfieldtype == ExternalFieldType::BfieldExternal);
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        if (e_excited) {
+            if (PEC::isAnyBoundaryPEC()) {
+                // PEC on E, including the split E fields in the PML region
+                ApplyEfieldBoundary(lev, PatchType::fine);
+            }
+            // PEC mask on the grid (including the guard cells, which the excitation
+            // also writes) and, if extended, in the PML
+            const bool include_guard_cells = true;
+            ApplyPECMaskToEfield(lev, include_guard_cells);
+        }
+        if (b_excited && PEC::isAnyBoundaryPEC()) {
+            // PEC only: Silver-Mueller (in ApplyBfieldBoundary) advances B using E
+            // and must not be applied a second time within a half step
+            PEC::ApplyPECtoBfield( { get_pointer_Bfield_fp(lev, 0),
+                                     get_pointer_Bfield_fp(lev, 1),
+                                     get_pointer_Bfield_fp(lev, 2) }, lev, PatchType::fine);
+        }
+    }
 }
 
 void
@@ -114,8 +158,8 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
     // A flag is used to determine the type of excitation.
     // If flag == 1, it is a hard source and the field = excitation
     // If flag == 2, if is a soft source and the field += excitation
-    // If flag == 0, the excitation parser is not computed and the field is unchanged.
-    // If flag is not 0, or 1, or 2, the code will Abort!
+    // If flag <= 0, the excitation parser is not computed and the field is unchanged.
+    // If flag is greater than 2, the code will Abort!
 
     // Gpu vector to store Ex-Bz staggering (Hx-Hz for LLG)
     GpuArray<int,3> mfx_stag, mfy_stag, mfz_stag;
@@ -169,8 +213,8 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 if (flag_type == 2._rt and dt_type_flag == 1) {
                     dt_type_factor = 0.5_rt;
                 }
-                if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
-                    amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
+                if (flag_type > 2._rt) {
+                    amrex::Abort("flag type for excitation must be <= 2");
                 } else if ( flag_type > 0._rt ) {
                     Fx(i, j, k, n) = Fx(i,j,k,n)*(flag_type-1.0_rt)
                                    + dt_type_factor * xfield_parser(x,y,z,t);
@@ -188,8 +232,8 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 if (flag_type == 2._rt and dt_type_flag == 1) {
                     dt_type_factor = 0.5_rt;
                 }
-                if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
-                    amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
+                if (flag_type > 2._rt) {
+                    amrex::Abort("flag type for excitation must be <= 2");
                 } else if ( flag_type > 0._rt ) {
                     Fy(i, j, k, n) = Fy(i,j,k,n)*(flag_type-1.0_rt)
                                    + dt_type_factor * yfield_parser(x,y,z,t);
@@ -207,8 +251,8 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
                 if (flag_type == 2._rt and dt_type_flag == 1) {
                     dt_type_factor = 0.5_rt;
                 }
-                if (flag_type != 0._rt && flag_type != 1._rt && flag_type != 2._rt) {
-                    amrex::Abort("flag type for excitation must be 0, or 1, or 2!");
+                if (flag_type > 2._rt) {
+                    amrex::Abort("flag type for excitation must be <= 2");
                 } else if ( flag_type > 0._rt ) {
                     Fz(i, j, k,n) = Fz(i,j,k,n)*(flag_type-1.0_rt)
                                   + dt_type_factor * zfield_parser(x,y,z,t);

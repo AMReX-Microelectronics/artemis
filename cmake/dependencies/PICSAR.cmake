@@ -103,7 +103,12 @@ if(WarpX_QED)
     set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
         CACHE STRING
         "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
-    set(WarpX_picsar_branch "1903ecfff51a31a321d39790af90d8520c10537e"
+    # Parse PICSAR version and commit information
+    file(READ "${WarpX_SOURCE_DIR}/dependencies.json" dependencies_data)
+    string(JSON picsar_version GET "${dependencies_data}" version_picsar)
+    string(JSON picsar_commit GET "${dependencies_data}" commit_picsar)
+
+    set(WarpX_picsar_branch ${picsar_commit}
         CACHE STRING
         "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
 

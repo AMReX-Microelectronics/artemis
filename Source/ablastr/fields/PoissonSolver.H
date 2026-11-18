@@ -259,7 +259,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         amrex::MLMG mlmg(linop); // actual solver defined here
         mlmg.setVerbose(verbosity);
         mlmg.setMaxIter(max_iters);
-        mlmg.setAlwaysUseBNorm(always_use_bnorm);
+        mlmg.setConvergenceNormType(always_use_bnorm ? amrex::MLMGNormType::bnorm : amrex::MLMGNormType::greater);
 
         // Solve Poisson equation at lev
         mlmg.solve( {phi[lev]}, {rho[lev]},

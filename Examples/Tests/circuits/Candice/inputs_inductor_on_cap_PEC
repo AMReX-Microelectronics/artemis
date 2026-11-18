@@ -1,0 +1,192 @@
+# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 200000
+
+amr.n_cell = n_cellx n_celly n_cellz
+amr.max_grid_size_x = max_grid_sizex
+amr.max_grid_size_y = max_grid_sizey
+amr.max_grid_size_z = max_grid_sizez
+amr.blocking_factor = blocking_factor
+amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
+
+geometry.dims = 3
+geometry.prob_lo = prob_lox prob_loy prob_loz
+geometry.prob_hi = prob_hix prob_hiy prob_hiz
+
+amr.max_level = 0
+
+# use pec instead of pml overlaying current source so you don't get a reflection
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
+
+my_constants.offset_y = -1100.e-6
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+
+warpx.cfl = 0.8
+
+# vacuum or macroscopic
+algo.em_solver_medium = macroscopic
+
+# laxwendroff or backwardeuler
+algo.macroscopic_sigma_method = laxwendroff
+
+algo.use_lumped_inductor = 1
+
+inductor.inductor_x_function(x,y,z) = "4.e-13 * (x > -460.e-6) * (x < -395.e-6) * (y > -ddy) * (y < ddy) * (z > h_si - ddz) * (z < h_si + ddz)"
+inductor.inductor_y_function(x,y,z) = "0."
+inductor.inductor_z_function(x,y,z) = "0."
+
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_si - sigma_0) * (z <= h_si) + (sigma_metal - sigma_0) * (z > h_si) * (z < h_si + dz) *
+                                  (1
+                                   -(x > prob_lox) * (x < prob_hix) * (y > prob_loy) * (y < prob_hiy)
+                                   -(x < prob_lox) * (y > -32.5e-6) * (y < -27.5e-6)
+                                   -(x < prob_lox) * (y > -20.0e-6) * (y < -15.0e-6)
+                                   )"
+
+macroscopic.epsilon_function(x,y,z) = "eps_0 + eps_0 * (eps_r_si - 1.) * (z <= h_si)"
+
+macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_test - 1.) * (z > h_si) * (z < h_si + dz) *
+                                           (1
+                                            -(x < -795.e-6 - ddx) * (y > -32.5e-6 + ddy) * (y < -27.5e-6 - ddy)
+                                            -(x < -795.e-6 - ddx) * (y > -20.e-6 + ddy) * (y < -15.e-6 - ddy)
+                                            -(x > -800.e-6 + ddx) * (x < -795.e-6 - ddx) * (y > -27.5e-6 - ddy) * (y < -20.e-6 + ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > -372.5e-6 + ddy) * (y < -272.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > 272.5e-6 + ddy) * (y < 372.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -595.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            -(x > -460.e-6 + ddx) * (x < -395.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            -(x > -260.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            )"
+
+#################################
+############ FIELDS #############
+#################################
+
+###############
+# domain size
+# n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
+###############
+my_constants.n_cellx = 700
+my_constants.n_celly = 400
+my_constants.n_cellz = 32
+
+my_constants.max_grid_sizex = 700
+my_constants.max_grid_sizey = 400
+my_constants.max_grid_sizez = 32
+my_constants.blocking_factor = 2
+
+my_constants.prob_lox = -1750.e-6
+my_constants.prob_loy = -500.e-6
+my_constants.prob_loz = 0.
+
+my_constants.prob_hix = 0.e-6
+my_constants.prob_hiy = 500.e-6
+my_constants.prob_hiz = 320.e-6
+
+my_constants.Lx = prob_hix - prob_lox
+my_constants.Ly = prob_hiy - prob_loy
+my_constants.Lz = prob_hiz - prob_loz
+
+###############
+# material properties
+###############
+my_constants.sigma_0 = 0.0
+my_constants.sigma_si = 0.
+my_constants.sigma_metal = 1.e11
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_si = 11.7
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_si = 1.0
+my_constants.mu_r_test = 0.999999
+
+###############
+# silicon and palladium cross section
+###############
+my_constants.h_si = 160.e-6
+
+###############
+# waveguide port parameters
+###############
+my_constants.h_port = 160.e-6
+my_constants.w_port = 320.e-6
+
+###############
+# derived quantities and fundamental constants - don't touch these
+###############
+
+my_constants.pi = 3.14159265358979
+
+my_constants.freq = 1.9e11
+my_constants.TP = 1./freq
+
+# grid spacing
+my_constants.dx = Lx / n_cellx
+my_constants.dy = Ly / n_celly
+my_constants.dz = Lz / n_cellz
+
+my_constants.ddx = dx/1.e6
+my_constants.ddy = dy/1.e6
+my_constants.ddz = dz/1.e6
+
+my_constants.flag_none = 0
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
+
+###############
+# excitation
+###############
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
+                                           (1
+                                            -(x < -795.e-6 - ddx) * (y > -32.5e-6 + ddy) * (y < -27.5e-6 - ddy)
+                                            -(x < -795.e-6 - ddx) * (y > -20.e-6 + ddy) * (y < -15.e-6 - ddy)
+                                            -(x > -800.e-6 + ddx) * (x < -795.e-6 - ddx) * (y > -27.5e-6 - ddy) * (y < -20.e-6 + ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > -372.5e-6 + ddy) * (y < -272.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > 272.5e-6 + ddy) * (y < 372.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -595.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            -(x > -460.e-6 + ddx) * (x < -395.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            -(x > -260.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            )"
+
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_hs * (z > h_si - ddz) * (z < h_si + ddz) *
+                                           (1
+                                            -(x < -795.e-6 - ddx) * (y > -32.5e-6 + ddy) * (y < -27.5e-6 - ddy)
+                                            -(x < -795.e-6 - ddx) * (y > -20.e-6 + ddy) * (y < -15.e-6 - ddy)
+                                            -(x > -800.e-6 + ddx) * (x < -795.e-6 - ddx) * (y > -27.5e-6 - ddy) * (y < -20.e-6 + ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > -372.5e-6 + ddy) * (y < -272.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > 272.5e-6 + ddy) * (y < 372.5e-6 - ddy)
+                                            -(x > -695.e-6 + ddx) * (x < -595.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            -(x > -460.e-6 + ddx) * (x < -395.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            -(x > -260.e-6 + ddx) * (x < -160.e-6 - ddx) * (y > -272.5e-6 - ddy) * (y < 272.5e-6 + ddy)
+                                            )
+                                            + flag_ss * ( (y >= -20.e-6 + ddy) * (y <= -15.e-6 - ddy) + (y >= -32.5e-6 + ddy) * (y <= -27.5e-6 - ddy)) * (z > h_si - ddz) * (z < h_si + ddz) * (x > -1745.e-6 - ddx) * (x < -1745.e-6 + ddx)"
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+
+
+# This is a source on a qubit control line
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
+                                                      ( (y >= -20.e-6 + ddy) * (y <= -15.e-6 - ddy) - (y >= -32.5e-6 + ddy) * (y <= -27.5e-6 - ddy)) * (z > h_si - ddz) * (z < h_si + ddz) * (x > -1745.e-6 - ddx) * (x < -1745.e-6 + ddx)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+###############
+# diagnostics
+###############
+
+diagnostics.diags_names = plt
+###############
+# full plotfiles
+plt.intervals = 1000
+plt.fields_to_plot = Ex Ey Ez Bx By Bz mu
+plt.diag_type = Full
+plt.file_min_digits = 7

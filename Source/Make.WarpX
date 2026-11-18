@@ -7,7 +7,6 @@ USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
 USE_GPU_RDC   = FALSE
 BL_NO_FORT    = TRUE
-CXXSTD        = c++17
 
 # required for AMReX async I/O
 MPI_THREAD_MULTIPLE = TRUE

@@ -1,0 +1,165 @@
+# See parameters in https://github.com/ECP-WarpX/artemis/pull/43
+
+################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 10
+
+amr.n_cell = n_cellx n_celly n_cellz
+amr.max_grid_size_x = max_grid_sizex
+amr.max_grid_size_y = max_grid_sizey
+amr.max_grid_size_z = max_grid_sizez
+amr.blocking_factor = blocking_factor
+amr.refine_grid_layout = 1  # if n_MPI > n_grids, the grids will be successively divided in half until n_MPI <= n_grids
+
+geometry.dims = 3
+geometry.prob_lo = prob_lox prob_loy prob_loz
+geometry.prob_hi = prob_hix prob_hiy prob_hiz
+
+amr.max_level = 0
+
+# use pec instead of pml overlaying current source so you don't get a reflection
+boundary.field_lo = pml pml pml
+boundary.field_hi = pml pml pml
+
+my_constants.offset_y = -1100.e-6
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+
+warpx.cfl = 0.8
+
+# vacuum or macroscopic
+algo.em_solver_medium = macroscopic
+
+# laxwendroff or backwardeuler
+algo.macroscopic_sigma_method = laxwendroff
+
+##########################################
+# sigma
+
+# sigma is still parsed in the PML region
+macroscopic.sigma_function(x,y,z) = "sigma_0 + (sigma_si - sigma_0) * (z <= h_si)"
+
+# k index of where to deposit conductivity from sigma npy file
+macroscopic.npy_k_index = 10
+
+# GDS file for sigma layer
+macroscopic.sigma_npy_file = "/pscratch/sd/y/ytang4/Artemis_solver_veri_gds_2d/artemis/Bin/array_3d_gds_new_large_8_qubit.npy"
+macroscopic.sigma_npy_value = 1.e10
+
+# enable use of PEC mask layer from sigma in valid region
+algo.use_PEC_mask = 0
+
+##########################################
+
+macroscopic.epsilon_function(x,y,z) = "eps_0 + eps_0 * (eps_r_si - 1.) * (z <= h_si)"
+
+macroscopic.mu_function(x,y,z) = "mu_0 + mu_0 * (mu_r_si - 1.) * (z <= h_si)"
+
+#################################
+############ FIELDS #############
+#################################
+
+###############
+# domain size
+# n_cellx/y/z and Lx/y/z are needed to calculate dx/dy/dz
+###############
+my_constants.n_cellx = 3800
+my_constants.n_celly = 3800
+my_constants.n_cellz = 20
+
+my_constants.max_grid_sizex = 3800
+my_constants.max_grid_sizey = 3800
+my_constants.max_grid_sizez = 20
+my_constants.blocking_factor = 2
+
+my_constants.prob_lox = 0.
+my_constants.prob_loy = 0.
+my_constants.prob_loz = 0.
+
+my_constants.prob_hix = 9500.e-6
+my_constants.prob_hiy = 9500.e-6
+my_constants.prob_hiz = 200.e-6
+
+my_constants.Lx = prob_hix - prob_lox
+my_constants.Ly = prob_hiy - prob_loy
+my_constants.Lz = prob_hiz - prob_loz
+
+###############
+# material properties
+###############
+my_constants.sigma_0 = 0.0
+my_constants.sigma_si = 0.
+my_constants.sigma_metal = 1.e11
+
+my_constants.eps_0 = 8.8541878128e-12
+my_constants.eps_r_si = 11.7
+
+my_constants.mu_0 = 1.25663706212e-06
+my_constants.mu_r_si = 1.0
+my_constants.mu_r_test = 0.9999
+
+###############
+# silicon and palladium cross section
+###############
+my_constants.h_si = 100.e-6
+
+###############
+# waveguide port parameters
+###############
+my_constants.h_port = 100.e-6
+my_constants.w_port = 200.e-6
+
+###############
+# derived quantities and fundamental constants - don't touch these
+###############
+
+my_constants.pi = 3.14159265358979
+
+my_constants.freq = 8.6e9
+my_constants.TP = 1./freq
+
+# grid spacing
+my_constants.dx = Lx / n_cellx
+my_constants.dy = Ly / n_celly
+my_constants.dz = Lz / n_cellz
+
+my_constants.ddx = dx/1.e6
+my_constants.ddy = dy/1.e6
+my_constants.ddz = dz/1.e6
+
+my_constants.flag_none = 0
+my_constants.flag_hs = 1
+my_constants.flag_ss = 2
+
+###############
+# excitation
+###############
+
+warpx.E_excitation_on_grid_style = parse_E_excitation_grid_function
+
+warpx.Ex_excitation_flag_function(x,y,z) = "flag_none"
+warpx.Ey_excitation_flag_function(x,y,z) = "flag_ss * ( (y >= 470.e-6 + ddy) * (y < 475.e-6 - ddy) + (y >= 485e-6 + ddy) * (y <= 490e-6 - ddy)) * (z > h_si + ddz ) * (z <= h_si + dz + ddz) * (x > 0.e-6 - ddx) * (x < 0.e-6 + ddx)"
+warpx.Ez_excitation_flag_function(x,y,z) = "flag_none"
+
+
+# This is a source on a qubit control line
+warpx.Ex_excitation_grid_function(x,y,z,t) = "0."
+warpx.Ey_excitation_grid_function(x,y,z,t) = "exp(-(t-3*TP)**2/(2*TP**2))*sin(2*pi*freq*t) *
+                                                      ( (y >= 470.e-6 + ddy) * (y < 475.e-6 - ddy) - (y >= 485e-6 + ddy) * (y <= 490e-6 - ddy)) * (z > h_si + ddz) * (z <= h_si + dz + ddz) * (x > 0.e-6 - ddx) * (x < 0.e-6 + ddx)"
+warpx.Ez_excitation_grid_function(x,y,z,t) = "0."
+
+###############
+# diagnostics
+###############
+
+diagnostics.diags_names = plt
+###############
+# full plotfiles
+plt.intervals = 5
+plt.fields_to_plot = Ex Ey Ez Bx By Bz sigma mu epsilon
+plt.diag_type = Full
+plt.file_min_digits = 7
