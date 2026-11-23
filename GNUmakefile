@@ -10,9 +10,6 @@ WARN_ALL = TRUE
 #DIM = 2
 DIM = 3
 
-QED	       = FALSE
-#QED_TABLE_GEN = TRUE
-
 COMP = gcc
 #COMP = intel
 #COMP = pgi
@@ -38,7 +35,6 @@ USE_OPENPMD = FALSE
 WarpxBinDir = Bin
 
 USE_PSATD = FALSE
-USE_PSATD_PICSAR = FALSE
 USE_RZ = FALSE
 USE_LLG = FALSE
 

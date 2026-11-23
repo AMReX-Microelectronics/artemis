@@ -33,7 +33,7 @@ endif()
 
 # C++ Standard in Superbuilds #################################################
 #
-# This is the easiest way to push up a C++17 requirement for AMReX, PICSAR and
+# This is the easiest way to push up a C++17 requirement for AMReX and
 # openPMD-api until they increase their requirement.
 set_cxx17_superbuild()
 
@@ -69,8 +69,6 @@ option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
 option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
-option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
-option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
 option(WarpX_MAG_LLG       "LLG for magnetization modeling"             ON)
 
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
@@ -132,10 +130,6 @@ mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/AMReX.cmake)
 #   suppress warnings in AMReX headers (use -isystem instead of -I)
 warpx_make_third_party_includes_system(AMReX::amrex AMReX)
-
-# PICSAR
-#   builds PICSAR from source
-include(${WarpX_SOURCE_DIR}/cmake/dependencies/PICSAR.cmake)
 
 # openPMD
 #   builds openPMD-api from source (default) or finds an existing install
@@ -281,14 +275,6 @@ if(WarpX_MAG_LLG)
     target_compile_definitions(WarpX PUBLIC WARPX_MAG_LLG)
 endif()
 
-if(WarpX_QED)
-    target_compile_definitions(ablastr PUBLIC WARPX_QED)
-    if(WarpX_QED_TABLE_GEN)
-        target_compile_definitions(ablastr PUBLIC WARPX_QED_TABLE_GEN)
-    endif()
-    target_link_libraries(ablastr PUBLIC PXRMP_QED::PXRMP_QED)
-endif()
-
 # Link zlib for cnpy support
 target_link_libraries(ablastr PUBLIC ZLIB::ZLIB)
 
@@ -343,13 +329,6 @@ endif()
 
 if(WarpX_OPENPMD)
     target_compile_definitions(ablastr PUBLIC WARPX_USE_OPENPMD)
-endif()
-
-if(WarpX_QED)
-    target_compile_definitions(ablastr PUBLIC WARPX_QED)
-    if(WarpX_QED_TABLE_GEN)
-        target_compile_definitions(ablastr PUBLIC WarpX_QED_TABLE_GEN)
-    endif()
 endif()
 
 if(WarpX_PSATD)
