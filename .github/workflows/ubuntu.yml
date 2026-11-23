@@ -47,10 +47,10 @@ jobs:
           -DWarpX_MAG_LLG=OFF
         cmake --build build_3D_EM -j 2
 
-  build_1D_2D:
-    name: GCC 1D & 2D w/ MPI
-    runs-on: ubuntu-22.04
-    if: github.event.pull_request.draft == false && false
+  build_3D_MPI:
+    name: GCC 3D w/ MPI
+    runs-on: ubuntu-24.04
+    if: github.event.pull_request.draft == false
     env:
       CXXFLAGS: "-Werror"
       CXX: "g++-12"
@@ -68,31 +68,19 @@ jobs:
         path: |
           ~/.ccache
           ~/.cache/ccache
-        key: ccache-openmp-1D-2D-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        key: ccache-openmp-3D-MPI-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-openmp-1D-2D-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
-          ccache-openmp-1D-2D-
+          ccache-openmp-3D-MPI-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
+          ccache-openmp-3D-MPI-
     - name: build WarpX
       run: |
-        # cmake -S . -B build_1D         \
-        #  -GNinja                      \
-        #  -DCMAKE_VERBOSE_MAKEFILE=ON  \
-        #  -DWarpX_DIMS=1               \
-        #  -DWarpX_EB=OFF               \
-        #  -DWarpX_MAG_LLG=OFF          \
-        #  -DWarpX_PSATD=ON             \
-        #  -DWarpX_QED_TABLE_GEN=ON
-        # cmake --build build_1D -j 2
-
-        cmake -S . -B build_2D         \
+        cmake -S . -B build_3D_MPI     \
           -GNinja                      \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS=2               \
-          -DWarpX_EB=OFF               \
-          -DWarpX_MAG_LLG=OFF          \
-          -DWarpX_PSATD=ON             \
-          -DWarpX_QED_TABLE_GEN=ON
-        cmake --build build_2D -j 2
+          -DWarpX_DIMS=3               \
+          -DWarpX_MPI=ON               \
+          -DWarpX_QED=OFF
+        cmake --build build_3D_MPI -j 2
 
   build_gcc_ablastr:
     name: GCC ABLASTR w/o MPI
