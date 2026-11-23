@@ -445,59 +445,6 @@ endif()
 #)
 
 
-# pip helpers for the pywarpx package #########################################
-#
-if(WarpX_LIB)
-    set(PYINSTALLOPTIONS "" CACHE STRING
-        "Additional parameters to pass to `pip install`")
-
-    # add a prefix to custom targets so we do not collide if used as a subproject
-    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-        set(_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT "")
-    else()
-        set(_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT "warpx_")
-    endif()
-    set(WarpX_CUSTOM_TARGET_PREFIX "${_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT}"
-            CACHE STRING "Prefix for custom targets")
-
-    # build the wheel by re-using the shared library we build
-    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel
-        ${CMAKE_COMMAND} -E rm -f -r warpx-whl
-        COMMAND
-            ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=$<TARGET_FILE_DIR:shared>
-                python3 -m pip wheel -v --no-build-isolation --no-deps --wheel-dir=warpx-whl ${WarpX_SOURCE_DIR}
-        WORKING_DIRECTORY
-            ${WarpX_BINARY_DIR}
-        DEPENDS
-            shared
-    )
-
-    # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
-    if(WarpX_MPI)
-        set(pyWarpX_REQUIREMENT_FILE "requirements_mpi.txt")
-    else()
-        set(pyWarpX_REQUIREMENT_FILE "requirements.txt")
-    endif()
-    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
-        python3 -m pip install ${PYINSTALLOPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
-        WORKING_DIRECTORY
-            ${WarpX_BINARY_DIR}
-    )
-
-    # We force-install because in development, it is likely that the version of
-    # the package does not change, but the code did change. We need --no-deps,
-    # because otherwise pip would also force reinstall all dependencies.
-    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install
-        ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
-            python3 -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
-        WORKING_DIRECTORY
-            ${WarpX_BINARY_DIR}
-        DEPENDS
-            shared ${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel ${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
-    )
-endif()
-
-
 # Tests #######################################################################
 #
 
