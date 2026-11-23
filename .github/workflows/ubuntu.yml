@@ -47,19 +47,20 @@ jobs:
           -DWarpX_MAG_LLG=OFF
         cmake --build build_3D_EM -j 2
 
-  build_3D_MPI:
-    name: GCC 3D w/ MPI
+  build_3D_MPI_gnumake:
+    name: GCC 3D w/ MPI GNUmake (USE_LLG=${{ matrix.llg }})
     runs-on: ubuntu-24.04
     if: github.event.pull_request.draft == false
-    env:
-      CXXFLAGS: "-Werror"
-      CXX: "g++-12"
-      CC: "gcc-12"
+    strategy:
+      fail-fast: false
+      matrix:
+        llg: [FALSE, TRUE]
     steps:
     - uses: actions/checkout@v3
     - name: install dependencies
       run: |
-        .github/workflows/dependencies/gcc12.sh
+        .github/workflows/dependencies/gcc.sh
+        sudo apt-get install -y libopenmpi-dev openmpi-bin
     - name: CCache Cache
       uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
@@ -68,19 +69,24 @@ jobs:
         path: |
           ~/.ccache
           ~/.cache/ccache
-        key: ccache-openmp-3D-MPI-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        key: ccache-openmp-3D-MPI-gnumake-llg${{ matrix.llg }}-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('dependencies.json') }}
         restore-keys: |
-          ccache-openmp-3D-MPI-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
-          ccache-openmp-3D-MPI-
+          ccache-openmp-3D-MPI-gnumake-llg${{ matrix.llg }}-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
+          ccache-openmp-3D-MPI-gnumake-llg${{ matrix.llg }}-
     - name: build WarpX
       run: |
-        cmake -S . -B build_3D_MPI     \
-          -GNinja                      \
-          -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS=3               \
-          -DWarpX_MPI=ON               \
-          -DWarpX_QED=OFF
-        cmake --build build_3D_MPI -j 2
+        export CCACHE_COMPRESS=1
+        export CCACHE_COMPRESSLEVEL=10
+        export CCACHE_MAXSIZE=600M
+        ccache -z
+
+        # AMReX at the commit pinned in dependencies.json, next to the repo (GNUmakefile expects ../amrex)
+        git clone https://github.com/AMReX-Codes/amrex.git ../amrex
+        git -C ../amrex checkout --detach $(jq -r .commit_amrex dependencies.json)
+
+        make -j 2 DIM=3 USE_MPI=TRUE USE_LLG=${{ matrix.llg }} USE_CCACHE=TRUE
+
+        ccache -s
 
   build_gcc_ablastr:
     name: GCC ABLASTR w/o MPI
