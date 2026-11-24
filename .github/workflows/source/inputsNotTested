@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-# Search input files in Examples/ and verify if all input files are tested
-
-set -eu -o pipefail
-
-ok=0
-
-exit $ok

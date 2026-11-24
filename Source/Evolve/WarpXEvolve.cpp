@@ -515,7 +515,10 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryM(guard_cells.ng_FieldSolver);
             // ApplyExternalFieldExcitation
             ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal, DtType::FirstHalf); // apply H external excitation; soft source to be fixed
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal, DtType::FirstHalf); // apply H external excitation; soft source to be fixed
+            if (mag_time_scheme_order == 1) {
+                // for the 2nd-order scheme, H_bias is advanced inside MacroscopicEvolveHM_2nd
+                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal, DtType::FirstHalf); // apply H external excitation; soft source to be fixed
+            }
 
         } else {
             amrex::Abort("unsupported em_solver_medium for M field");
@@ -570,7 +573,10 @@ WarpX::OneStep_nosub (Real cur_time)
             }
             // ApplyExternalFieldExcitation
             ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HfieldExternal, DtType::SecondHalf); // redundant for hs; need to fix the way to increment ss
-            ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal, DtType::SecondHalf); // apply H external excitation; soft source to be fixed
+            if (mag_time_scheme_order == 1) {
+                // for the 2nd-order scheme, H_bias is advanced inside MacroscopicEvolveHM_2nd
+                ApplyExternalFieldExcitationOnGrid(ExternalFieldType::HbiasfieldExternal, DtType::SecondHalf); // apply H external excitation; soft source to be fixed
+            }
         }
         else {
             amrex::Abort("unsupported em_solver_medium for M field");

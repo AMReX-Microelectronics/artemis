@@ -1,5 +1,4 @@
 AMREX_HOME ?= ../../../amrex
-PICSAR_HOME ?= ../../../picsar
 OPENBC_HOME ?= ../../../openbc_poisson
 
 USE_MPI       = TRUE
@@ -106,28 +105,6 @@ ifeq ($(USE_EB),TRUE)
   USERSuffix := $(USERSuffix).EB
 endif
 
-ifeq ($(QED),TRUE)
-  INCLUDE_LOCATIONS += $(PICSAR_HOME)/multi_physics/QED/include
-  CXXFLAGS += -DWARPX_QED
-  CFLAGS   += -DWARPX_QED
-  FFLAGS   += -DWARPX_QED
-  F90FLAGS += -DWARPX_QED
-  USERSuffix := $(USERSuffix).QED
-
-  ifeq ($(QED_TABLE_GEN),TRUE)
-    BOOST_ROOT ?= NOT_SET
-    ifneq ($(BOOST_ROOT),NOT_SET)
-      VPATH_LOCATIONS += $(BOOST_ROOT)
-      INCLUDE_LOCATIONS += $(BOOST_ROOT)
-    endif
-    CXXFLAGS += -DWARPX_QED_TABLE_GEN
-    CFLAGS   += -DWARPX_QED_TABLE_GEN
-    FFLAGS   += -DWARPX_QED_TABLE_GEN
-    F90FLAGS += -DWARPX_QED_TABLE_GEN
-     USERSuffix := $(USERSuffix).GENTABLES
-  endif
-endif
-
 ifeq ($(PRECISION),FLOAT)
   USERSuffix := $(USERSuffix).SP
 endif
@@ -135,15 +112,9 @@ ifeq ($(USE_SINGLE_PRECISION_PARTICLES),TRUE)
   USERSuffix := $(USERSuffix).pSP
 endif
 
-ifeq ($(QED),TRUE)
-  include $(PICSAR_HOME)/src/Make.package
-endif
-
 WARPX_GIT_VERSION := $(shell cd $(WARPX_HOME); git describe --abbrev=12 --dirty --always --tags)
-PICSAR_GIT_VERSION := $(shell cd $(PICSAR_HOME); git describe --abbrev=12 --dirty --always --tags)
-WARPX_DEFINES = -DWARPX_GIT_VERSION=\"$(WARPX_GIT_VERSION)\" -DPICSAR_GIT_VERSION=\"$(PICSAR_GIT_VERSION)\"
+WARPX_DEFINES = -DWARPX_GIT_VERSION=\"$(WARPX_GIT_VERSION)\"
 
-DEFINES += -DPICSAR_NO_ASSUMED_ALIGNMENT
 DEFINES += -DWARPX
 
 ifeq ($(USE_OPENBC_POISSON),TRUE)
@@ -294,7 +265,7 @@ AMReX_buildInfo.cpp:
           --CXX_comp_name "$(CXX)" --CXX_flags "$(CXXFLAGS) $(CPPFLAGS) $(includes)" \
           --F_comp_name "$(F90)" --F_flags "$(F90FLAGS)" \
           --link_flags "$(LDFLAGS)" --libraries "$(libraries)" \
-          --GIT ". $(AMREX_HOME) $(PICSAR_HOME)"
+          --GIT ". $(AMREX_HOME)"
 
 vpath WarpXVersion.H $(srcTempDir)/Utils
 

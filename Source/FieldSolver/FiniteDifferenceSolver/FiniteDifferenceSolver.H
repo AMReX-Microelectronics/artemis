@@ -159,7 +159,8 @@ class FiniteDifferenceSolver
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
                        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
-                       std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield_old, // H bias at old time
+                       std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield,     // H bias at new time
                        std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
                        amrex::Real const dt,
                        std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
@@ -393,7 +394,8 @@ class FiniteDifferenceSolver
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Mfield,
             std::array<std::unique_ptr<amrex::MultiFab>, 3> &Hfield,            // H Maxwell
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-            std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield, // H bias
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield_old, // H bias at old time
+            std::array<std::unique_ptr<amrex::MultiFab>, 3> const &H_biasfield,     // H bias at new time
             std::array<std::unique_ptr<amrex::MultiFab>, 3> const &Efield,
             amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const &macroscopic_properties);
