@@ -141,6 +141,20 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     int use_lumped_resistor = warpx.use_lumped_resistor;
     int use_lumped_capacitor = warpx.use_lumped_capacitor;
 
+    // Geometric factor (edge length)/(cross-sectional area) for a lumped element on an
+    // x-, y-, or z-edge: sigma_eff = geom/R, eps_eff = eps + C*geom.
+    // Lumped elements are only supported in 3D (enforced in WarpX::ReadParameters).
+#if defined(WARPX_DIM_3D)
+    amrex::Real const lumped_geom_x = dx[0] / (dx[1]*dx[2]);
+    amrex::Real const lumped_geom_y = dx[1] / (dx[0]*dx[2]);
+    amrex::Real const lumped_geom_z = dx[2] / (dx[0]*dx[1]);
+#else
+    amrex::ignore_unused(dx);
+    amrex::Real const lumped_geom_x = 0._rt;
+    amrex::Real const lumped_geom_y = 0._rt;
+    amrex::Real const lumped_geom_z = 0._rt;
+#endif
+
     amrex::MultiFab& sigma_mf = macroscopic_properties->getsigma_mf();
     amrex::MultiFab& epsilon_mf = macroscopic_properties->getepsilon_mf();
 
@@ -172,18 +186,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     amrex::GpuArray<int, 3> const& sigma_stag = macroscopic_properties->sigma_IndexType;
     amrex::GpuArray<int, 3> const& epsilon_stag = macroscopic_properties->epsilon_IndexType;
     amrex::GpuArray<int, 3> const& macro_cr     = macroscopic_properties->macro_cr_ratio;
-
-    if (use_lumped_resistor){
-        amrex::GpuArray<int, 3> const& lumped_resistor_x_stag = macroscopic_properties->lumped_resistor_x_IndexType;
-        amrex::GpuArray<int, 3> const& lumped_resistor_y_stag = macroscopic_properties->lumped_resistor_y_IndexType;
-        amrex::GpuArray<int, 3> const& lumped_resistor_z_stag = macroscopic_properties->lumped_resistor_z_IndexType;
-    }
-
-    if (use_lumped_capacitor){
-        amrex::GpuArray<int, 3> const& lumped_capacitor_x_stag = macroscopic_properties->lumped_capacitor_x_IndexType;
-        amrex::GpuArray<int, 3> const& lumped_capacitor_y_stag = macroscopic_properties->lumped_capacitor_y_IndexType;
-        amrex::GpuArray<int, 3> const& lumped_capacitor_z_stag = macroscopic_properties->lumped_capacitor_z_IndexType;
-    }
 
     amrex::GpuArray<int, 3> const& Ex_stag = macroscopic_properties->Ex_IndexType;
     amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
@@ -283,12 +285,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Extra conductance term from a lumped resistor on Ex edges
                 amrex::Real const fac1 = (dt/epsilon_interp) *
                                          ( sigma_interp + ((use_lumped_resistor && resistor_x_arr(i,j,k)!=0._rt)
-                                            ? dx[0] / (dx[1]*dx[2]*resistor_x_arr(i,j,k))
+                                            ? lumped_geom_x / resistor_x_arr(i,j,k)
                                             : 0._rt) );
 
                 // Extra term from a lumped capacitor on Ex edges
                 amrex::Real const fac2 = (use_lumped_capacitor && capacitor_x_arr(i,j,k)!=0._rt)
-                                            ? capacitor_x_arr(i,j,k) * dx[0] / (dx[1]*dx[2]*epsilon_interp)
+                                            ? capacitor_x_arr(i,j,k) * lumped_geom_x / epsilon_interp
                                             : 0._rt;
 
                 amrex::Real alpha_compact = T_MacroAlgo::alpha_compact(fac1, fac2);
@@ -320,15 +322,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Extra conductance term from a lumped resistor on Ey edges
                 amrex::Real const fac1 = (dt/epsilon_interp) *
                                          ( sigma_interp + ((use_lumped_resistor && resistor_y_arr(i,j,k)!=0._rt)
-                                            ? dx[1] / (dx[0]*dx[2]*resistor_y_arr(i,j,k))
+                                            ? lumped_geom_y / resistor_y_arr(i,j,k)
                                             : 0._rt) );
-                // if (use_lumped_resistor && resistor_y_arr(i,j,k)!=0._rt){
-                //     printf("fac1=%f\n", fac1);
-                // }
 
                 // Extra term from a lumped capacitor on Ey edges
                 amrex::Real const fac2 = (use_lumped_capacitor && capacitor_y_arr(i,j,k)!=0._rt)
-                                            ? capacitor_y_arr(i,j,k) * dx[1] / (dx[0]*dx[2]*epsilon_interp)
+                                            ? capacitor_y_arr(i,j,k) * lumped_geom_y / epsilon_interp
                                             : 0._rt;
 
                 amrex::Real alpha_compact = T_MacroAlgo::alpha_compact(fac1, fac2);
@@ -355,12 +354,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Extra conductance term from a lumped resistor on Ez edges
                 amrex::Real const fac1 = (dt/epsilon_interp) *
                                          ( sigma_interp + ((use_lumped_resistor && resistor_z_arr(i,j,k)!=0._rt)
-                                            ? dx[2] / (dx[0]*dx[1]*resistor_z_arr(i,j,k))
+                                            ? lumped_geom_z / resistor_z_arr(i,j,k)
                                             : 0._rt) );
 
                 // Extra term from a lumped capacitor on Ez edges
                 amrex::Real const fac2 = (use_lumped_capacitor && capacitor_z_arr(i,j,k)!=0._rt)
-                                            ? capacitor_z_arr(i,j,k) * dx[2] / (dx[0]*dx[1]*epsilon_interp)
+                                            ? capacitor_z_arr(i,j,k) * lumped_geom_z / epsilon_interp
                                             : 0._rt;
 
                 amrex::Real alpha_compact = T_MacroAlgo::alpha_compact(fac1, fac2);
