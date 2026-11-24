@@ -152,7 +152,8 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
        ParserExecutor<4> const& zfield_parser,
        ParserExecutor<3> const& xflag_parser,
        ParserExecutor<3> const& yflag_parser,
-       ParserExecutor<3> const& zflag_parser, const int lev, DtType a_dt_type )
+       ParserExecutor<3> const& zflag_parser, const int lev, DtType a_dt_type,
+       amrex::Real a_time_offset )
 {
     // This function adds the contribution from an external excitation to the fields.
     // A flag is used to determine the type of excitation.
@@ -168,7 +169,9 @@ WarpX::ApplyExternalFieldExcitationOnGrid (
         mfy_stag[idim] = mfy->ixType()[idim];
         mfz_stag[idim] = mfz->ixType()[idim];
     }
-    amrex::Real t = gett_new(lev);
+    // a_time_offset (default 0) lets callers evaluate the excitation at a time other than t_new,
+    // e.g., at the end of a half step (see WarpX::MacroscopicEvolveHM_2nd)
+    amrex::Real t = gett_new(lev) + a_time_offset;
     const auto problo = Geom(lev).ProbLoArray();
     const auto dx = Geom(lev).CellSizeArray();
     amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
