@@ -243,7 +243,6 @@ set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
 
 # Parse AMReX version and commit information
 file(READ "${WarpX_SOURCE_DIR}/dependencies.json" dependencies_data)
-string(JSON amrex_version GET "${dependencies_data}" version_amrex)
 string(JSON amrex_commit GET "${dependencies_data}" commit_amrex)
 
 set(WarpX_amrex_branch ${amrex_commit}

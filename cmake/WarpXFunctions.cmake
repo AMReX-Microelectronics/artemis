@@ -1,6 +1,6 @@
 # Set C++17 for the whole build if not otherwise requested
 #
-# This is the easiest way to push up a C++17 requirement for AMReX, PICSAR and
+# This is the easiest way to push up a C++17 requirement for AMReX and
 # openPMD-api until they increase their requirement.
 #
 macro(set_cxx17_superbuild)
@@ -240,14 +240,6 @@ function(set_warpx_binary_name)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".EB")
         endif()
 
-        if(WarpX_QED)
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".QED")
-        endif()
-
-        if(WarpX_QED_TABLE_GEN)
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".GENQEDTABLES")
-        endif()
-
         if(WarpX_SENSEI)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".SENSEI")
         endif()
@@ -389,9 +381,7 @@ function(warpx_print_summary)
     message("    PRECISION: ${WarpX_PRECISION}")
     message("    PARTICLE PRECISION: ${WarpX_PARTICLE_PRECISION}")
     message("    OPENPMD: ${WarpX_OPENPMD}")
-    message("    QED: ${WarpX_QED}")
     message("    LLG: ${WarpX_MAG_LLG}")
-    message("    QED table generation: ${WarpX_QED_TABLE_GEN}")
     message("    SENSEI: ${WarpX_SENSEI}")
     message("")
 endfunction()
