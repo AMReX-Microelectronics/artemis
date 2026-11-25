@@ -166,32 +166,42 @@ MacroscopicProperties::ReadParameters ()
     }
 
 
+    // Lumped resistor / capacitor values per edge direction. Any direction that is not
+    // specified defaults to "0", which means "no element" on those edges.
+    auto read_lumped_parser = [&pp_macroscopic] (std::string const& name, std::string& str,
+                                                 std::unique_ptr<amrex::Parser>& parser) -> bool {
+        bool const specified = pp_macroscopic.contains(name.c_str());
+        if (specified) {
+            utils::parser::Store_parserString(pp_macroscopic, name, str);
+        } else {
+            str = "0";
+        }
+        parser = std::make_unique<amrex::Parser>(utils::parser::makeParser(str, {"x","y","z"}));
+        return specified;
+    };
+
     if (warpx.use_lumped_resistor == 1){
-        utils::parser::Store_parserString(pp_macroscopic, "lumped_resistor_x_function(x,y,z)", m_str_lumped_resistor_x_function);
-        m_lumped_resistor_x_parser = std::make_unique<amrex::Parser>(
-                                        utils::parser::makeParser(m_str_lumped_resistor_x_function,{"x","y","z"}));
-
-        utils::parser::Store_parserString(pp_macroscopic, "lumped_resistor_y_function(x,y,z)", m_str_lumped_resistor_y_function);
-        m_lumped_resistor_y_parser = std::make_unique<amrex::Parser>(
-                                        utils::parser::makeParser(m_str_lumped_resistor_y_function,{"x","y","z"}));
-
-        utils::parser::Store_parserString(pp_macroscopic, "lumped_resistor_z_function(x,y,z)", m_str_lumped_resistor_z_function);
-        m_lumped_resistor_z_parser = std::make_unique<amrex::Parser>(
-                                        utils::parser::makeParser(m_str_lumped_resistor_z_function,{"x","y","z"}));
+        bool any = false;
+        any |= read_lumped_parser("lumped_resistor_x_function(x,y,z)", m_str_lumped_resistor_x_function, m_lumped_resistor_x_parser);
+        any |= read_lumped_parser("lumped_resistor_y_function(x,y,z)", m_str_lumped_resistor_y_function, m_lumped_resistor_y_parser);
+        any |= read_lumped_parser("lumped_resistor_z_function(x,y,z)", m_str_lumped_resistor_z_function, m_lumped_resistor_z_parser);
+        if (!any) {
+            ablastr::warn_manager::WMRecordWarning("Lumped elements",
+                "algo.use_lumped_resistor = 1 but no macroscopic.lumped_resistor_{x,y,z}_function(x,y,z) "
+                "was given; no resistors will be applied.");
+        }
     }
 
     if (warpx.use_lumped_capacitor == 1){
-        utils::parser::Store_parserString(pp_macroscopic, "lumped_capacitor_x_function(x,y,z)", m_str_lumped_capacitor_x_function);
-        m_lumped_capacitor_x_parser = std::make_unique<amrex::Parser>(
-                                        utils::parser::makeParser(m_str_lumped_capacitor_x_function,{"x","y","z"}));
-
-        utils::parser::Store_parserString(pp_macroscopic, "lumped_capacitor_y_function(x,y,z)", m_str_lumped_capacitor_y_function);
-        m_lumped_capacitor_y_parser = std::make_unique<amrex::Parser>(
-                                        utils::parser::makeParser(m_str_lumped_capacitor_y_function,{"x","y","z"}));
-
-        utils::parser::Store_parserString(pp_macroscopic, "lumped_capacitor_z_function(x,y,z)", m_str_lumped_capacitor_z_function);
-        m_lumped_capacitor_z_parser = std::make_unique<amrex::Parser>(
-                                        utils::parser::makeParser(m_str_lumped_capacitor_z_function,{"x","y","z"}));
+        bool any = false;
+        any |= read_lumped_parser("lumped_capacitor_x_function(x,y,z)", m_str_lumped_capacitor_x_function, m_lumped_capacitor_x_parser);
+        any |= read_lumped_parser("lumped_capacitor_y_function(x,y,z)", m_str_lumped_capacitor_y_function, m_lumped_capacitor_y_parser);
+        any |= read_lumped_parser("lumped_capacitor_z_function(x,y,z)", m_str_lumped_capacitor_z_function, m_lumped_capacitor_z_parser);
+        if (!any) {
+            ablastr::warn_manager::WMRecordWarning("Lumped elements",
+                "algo.use_lumped_capacitor = 1 but no macroscopic.lumped_capacitor_{x,y,z}_function(x,y,z) "
+                "was given; no capacitors will be applied.");
+        }
     }
 
 #ifdef WARPX_MAG_LLG
@@ -292,6 +302,18 @@ MacroscopicProperties::InitData ()
         jx_IndexType[idim] = jx_stag[idim];
         jy_IndexType[idim] = jy_stag[idim];
         jz_IndexType[idim] = jz_stag[idim];
+    }
+    // lumped elements live at the same (edge) locations as J and E
+    for (int idim = 0; idim < 3; ++idim) {
+        int const sx = (idim < AMREX_SPACEDIM) ? jx_stag[idim] : 0;
+        int const sy = (idim < AMREX_SPACEDIM) ? jy_stag[idim] : 0;
+        int const sz = (idim < AMREX_SPACEDIM) ? jz_stag[idim] : 0;
+        lumped_resistor_x_IndexType[idim]  = sx;
+        lumped_resistor_y_IndexType[idim]  = sy;
+        lumped_resistor_z_IndexType[idim]  = sz;
+        lumped_capacitor_x_IndexType[idim] = sx;
+        lumped_capacitor_y_IndexType[idim] = sy;
+        lumped_capacitor_z_IndexType[idim] = sz;
     }
 
     // Define material property multifabs using ba and dmap from WarpX instance
@@ -411,6 +433,12 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_lumped_resistor_x_mf.get(), m_lumped_resistor_x_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_lumped_resistor_y_mf.get(), m_lumped_resistor_y_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_lumped_resistor_z_mf.get(), m_lumped_resistor_z_parser->compile<3>(), lev);
+
+        // R < 0 is a negative conductance and makes the E update unstable; R = 0 means "no resistor"
+        for (auto const* mf : {m_lumped_resistor_x_mf.get(), m_lumped_resistor_y_mf.get(), m_lumped_resistor_z_mf.get()}) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(mf->min(0, mf->nGrow()) >= 0._rt,
+                "macroscopic.lumped_resistor_*_function must be non-negative (0 means no resistor)");
+        }
     }
 
     if (warpx.use_lumped_capacitor == 1){
@@ -421,6 +449,11 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_lumped_capacitor_x_mf.get(), m_lumped_capacitor_x_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_lumped_capacitor_y_mf.get(), m_lumped_capacitor_y_parser->compile<3>(), lev);
         InitializeMacroMultiFabUsingParser(m_lumped_capacitor_z_mf.get(), m_lumped_capacitor_z_parser->compile<3>(), lev);
+
+        for (auto const* mf : {m_lumped_capacitor_x_mf.get(), m_lumped_capacitor_y_mf.get(), m_lumped_capacitor_z_mf.get()}) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(mf->min(0, mf->nGrow()) >= 0._rt,
+                "macroscopic.lumped_capacitor_*_function must be non-negative (0 means no capacitor)");
+        }
     }
 
 #ifdef WARPX_MAG_LLG

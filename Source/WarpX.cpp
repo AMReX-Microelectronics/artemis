@@ -1073,9 +1073,6 @@ WarpX::ReadParameters ()
             );
         }
 
-        pp_warpx.query("use_lumped_resistor", use_lumped_resistor);
-        pp_warpx.query("use_lumped_capacitor", use_lumped_capacitor);
-
 #ifdef WARPX_MAG_LLG
         // Read the value of the time advancement scheme of M field
         pp_warpx.query("mag_time_scheme_order", mag_time_scheme_order);
@@ -1312,6 +1309,30 @@ WarpX::ReadParameters ()
         pp_algo.query("extend_PEC_mask_into_pml",extend_PEC_mask_into_pml);
         pp_algo.query("use_lumped_inductor",use_lumped_inductor);
         pp_algo.query("use_josephson_junction",use_josephson_junction);
+
+        // Lumped resistor / capacitor (values set via macroscopic.lumped_{resistor,capacitor}_*_function)
+        pp_algo.query("use_lumped_resistor", use_lumped_resistor);
+        pp_algo.query("use_lumped_capacitor", use_lumped_capacitor);
+        {
+            // backward compatibility: these used to be read as warpx.use_lumped_*
+            const amrex::ParmParse pp_warpx_old("warpx");
+            for (auto const& [name, flag] : {std::pair<const char*, int*>{"use_lumped_resistor",  &use_lumped_resistor},
+                                             std::pair<const char*, int*>{"use_lumped_capacitor", &use_lumped_capacitor}}) {
+                if (pp_warpx_old.contains(name)) {
+                    ablastr::warn_manager::WMRecordWarning("Lumped elements",
+                        std::string("warpx.") + name + " is deprecated; use algo." + name + " instead.");
+                    if (!pp_algo.contains(name)) { pp_warpx_old.query(name, *flag); }
+                }
+            }
+        }
+        if (use_lumped_resistor || use_lumped_capacitor) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(em_solver_medium == MediumForEM::Macroscopic,
+                "algo.use_lumped_resistor / algo.use_lumped_capacitor require algo.em_solver_medium = macroscopic");
+#if !defined(WARPX_DIM_3D)
+            WARPX_ABORT_WITH_MESSAGE(
+                "algo.use_lumped_resistor / algo.use_lumped_capacitor are only implemented in 3D");
+#endif
+        }
 
         // Load balancing parameters
         std::vector<std::string> load_balance_intervals_string_vec = {"0"};
